@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import { extractJson } from "../eval/harness/agent.ts";
-import { evaluateGate, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
+import { evaluateGate, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
+import { formatCall } from "../eval/harness/format.ts";
+import { describeSelfCheck, runSelfCheck } from "../eval/harness/self-check.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
 import { CorpusIndex } from "../eval/harness/search.ts";
@@ -16,9 +18,11 @@ class ScriptedModel implements LanguageModel {
   readonly info = { id: "scripted", runtime: "scripted" as const, contextLength: 4096 };
   readonly requests: GenerationRequest[] = [];
   private readonly replies: string[];
+  private readonly decodeDelayMs: number;
 
-  constructor(replies: string[]) {
+  constructor(replies: string[], decodeDelayMs = 0) {
     this.replies = [...replies];
+    this.decodeDelayMs = decodeDelayMs;
   }
 
   supportsConstrainedDecoding() {
@@ -29,6 +33,7 @@ class ScriptedModel implements LanguageModel {
     this.requests.push(request);
     const text = this.replies.shift() ?? "{}";
     yield { text, done: false };
+    if (this.decodeDelayMs) await new Promise((resolve) => setTimeout(resolve, this.decodeDelayMs));
     yield { text: "", done: true, usage: { promptTokens: 100, completionTokens: 20 } };
   }
 
@@ -44,7 +49,7 @@ describe("research agent", () => {
       `{"tool":"read","args":{"docId":"lumen-advisory-2024-07"}}`,
       `{"tool":"final_answer","args":{"found":true,"answer":"LumenDB 3.0.0 through 3.1.4 are affected.","citations":["lumen-advisory-2024-07"]}}`,
     ]);
-    const run = await runResearchTask(task("r03-advisory-affected"), model, true);
+    const run = await runResearchTask(task("r03-advisory-affected"), model, { constrained: true });
     assert.equal(run.agent.stopReason, "final");
     assert.equal(run.score.passed, true);
     assert.equal(run.agent.calls.length, 3);
@@ -60,7 +65,7 @@ describe("research agent", () => {
       `{"tool":"search","args":{}}`,
       "```json\n" + `{"tool":"final_answer","args":{"found":true,"answer":"MPL-2.0","citations":["lumen-overview"]}}` + "\n```",
     ]);
-    const run = await runResearchTask(task("r02-lumen-license"), model, false);
+    const run = await runResearchTask(task("r02-lumen-license"), model, { constrained: false });
     assert.equal(run.score.passed, true);
     assert.deepEqual(run.agent.calls.map((c) => c.valid), [false, false, true]);
     assert.ok(model.requests.every((r) => !r.responseSchema));
@@ -70,7 +75,7 @@ describe("research agent", () => {
     const fabricated = await runResearchTask(
       task("r02-lumen-license"),
       new ScriptedModel([`{"tool":"final_answer","args":{"found":true,"answer":"MPL-2.0","citations":["lumen-overview","made-up-doc"]}}`]),
-      true,
+      { constrained: true },
     );
     assert.equal(fabricated.score.checks.citationsExist, false);
     assert.equal(fabricated.score.passed, false);
@@ -78,21 +83,21 @@ describe("research agent", () => {
     const unanswerable = await runResearchTask(
       task("r22-harrow-ceo"),
       new ScriptedModel([`{"tool":"final_answer","args":{"found":true,"answer":"Jane Doe","citations":["harrow-press"]}}`]),
-      true,
+      { constrained: true },
     );
     assert.equal(unanswerable.score.passed, false);
 
     const declined = await runResearchTask(
       task("r22-harrow-ceo"),
       new ScriptedModel([`{"tool":"final_answer","args":{"found":false,"answer":"The documents do not name a CEO.","citations":[]}}`]),
-      true,
+      { constrained: true },
     );
     assert.equal(declined.score.passed, true);
   });
 
   it("stops at the call limit", async () => {
     const model = new ScriptedModel(Array(20).fill(`{"tool":"search","args":{"query":"LumenDB"}}`));
-    const run = await runResearchTask(task("r01-lumen-maintainer"), model, true);
+    const run = await runResearchTask(task("r01-lumen-maintainer"), model, { constrained: true });
     assert.equal(run.agent.stopReason, "max-calls");
     assert.equal(run.agent.calls.length, 8);
     assert.equal(run.score.passed, false);
@@ -104,7 +109,7 @@ describe("research agent", () => {
       `{"tool":"final_answer","args":{"found":true,"answer":"Tessel Foundation","citations":["lumen-overview"]}}`,
     ]);
     Object.assign(model.info, { contextLength: 1600 });
-    const run = await runResearchTask(task("r01-lumen-maintainer"), model, true);
+    const run = await runResearchTask(task("r01-lumen-maintainer"), model, { constrained: true });
     assert.equal(run.agent.stopReason, "final");
     assert.ok(run.agent.transcript.some((m) => m.content.includes("removed to save context")));
   });
@@ -118,7 +123,7 @@ describe("coding agent", () => {
       JSON.stringify({ tool: "run_tests", args: { code: coding.starterCode } }),
       JSON.stringify({ tool: "final_answer", args: { code: fixed } }),
     ]);
-    const run = await runCodingTask(coding, model, true, new NodeCodeRunner());
+    const run = await runCodingTask(coding, model, new NodeCodeRunner(), { constrained: true });
     assert.match(run.agent.transcript[3]!.content, /FAIL median\(\[10, 2, 33, 4\]\)/);
     assert.equal(run.score.passed, true);
   });
@@ -127,7 +132,7 @@ describe("coding agent", () => {
     const coding = codingTasks.find((t) => t.id === "c09-roman-to-int")!;
     const shortcut = `function romanToInt(s) { return s === "IV" ? 4 : s.length; }`;
     const model = new ScriptedModel([JSON.stringify({ tool: "final_answer", args: { code: shortcut } })]);
-    const run = await runCodingTask(coding, model, true, new NodeCodeRunner());
+    const run = await runCodingTask(coding, model, new NodeCodeRunner(), { constrained: true });
     assert.equal(run.score.passed, false);
   });
 
@@ -166,8 +171,75 @@ describe("benchmark", () => {
       calls: 3, validCalls: 3, promptTokens: 3000, completionTokens: 300, estimatedTokens: false,
       modelMs: 12000, ttftMs: 2000, wallMs: 12500, actions: [],
     });
-    const gate = evaluateGate(summarize([result("a", true), result("b", true), result("c", false)]));
+    const summary = summarize([result("a", true), result("b", true), result("c", false)]);
+    const gate = evaluateGate(summary, true);
     assert.equal(gate.passed, true, JSON.stringify(gate.criteria));
+    // The same numbers from a subset or a stopped run cannot pass.
+    assert.equal(evaluateGate(summary, false).passed, false);
+  });
+
+  it("runs only the quick preset's tasks and marks the gate as not applicable", async () => {
+    const model = new ScriptedModel([]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["research", "coding"], modes: ["constrained"], preset: "quick" },
+    });
+    assert.deepEqual(report.results.map((r) => r.taskId), QUICK_TASK_IDS);
+    assert.equal(report.complete, true);
+    assert.equal(report.gate.criteria[0]!.passed, false);
+    // The quick preset covers every research task kind and both coding kinds.
+    const kinds = new Set(report.results.map((r) => `${r.suite}:${r.kind}`));
+    assert.equal(kinds.size, 7);
+  });
+
+  it("returns a partial report when stopped, leaving out the interrupted task", async () => {
+    const controller = new AbortController();
+    const model = new ScriptedModel(Array(40).fill(`{"tool":"search","args":{"query":"LumenDB"}}`));
+    const calls: string[] = [];
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      signal: controller.signal,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["research"], modes: ["constrained"], taskIds: ["r01-lumen-maintainer", "r02-lumen-license", "r03-advisory-affected"] },
+      // Stop during the second task's third call.
+      onCall: (call, index) => {
+        calls.push(formatCall(call, index));
+        if (calls.length === 8 + 3) controller.abort();
+      },
+    });
+    assert.equal(report.complete, false);
+    assert.deepEqual(report.results.map((r) => r.taskId), ["r01-lumen-maintainer"]);
+    assert.equal(report.gate.passed, false);
+    assert.match(calls[0]!, /^  call 1: search \{"query":"LumenDB"\} \(\d+\.\d s, [\d.]+ tok\/s\)$/);
+  });
+});
+
+describe("self-check", () => {
+  it("passes on a valid action and estimates the worst-case task time", async () => {
+    // 20 tokens in about 200 ms is about 100 tokens/s, so 8 calls of 256 tokens take about 20 s.
+    const result = await runSelfCheck(new ScriptedModel([`{"tool":"search","args":{"query":"LumenDB license"}}`], 200));
+    assert.equal(result.passed, true);
+    assert.equal(result.constrained, true);
+    assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond <= 100, String(result.decodeTokensPerSecond));
+    assert.ok(result.maxResearchTaskMinutes >= 0.3 && result.maxResearchTaskMinutes <= 0.7, String(result.maxResearchTaskMinutes));
+  });
+
+  it("fails on broken output and reports what the model produced", async () => {
+    const result = await runSelfCheck(new ScriptedModel(["\u0000\u0000 garbage"]));
+    assert.equal(result.passed, false);
+    assert.match(result.error ?? "", /no JSON object/);
+    assert.match(describeSelfCheck(result).join("\n"), /FAILED[\s\S]*garbage/);
+  });
+
+  it("logs invalid calls with the model's output", () => {
+    const line = formatCall(
+      { valid: false, error: "no JSON object found", output: "Sure!", promptTokens: 10, completionTokens: 5, estimatedTokens: false, ttftMs: 500, totalMs: 1500 },
+      2,
+    );
+    assert.equal(line, '  call 2: INVALID: no JSON object found. Output: "Sure!" (1.5 s, 5.0 tok/s)');
   });
 });
 
