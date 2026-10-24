@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Planned, starting October 2026 |
+| Status | In progress: slice 1 (engine move, app skeleton, local-server setup) |
 | Depends on | M0 provisional go ([`m0-benchmark.md`](m0-benchmark.md#m0-status)) |
 | Team | Project owner (decisions, reviews, laptop testing) and Claude (implementation, tests, benchmark runs, docs) |
 

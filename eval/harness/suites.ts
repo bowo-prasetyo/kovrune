@@ -5,10 +5,11 @@ import type { LanguageModel } from "../../src/models/types.ts";
 import { codingTasks, type CodingTask } from "../tasks/coding.ts";
 import { corpus } from "../tasks/corpus.ts";
 import { researchTasks, type ResearchTask } from "../tasks/research.ts";
-import { runAgent, type AgentRun, type AgentTool, type CallRecord } from "./agent.ts";
+import { runAgent, type AgentRun, type AgentTool, type CallRecord } from "../../src/agent/agent.ts";
+import { createResearchTools, RESEARCH_SYSTEM, type ResearchFinal } from "../../src/tools/research.ts";
+import { DocumentIndex } from "../../src/tools/search.ts";
 import type { CodeRunner } from "./sandbox.ts";
-import { scoreCoding, scoreResearch, type ResearchFinal, type Score } from "./scoring.ts";
-import { CorpusIndex } from "./search.ts";
+import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
 
 export type SuiteName = "research" | "coding";
 
@@ -26,41 +27,8 @@ export interface TaskRun {
   agent: AgentRun;
 }
 
-const index = new CorpusIndex(corpus);
 const corpusIds = new Set(corpus.map((doc) => doc.id));
-const MAX_DOC_CHARS = 2400;
-
-export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
-Search first, then read the documents you need. Some documents are outdated or corrected by later ones; prefer the most recent correction.
-Finish with final_answer. Cite the IDs of the documents that support the answer. If the documents do not contain the answer, set "found" to false.`;
-
-export const researchTools: AgentTool[] = [
-  {
-    name: "search",
-    usage: `{"tool":"search","args":{"query":"..."}} searches the documents and returns IDs, titles and snippets.`,
-    args: z.object({ query: z.string() }).strict(),
-    execute: async ({ query }: { query: string }) => {
-      const hits = index.search(query);
-      if (!hits.length) return "No matching documents.";
-      return hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
-    },
-  },
-  {
-    name: "read",
-    usage: `{"tool":"read","args":{"docId":"..."}} returns the full text of a document.`,
-    args: z.object({ docId: z.string() }).strict(),
-    execute: async ({ docId }: { docId: string }) => {
-      const doc = index.get(docId);
-      if (!doc) return `No document with ID "${docId}". Use an ID returned by search.`;
-      return `[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`;
-    },
-  },
-  {
-    name: "final_answer",
-    usage: `{"tool":"final_answer","args":{"found":true,"answer":"...","citations":["doc-id"]}} finishes the task.`,
-    args: z.object({ found: z.boolean(), answer: z.string(), citations: z.array(z.string()) }).strict(),
-  },
-];
+export const researchTools = createResearchTools(new DocumentIndex(corpus));
 
 export async function runResearchTask(
   task: ResearchTask,

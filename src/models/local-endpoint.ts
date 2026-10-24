@@ -100,3 +100,20 @@ export async function* readServerSentEvents(stream: ReadableStream<Uint8Array>):
     }
   }
 }
+
+/** Lists model IDs from an OpenAI-compatible server (GET {baseUrl}/models). */
+export async function listModels(
+  baseUrl: string,
+  options: { apiKey?: string; signal?: AbortSignal; fetchImpl?: typeof fetch } = {},
+): Promise<string[]> {
+  const { apiKey, signal, fetchImpl = fetch } = options;
+  const response = await fetchImpl(`${baseUrl.replace(/\/$/, "")}/models`, {
+    headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {},
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`Server returned ${response.status}: ${(await response.text()).slice(0, 200)}`);
+  }
+  const body = (await response.json()) as { data?: Array<{ id?: unknown }> };
+  return (body.data ?? []).map((m) => m.id).filter((id): id is string => typeof id === "string");
+}

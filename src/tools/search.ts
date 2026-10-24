@@ -1,7 +1,12 @@
-// Deterministic BM25 search over the corpus, so research results depend on the
-// model under test and not on a retrieval model.
+// Deterministic BM25 keyword search over a set of documents. The benchmark
+// uses it so results depend on the model and not on a retrieval model; the
+// app uses the same search over the user's documents.
 
-import type { CorpusDocument } from "../tasks/corpus.ts";
+export interface SourceDocument {
+  id: string;
+  title: string;
+  text: string;
+}
 
 export interface SearchHit {
   docId: string;
@@ -24,14 +29,14 @@ function tokenize(text: string): string[] {
   return (text.toLowerCase().match(/[a-z0-9]+(?:[.-][a-z0-9]+)*/g) ?? []).filter((t) => !STOP_WORDS.has(t)).map(stem);
 }
 
-export class CorpusIndex {
-  private readonly docs: CorpusDocument[];
+export class DocumentIndex {
+  private readonly docs: SourceDocument[];
   private readonly termFreqs: Map<string, number>[];
   private readonly lengths: number[];
   private readonly docFreq = new Map<string, number>();
   private readonly avgLength: number;
 
-  constructor(docs: CorpusDocument[]) {
+  constructor(docs: SourceDocument[]) {
     this.docs = docs;
     this.termFreqs = docs.map((doc) => {
       const freqs = new Map<string, number>();
@@ -43,7 +48,7 @@ export class CorpusIndex {
     this.avgLength = this.lengths.reduce((a, b) => a + b, 0) / Math.max(docs.length, 1);
   }
 
-  get(docId: string): CorpusDocument | undefined {
+  get(docId: string): SourceDocument | undefined {
     return this.docs.find((doc) => doc.id === docId);
   }
 

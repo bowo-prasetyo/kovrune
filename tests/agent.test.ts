@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { extractJson } from "../eval/harness/agent.ts";
+import { extractJson } from "../src/agent/agent.ts";
 import { evaluateGate, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
 import { formatCall } from "../eval/harness/format.ts";
-import { describeSelfCheck, runSelfCheck } from "../eval/harness/self-check.ts";
+import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
-import { CorpusIndex } from "../eval/harness/search.ts";
+import { DocumentIndex } from "../src/tools/search.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 import { researchTasks } from "../eval/tasks/research.ts";
@@ -250,10 +250,12 @@ describe("self-check", () => {
     // 20 tokens in about 200 ms is about 100 tokens/s, so 8 calls of 256 tokens take about 20 s.
     // Bounds are loose because timers can fire slightly early or late on busy CI machines.
     const model = new ScriptedModel([search, `{"tool":"read","args":{"docId":"lumen-overview"}}`], 200);
-    const result = await runSelfCheck(model);
+    const steps: number[] = [];
+    const result = await runSelfCheck(model, { onStep: (step) => steps.push(step) });
     assert.equal(result.passed, true);
     assert.equal(result.constrained, true);
     assert.equal(model.requests.length, 2);
+    assert.deepEqual(steps, [1, 2]);
     // The second call sees the search result for the fixed query.
     assert.match(model.requests[1]!.messages.at(-1)!.content, /untrusted data[\s\S]*lumen-overview/);
     assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond < 120, String(result.decodeTokensPerSecond));
@@ -300,13 +302,13 @@ describe("helpers", () => {
   });
 
   it("matches different word forms in search and snippets", () => {
-    const hits = new CorpusIndex(corpus).search("Who maintains LumenDB?");
+    const hits = new DocumentIndex(corpus).search("Who maintains LumenDB?");
     assert.equal(hits[0]?.docId, "lumen-overview");
     assert.match(hits[0]!.snippet, /maintained by the Tessel Foundation/);
   });
 
   it("ranks the advisory first for an advisory query", () => {
-    const hits = new CorpusIndex(corpus).search("LSA-2024-07 path traversal");
+    const hits = new DocumentIndex(corpus).search("LSA-2024-07 path traversal");
     assert.equal(hits[0]?.docId, "lumen-advisory-2024-07");
   });
 });

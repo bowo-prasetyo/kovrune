@@ -1,4 +1,4 @@
-import type { CallRecord } from "./agent.ts";
+import type { CallRecord } from "../../src/agent/agent.ts";
 import type { Report } from "./benchmark.ts";
 
 /** Markdown summary of one report, used by the CLI, the browser page and results tables. */

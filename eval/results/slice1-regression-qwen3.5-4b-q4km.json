@@ -1,0 +1,1022 @@
+{
+  "harnessVersion": "0.4.0",
+  "createdAt": "2026-10-24T14:11:51.191Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "Slice 1 regression check after moving the engine into src/; native llama.cpp on CPU."
+  },
+  "config": {
+    "suites": [
+      "research",
+      "coding"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+    "seconds": 19.5,
+    "decodeTokensPerSecond": 5.1,
+    "maxResearchTaskMinutes": 7.4
+  },
+  "summary": [
+    {
+      "suite": "research",
+      "mode": "constrained",
+      "tasks": 22,
+      "passed": 16,
+      "successRate": 0.727,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 4.3,
+      "prefillTokensPerSecond": 82.6,
+      "medianTaskSeconds": 32.8
+    },
+    {
+      "suite": "coding",
+      "mode": "constrained",
+      "tasks": 12,
+      "passed": 8,
+      "successRate": 0.667,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 4.9,
+      "prefillTokensPerSecond": 29.4,
+      "medianTaskSeconds": 38.3
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 34 tasks, both suites",
+        "actual": "yes",
+        "passed": true
+      },
+      {
+        "name": "Research task success (constrained)",
+        "threshold": ">= 60%",
+        "actual": "72.7%",
+        "passed": true
+      },
+      {
+        "name": "Valid action rate (constrained, all suites)",
+        "threshold": ">= 95%",
+        "actual": "100%",
+        "passed": true
+      },
+      {
+        "name": "Decode speed",
+        "threshold": ">= 10 tokens/s",
+        "actual": "4.3 tokens/s",
+        "passed": false
+      },
+      {
+        "name": "Median research task time",
+        "threshold": "<= 60 s",
+        "actual": "32.8 s",
+        "passed": true
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1087,
+      "completionTokens": 72,
+      "estimatedTokens": false,
+      "modelMs": 43250,
+      "ttftMs": 15188,
+      "wallMs": 43258,
+      "actions": [
+        "search {\"query\":\"LumenDB organization maintainer\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Tessel Foundation maintains LumenDB since 2022.\",\"citations\":[\"lumen-overview\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The Tessel Foundation maintains LumenDB since 2022.\",\"citations\":[\"lumen-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r02-lumen-license",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 555,
+      "completionTokens": 74,
+      "estimatedTokens": false,
+      "modelMs": 23706,
+      "ttftMs": 8340,
+      "wallMs": 23710,
+      "actions": [
+        "search {\"query\":\"LumenDB license version 3.0\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB has been released under the Mozilla Public License 2.0 (MPL-2.0) since version 3.0.\",\"citations\":[\"lumen-overview\"]"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB has been released under the Mozilla Public License 2.0 (MPL-2.0) since version 3.0.\",\"citations\":[\"lumen-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1848,
+      "completionTokens": 141,
+      "estimatedTokens": false,
+      "modelMs": 112918,
+      "ttftMs": 41657,
+      "wallMs": 112923,
+      "actions": [
+        "search {\"query\":\"LSA-2024-07 LumenDB versions\"}",
+        "search {\"query\":\"LSA-2024-07 LumenDB affected versions\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB versions 3.0.0 through 3.1.4 are affected by advisory LSA-2024-07.\",\"citations\":[\"lumen-advisory-2024-07\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB versions 3.0.0 through 3.1.4 are affected by advisory LSA-2024-07.\",\"citations\":[\"lumen-advisory-2024-07\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r04-advisory-fixed",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 573,
+      "completionTokens": 76,
+      "estimatedTokens": false,
+      "modelMs": 42730,
+      "ttftMs": 19717,
+      "wallMs": 42733,
+      "actions": [
+        "search {\"query\":\"LSA-2024-07 LumenDB version fix\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB version 3.2 contains the fix for LSA-2024-07.\",\"citations\":[\"lumen-3-2-release\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB version 3.2 contains the fix for LSA-2024-07.\",\"citations\":[\"lumen-3-2-release\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 611,
+      "completionTokens": 52,
+      "estimatedTokens": false,
+      "modelMs": 20468,
+      "ttftMs": 8800,
+      "wallMs": 20471,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.2 maximum key size\"}",
+        "final_answer {\"found\":true,\"answer\":\"4 KiB\",\"citations\":[\"lumen-3-2-release\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"4 KiB\",\"citations\":[\"lumen-3-2-release\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r06-quillstate-rename",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 537,
+      "completionTokens": 49,
+      "estimatedTokens": false,
+      "modelMs": 16550,
+      "ttftMs": 7383,
+      "wallMs": 16553,
+      "actions": [
+        "search {\"query\":\"Quillstate 2.0 createStore renamed\"}",
+        "final_answer {\"found\":true,\"answer\":\"defineStore()\",\"citations\":[\"quillstate-migration\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"defineStore()\",\"citations\":[\"quillstate-migration\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r07-cobble-2-5",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 564,
+      "completionTokens": 62,
+      "estimatedTokens": false,
+      "modelMs": 19459,
+      "ttftMs": 7049,
+      "wallMs": 19461,
+      "actions": [
+        "search {\"query\":\"Cobble 2.5 security feature\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cobble 2.5 added encryption at rest using AES-256-GCM.\",\"citations\":[\"cobble-overview\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cobble 2.5 added encryption at rest using AES-256-GCM.\",\"citations\":[\"cobble-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r08-lumen-4-date",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 574,
+      "completionTokens": 75,
+      "estimatedTokens": false,
+      "modelMs": 23704,
+      "ttftMs": 8699,
+      "wallMs": 23707,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.0 release date\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025).\",\"citations\":[\"lumen-4-roadmap\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025).\",\"citations\":[\"lumen-4-roadmap\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r09-rfc-period",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 589,
+      "completionTokens": 50,
+      "estimatedTokens": false,
+      "modelMs": 17879,
+      "ttftMs": 8645,
+      "wallMs": 17880,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation RFC breaking API change comment period\"}",
+        "final_answer {\"found\":true,\"answer\":\"At least two weeks.\",\"citations\":[\"tessel-governance\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"At least two weeks.\",\"citations\":[\"tessel-governance\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 4766,
+      "completionTokens": 178,
+      "estimatedTokens": false,
+      "modelMs": 75291,
+      "ttftMs": 39970,
+      "wallMs": 75295,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 creator compression library\"}",
+        "search {\"query\":\"LumenDB LSA-2024-07 author\"}",
+        "search {\"query\":\"LSA-2024-07 author Priya Raman\"}",
+        "search {\"query\":\"Priya Raman compression library\"}",
+        "read {\"docId\":\"brisk-overview\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "final_answer {\"found\":true,\"answer\":\"Brisk\",\"citations\":[\"brisk-overview\",\"lumen-advisory-2024-07\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Brisk\",\"citations\":[\"brisk-overview\",\"lumen-advisory-2024-07\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r11-lumen-chair",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 602,
+      "completionTokens": 52,
+      "estimatedTokens": false,
+      "modelMs": 24381,
+      "ttftMs": 13925,
+      "wallMs": 24383,
+      "actions": [
+        "search {\"query\":\"LumenDB steering committee chair 2024\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ana Lindqvist\",\"citations\":[\"tessel-governance\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ana Lindqvist\",\"citations\":[\"tessel-governance\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r12-chair-library-node",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1873,
+      "completionTokens": 99,
+      "estimatedTokens": false,
+      "modelMs": 41549,
+      "ttftMs": 21910,
+      "wallMs": 41552,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation steering committee 2024 chair library Node.js 2.0\"}",
+        "search {\"query\":\"Quillstate library Node.js version 2.0\"}",
+        "read {\"docId\":\"quillstate-migration\"}",
+        "final_answer {\"found\":true,\"answer\":\"Node.js 16\",\"citations\":[\"quillstate-migration\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Node.js 16\",\"citations\":[\"quillstate-migration\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r13-cobble-license-conversion",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1062,
+      "completionTokens": 76,
+      "estimatedTokens": false,
+      "modelMs": 31965,
+      "ttftMs": 17455,
+      "wallMs": 31968,
+      "actions": [
+        "search {\"query\":\"Cobble license conversion years\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Each Cobble release converts to the Apache-2.0 license four years after its release date.\",\"citations\":[\"cobble-overview\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Each Cobble release converts to the Apache-2.0 license four years after its release date.\",\"citations\":[\"cobble-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r14-talk-city",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1277,
+      "completionTokens": 70,
+      "estimatedTokens": false,
+      "modelMs": 32438,
+      "ttftMs": 19072,
+      "wallMs": 32442,
+      "actions": [
+        "search {\"query\":\"May 2024 embedded store benchmark author talk 2024 city\"}",
+        "read {\"docId\":\"priya-talk\"}",
+        "final_answer {\"found\":true,\"answer\":\"Lisbon\",\"citations\":[\"priya-talk\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Lisbon\",\"citations\":[\"priya-talk\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r15-write-throughput",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1262,
+      "completionTokens": 124,
+      "estimatedTokens": false,
+      "modelMs": 44387,
+      "ttftMs": 19337,
+      "wallMs": 44390,
+      "actions": [
+        "search {\"query\":\"Priya Raman benchmark LumenDB Cobble random-write throughput\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cobble had higher random-write throughput than LumenDB by 30,000 operations per second (Cobble: 180,000 ops/sec vs. LumenDB"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cobble had higher random-write throughput than LumenDB by 30,000 operations per second (Cobble: 180,000 ops/sec vs. LumenDB: 150,000 ops/sec).\",\"citations\":[\"bench-blog-2024\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 573,
+      "completionTokens": 85,
+      "estimatedTokens": false,
+      "modelMs": 27362,
+      "ttftMs": 9973,
+      "wallMs": 27364,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default block size\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.x has a default page size of 8 KiB, while Cobble has a default block size of 4 KiB.\",\"citations\":[\"cobble-overvie"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.x has a default page size of 8 KiB, while Cobble has a default block size of 4 KiB.\",\"citations\":[\"cobble-overview\",\"lumen-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1242,
+      "completionTokens": 75,
+      "estimatedTokens": false,
+      "modelMs": 32582,
+      "ttftMs": 17940,
+      "wallMs": 32585,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark\"}",
+        "read {\"docId\":\"bench-correction\"}",
+        "final_answer {\"found\":true,\"answer\":\"330,000 operations per second\",\"citations\":[\"bench-correction\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"330,000 operations per second\",\"citations\":[\"bench-correction\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r18-brisk-levels",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1038,
+      "completionTokens": 99,
+      "estimatedTokens": false,
+      "modelMs": 34640,
+      "ttftMs": 15021,
+      "wallMs": 34643,
+      "actions": [
+        "search {\"query\":\"Brisk compression levels latest release\"}",
+        "read {\"docId\":\"brisk-1-4-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"The latest release of Brisk (version 1.4, released in August 2024) supports 13 compression levels (1 through 13).\",\"citatio"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The latest release of Brisk (version 1.4, released in August 2024) supports 13 compression levels (1 through 13).\",\"citations\":[\"brisk-1-4-release\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r19-faster-reads-after-correction",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1306,
+      "completionTokens": 63,
+      "estimatedTokens": false,
+      "modelMs": 33028,
+      "ttftMs": 19998,
+      "wallMs": 33031,
+      "actions": [
+        "search {\"query\":\"LumenDB Cobble random-read throughput benchmark correction\"}",
+        "read {\"docId\":\"bench-correction\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB\",\"citations\":[\"bench-correction\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB\",\"citations\":[\"bench-correction\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r20-lumen-4-1-date",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4588,
+      "completionTokens": 155,
+      "estimatedTokens": false,
+      "modelMs": 66163,
+      "ttftMs": 36527,
+      "wallMs": 66167,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release\"}",
+        "search {\"query\":\"LumenDB 4.1 roadmap\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r21-brisk-downloads",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 5506,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "modelMs": 71420,
+      "ttftMs": 45841,
+      "wallMs": 71424,
+      "actions": [
+        "search {\"query\":\"Brisk compression library downloads\"}",
+        "read {\"docId\":\"brisk-overview\"}",
+        "read {\"docId\":\"brisk-1-4-release\"}",
+        "search {\"query\":\"Brisk compression library download count\"}",
+        "read {\"docId\":\"brisk-overview\"}",
+        "search {\"query\":\"Brisk downloads GitHub\"}",
+        "search {\"query\":\"Brisk download statistics\"}",
+        "search {\"query\":\"Brisk compression library download count github\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r22-harrow-ceo",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4844,
+      "completionTokens": 134,
+      "estimatedTokens": false,
+      "modelMs": 69900,
+      "ttftMs": 43870,
+      "wallMs": 69907,
+      "actions": [
+        "search {\"query\":\"CEO Harrow Labs\"}",
+        "search {\"query\":\"Harrow Labs CEO\"}",
+        "search {\"query\":\"Harrow Labs CEO name\"}",
+        "search {\"query\":\"Harrow Labs leadership CEO\"}",
+        "read {\"docId\":\"harrow-press\"}",
+        "search {\"query\":\"Harrow Labs CEO Cobble\"}",
+        "search {\"query\":\"Harrow Labs CEO Priya Raman\"}",
+        "search {\"query\":\"Harrow Labs CEO name site:github.com\"}"
+      ]
+    },
+    {
+      "suite": "coding",
+      "taskId": "c01-slugify",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "testsPass": false
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 234,
+      "completionTokens": 51,
+      "estimatedTokens": false,
+      "modelMs": 21964,
+      "ttftMs": 11748,
+      "wallMs": 22193,
+      "actions": [
+        "final_answer {\"code\":\"function slugify(text) {\\n  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|+$/g, '');\\n}\"}"
+      ],
+      "final": "{\"code\":\"function slugify(text) {\\n  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|+$/g, '');\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c02-parse-duration",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "testsPass": false
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 261,
+      "completionTokens": 186,
+      "estimatedTokens": false,
+      "modelMs": 49808,
+      "ttftMs": 9884,
+      "wallMs": 49943,
+      "actions": [
+        "final_answer {\"code\":\"function parseDuration(text) {\\n  const match = text.match(/(\\\\d+)h?|(?:(\\\\d+)m)?|(?:(\\\\d+)s)?/);\\n  if (!match) throw new Error('Invalid "
+      ],
+      "final": "{\"code\":\"function parseDuration(text) {\\n  const match = text.match(/(\\\\d+)h?|(?:(\\\\d+)m)?|(?:(\\\\d+)s)?/);\\n  if (!match) throw new Error('Invalid input');\\n  \\n  const hours = match[1] ? parseInt(match[1], 10) : 0;\\n  const minutes = match[2] ? parseInt(match[2], 10) : 0;\\n  const seconds = match[3] ? parseInt(match[3], 10) : 0;\\n  \\n  if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) throw new Error('Invalid input');\\n  \\n  return hours * 3600 + minutes * 60 + seconds;\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c03-fix-chunk",
+      "kind": "fix",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 317,
+      "completionTokens": 104,
+      "estimatedTokens": false,
+      "modelMs": 31913,
+      "ttftMs": 10952,
+      "wallMs": 32041,
+      "actions": [
+        "final_answer {\"code\":\"function chunk(items, size) {\\n  const result = [];\\n  let current = [];\\n  for (const item of items) {\\n    current.push(item);\\n    if ("
+      ],
+      "final": "{\"code\":\"function chunk(items, size) {\\n  const result = [];\\n  let current = [];\\n  for (const item of items) {\\n    current.push(item);\\n    if (current.length === size) {\\n      result.push(current);\\n      current = [];\\n    }\\n  }\\n  if (current.length > 0) {\\n    result.push(current);\\n  }\\n  return result;\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c04-semver-compare",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 253,
+      "completionTokens": 156,
+      "estimatedTokens": false,
+      "modelMs": 39906,
+      "ttftMs": 8230,
+      "wallMs": 39974,
+      "actions": [
+        "final_answer {\"code\":\"function compareVersions(a, b) {\\n  const partsA = a.split('.').map(Number);\\n  const partsB = b.split('.').map(Number);\\n  const maxLen ="
+      ],
+      "final": "{\"code\":\"function compareVersions(a, b) {\\n  const partsA = a.split('.').map(Number);\\n  const partsB = b.split('.').map(Number);\\n  const maxLen = Math.max(partsA.length, partsB.length);\\n  \\n  for (let i = 0; i < maxLen; i++) {\\n    const valA = partsA[i] || 0;\\n    const valB = partsB[i] || 0;\\n    \\n    if (valA < valB) return -1;\\n    if (valA > valB) return 1;\\n  }\\n  \\n  return 0;\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c05-group-by",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 236,
+      "completionTokens": 96,
+      "estimatedTokens": false,
+      "modelMs": 28056,
+      "ttftMs": 7494,
+      "wallMs": 28118,
+      "actions": [
+        "final_answer {\"code\":\"function groupBy(items, keyFn) {\\n  const result = {};\\n  for (let i = 0; i < items.length; i++) {\\n    const key = keyFn(items[i]);\\n    "
+      ],
+      "final": "{\"code\":\"function groupBy(items, keyFn) {\\n  const result = {};\\n  for (let i = 0; i < items.length; i++) {\\n    const key = keyFn(items[i]);\\n    if (!result[key]) {\\n      result[key] = [];\\n    }\\n    result[key].push(items[i]);\\n  }\\n  return result;\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c06-fix-median",
+      "kind": "fix",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 251,
+      "completionTokens": 96,
+      "estimatedTokens": false,
+      "modelMs": 27791,
+      "ttftMs": 8701,
+      "wallMs": 27888,
+      "actions": [
+        "final_answer {\"code\":\"function median(numbers) {\\n  const sorted = [...numbers].sort((a, b) => a - b);\\n  const middle = Math.floor(sorted.length / 2);\\n  if (s"
+      ],
+      "final": "{\"code\":\"function median(numbers) {\\n  const sorted = [...numbers].sort((a, b) => a - b);\\n  const middle = Math.floor(sorted.length / 2);\\n  if (sorted.length % 2 === 0) {\\n    return (sorted[middle - 1] + sorted[middle]) / 2;\\n  }\\n  return sorted[middle];\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c07-dedupe-by",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 257,
+      "completionTokens": 82,
+      "estimatedTokens": false,
+      "modelMs": 25721,
+      "ttftMs": 8252,
+      "wallMs": 25793,
+      "actions": [
+        "final_answer {\"code\":\"function dedupeBy(items, keyFn) {\\n  const seen = new Set();\\n  return items.filter(item => {\\n    const key = keyFn(item);\\n    if (seen."
+      ],
+      "final": "{\"code\":\"function dedupeBy(items, keyFn) {\\n  const seen = new Set();\\n  return items.filter(item => {\\n    const key = keyFn(item);\\n    if (seen.has(key)) {\\n      return false;\\n    }\\n    seen.add(key);\\n    return true;\\n  });\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c08-word-wrap",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "testsPass": false
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 249,
+      "completionTokens": 264,
+      "estimatedTokens": false,
+      "modelMs": 60181,
+      "ttftMs": 8552,
+      "wallMs": 60305,
+      "actions": [
+        "final_answer {\"code\":\"function wordWrap(text, width) {\\n  if (!text || text.trim().length === 0) return [];\\n  const words = text.trim().split(/\\\\s+/);\\n  if (w"
+      ],
+      "final": "{\"code\":\"function wordWrap(text, width) {\\n  if (!text || text.trim().length === 0) return [];\\n  const words = text.trim().split(/\\\\s+/);\\n  if (words.length === 0) return [];\\n  \\n  const lines = [];\\n  let currentLine = '';\\n  \\n  for (const word of words) {\\n    if (currentLine === '') {\\n      if (word.length <= width) {\\n        currentLine = word;\\n      } else {\\n        lines.push(word);\\n        currentLine = word;\\n      }\\n    } else {\\n      if (currentLine.length + 1 + word.length <= width) {\\n        currentLine += ' ' + word;\\n      } else {\\n        lines.push(currentLine);\\n "
+    },
+    {
+      "suite": "coding",
+      "taskId": "c09-roman-to-int",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 213,
+      "completionTokens": 205,
+      "estimatedTokens": false,
+      "modelMs": 49374,
+      "ttftMs": 6957,
+      "wallMs": 49455,
+      "actions": [
+        "final_answer {\"code\":\"function romanToInt(numeral) {\\n  const romanValues = {\\n    'I': 1,\\n    'V': 5,\\n    'X': 10,\\n    'L': 50,\\n    'C': 100,\\n    'D': 500"
+      ],
+      "final": "{\"code\":\"function romanToInt(numeral) {\\n  const romanValues = {\\n    'I': 1,\\n    'V': 5,\\n    'X': 10,\\n    'L': 50,\\n    'C': 100,\\n    'D': 500,\\n    'M': 1000\\n  };\\n\\n  let total = 0;\\n  let i = 0;\\n\\n  while (i < numeral.length) {\\n    const current = romanValues[numeral[i]];\\n    const next = numeral[i + 1] ? romanValues[numeral[i + 1]] : 0;\\n\\n    if (current < next) {\\n      total -= current;\\n    } else {\\n      total += current;\\n    }\\n    i++;\\n  }\\n\\n  return total;\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c10-fix-flatten",
+      "kind": "fix",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "testsPass": false
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 334,
+      "completionTokens": 120,
+      "estimatedTokens": false,
+      "modelMs": 36546,
+      "ttftMs": 10619,
+      "wallMs": 36609,
+      "actions": [
+        "final_answer {\"code\":\"function flattenObject(obj, prefix = \\\"\\\") {\\n  const result = {};\\n  for (const [key, value] of Object.entries(obj)) {\\n    if (value && "
+      ],
+      "final": "{\"code\":\"function flattenObject(obj, prefix = \\\"\\\") {\\n  const result = {};\\n  for (const [key, value] of Object.entries(obj)) {\\n    if (value && typeof value === \\\"object\\\" && !Array.isArray(value)) {\\n      Object.assign(result, flattenObject(value, prefix + \\\".\\\" + key));\\n    } else {\\n      result[prefix ? prefix + \\\".\\\" + key : key] = value;\\n    }\\n  }\\n  return result;\\n}\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c11-parse-csv-line",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 248,
+      "completionTokens": 217,
+      "estimatedTokens": false,
+      "modelMs": 51871,
+      "ttftMs": 7352,
+      "wallMs": 51919,
+      "actions": [
+        "final_answer {\"code\":\"function parseCsvLine(line) {\\n  const result = [];\\n  let current = '';\\n  let inQuotes = false;\\n  \\n  for (let i = 0; i < line.length; "
+      ],
+      "final": "{\"code\":\"function parseCsvLine(line) {\\n  const result = [];\\n  let current = '';\\n  let inQuotes = false;\\n  \\n  for (let i = 0; i < line.length; i++) {\\n    const char = line[i];\\n    \\n    if (char === '\\\"') {\\n      if (inQuotes) {\\n        if (i + 1 < line.length && line[i + 1] === '\\\"') {\\n          current += '\\\"';\\n          i++;\\n        } else {\\n          inQuotes = false;\\n        }\\n      } else {\\n        inQuotes = true;\\n      }\\n    } else if (char === ',' && !inQuotes) {\\n      result.push(current);\\n      current = '';\\n    } else {\\n      current += char;\\n    }\\n  }\\n  \\n "
+    },
+    {
+      "suite": "coding",
+      "taskId": "c12-topo-sort",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 255,
+      "completionTokens": 205,
+      "estimatedTokens": false,
+      "modelMs": 50043,
+      "ttftMs": 7103,
+      "wallMs": 50169,
+      "actions": [
+        "final_answer {\"code\":\"function topoSort(deps) {\\n  const visited = new Set();\\n  const recursionStack = new Set();\\n  const result = [];\\n\\n  function dfs(node)"
+      ],
+      "final": "{\"code\":\"function topoSort(deps) {\\n  const visited = new Set();\\n  const recursionStack = new Set();\\n  const result = [];\\n\\n  function dfs(node) {\\n    if (recursionStack.has(node)) {\\n      throw new Error('Cycle detected');\\n    }\\n    if (visited.has(node)) {\\n      return;\\n    }\\n\\n    visited.add(node);\\n    recursionStack.add(node);\\n\\n    const dependencies = deps[node] || [];\\n    for (const dep of dependencies) {\\n      dfs(dep);\\n    }\\n\\n    recursionStack.delete(node);\\n    result.push(node);\\n  }\\n\\n  const allNodes = Object.keys(deps);\\n  for (const node of allNodes) {\\n    i"
+    }
+  ]
+}

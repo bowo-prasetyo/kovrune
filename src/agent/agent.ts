@@ -6,7 +6,7 @@
 // validated, and invalid output is sent back to the model with the error.
 
 import { z } from "zod";
-import { stripThinking, type ChatMessage, type LanguageModel } from "../../src/models/types.ts";
+import { stripThinking, type ChatMessage, type LanguageModel } from "../models/types.ts";
 
 export interface AgentTool {
   name: string;
