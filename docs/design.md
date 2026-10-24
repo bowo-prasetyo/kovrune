@@ -637,6 +637,8 @@ Build the evaluation set and a minimal harness. Run 3–5 candidate models throu
 
 **Acceptance / go–no-go:** at least one browser-runnable model completes a defined share of the research tasks on hardware class 2 (thresholds, evaluation set, and procedure in [`m0-benchmark.md`](m0-benchmark.md)). If none does, the local endpoint becomes the primary path for agent work and the browser runtime is positioned for lighter tasks; the roadmap is adjusted accordingly.
 
+**Outcome (October 2026): provisional go.** Qwen3.5-4B passes the quality criteria in native runs, and native speed passes even on class 1 hardware. Browser speed on class 2 is estimated to pass but not yet measured, so a class 2 confirmation run is a gating check early in M1, and the local endpoint adapter stays a first-class path. Details in [`m0-benchmark.md`](m0-benchmark.md#m0-status).
+
 ### M1 — Local agent
 
 UI, model library, WebLLM adapter with constrained decoding, local endpoint adapter, verified downloads, bounded agent loop, and the MVP research workflow over user documents and CORS-friendly sources.
