@@ -1,9 +1,10 @@
 import wllamaWasm from "@wllama/wllama/esm/wasm/wllama.wasm?url";
 import type { LanguageModel } from "../../src/models/types.ts";
 import { webllmCandidates, wllamaCandidates } from "../candidates.ts";
-import { runBenchmark, type BenchmarkConfig, type Mode, type Report } from "../harness/benchmark.ts";
-import { formatReport } from "../harness/format.ts";
+import { runBenchmark, type BenchmarkConfig, type Mode, type Preset, type Report } from "../harness/benchmark.ts";
+import { formatCall, formatReport } from "../harness/format.ts";
 import { BrowserCodeRunner } from "../harness/sandbox.ts";
+import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../harness/self-check.ts";
 import type { SuiteName } from "../harness/suites.ts";
 
 export interface BrowserRunOptions {
@@ -14,6 +15,8 @@ export interface BrowserRunOptions {
   gpuLayers?: number;
   hardwareClass: string;
   notes?: string;
+  /** Run the benchmark even when the post-load self-check fails. */
+  ignoreSelfCheck?: boolean;
   config: BenchmarkConfig;
 }
 
@@ -88,6 +91,17 @@ async function loadModel(options: BrowserRunOptions): Promise<LanguageModel> {
 
 let controller: AbortController | undefined;
 
+function selfCheckHint(options: BrowserRunOptions, hardware: Record<string, unknown>): string {
+  const webgpu = hardware.webgpu as { available?: boolean; shaderF16?: boolean } | undefined;
+  if (options.runtime === "wllama" && options.gpuLayers !== 0 && webgpu?.available) {
+    return "The model ran on WebGPU. Some integrated GPUs produce broken output there: set GPU layers to 0 (CPU only) and run again.";
+  }
+  if (options.runtime === "webllm" && webgpu?.shaderF16 === false) {
+    return "This GPU lacks shader-f16, which the q4f16 WebLLM models need. Try the wllama runtime instead.";
+  }
+  return "Check the model output above. Try another candidate, or the other runtime.";
+}
+
 /** Entry point for both the form and automated runs (window.kovruneBench.run). */
 async function run(options: BrowserRunOptions): Promise<Report> {
   controller = new AbortController();
@@ -96,12 +110,21 @@ async function run(options: BrowserRunOptions): Promise<Report> {
   const loadStarted = performance.now();
   const model = await loadModel(options);
   const loadSeconds = Math.round((performance.now() - loadStarted) / 100) / 10;
-  log(`Loaded in ${loadSeconds} s.`);
+  log(`Loaded in ${loadSeconds} s. Running the self-check…`);
   try {
+    const selfCheck: SelfCheckResult = await runSelfCheck(model, controller.signal);
+    if (controller.signal.aborted) throw new Error("Stopped before the benchmark started.");
+    for (const line of describeSelfCheck(selfCheck)) log(line);
+    if (!selfCheck.passed) {
+      const hint = selfCheckHint(options, hardware);
+      log(`Hint: ${hint}`);
+      if (!options.ignoreSelfCheck) throw new Error(`Self-check failed, so the benchmark did not start. ${hint}`);
+    }
     const report = await runBenchmark({
       model,
       runner: new BrowserCodeRunner(),
       config: options.config,
+      selfCheck,
       signal: controller.signal,
       environment: {
         runtime: options.runtime,
@@ -111,9 +134,11 @@ async function run(options: BrowserRunOptions): Promise<Report> {
         hardware: { ...hardware, loadSeconds, gpuLayers: options.gpuLayers ?? "all" },
         notes: options.notes,
       },
+      onCall: (call, index) => log(formatCall(call, index)),
       onResult: (r, done, total) =>
         log(`[${done}/${total}] ${r.mode} ${r.taskId}: ${r.passed ? "PASS" : "FAIL"} (${(r.wallMs / 1000).toFixed(1)} s, ${r.validCalls}/${r.calls} valid)`),
     });
+    if (!report.complete) log(`Stopped early. The report includes the ${report.results.length} completed task runs.`);
     $("summary").textContent = formatReport(report);
     return report;
   } finally {
@@ -148,9 +173,11 @@ function readForm(): BrowserRunOptions {
     gpuLayers: gpuLayers === "" ? undefined : Number(gpuLayers),
     hardwareClass: $<HTMLSelectElement>("hardware-class").value,
     notes: $<HTMLInputElement>("notes").value || undefined,
+    ignoreSelfCheck: $<HTMLInputElement>("ignore-self-check").checked,
     config: {
       suites: checked("suite") as SuiteName[],
       modes: checked("mode") as Mode[],
+      preset: $<HTMLSelectElement>("preset").value as Preset,
       taskIds: tasks ? tasks.split(",").map((t) => t.trim()) : undefined,
     },
   };

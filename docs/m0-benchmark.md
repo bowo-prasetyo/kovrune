@@ -103,7 +103,7 @@ npm test                       # validates the evaluation set and harness
 npm run bench:browser          # dev server with cross-origin isolation headers
 ```
 
-Open the printed URL, choose the runtime, candidate, and hardware class, and press **Run benchmark**. The full run (34 tasks × 2 modes) downloads the model once. When it finishes, press **Download report** and save the JSON in `eval/results/`.
+Open the printed URL, choose the runtime, candidate, hardware class and task set, and press **Run benchmark**. The model downloads once and is cached by the browser. When the run finishes, press **Download report** and save the JSON in `eval/results/`.
 
 For automation, the page exposes `window.kovruneBench.run(options)`, which returns the report.
 
@@ -119,7 +119,31 @@ npm run bench:endpoint -- --base-url http://localhost:8080/v1 --model qwen3 \
   --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --out eval/results/qwen3-llamacpp.json
 ```
 
-Options: `--suites research,coding`, `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--notes "..."`.
+Options: `--preset full|quick`, `--suites research,coding`, `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--ignore-self-check`, `--notes "..."`. Press Ctrl+C to stop early; the report still includes the completed tasks.
+
+### What happens during a run
+
+1. **Self-check.** After loading, the model gets one short research prompt and must reply with a valid action. This takes about a minute even on slow hardware. It also measures decode speed and shows the worst-case time for one research task. If it fails, the run does not start, and the log shows the model's raw output and a hint. Tick **Run even if the self-check fails** (or pass `--ignore-self-check`) to run anyway.
+2. **Live progress.** Every model call is logged as it finishes, with its action (or, for an invalid reply, the error and the start of the output), time and speed. For example: `call 2: search {"query":"LumenDB license"} (14.2 s, 3.1 tok/s)`.
+3. **Stopping early.** **Stop** (or Ctrl+C) discards only the task in progress. The report is still produced and downloadable, marked as stopped early (`"complete": false`).
+
+### Task sets
+
+| Set | Tasks | Use |
+| --- | --- | --- |
+| Full | All 34 | Gate results. Only a complete full run of both suites can pass the gate. |
+| Quick | 8: `r01`, `r03`, `r10`, `r16`, `r17`, `r20`, `c01`, `c03` | First checks and slow machines. Covers every task kind; not enough for the gate. |
+
+On slow machines, start with the Quick set in constrained mode only. Use the self-check's time estimate to decide whether a full run is practical.
+
+### Troubleshooting
+
+| Symptom | Likely cause | What to try |
+| --- | --- | --- |
+| Self-check fails with garbled or empty output (wllama) | WebGPU produces broken output on some integrated GPUs | Set **GPU layers** to 0 to run on the CPU |
+| WebLLM model fails to load; Environment shows `"shaderF16": false` | The GPU lacks 16-bit shader support, which `q4f16` models need | Use the wllama runtime |
+| Every call is valid but tasks hit the call limit (8/8) | The model searches repeatedly without answering | A model quality result; record it |
+| Calls take minutes each | Hardware below the model's needs | Try a smaller model or the Quick set, and record the speed |
 
 ## Go/no-go gate
 
@@ -148,6 +172,10 @@ Reports live in [`eval/results/`](../eval/results/). Add new rows here when you 
 | Model | Runtime | Class | Research (constrained) | Coding (constrained) | Valid actions | Decode tok/s | Gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | *Reference-hardware runs pending* | | | | | | | |
+
+### Field notes (not gate results)
+
+- **Class 1: Intel Core i5-8250U, UHD Graphics 620, 8 GB RAM, Windows, Chrome.** wllama with `Qwen3.5-2B-Q4_K_M` on WebGPU (all GPU layers) produced **0 valid actions out of 8** on each of the first three research tasks, at about 1,200 s per task. The same model and file on CPU in the cloud container produced valid constrained actions, which points to broken WebGPU output on this GPU. The self-check (harness 0.2.0) catches this before a run starts. A CPU-only run (GPU layers = 0) is pending.
 
 ### Harness smoke test (not a gate result)
 

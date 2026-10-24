@@ -3,17 +3,38 @@
 import type { LanguageModel, Runtime } from "../../src/models/types.ts";
 import { codingTasks } from "../tasks/coding.ts";
 import { researchTasks } from "../tasks/research.ts";
+import type { CallRecord } from "./agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
+import type { SelfCheckResult } from "./self-check.ts";
 import { runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.1.0";
+export const HARNESS_VERSION = "0.2.0";
 
 export type Mode = "constrained" | "unconstrained";
+
+export type Preset = "full" | "quick";
+
+/**
+ * The quick preset covers every task kind in 8 tasks, for slow machines and
+ * first checks. Only a complete full run can pass the gate.
+ */
+export const QUICK_TASK_IDS = [
+  "r01-lumen-maintainer",
+  "r03-advisory-affected",
+  "r10-reporter-library",
+  "r16-page-size-comparison",
+  "r17-corrected-read",
+  "r20-lumen-4-1-date",
+  "c01-slugify",
+  "c03-fix-chunk",
+];
 
 export interface BenchmarkConfig {
   suites: SuiteName[];
   modes: Mode[];
-  /** Run only these task IDs; all tasks when omitted. */
+  /** Defaults to "full". Ignored when taskIds is set. */
+  preset?: Preset;
+  /** Run only these task IDs. */
   taskIds?: string[];
 }
 
@@ -80,8 +101,11 @@ export interface GateResult {
 export interface Report {
   harnessVersion: string;
   createdAt: string;
+  /** False when the run was stopped early; the interrupted task is not included. */
+  complete: boolean;
   environment: Environment;
   config: BenchmarkConfig;
+  selfCheck?: SelfCheckResult;
   summary: Summary[];
   gate: GateResult;
   results: TaskResult[];
@@ -160,18 +184,34 @@ export function summarize(results: TaskResult[]): Summary[] {
   });
 }
 
-export function evaluateGate(summary: Summary[]): GateResult {
+export function selectedTaskIds(config: BenchmarkConfig): string[] | undefined {
+  return config.taskIds ?? (config.preset === "quick" ? QUICK_TASK_IDS : undefined);
+}
+
+/** Whether a run covers the whole evaluation set in both suites. */
+export function isFullSetRun(config: BenchmarkConfig, complete: boolean): boolean {
+  return complete && !selectedTaskIds(config) && config.suites.includes("research") && config.suites.includes("coding");
+}
+
+export function evaluateGate(summary: Summary[], fullSetRun: boolean): GateResult {
+  const coverage: GateCriterion = {
+    name: "Complete run of the full evaluation set",
+    threshold: "all 34 tasks, both suites",
+    actual: fullSetRun ? "yes" : "no (subset, preset, or stopped early)",
+    passed: fullSetRun,
+  };
   const research = summary.find((s) => s.suite === "research" && s.mode === "constrained");
   if (!research) {
     return {
       passed: false,
-      criteria: [{ name: "Constrained research run", threshold: "present", actual: "missing", passed: false }],
+      criteria: [coverage, { name: "Constrained research run", threshold: "present", actual: "missing", passed: false }],
     };
   }
   const constrained = summary.filter((s) => s.mode === "constrained");
   const validRate = Math.min(...constrained.map((s) => s.validActionRate));
   const decode = Math.min(...constrained.map((s) => s.decodeTokensPerSecond));
   const criteria: GateCriterion[] = [
+    coverage,
     {
       name: "Research task success (constrained)",
       threshold: `>= ${GATE.researchSuccessRate * 100}%`,
@@ -205,42 +245,45 @@ export async function runBenchmark(options: {
   environment: Environment;
   config: BenchmarkConfig;
   runner: CodeRunner;
+  selfCheck?: SelfCheckResult;
   onResult?: (result: TaskResult, done: number, total: number) => void;
+  onCall?: (call: CallRecord, index: number) => void;
+  /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
-  const { model, config, runner, signal } = options;
-  const wanted = (id: string) => !config.taskIds || config.taskIds.includes(id);
+  const { model, config, runner, signal, onCall } = options;
+  const ids = selectedTaskIds(config);
+  const wanted = (id: string) => !ids || ids.includes(id);
   const research = config.suites.includes("research") ? researchTasks.filter((t) => wanted(t.id)) : [];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (research.length + coding.length) * config.modes.length;
   const results: TaskResult[] = [];
 
-  for (const mode of config.modes) {
-    const constrained = mode === "constrained";
-    for (const task of research) {
-      signal?.throwIfAborted();
-      const started = performance.now();
-      const run = await runResearchTask(task, model, constrained, signal);
-      results.push(toResult(run, mode, performance.now() - started));
-      options.onResult?.(results.at(-1)!, results.length, total);
-    }
-    for (const task of coding) {
-      signal?.throwIfAborted();
-      const started = performance.now();
-      const run = await runCodingTask(task, model, constrained, runner, signal);
-      results.push(toResult(run, mode, performance.now() - started));
-      options.onResult?.(results.at(-1)!, results.length, total);
-    }
+  const queue = config.modes.flatMap((mode) => [
+    ...research.map((task) => ({ mode, run: (o: { constrained: boolean }) => runResearchTask(task, model, { ...o, signal, onCall }) })),
+    ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),
+  ]);
+  for (const item of queue) {
+    if (signal?.aborted) break;
+    const started = performance.now();
+    const run = await item.run({ constrained: item.mode === "constrained" });
+    // A task interrupted by the abort is incomplete, so it is left out of the report.
+    if (signal?.aborted) break;
+    results.push(toResult(run, item.mode, performance.now() - started));
+    options.onResult?.(results.at(-1)!, results.length, total);
   }
 
+  const complete = results.length === total;
   const summary = summarize(results);
   return {
     harnessVersion: HARNESS_VERSION,
     createdAt: new Date().toISOString(),
+    complete,
     environment: options.environment,
     config,
+    selfCheck: options.selfCheck,
     summary,
-    gate: evaluateGate(summary),
+    gate: evaluateGate(summary, isFullSetRun(config, complete)),
     results,
   };
 }

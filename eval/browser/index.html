@@ -47,14 +47,27 @@
           <option value="other" selected>Other / not a reference machine</option>
         </select>
       </label>
+      <label>Task set
+        <select id="preset">
+          <option value="full">Full: all 34 tasks (needed for the gate)</option>
+          <option value="quick">Quick: 8 tasks, one or two of each kind (for slow machines and first checks)</option>
+        </select>
+      </label>
       <div class="row">
         <label><input type="checkbox" name="suite" value="research" checked /> Research</label>
         <label><input type="checkbox" name="suite" value="coding" checked /> Coding</label>
         <label><input type="checkbox" name="mode" value="constrained" checked /> Constrained</label>
         <label><input type="checkbox" name="mode" value="unconstrained" checked /> Unconstrained</label>
       </div>
-      <label>Only these task IDs (comma-separated, optional) <input id="tasks" type="text" /></label>
+      <label>Only these task IDs (comma-separated, optional; overrides the task set) <input id="tasks" type="text" /></label>
       <label>Notes <input id="notes" type="text" placeholder="e.g. laptop model, power mode, other tabs closed" /></label>
+      <div class="row">
+        <label><input type="checkbox" id="ignore-self-check" /> Run even if the self-check fails</label>
+      </div>
+      <p>
+        After loading, a one-call self-check confirms the model produces valid actions and estimates how long tasks take.
+        <strong>Stop</strong> ends the run early and keeps the completed tasks for download.
+      </p>
       <button id="run">Run benchmark</button>
       <button id="stop" disabled>Stop</button>
       <button id="download" disabled>Download report</button>

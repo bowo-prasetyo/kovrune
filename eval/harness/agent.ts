@@ -37,6 +37,8 @@ export interface CallRecord {
   estimatedTokens: boolean;
   ttftMs: number;
   totalMs: number;
+  /** Start of the raw model output, kept for invalid replies to help diagnose them. */
+  output?: string;
 }
 
 export interface AgentRun {
@@ -86,6 +88,58 @@ function fitToContext(messages: ChatMessage[], budget: number): boolean {
   return size() <= budget;
 }
 
+/** Makes one model call and validates its output as an action. Shared by the agent loop and the self-check. */
+export async function callForAction(options: {
+  model: LanguageModel;
+  messages: ChatMessage[];
+  schema: z.ZodType;
+  responseSchema?: object;
+  maxTokens: number;
+  signal?: AbortSignal;
+}): Promise<{ record: CallRecord; text: string; action?: { tool: string; args: Record<string, unknown> } }> {
+  const { model, messages, signal } = options;
+  const started = performance.now();
+  let ttftMs = 0;
+  let text = "";
+  let usage: { promptTokens: number; completionTokens: number } | undefined;
+  for await (const chunk of model.generate({
+    messages,
+    maxTokens: options.maxTokens,
+    temperature: 0,
+    responseSchema: options.responseSchema,
+    signal,
+  })) {
+    if (chunk.text && !ttftMs) ttftMs = performance.now() - started;
+    text += chunk.text;
+    if (chunk.usage) usage = chunk.usage;
+  }
+  const totalMs = performance.now() - started;
+  const record: CallRecord = {
+    valid: false,
+    promptTokens: usage?.promptTokens ?? messages.reduce((sum, m) => sum + estimateTokens(m.content), 0),
+    completionTokens: usage?.completionTokens ?? estimateTokens(text),
+    estimatedTokens: !usage,
+    ttftMs: ttftMs || totalMs,
+    totalMs,
+  };
+  try {
+    const parsed = options.schema.safeParse(extractJson(text));
+    if (!parsed.success) throw new Error(z.prettifyError(parsed.error).split("\n").slice(0, 3).join(" "));
+    const action = parsed.data as { tool: string; args: Record<string, unknown> };
+    Object.assign(record, { valid: true, tool: action.tool, args: action.args });
+    return { record, text, action };
+  } catch (error) {
+    record.error = error instanceof Error ? error.message : String(error);
+    record.output = text.slice(0, 200);
+    return { record, text };
+  }
+}
+
+export function systemPrompt(system: string, tools: AgentTool[]): string {
+  const toolList = tools.map((t) => `- ${t.usage}`).join("\n");
+  return `${system}\n\nReply with exactly one JSON object and nothing else. Available actions:\n${toolList}`;
+}
+
 export async function runAgent(options: {
   model: LanguageModel;
   system: string;
@@ -94,16 +148,14 @@ export async function runAgent(options: {
   finalTool: string;
   config: AgentConfig;
   signal?: AbortSignal;
+  /** Called after every model call, valid or not, for live progress. */
+  onCall?: (call: CallRecord, index: number) => void;
 }): Promise<AgentRun> {
   const { model, tools, finalTool, config, signal } = options;
   const schema = actionSchema(tools);
   const responseSchema = config.constrained && model.supportsConstrainedDecoding() ? actionJsonSchema(tools) : undefined;
-  const toolList = tools.map((t) => `- ${t.usage}`).join("\n");
   const transcript: ChatMessage[] = [
-    {
-      role: "system",
-      content: `${options.system}\n\nReply with exactly one JSON object and nothing else. Available actions:\n${toolList}`,
-    },
+    { role: "system", content: systemPrompt(options.system, tools) },
     { role: "user", content: options.task },
   ];
   const calls: CallRecord[] = [];
@@ -114,43 +166,17 @@ export async function runAgent(options: {
       return { stopReason: "context-overflow", calls, transcript };
     }
 
-    const started = performance.now();
-    let ttftMs = 0;
-    let text = "";
-    let usage: { promptTokens: number; completionTokens: number } | undefined;
+    let result: Awaited<ReturnType<typeof callForAction>>;
     try {
-      for await (const chunk of model.generate({
-        messages: transcript,
-        maxTokens: config.maxTokensPerCall,
-        temperature: 0,
-        responseSchema,
-        signal,
-      })) {
-        if (chunk.text && !ttftMs) ttftMs = performance.now() - started;
-        text += chunk.text;
-        if (chunk.usage) usage = chunk.usage;
-      }
+      result = await callForAction({ model, messages: transcript, schema, responseSchema, maxTokens: config.maxTokensPerCall, signal });
     } catch (error) {
       return { stopReason: "error", error: error instanceof Error ? error.message : String(error), calls, transcript };
     }
-    const totalMs = performance.now() - started;
-    const record: CallRecord = {
-      valid: false,
-      promptTokens: usage?.promptTokens ?? transcript.reduce((sum, m) => sum + estimateTokens(m.content), 0),
-      completionTokens: usage?.completionTokens ?? estimateTokens(text),
-      estimatedTokens: !usage,
-      ttftMs: ttftMs || totalMs,
-      totalMs,
-    };
+    const { record, text, action } = result;
     calls.push(record);
+    options.onCall?.(record, calls.length);
 
-    let action: { tool: string; args: Record<string, unknown> };
-    try {
-      const parsed = schema.safeParse(extractJson(text));
-      if (!parsed.success) throw new Error(z.prettifyError(parsed.error).split("\n").slice(0, 3).join(" "));
-      action = parsed.data as typeof action;
-    } catch (error) {
-      record.error = error instanceof Error ? error.message : String(error);
+    if (!action) {
       transcript.push({ role: "assistant", content: text.slice(0, 400) });
       transcript.push({
         role: "user",
@@ -159,9 +185,6 @@ export async function runAgent(options: {
       continue;
     }
 
-    record.valid = true;
-    record.tool = action.tool;
-    record.args = action.args;
     transcript.push({ role: "assistant", content: JSON.stringify(action) });
     if (action.tool === finalTool) {
       return { stopReason: "final", final: action.args, calls, transcript };

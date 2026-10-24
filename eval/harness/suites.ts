@@ -5,12 +5,18 @@ import type { LanguageModel } from "../../src/models/types.ts";
 import { codingTasks, type CodingTask } from "../tasks/coding.ts";
 import { corpus } from "../tasks/corpus.ts";
 import { researchTasks, type ResearchTask } from "../tasks/research.ts";
-import { runAgent, type AgentRun, type AgentTool } from "./agent.ts";
+import { runAgent, type AgentRun, type AgentTool, type CallRecord } from "./agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import { scoreCoding, scoreResearch, type ResearchFinal, type Score } from "./scoring.ts";
 import { CorpusIndex } from "./search.ts";
 
 export type SuiteName = "research" | "coding";
+
+export interface TaskOptions {
+  constrained: boolean;
+  signal?: AbortSignal;
+  onCall?: (call: CallRecord, index: number) => void;
+}
 
 export interface TaskRun {
   suite: SuiteName;
@@ -24,11 +30,11 @@ const index = new CorpusIndex(corpus);
 const corpusIds = new Set(corpus.map((doc) => doc.id));
 const MAX_DOC_CHARS = 2400;
 
-const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
+export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
 Search first, then read the documents you need. Some documents are outdated or corrected by later ones; prefer the most recent correction.
 Finish with final_answer. Cite the IDs of the documents that support the answer. If the documents do not contain the answer, set "found" to false.`;
 
-const researchTools: AgentTool[] = [
+export const researchTools: AgentTool[] = [
   {
     name: "search",
     usage: `{"tool":"search","args":{"query":"..."}} searches the documents and returns IDs, titles and snippets.`,
@@ -59,8 +65,7 @@ const researchTools: AgentTool[] = [
 export async function runResearchTask(
   task: ResearchTask,
   model: LanguageModel,
-  constrained: boolean,
-  signal?: AbortSignal,
+  { constrained, signal, onCall }: TaskOptions,
 ): Promise<TaskRun> {
   const agent = await runAgent({
     model,
@@ -70,6 +75,7 @@ export async function runResearchTask(
     finalTool: "final_answer",
     config: { constrained, maxCalls: 8, maxTokensPerCall: 256 },
     signal,
+    onCall,
   });
   const score = scoreResearch(task, agent.final as ResearchFinal | undefined, corpusIds);
   return { suite: "research", taskId: task.id, kind: task.kind, score, agent };
@@ -97,9 +103,8 @@ Use run_tests to check your code against the visible tests, then submit it with 
 export async function runCodingTask(
   task: CodingTask,
   model: LanguageModel,
-  constrained: boolean,
   runner: CodeRunner,
-  signal?: AbortSignal,
+  { constrained, signal, onCall }: TaskOptions,
 ): Promise<TaskRun> {
   const tools: AgentTool[] = [
     {
@@ -126,6 +131,7 @@ export async function runCodingTask(
     finalTool: "final_answer",
     config: { constrained, maxCalls: 6, maxTokensPerCall: 768 },
     signal,
+    onCall,
   });
   const code = typeof agent.final?.code === "string" ? normalizeCode(agent.final.code) : undefined;
   const run = code === undefined ? undefined : await runner.run(code, [...task.visibleTests, ...task.hiddenTests]);
