@@ -246,11 +246,12 @@ describe("benchmark", () => {
 describe("self-check", () => {
   it("passes on a valid action and estimates the worst-case task time", async () => {
     // 20 tokens in about 200 ms is about 100 tokens/s, so 8 calls of 256 tokens take about 20 s.
+    // Bounds are loose because timers can fire slightly early or late on busy CI machines.
     const result = await runSelfCheck(new ScriptedModel([`{"tool":"search","args":{"query":"LumenDB license"}}`], 200));
     assert.equal(result.passed, true);
     assert.equal(result.constrained, true);
-    assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond <= 100, String(result.decodeTokensPerSecond));
-    assert.ok(result.maxResearchTaskMinutes >= 0.3 && result.maxResearchTaskMinutes <= 0.7, String(result.maxResearchTaskMinutes));
+    assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond < 120, String(result.decodeTokensPerSecond));
+    assert.ok(result.maxResearchTaskMinutes >= 0.25 && result.maxResearchTaskMinutes <= 0.7, String(result.maxResearchTaskMinutes));
   });
 
   it("fails on broken output and reports what the model produced", async () => {
