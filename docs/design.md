@@ -635,7 +635,7 @@ Each milestone delivers a usable result and has explicit acceptance criteria. Th
 
 Build the evaluation set and a minimal harness. Run 3–5 candidate models through WebLLM, wllama, and a local endpoint on the three reference hardware classes. Measure tokens per second, prefill speed, valid tool-call rate with and without constrained decoding, and task success.
 
-**Acceptance / go–no-go:** at least one browser-runnable model completes a defined share of the research tasks on hardware class 2. If none does, the local endpoint becomes the primary path for agent work and the browser runtime is positioned for lighter tasks; the roadmap is adjusted accordingly.
+**Acceptance / go–no-go:** at least one browser-runnable model completes a defined share of the research tasks on hardware class 2 (thresholds, evaluation set, and procedure in [`m0-benchmark.md`](m0-benchmark.md)). If none does, the local endpoint becomes the primary path for agent work and the browser runtime is positioned for lighter tasks; the roadmap is adjusted accordingly.
 
 ### M1 — Local agent
 

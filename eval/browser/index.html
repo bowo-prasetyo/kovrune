@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kovrune M0 Benchmark</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { max-width: 860px; margin: 0 auto; padding: 16px; line-height: 1.45; }
+      fieldset { border: 1px solid #8884; border-radius: 8px; margin: 0 0 12px; }
+      label { display: block; margin: 6px 0; }
+      input[type="text"], input[type="number"], select { width: 100%; box-sizing: border-box; padding: 6px; }
+      .row { display: flex; gap: 16px; flex-wrap: wrap; }
+      .row label { display: inline-flex; gap: 6px; align-items: center; }
+      button { padding: 8px 16px; margin-right: 8px; }
+      pre { background: #8881; padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+      #log { max-height: 320px; overflow-y: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Kovrune M0 Benchmark</h1>
+    <p>
+      Runs the fixed research and coding tasks against a model in this browser and reports task success, valid action rate,
+      and speed. See <code>docs/m0-benchmark.md</code> for the procedure.
+    </p>
+
+    <fieldset>
+      <legend>Model</legend>
+      <label>Runtime
+        <select id="runtime">
+          <option value="webllm">WebLLM (WebGPU)</option>
+          <option value="wllama">wllama (GGUF, WebGPU or CPU)</option>
+        </select>
+      </label>
+      <label>Candidate <select id="candidate"></select></label>
+      <label>Context length (tokens) <input id="context" type="number" value="4096" min="2048" step="1024" /></label>
+      <label id="gpu-layers-label">GPU layers for wllama (blank = all, 0 = CPU only) <input id="gpu-layers" type="number" min="0" /></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Run</legend>
+      <label>Hardware class
+        <select id="hardware-class">
+          <option value="1">1: integrated GPU, 8 GB RAM</option>
+          <option value="2">2: 16 GB unified memory or mid-range discrete GPU</option>
+          <option value="3">3: discrete GPU with 12 GB+ VRAM</option>
+          <option value="other" selected>Other / not a reference machine</option>
+        </select>
+      </label>
+      <div class="row">
+        <label><input type="checkbox" name="suite" value="research" checked /> Research</label>
+        <label><input type="checkbox" name="suite" value="coding" checked /> Coding</label>
+        <label><input type="checkbox" name="mode" value="constrained" checked /> Constrained</label>
+        <label><input type="checkbox" name="mode" value="unconstrained" checked /> Unconstrained</label>
+      </div>
+      <label>Only these task IDs (comma-separated, optional) <input id="tasks" type="text" /></label>
+      <label>Notes <input id="notes" type="text" placeholder="e.g. laptop model, power mode, other tabs closed" /></label>
+      <button id="run">Run benchmark</button>
+      <button id="stop" disabled>Stop</button>
+      <button id="download" disabled>Download report</button>
+    </fieldset>
+
+    <h2>Environment</h2>
+    <pre id="environment">Detecting…</pre>
+    <h2>Progress</h2>
+    <pre id="log"></pre>
+    <h2>Summary</h2>
+    <pre id="summary">No results yet.</pre>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
