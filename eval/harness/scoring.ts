@@ -1,12 +1,7 @@
 import type { CodingTask } from "../tasks/coding.ts";
 import type { ResearchTask } from "../tasks/research.ts";
+import type { ResearchFinal } from "../../src/tools/research.ts";
 import type { TestRun } from "./sandbox.ts";
-
-export interface ResearchFinal {
-  found: boolean;
-  answer: string;
-  citations: string[];
-}
 
 export interface Score {
   passed: boolean;

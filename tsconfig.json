@@ -26,7 +26,8 @@
       "@wllama/wllama": [
         "./node_modules/@wllama/wllama/esm/index.d.ts"
       ]
-    }
+    },
+    "jsx": "react-jsx"
   },
   "include": [
     "src",

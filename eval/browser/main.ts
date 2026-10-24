@@ -4,7 +4,8 @@ import { webllmCandidates, wllamaCandidates } from "../candidates.ts";
 import { runBenchmark, type BenchmarkConfig, type Mode, type Preset, type Report } from "../harness/benchmark.ts";
 import { formatCall, formatReport } from "../harness/format.ts";
 import { BrowserCodeRunner } from "../harness/sandbox.ts";
-import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../harness/self-check.ts";
+import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../../src/agent/self-check.ts";
+import { corpus } from "../tasks/corpus.ts";
 import type { SuiteName } from "../harness/suites.ts";
 
 export interface BrowserRunOptions {
@@ -115,7 +116,7 @@ async function run(options: BrowserRunOptions): Promise<Report> {
   const loadSeconds = Math.round((performance.now() - loadStarted) / 100) / 10;
   log(`Loaded in ${loadSeconds} s. Running the self-check…`);
   try {
-    const selfCheck: SelfCheckResult = await runSelfCheck(model, controller.signal);
+    const selfCheck: SelfCheckResult = await runSelfCheck(model, { signal: controller.signal, documents: corpus });
     if (controller.signal.aborted) throw new Error("Stopped before the benchmark started.");
     for (const line of describeSelfCheck(selfCheck)) log(line);
     if (!selfCheck.passed) {

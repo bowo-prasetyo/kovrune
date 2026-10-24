@@ -13,7 +13,8 @@ import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import { runBenchmark, type Mode, type Preset } from "./harness/benchmark.ts";
 import { formatCall, formatReport } from "./harness/format.ts";
 import { NodeCodeRunner } from "./harness/sandbox.ts";
-import { describeSelfCheck, runSelfCheck } from "./harness/self-check.ts";
+import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
+import { corpus } from "./tasks/corpus.ts";
 import type { SuiteName } from "./harness/suites.ts";
 
 const { values } = parseArgs({
@@ -60,7 +61,7 @@ process.once("SIGINT", () => {
 });
 
 console.log("Running the self-check…");
-const selfCheck = await runSelfCheck(model, controller.signal);
+const selfCheck = await runSelfCheck(model, { signal: controller.signal, documents: corpus });
 if (controller.signal.aborted) process.exit(130);
 for (const line of describeSelfCheck(selfCheck)) console.log(line);
 if (!selfCheck.passed && !values["ignore-self-check"]) {

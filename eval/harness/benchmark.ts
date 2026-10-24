@@ -3,9 +3,9 @@
 import type { LanguageModel, Runtime } from "../../src/models/types.ts";
 import { codingTasks } from "../tasks/coding.ts";
 import { researchTasks } from "../tasks/research.ts";
-import type { CallRecord } from "./agent.ts";
+import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
-import type { SelfCheckResult } from "./self-check.ts";
+import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
 export const HARNESS_VERSION = "0.4.0";
