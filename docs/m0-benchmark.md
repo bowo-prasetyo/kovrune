@@ -151,12 +151,20 @@ A **single run** passes the gate when, in constrained mode:
 
 | Criterion | Threshold |
 | --- | --- |
+| Complete run of the full evaluation set | All 34 tasks, both suites, not stopped early |
 | Research task success | ≥ 60% |
 | Valid action rate (all suites) | ≥ 95% |
 | Decode speed | ≥ 10 tokens/s |
 | Median research task time | ≤ 60 s |
 
 The harness evaluates these automatically and includes the result in every report (`gate`).
+
+**Two questions, answered in order.** The gate mixes a quality question and a speed question, and only speed depends on the hardware:
+
+1. **Quality:** can a browser-sized model do the tasks at all? The same model file gives the same answers on any machine, so this is measured with **native runs**: the same GGUF files served by llama.cpp on whatever hardware is available, through `bench:endpoint`. Only research success and valid action rate count; speed figures from these runs are ignored.
+2. **Speed:** is a model that passes on quality fast enough in the browser on class 2 hardware? This needs a WebLLM or wllama run on a class 2 machine.
+
+If no candidate passes on quality, M0 is a no-go for browser-first without needing class 2 runs.
 
 **M0 decision:**
 
@@ -168,6 +176,35 @@ Either way, class 1 and class 3 results set the minimum and recommended hardware
 ## Results
 
 Reports live in [`eval/results/`](../eval/results/). Add new rows here when you commit a report.
+
+### Quality (native runs)
+
+Full evaluation set, harness 0.3.0. Each model is the same Q4_K_M GGUF file the browser candidates use, served by native llama.cpp (commit `6b9ba4f2`) on CPU in a 4-core cloud container, with a 4,096-token context to match the browser runtimes. Thinking is disabled. Speed figures from these runs are ignored.
+
+| Model | Research (constrained) | Coding (constrained) | Valid actions (constrained) | Research (unconstrained) | Valid actions (unconstrained) | Quality criteria | Report |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-2B | 13/22 (59%) | 4/12 (33%) | 100% research, 95.5% coding | 13/22 (59%) | 87% research, 38% coding | ❌ research 59% (needs 60%) | [json](../eval/results/native-qwen3.5-2b-q4km.json) |
+| Llama-3.2-3B-Instruct | 7/22 (32%) | 3/12 (25%) | 100% | 4/22 (18%) | 83% research, 19% coding | ❌ | [json](../eval/results/native-llama-3.2-3b-q4km.json) |
+| Qwen3.5-4B | *running* | | | | | | |
+
+Constrained research results by task kind:
+
+| Kind | Qwen3.5-2B | Llama-3.2-3B |
+| --- | --- | --- |
+| Lookup (9) | 7 | 3 |
+| Multi-hop (5) | 2 | 2 |
+| Comparison (2) | 2 | 1 |
+| Contradiction (3) | 2 | 0 |
+| Unanswerable (3) | 0 | 1 |
+
+What these runs show so far:
+
+- **Qwen3.5-2B is at the research threshold** (59% against 60%: one task short). It handles single lookups and comparisons well, but **answers every unanswerable question with an invented answer** (0/3) and struggles with multi-hop questions.
+- **Coding is weak for both** (25–33%), well below what an agent needs for code changes.
+- **Constrained decoding is essential.** Without it, valid action rates fall to 83–87% for research and 19–38% for coding, because code inside JSON strings is easy to break.
+- **Llama-3.2-3B is clearly weaker** than the smaller Qwen3.5-2B on research (32%).
+
+### Speed (browser runs on reference hardware)
 
 | Model | Runtime | Class | Research (constrained) | Coding (constrained) | Valid actions | Decode tok/s | Gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -195,3 +232,13 @@ These are single-task observations, not gate results: a gate result needs a comp
 To prove the browser path works end to end, the harness was run in headless Chromium on a 4-core cloud container with no GPU, using wllama and the 0.8B smoke-test model on two research tasks. The model loaded in 31 s, produced 100% valid actions under constrained decoding, and failed both tasks (0/2) at about 5 tokens/s, using the container's software-emulated WebGPU.
 
 This confirms model download from a pinned revision, loading, constrained decoding, tool execution, scoring, and reporting. It says nothing about reference hardware: the container has no GPU, and the model is far below candidate size.
+
+## Harness versions
+
+Results are only comparable within a harness version (`harnessVersion` in each report).
+
+| Version | Changes |
+| --- | --- |
+| 0.1.0 | Initial harness and evaluation set |
+| 0.2.0 | Self-check after loading, live per-call logs, partial reports, quick preset, full-set gate criterion |
+| 0.3.0 | Search matches word forms (light stemming) and picks snippets by term rarity; a repeated identical action gets a notice instead of a re-run; `run_tests` reports how many visible tests pass; console output from submitted code is discarded |

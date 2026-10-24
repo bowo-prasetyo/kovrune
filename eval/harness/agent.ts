@@ -159,6 +159,7 @@ export async function runAgent(options: {
     { role: "user", content: options.task },
   ];
   const calls: CallRecord[] = [];
+  const executed = new Set<string>();
   const budget = model.info.contextLength - config.maxTokensPerCall - (config.contextReserve ?? 128);
 
   while (calls.length < config.maxCalls) {
@@ -185,12 +186,20 @@ export async function runAgent(options: {
       continue;
     }
 
-    transcript.push({ role: "assistant", content: JSON.stringify(action) });
+    const actionText = JSON.stringify(action);
+    transcript.push({ role: "assistant", content: actionText });
     if (action.tool === finalTool) {
       return { stopReason: "final", final: action.args, calls, transcript };
     }
+    // Tools are deterministic, so repeating an action cannot help; say so instead of re-running it.
+    const repeated = executed.has(actionText);
+    executed.add(actionText);
     const tool = tools.find((t) => t.name === action.tool)!;
-    const observation = tool.execute ? await tool.execute(action.args) : "OK";
+    const observation = repeated
+      ? `You already ran this exact action and its result has not changed. Choose a different action, or finish with ${finalTool}.`
+      : tool.execute
+        ? await tool.execute(action.args)
+        : "OK";
     transcript.push({ role: "user", content: `${OBSERVATION_PREFIX}${observation}` });
   }
   return { stopReason: "max-calls", calls, transcript };

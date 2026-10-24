@@ -28,7 +28,9 @@ export interface CodeRunner {
  * Common host capabilities are shadowed so submitted code cannot reach them by name.
  */
 function runTestsInWorker(code: string, tests: CodeTest[]): TestRun {
-  const shadowed = ["require", "process", "fetch", "XMLHttpRequest", "WebSocket", "importScripts", "postMessage", "self", "globalThis"];
+  const shadowed = ["require", "process", "fetch", "XMLHttpRequest", "WebSocket", "importScripts", "postMessage", "self", "globalThis", "console"];
+  // Submitted code may log; the output is discarded rather than printed by the host.
+  const quietConsole = { log() {}, info() {}, warn() {}, error() {}, debug() {} };
   const describe = (value: unknown): string => {
     try {
       const text = JSON.stringify(value);
@@ -52,7 +54,7 @@ function runTestsInWorker(code: string, tests: CodeTest[]): TestRun {
     try {
       // Each test re-evaluates the code so state cannot leak between tests.
       const evaluate = new Function(...shadowed, `"use strict";\n${code}\n;return (${test.expr});`);
-      const actual = evaluate();
+      const actual = evaluate(...shadowed.map((name) => (name === "console" ? quietConsole : undefined)));
       if (test.throws) {
         outcomes.push({ expr: test.expr, passed: false, detail: `expected an error, got ${describe(actual)}` });
       } else if (deepEqual(actual, test.expected)) {
