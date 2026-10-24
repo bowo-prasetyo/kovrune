@@ -175,7 +175,20 @@ Reports live in [`eval/results/`](../eval/results/). Add new rows here when you 
 
 ### Field notes (not gate results)
 
-- **Class 1: Intel Core i5-8250U, UHD Graphics 620, 8 GB RAM, Windows, Chrome.** wllama with `Qwen3.5-2B-Q4_K_M` on WebGPU (all GPU layers) produced **0 valid actions out of 8** on each of the first three research tasks, at about 1,200 s per task. The same model and file on CPU in the cloud container produced valid constrained actions, which points to broken WebGPU output on this GPU. The self-check (harness 0.2.0) catches this before a run starts. A CPU-only run (GPU layers = 0) is pending.
+**Class 1 laptop: Intel Core i5-8250U (4 cores, 8 threads), Intel UHD Graphics 620 (Gen 9, reports `shader-f16`), 8 GB RAM, Windows.** Model: wllama with `unsloth/Qwen3.5-2B-GGUF` `Qwen3.5-2B-Q4_K_M.gguf` at revision `f6d5376b`, 4,096-token context, constrained mode, harness 0.1.0.
+
+| Run | Browser | Tasks | Valid actions | Result | Decode tok/s | Prefill tok/s | Time per task |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| WebGPU (all GPU layers) | Chromium-based | First 3 research tasks (stopped) | 0/8 per task | 0/3 | — | — | about 1,200 s |
+| CPU only (GPU layers = 0) | Edge 155 | `r01-lumen-maintainer` | 8/8 | 0/1, call limit reached | 1.6 | 2.1 | 770 s |
+
+What these runs show:
+
+- **WebGPU output is broken on this GPU.** The same model and file produced valid constrained actions on CPU, both on this laptop and in the cloud container. The GPU reports `shader-f16`, so missing 16-bit support is not the cause. wllama must run CPU-only here. The self-check in harness 0.2.0 now catches this before a run starts.
+- **Class 1 hardware is below the floor for browser agents.** On CPU, decode speed is about 6× below the gate (1.6 vs 10 tokens/s), and one research task took almost 13 minutes against a 60 s limit. Even an ideal three-call task would take several minutes. The model made only valid calls but never answered within the 8-call budget.
+- **Prefill is unusually slow** (2.1 tokens/s), which suggests the WebAssembly build adds a large overhead on top of the hardware limit. A native run of the same model on the same laptop (Ollama via `npm run bench:endpoint`) would separate the two; it has not been done yet.
+
+These are single-task observations, not gate results: a gate result needs a complete full run.
 
 ### Harness smoke test (not a gate result)
 
