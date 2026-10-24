@@ -91,7 +91,10 @@ async function loadModel(options: BrowserRunOptions): Promise<LanguageModel> {
 
 let controller: AbortController | undefined;
 
-function selfCheckHint(options: BrowserRunOptions, hardware: Record<string, unknown>): string {
+function selfCheckHint(options: BrowserRunOptions, hardware: Record<string, unknown>, selfCheck: SelfCheckResult): string {
+  if (selfCheck.failedStep === "uses-tool-result") {
+    return "The model produced valid actions but ignored the tool result, so tasks would loop until the call limit. Try another candidate.";
+  }
   const webgpu = hardware.webgpu as { available?: boolean; shaderF16?: boolean } | undefined;
   if (options.runtime === "wllama" && options.gpuLayers !== 0 && webgpu?.available) {
     return "The model ran on WebGPU. Some integrated GPUs produce broken output there: set GPU layers to 0 (CPU only) and run again.";
@@ -116,7 +119,7 @@ async function run(options: BrowserRunOptions): Promise<Report> {
     if (controller.signal.aborted) throw new Error("Stopped before the benchmark started.");
     for (const line of describeSelfCheck(selfCheck)) log(line);
     if (!selfCheck.passed) {
-      const hint = selfCheckHint(options, hardware);
+      const hint = selfCheckHint(options, hardware, selfCheck);
       log(`Hint: ${hint}`);
       if (!options.ignoreSelfCheck) throw new Error(`Self-check failed, so the benchmark did not start. ${hint}`);
     }

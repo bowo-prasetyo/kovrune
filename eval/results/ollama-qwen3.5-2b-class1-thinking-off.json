@@ -1,0 +1,321 @@
+{
+  "harnessVersion": "0.3.0",
+  "createdAt": "2026-10-24T12:31:22.073Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "hf.co/unsloth/Qwen3.5-2B-GGUF:Q4_K_M",
+    "contextLength": 4096,
+    "hardwareClass": "1",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+      "cpuCores": 8,
+      "memoryGb": 6,
+      "endpoint": "http://localhost:11434/v1"
+    },
+    "notes": "Ollama native in WSL (6 GB), i5-8250U, 8 GB, thinking off"
+  },
+  "config": {
+    "suites": [
+      "research",
+      "coding"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "quick"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"args\": {\"query\": \"LumenDB license\"}, \"tool\": \"search\"}",
+    "seconds": 34.8,
+    "decodeTokensPerSecond": 9,
+    "maxResearchTaskMinutes": 8.2
+  },
+  "summary": [
+    {
+      "suite": "research",
+      "mode": "constrained",
+      "tasks": 6,
+      "passed": 0,
+      "successRate": 0,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 9.7,
+      "prefillTokensPerSecond": 167.9,
+      "medianTaskSeconds": 48.7
+    },
+    {
+      "suite": "coding",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 1,
+      "successRate": 0.5,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 10.8,
+      "prefillTokensPerSecond": 26.1,
+      "medianTaskSeconds": 20
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 34 tasks, both suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Research task success (constrained)",
+        "threshold": ">= 60%",
+        "actual": "0%",
+        "passed": false
+      },
+      {
+        "name": "Valid action rate (constrained, all suites)",
+        "threshold": ">= 95%",
+        "actual": "100%",
+        "passed": true
+      },
+      {
+        "name": "Decode speed",
+        "threshold": ">= 10 tokens/s",
+        "actual": "9.7 tokens/s",
+        "passed": false
+      },
+      {
+        "name": "Median research task time",
+        "threshold": "<= 60 s",
+        "actual": "48.7 s",
+        "passed": true
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4277,
+      "completionTokens": 145,
+      "estimatedTokens": false,
+      "modelMs": 37243,
+      "ttftMs": 22933,
+      "wallMs": 37262,
+      "actions": [
+        "search {\"query\":\"Which organization maintains LumenDB?\"}",
+        "search {\"query\":\"Which organization maintains LumenDB?\"}",
+        "search {\"query\":\"Who maintains LumenDB?\"}",
+        "search {\"query\":\"Who maintains LumenDB?\"}",
+        "search {\"query\":\"Who maintains LumenDB?\"}",
+        "search {\"query\":\"Who maintains LumenDB?\"}",
+        "search {\"query\":\"Who maintains LumenDB?\"}",
+        "search {\"query\":\"Who maintains LumenDB?\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4271,
+      "completionTokens": 230,
+      "estimatedTokens": false,
+      "modelMs": 50899,
+      "ttftMs": 27855,
+      "wallMs": 50910,
+      "actions": [
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4308,
+      "completionTokens": 232,
+      "estimatedTokens": false,
+      "modelMs": 48152,
+      "ttftMs": 24541,
+      "wallMs": 48157,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library name\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4650,
+      "completionTokens": 227,
+      "estimatedTokens": false,
+      "modelMs": 52268,
+      "ttftMs": 28443,
+      "wallMs": 52274,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.x default page or block size Cobble default page or block size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page or block size Cobble default page or block size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page or block size Cobble default page or block size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default page size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default page size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default page size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default page size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default page size comparison\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 4537,
+      "completionTokens": 225,
+      "estimatedTokens": false,
+      "modelMs": 49232,
+      "ttftMs": 25837,
+      "wallMs": 49236,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r20-lumen-4-1-date",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 3878,
+      "completionTokens": 169,
+      "estimatedTokens": false,
+      "modelMs": 42706,
+      "ttftMs": 24730,
+      "wallMs": 42711,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}"
+      ]
+    },
+    {
+      "suite": "coding",
+      "taskId": "c01-slugify",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "testsPass": false
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 234,
+      "completionTokens": 72,
+      "estimatedTokens": false,
+      "modelMs": 19940,
+      "ttftMs": 13049,
+      "wallMs": 20791,
+      "actions": [
+        "final_answer {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim();\\n}\\n\"}"
+      ],
+      "final": "{\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim();\\n}\\n\"}"
+    },
+    {
+      "suite": "coding",
+      "taskId": "c03-fix-chunk",
+      "kind": "fix",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 317,
+      "completionTokens": 121,
+      "estimatedTokens": false,
+      "modelMs": 19054,
+      "ttftMs": 8083,
+      "wallMs": 19235,
+      "actions": [
+        "final_answer {\"code\":\"function chunk(items, size) {\\n  const result = [];\\n  let current = [];\\n  for (const item of items) {\\n    current.push(item);\\n    if ("
+      ],
+      "final": "{\"code\":\"function chunk(items, size) {\\n  const result = [];\\n  let current = [];\\n  for (const item of items) {\\n    current.push(item);\\n    if (current.length === size) {\\n      result.push(current);\\n      current = [];\\n    }\\n  }\\n  if (current.length > 0) {\\n    result.push(current);\\n  }\\n  return result;\\n}\"}"
+    }
+  ]
+}
