@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | In progress: slices 1 and 2 done; next is slice 3 (browser path). See [Progress](#progress) |
+| Status | In progress: slices 1–3 built; slice 3 waits on a class 2 run. Next is slice 4 (open sources and polish). See [Progress](#progress) |
 | Depends on | M0 provisional go ([`m0-benchmark.md`](m0-benchmark.md#m0-status)) |
 | Team | Project owner (decisions, reviews, laptop testing) and Claude (implementation, tests, benchmark runs, docs) |
 
@@ -43,7 +43,7 @@
    - a result view with the answer, citations, quoted passages and verification status.
 3. **Model paths.**
    - **Local server:** connect to an OpenAI-compatible URL. llama.cpp server is supported; Ollama is experimental. The self-check runs on connect, and setup instructions are shown for llama.cpp.
-   - **Browser:** WebLLM with a two-model catalog: Qwen3.5-4B (default) and Qwen3.5-2B (lighter). It includes a compatibility check (WebGPU, `shader-f16`, estimated GPU memory) and download progress.
+   - **Browser:** WebLLM with a two-model catalog: Qwen3.5-4B (default) and Qwen3.5-2B (lighter). It includes a compatibility check (WebGPU, `shader-f16`, estimated GPU memory) and download progress. GPUs without `shader-f16` get the 32-bit (q4f32) build of the same model (added in slice 3).
 4. **Device advisor (D1).** It recommends the browser path when WebGPU is available, `shader-f16` is supported, and the adapter can fit the default model. Otherwise it recommends a local server. It never runs a model on WebGPU without the self-check passing.
 5. **Research sources.** The user's documents (chunked and searched with the benchmark's search, stemming included), plus Wikipedia and OpenAlex, which allow browser requests. Each source records its URL and retrieval time.
 6. **Trust features.**
@@ -118,6 +118,44 @@ Decode speed in the container is about 7 tokens/s, which is not a class 1 or cla
 
 Still open for the slice: the owner asks a question about one of their own PDFs on the class 1 laptop.
 
+### Slice 3: browser path (built; class 2 run pending)
+
+The model can now run in the browser:
+
+- **Device step.** It offers both paths. The recommended one is the primary button, and on a GPU the advisor doesn't recommend, the browser path is offered as "Run in this browser anyway".
+- **Model step.** The catalog has Qwen3.5-4B and Qwen3.5-2B. The 2B is suggested on devices that report 8 GB of memory or less.
+- **Compatibility check.**
+  - It blocks: no WebGPU, GPU buffers too small, or not enough browser storage.
+  - It warns about: no `shader-f16` (the 32-bit build is used instead), integrated Intel graphics, an untested GPU, or low device memory.
+  - Warnings leave the decision to the model test.
+- **Download and loading.**
+  - A progress bar shows the download, and later visits load the model from the browser's storage.
+  - Models already downloaded are marked, and their download can be deleted.
+  - The browser is asked to keep the download persistent.
+  - The model is loaded once per visit and shared by the model test and the research screen.
+- **Settings.** They are saved only after the model test passes, as before. Settings saved by slices 1–2 still load as local-server settings.
+- **Stop.** Stop now takes effect at once with WebLLM too. Before, it waited for the engine's next token, which on a slow GPU can be minutes away.
+
+Tested in the cloud container:
+- Unit tests cover the catalog against WebLLM's prebuilt list, the compatibility check, settings migration and the immediate stop.
+- End-to-end runs in headless Chromium at 375 px used the container's software WebGPU (SwiftShader, no `shader-f16`). They covered:
+  - the device advice;
+  - the 32-bit fallback warning;
+  - detecting a cached model;
+  - loading from the browser's storage (10 s for Qwen3.5-2B);
+  - the start of the model test;
+  - Ask enabled only after loading;
+  - Stop;
+  - deleting a download.
+- Generation itself is far too slow on a software GPU to finish a model test: the first call of Qwen3.5-0.8B had not finished after 10 minutes. So answers in the browser are not yet checked end to end.
+- The local-server wizard and research flow were re-run end to end against llama.cpp, with the same results as slice 2.
+
+Still open for the slice:
+- **Class 2 check.** The same research task works in the browser on a class 2 machine (issue #9 or a tester).
+- **Class 1 check.** On the class 1 laptop, the advisor recommends the local server.
+
+Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work.
+
 ## Acceptance
 
 M1 is done when:
@@ -129,7 +167,7 @@ M1 is done when:
    - unanswerable set ≥ 2/3 correct refusals;
    - valid actions ≥ 95%;
    - every answer judged correct includes a verified quote.
-4. **No hosted inference** in any path, verified by the app's network requests: only Hugging Face model downloads, the configured local server, Wikipedia and OpenAlex.
+4. **No hosted inference** in any path, verified by the app's network requests: only model downloads (Hugging Face weights, and WebLLM's compiled model libraries from GitHub), the configured local server, Wikipedia and OpenAlex.
 5. **Usability:** at least 3 of 5 test users complete setup and one research task without help.
 
 ## Risks

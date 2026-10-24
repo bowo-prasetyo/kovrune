@@ -1,14 +1,28 @@
 // Settings kept in the browser between visits. Only setup choices are stored;
 // documents and tasks are not persisted until M2.
 
+import { browserModelFor } from "../models/catalog.ts";
 import { SERVER_PRESETS, type ServerKind } from "./servers.ts";
 
-export interface Settings {
+export interface ServerSettings {
+  path: "local-server";
   serverKind: ServerKind;
   baseUrl: string;
   model: string;
   contextLength: number;
 }
+
+export interface BrowserSettings {
+  path: "browser";
+  /** WebLLM model ID from the catalog. */
+  modelId: string;
+  contextLength: number;
+}
+
+export type Settings = ServerSettings | BrowserSettings;
+
+/** The browser path always uses the context length the models were evaluated with. */
+export const BROWSER_CONTEXT_LENGTH = 4096;
 
 const KEY = "kovrune.settings.v1";
 
@@ -16,8 +30,15 @@ const KEY = "kovrune.settings.v1";
 export function parseSettings(raw: string | null): Settings | undefined {
   if (!raw) return undefined;
   try {
-    const value = JSON.parse(raw) as Partial<Settings>;
+    const value = JSON.parse(raw) as Partial<Omit<ServerSettings, "path"> & Omit<BrowserSettings, "path">> & { path?: string };
+    if (value.path === "browser") {
+      return typeof value.modelId === "string" && browserModelFor(value.modelId)
+        ? { path: "browser", modelId: value.modelId, contextLength: BROWSER_CONTEXT_LENGTH }
+        : undefined;
+    }
+    // Settings saved before slice 3 have no path; they are local-server settings.
     if (
+      (value.path === undefined || value.path === "local-server") &&
       typeof value.serverKind === "string" &&
       value.serverKind in SERVER_PRESETS &&
       typeof value.baseUrl === "string" &&
@@ -25,7 +46,8 @@ export function parseSettings(raw: string | null): Settings | undefined {
       typeof value.contextLength === "number" &&
       value.contextLength >= 2048
     ) {
-      return value as Settings;
+      const { serverKind, baseUrl, model, contextLength } = value as Omit<ServerSettings, "path">;
+      return { path: "local-server", serverKind, baseUrl, model, contextLength };
     }
   } catch {
     // Fall through: treat as no settings.

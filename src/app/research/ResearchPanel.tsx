@@ -1,8 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
 import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/research.ts";
-import { LocalEndpointModel } from "../../models/local-endpoint.ts";
-import { describeConnectionError, SERVER_PRESETS } from "../servers.ts";
+import { describeModelError, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import type { LibraryDocument } from "./library.ts";
 import { describeCall, describeNoAnswer, STATUS_TEXT } from "./trace.ts";
@@ -14,13 +13,21 @@ type RunState =
   | { phase: "stopped"; steps: string[] }
   | { phase: "error"; steps: string[]; message: string };
 
-export function ResearchPanel({ settings, documents }: { settings: Settings; documents: LibraryDocument[] }) {
+export function ResearchPanel({
+  settings,
+  documents,
+  modelReady,
+}: {
+  settings: Settings;
+  documents: LibraryDocument[];
+  modelReady: boolean;
+}) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<RunState>({ phase: "idle" });
   const controller = useRef<AbortController>(undefined);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
-  const canAsk = !running && usable.length > 0 && question.trim().length > 0;
+  const canAsk = modelReady && !running && usable.length > 0 && question.trim().length > 0;
 
   async function ask() {
     const abort = new AbortController();
@@ -29,13 +36,8 @@ export function ResearchPanel({ settings, documents }: { settings: Settings; doc
     const titleFor = (id: string) => library.documentFor(id)?.title;
     const steps: string[] = [];
     setState({ phase: "running", steps });
-    const model = new LocalEndpointModel({
-      baseUrl: settings.baseUrl,
-      model: settings.model,
-      contextLength: settings.contextLength,
-      extraBody: SERVER_PRESETS[settings.serverKind].extraBody,
-    });
     try {
+      const model = await openModel(settings);
       const result = await runResearch({
         question: question.trim(),
         library,
@@ -48,11 +50,11 @@ export function ResearchPanel({ settings, documents }: { settings: Settings; doc
       });
       if (abort.signal.aborted) setState({ phase: "stopped", steps });
       else if (result.agent.stopReason === "error")
-        setState({ phase: "error", steps, message: describeConnectionError(new Error(result.agent.error), settings.baseUrl) });
+        setState({ phase: "error", steps, message: describeModelError(new Error(result.agent.error), settings) });
       else setState({ phase: "done", steps, result, library });
     } catch (error) {
       if (abort.signal.aborted) setState({ phase: "stopped", steps });
-      else setState({ phase: "error", steps, message: describeConnectionError(error, settings.baseUrl) });
+      else setState({ phase: "error", steps, message: describeModelError(error, settings) });
     }
   }
 

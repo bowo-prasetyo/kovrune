@@ -1,4 +1,6 @@
-import { modelLabel, SERVER_PRESETS } from "../servers.ts";
+import { LoadProgressView } from "../LoadProgressView.tsx";
+import { describeSetup } from "../models.ts";
+import { useModelLoad } from "../useModelLoad.ts";
 import type { Settings } from "../settings.ts";
 import { DocumentLibrary } from "./DocumentLibrary.tsx";
 import type { LibraryDocument } from "./library.ts";
@@ -17,12 +19,11 @@ export function ResearchScreen({
   onRetest: () => void;
   onChangeSetup: () => void;
 }) {
+  const load = useModelLoad(settings);
   return (
     <>
       <div className="setup-summary">
-        <span>
-          {modelLabel(settings.model)} on {SERVER_PRESETS[settings.serverKind].label}
-        </span>
+        <span>{describeSetup(settings)}</span>
         <span className="links">
           <button className="link" onClick={onRetest}>
             Test the model again
@@ -32,8 +33,9 @@ export function ResearchScreen({
           </button>
         </span>
       </div>
+      <LoadProgressView state={load.state} onRetry={load.retry} />
       <DocumentLibrary documents={documents} onChange={onDocumentsChange} />
-      <ResearchPanel settings={settings} documents={documents} />
+      <ResearchPanel settings={settings} documents={documents} modelReady={load.state.phase === "ready"} />
     </>
   );
 }
