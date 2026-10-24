@@ -1,0 +1,321 @@
+{
+  "harnessVersion": "0.3.0",
+  "createdAt": "2026-10-24T12:11:55.771Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "hf.co/unsloth/Qwen3.5-2B-GGUF:Q4_K_M",
+    "contextLength": 4096,
+    "hardwareClass": "1",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+      "cpuCores": 8,
+      "memoryGb": 4,
+      "endpoint": "http://localhost:11434/v1"
+    },
+    "notes": "Ollama native in WSL, i5-8250U, 8 GB"
+  },
+  "config": {
+    "suites": [
+      "research",
+      "coding"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "quick"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"args\":{\"query\":\"LumenDB license\"},\"tool\":\"search\"}",
+    "seconds": 37.4,
+    "decodeTokensPerSecond": 21.3,
+    "maxResearchTaskMinutes": 6.3
+  },
+  "summary": [
+    {
+      "suite": "research",
+      "mode": "constrained",
+      "tasks": 6,
+      "passed": 2,
+      "successRate": 0.333,
+      "validActionRate": 0.5,
+      "decodeTokensPerSecond": 36.6,
+      "prefillTokensPerSecond": 34.3,
+      "medianTaskSeconds": 192
+    },
+    {
+      "suite": "coding",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 0,
+      "successRate": 0,
+      "validActionRate": 0,
+      "decodeTokensPerSecond": 0,
+      "prefillTokensPerSecond": 0,
+      "medianTaskSeconds": 0.8
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 34 tasks, both suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Research task success (constrained)",
+        "threshold": ">= 60%",
+        "actual": "33.3%",
+        "passed": false
+      },
+      {
+        "name": "Valid action rate (constrained, all suites)",
+        "threshold": ">= 95%",
+        "actual": "0%",
+        "passed": false
+      },
+      {
+        "name": "Decode speed",
+        "threshold": ">= 10 tokens/s",
+        "actual": "0 tokens/s",
+        "passed": false
+      },
+      {
+        "name": "Median research task time",
+        "threshold": "<= 60 s",
+        "actual": "192 s",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1602,
+      "completionTokens": 615,
+      "estimatedTokens": false,
+      "modelMs": 73934,
+      "ttftMs": 59746,
+      "wallMs": 73954,
+      "actions": [
+        "search {\"query\":\"LumenDB organization maintainer\"}",
+        "search {\"query\":\"LumenDB organization maintainers or foundation\"}",
+        "search {\"query\":\"LumenDB organization maintainers Tessel Foundation or foundation name\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB is maintained by the Tessel Foundation, which was established in 2022 after being created in 2019 by Mira Okafor as"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB is maintained by the Tessel Foundation, which was established in 2022 after being created in 2019 by Mira Okafor as a side project.\",\"citations\":[\"lumen-overview\",\"tessel-governance\",\"lumen-4-roadmap\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 2,
+      "promptTokens": 5263,
+      "completionTokens": 1781,
+      "estimatedTokens": false,
+      "modelMs": 199336,
+      "ttftMs": 157514,
+      "wallMs": 199348,
+      "actions": [
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07\"}",
+        "search {\"query\":\"LumenDB versions affected by advisory LSA-2024-07 path traversal backup restore fix\"}",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 4,
+      "promptTokens": 4889,
+      "completionTokens": 1731,
+      "estimatedTokens": false,
+      "modelMs": 193767,
+      "ttftMs": 158088,
+      "wallMs": 193774,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library created by reporter\"}",
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library created by reporter\"}",
+        "search {\"query\":\"LumenDB LSA-2024-07 compression library created by reporter name\"}",
+        "search {\"query\":\"LSA-2024-07 LumenDB reporter name compression library created by reporter\"}",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 5089,
+      "completionTokens": 1571,
+      "estimatedTokens": false,
+      "modelMs": 190069,
+      "ttftMs": 167895,
+      "wallMs": 190129,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.x Cobble default page block size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x Cobble default page block size comparison\"}",
+        "search {\"query\":\"LumenDB 3.x Cobble default page block size comparison\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.x has a default page size of 8 KiB, while Cobble has a default block size of 4 KiB.\",\"citations\":[\"lumen-overview"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.x has a default page size of 8 KiB, while Cobble has a default block size of 4 KiB.\",\"citations\":[\"lumen-overview\",\"cobble-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 1,
+      "promptTokens": 5809,
+      "completionTokens": 1875,
+      "estimatedTokens": false,
+      "modelMs": 213006,
+      "ttftMs": 120277,
+      "wallMs": 213084,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark correction\"}",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found"
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r20-lumen-4-1-date",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 3,
+      "promptTokens": 4644,
+      "completionTokens": 1487,
+      "estimatedTokens": false,
+      "modelMs": 173860,
+      "ttftMs": 132878,
+      "wallMs": 174128,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date official announcement\"}",
+        "invalid: no JSON object found",
+        "search {\"query\":\"LumenDB 4.1 release date official announcement or roadmap document\"}",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found",
+        "invalid: no JSON object found"
+      ]
+    },
+    {
+      "suite": "coding",
+      "taskId": "c01-slugify",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "error",
+      "error": "fetch failed",
+      "calls": 0,
+      "validCalls": 0,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "estimatedTokens": false,
+      "modelMs": 0,
+      "ttftMs": 0,
+      "wallMs": 1605,
+      "actions": []
+    },
+    {
+      "suite": "coding",
+      "taskId": "c03-fix-chunk",
+      "kind": "fix",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "error",
+      "error": "fetch failed",
+      "calls": 0,
+      "validCalls": 0,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "estimatedTokens": false,
+      "modelMs": 0,
+      "ttftMs": 0,
+      "wallMs": 54,
+      "actions": []
+    }
+  ]
+}

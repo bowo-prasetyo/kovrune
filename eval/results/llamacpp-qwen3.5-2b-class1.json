@@ -1,0 +1,323 @@
+{
+  "harnessVersion": "0.3.0",
+  "createdAt": "2026-10-24T12:59:51.699Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b",
+    "contextLength": 4096,
+    "hardwareClass": "1",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz",
+      "cpuCores": 8,
+      "memoryGb": 6,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "llama.cpp server in WSL (6 GB), i5-8250U, 8 GB"
+  },
+  "config": {
+    "suites": [
+      "research",
+      "coding"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "quick"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"search\",\"args\":{\"query\":\"LumenDB license\"}}",
+    "seconds": 11.1,
+    "decodeTokensPerSecond": 3.6,
+    "maxResearchTaskMinutes": 10.3
+  },
+  "summary": [
+    {
+      "suite": "research",
+      "mode": "constrained",
+      "tasks": 6,
+      "passed": 3,
+      "successRate": 0.5,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 10.9,
+      "prefillTokensPerSecond": 125.1,
+      "medianTaskSeconds": 20.4
+    },
+    {
+      "suite": "coding",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 1,
+      "successRate": 0.5,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 10.6,
+      "prefillTokensPerSecond": 99.6,
+      "medianTaskSeconds": 48.7
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 34 tasks, both suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Research task success (constrained)",
+        "threshold": ">= 60%",
+        "actual": "50%",
+        "passed": false
+      },
+      {
+        "name": "Valid action rate (constrained, all suites)",
+        "threshold": ">= 95%",
+        "actual": "100%",
+        "passed": true
+      },
+      {
+        "name": "Decode speed",
+        "threshold": ">= 10 tokens/s",
+        "actual": "10.6 tokens/s",
+        "passed": true
+      },
+      {
+        "name": "Median research task time",
+        "threshold": "<= 60 s",
+        "actual": "20.4 s",
+        "passed": true
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 537,
+      "completionTokens": 44,
+      "estimatedTokens": false,
+      "modelMs": 9364,
+      "ttftMs": 5238,
+      "wallMs": 9378,
+      "actions": [
+        "search {\"query\":\"LumenDB organization maintain\"}",
+        "final_answer {\"found\":true,\"answer\":\"Tessel Foundation\",\"citations\":[\"lumen-overview\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Tessel Foundation\",\"citations\":[\"lumen-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1149,
+      "completionTokens": 120,
+      "estimatedTokens": false,
+      "modelMs": 22359,
+      "ttftMs": 11611,
+      "wallMs": 22364,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.2.0 (released in September 2024) is the version affected by advisory LSA-2024-07 and includes the fix for the pat"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.2.0 (released in September 2024) is the version affected by advisory LSA-2024-07 and includes the fix for the path traversal vulnerability in backup restore.\",\"citations\":[\"lumen-3-2-release\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": false
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2007,
+      "completionTokens": 115,
+      "estimatedTokens": false,
+      "modelMs": 32623,
+      "ttftMs": 21147,
+      "wallMs": 32628,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"Brisk\",\"citations\":[\"lumen-advisory-2024-07\",\"lumen-3-2-release\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Brisk\",\"citations\":[\"lumen-advisory-2024-07\",\"lumen-3-2-release\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 575,
+      "completionTokens": 119,
+      "estimatedTokens": false,
+      "modelMs": 17080,
+      "ttftMs": 6147,
+      "wallMs": 17084,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.x default page block size Cobble default page block size\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.x has a default page size of 8 KiB, while Cobble has a default page size of 4 KiB.\",\"citations\":[\"lumen-overview\""
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.x has a default page size of 8 KiB, while Cobble has a default page size of 4 KiB.\",\"citations\":[\"lumen-overview\",\"cobble-overview\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1242,
+      "completionTokens": 75,
+      "estimatedTokens": false,
+      "modelMs": 18505,
+      "ttftMs": 11982,
+      "wallMs": 18508,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark\"}",
+        "read {\"docId\":\"bench-correction\"}",
+        "final_answer {\"found\":true,\"answer\":\"330,000 operations per second\",\"citations\":[\"bench-correction\"]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"330,000 operations per second\",\"citations\":[\"bench-correction\"]}"
+    },
+    {
+      "suite": "research",
+      "taskId": "r20-lumen-4-1-date",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 3878,
+      "completionTokens": 160,
+      "estimatedTokens": false,
+      "modelMs": 33237,
+      "ttftMs": 18948,
+      "wallMs": 33241,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}"
+      ]
+    },
+    {
+      "suite": "coding",
+      "taskId": "c01-slugify",
+      "kind": "implement",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": false
+      },
+      "stopReason": "max-calls",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 3514,
+      "completionTokens": 533,
+      "estimatedTokens": false,
+      "modelMs": 78545,
+      "ttftMs": 27906,
+      "wallMs": 78640,
+      "actions": [
+        "run_tests {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim('-');\\n}\\n\\nconsole.log(slugify(\\\"He",
+        "run_tests {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim('-');\\n}\\n\\nconsole.log(slugify(\\\"He",
+        "run_tests {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim('-');\\n}\\n\\nconsole.log(slugify(\\\"He",
+        "run_tests {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim('-');\\n}\\n\\nconsole.log(slugify(\\\"He",
+        "run_tests {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim('-');\\n}\\n\\nconsole.log(slugify(\\\"He",
+        "run_tests {\"code\":\"function slugify(text) {\\n  return text\\n    .toLowerCase()\\n    .replace(/[^a-z0-9]+/g, '-')\\n    .trim('-');\\n}\\n\\nconsole.log(slugify(\\\"He"
+      ]
+    },
+    {
+      "suite": "coding",
+      "taskId": "c03-fix-chunk",
+      "kind": "fix",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "testsPass": true
+      },
+      "stopReason": "final",
+      "calls": 1,
+      "validCalls": 1,
+      "promptTokens": 317,
+      "completionTokens": 91,
+      "estimatedTokens": false,
+      "modelMs": 18710,
+      "ttftMs": 10550,
+      "wallMs": 18812,
+      "actions": [
+        "final_answer {\"code\":\"function chunk(items, size) {\\n  const result = [];\\n  for (let i = 0; i < items.length; i += size) {\\n    const chunk = items.slice(i, i "
+      ],
+      "final": "{\"code\":\"function chunk(items, size) {\\n  const result = [];\\n  for (let i = 0; i < items.length; i += size) {\\n    const chunk = items.slice(i, i + size);\\n    result.push(chunk);\\n  }\\n  return result;\\n}\"}"
+    }
+  ]
+}

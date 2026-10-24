@@ -244,21 +244,44 @@ describe("benchmark", () => {
 });
 
 describe("self-check", () => {
-  it("passes on a valid action and estimates the worst-case task time", async () => {
+  const search = `{"tool":"search","args":{"query":"LumenDB license"}}`;
+
+  it("passes when the model acts on the tool result, measuring speed on the warm call", async () => {
     // 20 tokens in about 200 ms is about 100 tokens/s, so 8 calls of 256 tokens take about 20 s.
     // Bounds are loose because timers can fire slightly early or late on busy CI machines.
-    const result = await runSelfCheck(new ScriptedModel([`{"tool":"search","args":{"query":"LumenDB license"}}`], 200));
+    const model = new ScriptedModel([search, `{"tool":"read","args":{"docId":"lumen-overview"}}`], 200);
+    const result = await runSelfCheck(model);
     assert.equal(result.passed, true);
     assert.equal(result.constrained, true);
+    assert.equal(model.requests.length, 2);
+    // The second call sees the search result for the fixed query.
+    assert.match(model.requests[1]!.messages.at(-1)!.content, /untrusted data[\s\S]*lumen-overview/);
     assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond < 120, String(result.decodeTokensPerSecond));
     assert.ok(result.maxResearchTaskMinutes >= 0.25 && result.maxResearchTaskMinutes <= 0.7, String(result.maxResearchTaskMinutes));
   });
 
   it("fails on broken output and reports what the model produced", async () => {
-    const result = await runSelfCheck(new ScriptedModel(["\u0000\u0000 garbage"]));
+    const model = new ScriptedModel(["\u0000\u0000 garbage"]);
+    const result = await runSelfCheck(model);
     assert.equal(result.passed, false);
+    assert.equal(result.failedStep, "first-action");
+    assert.equal(model.requests.length, 1);
     assert.match(result.error ?? "", /no JSON object/);
-    assert.match(describeSelfCheck(result).join("\n"), /FAILED[\s\S]*garbage/);
+    assert.match(describeSelfCheck(result).join("\n"), /FAILED[\s\S]*garbage[\s\S]*thinking is turned off/);
+  });
+
+  it("reports a cut-off second reply separately from ignoring the result", async () => {
+    const result = await runSelfCheck(new ScriptedModel([search, `{"tool":"final_answer","args":{"found":true,"answer":"Lum`]));
+    assert.equal(result.failedStep, "second-action");
+    assert.doesNotMatch(describeSelfCheck(result).join("\n"), /not acting on tool results/);
+  });
+
+  it("fails when the model searches again instead of using the result", async () => {
+    const result = await runSelfCheck(new ScriptedModel([search, `{"tool":"search","args":{"query":"LumenDB"}}`]));
+    assert.equal(result.passed, false);
+    assert.equal(result.failedStep, "uses-tool-result");
+    assert.match(result.error ?? "", /searched again/);
+    assert.match(describeSelfCheck(result).join("\n"), /not acting on tool results[\s\S]*llama\.cpp server/);
   });
 
   it("logs invalid calls with the model's output", () => {

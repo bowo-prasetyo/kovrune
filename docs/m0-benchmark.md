@@ -2,7 +2,18 @@
 
 M0 decides whether models small enough to run in a browser can do Kovrune's agent work well enough to be the primary path (see [design §12](design.md#12-roadmap)). This document defines the evaluation set, the procedure, the go/no-go thresholds, and where results are recorded.
 
-**Status:** harness and evaluation set complete. Reference-hardware runs are pending (see [Results](#results)).
+## M0 status
+
+| Question | Answer so far | Evidence |
+| --- | --- | --- |
+| **Quality:** can a browser-sized model do the tasks? | **Yes, with Qwen3.5-4B** (research 73%, coding 67%, 100% valid actions). Qwen3.5-2B is one task short (59%). | [Quality results](#quality-native-runs) |
+| **Native speed:** is it fast enough outside the browser? | **Yes, even on class 1.** Qwen3.5-2B on an 8 GB laptop through llama.cpp server: 10.6 tokens/s, 20 s median research task. | [Field notes](#field-notes-not-gate-results) |
+| **Browser speed:** is it fast enough in the browser on class 2? | **Open.** Needs a WebLLM run of `Qwen3.5-4B-q4f16_1-MLC` on a class 2 machine. | — |
+
+Two cross-cutting findings so far:
+
+- **The browser build is the bottleneck on class 1.** On the same laptop and model file, native llama.cpp generated about 7× faster than wllama in the browser, and finished a research task in about 20 s instead of 770 s. M1 should treat the local-server path as a primary option for machines like this, not an extra.
+- **No candidate refuses unanswerable questions reliably** (1 correct refusal out of 9 across three models). M1 needs an explicit mitigation rather than relying on the model.
 
 ## What is measured
 
@@ -109,21 +120,32 @@ For automation, the page exposes `window.kovruneBench.run(options)`, which retur
 
 ### Against a local model server
 
-```bash
-# Ollama
-npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model qwen3:8b \
-  --context 8192 --hardware-class 2 --out eval/results/qwen3-8b-ollama-class2.json
+**Prefer llama.cpp server.** It applies the model's own chat template, and all native quality results so far use it. Ollama 0.40.10 with Qwen3.5 and thinking off repeated its first search on every call in a multi-step run, while llama.cpp server with the same model file on the same laptop did not (see [Field notes](#field-notes-not-gate-results)). The self-check now catches this.
 
-# llama.cpp server running a Qwen3 model, with thinking disabled
-npm run bench:endpoint -- --base-url http://localhost:8080/v1 --model qwen3 \
-  --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --out eval/results/qwen3-llamacpp.json
+```bash
+# llama.cpp server, with thinking disabled for Qwen3 / Qwen3.5 models
+llama-server -m Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
+npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-2b --context 4096 \
+  --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --hardware-class 2 \
+  --out eval/results/llamacpp-qwen3.5-2b-class2.json
+
+# Ollama (thinking is turned off with reasoning_effort; check the self-check passes)
+npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model hf.co/unsloth/Qwen3.5-2B-GGUF:Q4_K_M \
+  --context 4096 --extra-body '{"reasoning_effort":"none"}' --hardware-class 2 \
+  --out eval/results/ollama-qwen3.5-2b-class2.json
 ```
+
+Notes for Ollama: set `OLLAMA_CONTEXT_LENGTH=4096` and `OLLAMA_NUM_PARALLEL=1` for the service. Without `reasoning_effort`, Qwen3.5 thinks first, and Ollama returns the thinking separately with an empty answer until it finishes, which the harness sees as invalid replies. In WSL, give WSL enough memory (`memory=6GB` in `.wslconfig` on an 8 GB machine); with the default of half the RAM, Ollama was killed by the out-of-memory killer during coding tasks.
 
 Options: `--preset full|quick`, `--suites research,coding`, `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--ignore-self-check`, `--notes "..."`. Press Ctrl+C to stop early; the report still includes the completed tasks.
 
 ### What happens during a run
 
-1. **Self-check.** After loading, the model gets one short research prompt and must reply with a valid action. This takes about a minute even on slow hardware. It also measures decode speed and shows the worst-case time for one research task. If it fails, the run does not start, and the log shows the model's raw output and a hint. Tick **Run even if the self-check fails** (or pass `--ignore-self-check`) to run anyway.
+1. **Self-check.** After loading, two short calls check the setup before any task runs, in about a minute even on slow hardware:
+   1. The model must reply to a research question with a valid action. This also warms the runtime up.
+   2. Given a search result that names the right document, the model must read it or answer, not search again. This catches servers that mishandle multi-step tool conversations.
+
+   Speed is measured on the second, warm call, along with the worst-case time for one research task. If either step fails, the run does not start, and the log shows the model's raw output and a hint. Tick **Run even if the self-check fails** (or pass `--ignore-self-check`) to run anyway.
 2. **Live progress.** Every model call is logged as it finishes, with its action (or, for an invalid reply, the error and the start of the output), time and speed. For example: `call 2: search {"query":"LumenDB license"} (14.2 s, 3.1 tok/s)`.
 3. **Stopping early.** **Stop** (or Ctrl+C) discards only the task in progress. The report is still produced and downloadable, marked as stopped early (`"complete": false`).
 
@@ -142,7 +164,10 @@ On slow machines, start with the Quick set in constrained mode only. Use the sel
 | --- | --- | --- |
 | Self-check fails with garbled or empty output (wllama) | WebGPU produces broken output on some integrated GPUs | Set **GPU layers** to 0 to run on the CPU |
 | WebLLM model fails to load; Environment shows `"shaderF16": false` | The GPU lacks 16-bit shader support, which `q4f16` models need | Use the wllama runtime |
-| Every call is valid but tasks hit the call limit (8/8) | The model searches repeatedly without answering | A model quality result; record it |
+| Self-check step 2 fails: "not acting on tool results" | The server mishandles multi-step conversations for this model (seen with Ollama 0.40.10 and Qwen3.5, thinking off) | Use llama.cpp server with the same model file |
+| Self-check fails with "no JSON object found" or a cut-off reply | A thinking model is thinking first and runs out of tokens | Turn thinking off: `chat_template_kwargs` for llama.cpp, `reasoning_effort: "none"` for Ollama |
+| `fetch failed` partway through a run | The model server stopped, often killed for lack of memory | Check the server log (for Ollama: `journalctl -u ollama`); give it more memory |
+| Every call is valid but tasks hit the call limit (8/8), and the self-check passed | The model searches or re-runs tests repeatedly without answering | A model quality result; record it |
 | Calls take minutes each | Hardware below the model's needs | Try a smaller model or the Quick set, and record the speed |
 
 ## Go/no-go gate
@@ -226,9 +251,27 @@ What these runs show:
 
 - **WebGPU output is broken on this GPU.** The same model and file produced valid constrained actions on CPU, both on this laptop and in the cloud container. The GPU reports `shader-f16`, so missing 16-bit support is not the cause. wllama must run CPU-only here. The self-check in harness 0.2.0 now catches this before a run starts.
 - **Class 1 hardware is below the floor for browser agents.** On CPU, decode speed is about 6× below the gate (1.6 vs 10 tokens/s), and one research task took almost 13 minutes against a 60 s limit. Even an ideal three-call task would take several minutes. The model made only valid calls but never answered within the 8-call budget.
-- **Prefill is unusually slow** (2.1 tokens/s), which suggests the WebAssembly build adds a large overhead on top of the hardware limit. A native run of the same model on the same laptop (Ollama via `npm run bench:endpoint`) would separate the two; it has not been done yet.
+- **Prefill is unusually slow** (2.1 tokens/s), which suggests the WebAssembly build adds a large overhead on top of the hardware limit. The native runs below confirm it.
 
-These are single-task observations, not gate results: a gate result needs a complete full run.
+#### Same laptop, native runs (WSL, 6 GB memory, harness 0.3.0, Quick set, constrained)
+
+Same model file (`Qwen3.5-2B-Q4_K_M.gguf`, SHA-256 `aaf42c8b…`), served natively instead of in the browser.
+
+| Server | Thinking | Research | Coding | Valid actions | Decode tok/s | Median research task | Report |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Ollama 0.40.10 (WSL limited to 4 GB) | On | 2/6 | 0/2, server killed (out of memory) | 50% research | 21.3 (self-check) | 192 s | [json](../eval/results/ollama-qwen3.5-2b-class1-thinking-on.json) |
+| Ollama 0.40.10 | Off (`reasoning_effort: none`) | 0/6, first search repeated 8 times | 1/2 | 100% | 9.7 | 49 s | [json](../eval/results/ollama-qwen3.5-2b-class1-thinking-off.json) |
+| **llama.cpp server** | Off | **3/6** | 1/2 | 100% | **10.6** | **20 s** | [json](../eval/results/llamacpp-qwen3.5-2b-class1.json) |
+
+What these runs show:
+
+- **Running natively, this class 1 laptop meets the gate's speed criteria** (10.6 tokens/s, 20 s median research task). The same model in the browser managed 1.6 tokens/s and 770 s per task: the WebAssembly build, not the hardware, is the main bottleneck here.
+- **Ollama's thinking-on run failed for setup reasons.** Thinking used up each reply's token budget, so the harness received empty answers, and the coding tasks failed when the out-of-memory killer stopped Ollama.
+- **The thinking-off Ollama run is a server compatibility problem, not a model result.** Every research task repeated its first search until the call limit, while llama.cpp server with the same file behaved normally (2–4 calls per task). Ollama does keep conversation history in a simple two-turn test, so the problem is specific to longer tool conversations with this model. The two-step self-check in harness 0.4.0 catches it.
+- **The model's own weak spots match the cloud runs.** It searched 8 times instead of saying "not found" on the unanswerable question, and re-ran the same broken code 6 times on `c01`, ignoring the repeat notice both times. M1's agent needs firmer guards for small models, such as forcing a final answer after repeated actions.
+- **The old one-call self-check underestimated speed** (3.6 tokens/s against 10.6 during the run) because it measured the cold first call. Harness 0.4.0 measures a warm call.
+
+These are Quick-set observations, not gate results: a gate result needs a complete full run.
 
 ### Harness smoke test (not a gate result)
 
@@ -245,3 +288,4 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.1.0 | Initial harness and evaluation set |
 | 0.2.0 | Self-check after loading, live per-call logs, partial reports, quick preset, full-set gate criterion |
 | 0.3.0 | Search matches word forms (light stemming) and picks snippets by term rarity; a repeated identical action gets a notice instead of a re-run; `run_tests` reports how many visible tests pass; console output from submitted code is discarded |
+| 0.4.0 | Two-step self-check: a warm-up action, then a check that the model acts on a tool result; speed is measured on the warm call. Task scoring is unchanged from 0.3.0, so task results remain comparable |

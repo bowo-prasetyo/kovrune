@@ -64,7 +64,11 @@ const selfCheck = await runSelfCheck(model, controller.signal);
 if (controller.signal.aborted) process.exit(130);
 for (const line of describeSelfCheck(selfCheck)) console.log(line);
 if (!selfCheck.passed && !values["ignore-self-check"]) {
-  console.error("Self-check failed, so the benchmark did not start. Check that the server supports json_schema response_format, or pass --ignore-self-check.");
+  console.error(
+    selfCheck.failedStep !== "uses-tool-result"
+      ? "Self-check failed, so the benchmark did not start. Check that the server supports json_schema response_format and that thinking is off, or pass --ignore-self-check."
+      : "Self-check failed, so the benchmark did not start. Pass --ignore-self-check to run anyway.",
+  );
   process.exit(1);
 }
 
