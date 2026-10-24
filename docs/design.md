@@ -643,7 +643,14 @@ Build the evaluation set and a minimal harness. Run 3–5 candidate models throu
 
 UI, model library, WebLLM adapter with constrained decoding, local endpoint adapter, verified downloads, bounded agent loop, and the MVP research workflow over user documents and CORS-friendly sources.
 
-**Acceptance:** a user on reference hardware loads a catalog model or connects a local endpoint, runs a research task, and receives a cited result without any hosted inference service; the evaluation set passes at the M0 baseline.
+Adjusted after M0 (full plan in [`m1-plan.md`](m1-plan.md)):
+
+- A **device advisor** chooses the browser path on capable GPUs and a local server otherwise.
+- **llama.cpp server** is the supported local server; Ollama is experimental.
+- **PDF** documents are supported; wllama is not shipped.
+- An **evidence check** (verified quotes) and a **repeat guard** address the M0 findings on invented answers and repeated actions.
+
+**Acceptance:** a user on reference hardware loads a catalog model or connects a local endpoint, runs a research task, and receives a cited result without any hosted inference service; the evaluation set passes at the M0 baseline. Detailed criteria are in [`m1-plan.md`](m1-plan.md#acceptance).
 
 ### M2 — Persistence and release hardening
 
