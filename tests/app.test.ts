@@ -64,7 +64,7 @@ describe("settings", () => {
   const valid = { serverKind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", model: "qwen", contextLength: 4096 };
 
   it("accepts valid settings", () => {
-    assert.deepEqual(parseSettings(JSON.stringify(valid)), valid);
+    assert.deepEqual(parseSettings(JSON.stringify(valid)), { path: "local-server", ...valid });
   });
 
   it("treats missing or malformed settings as absent", () => {

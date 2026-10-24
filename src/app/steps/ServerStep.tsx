@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { listModels } from "../../models/local-endpoint.ts";
 import { describeConnectionError, modelLabel, RECOMMENDED_GGUF, SERVER_PRESETS, type ServerKind } from "../servers.ts";
-import type { Settings } from "../settings.ts";
+import type { ServerSettings } from "../settings.ts";
 
 export function ServerStep({
   initial,
   onBack,
   onContinue,
 }: {
-  initial?: Settings;
+  initial?: ServerSettings;
   onBack: () => void;
-  onContinue: (settings: Settings) => void;
+  onContinue: (settings: ServerSettings) => void;
 }) {
   const [kind, setKind] = useState<ServerKind>(initial?.serverKind ?? "llama.cpp");
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? SERVER_PRESETS["llama.cpp"].defaultBaseUrl);
@@ -138,7 +138,7 @@ export function ServerStep({
             <button
               className="primary"
               disabled={!model || contextLength < 2048}
-              onClick={() => onContinue({ serverKind: kind, baseUrl, model, contextLength })}
+              onClick={() => onContinue({ path: "local-server", serverKind: kind, baseUrl, model, contextLength })}
             >
               Test this model
             </button>

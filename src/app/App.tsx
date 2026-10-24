@@ -1,23 +1,27 @@
 import { useState } from "react";
+import type { DeviceCapabilities } from "./device.ts";
+import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
 import type { LibraryDocument } from "./research/library.ts";
+import { clearSettings, loadSettings, saveSettings, type Settings } from "./settings.ts";
+import { BrowserModelStep } from "./steps/BrowserModelStep.tsx";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
 import { ServerStep } from "./steps/ServerStep.tsx";
 import { TestStep } from "./steps/TestStep.tsx";
-import { clearSettings, loadSettings, saveSettings, type Settings } from "./settings.ts";
 
-type Step = "device" | "server" | "test" | "research";
+type Step = "device" | "server" | "browser" | "test" | "research";
 
-const STEP_LABELS: Array<[Step, string]> = [
-  ["device", "Your device"],
-  ["server", "Model server"],
-  ["test", "Test model"],
+const STEP_LABELS: Array<[Step[], string]> = [
+  [["device"], "Your device"],
+  [["server", "browser"], "Model"],
+  [["test"], "Test model"],
 ];
 
 export function App() {
   const [saved, setSaved] = useState<Settings | undefined>(loadSettings);
   const [draft, setDraft] = useState<Settings | undefined>(saved);
   const [step, setStep] = useState<Step>(saved ? "research" : "device");
+  const [caps, setCaps] = useState<DeviceCapabilities>();
   // Kept here, not in the research screen, so documents survive re-testing the model.
   const [documents, setDocuments] = useState<LibraryDocument[]>([]);
 
@@ -30,18 +34,37 @@ export function App() {
 
       {step !== "research" && (
         <ol className="steps" aria-label="Setup steps">
-          {STEP_LABELS.map(([id, label]) => (
-            <li key={id} aria-current={id === step ? "step" : undefined}>
+          {STEP_LABELS.map(([ids, label]) => (
+            <li key={label} aria-current={ids.includes(step) ? "step" : undefined}>
               {label}
             </li>
           ))}
         </ol>
       )}
 
-      {step === "device" && <DeviceStep onContinue={() => setStep("server")} />}
+      {step === "device" && (
+        <DeviceStep
+          onChoose={(path, detected) => {
+            setCaps(detected);
+            setStep(path === "browser" ? "browser" : "server");
+          }}
+        />
+      )}
       {step === "server" && (
         <ServerStep
-          initial={draft}
+          initial={draft?.path === "local-server" ? draft : undefined}
+          onBack={() => setStep("device")}
+          onContinue={(settings) => {
+            releaseBrowserModel();
+            setDraft(settings);
+            setStep("test");
+          }}
+        />
+      )}
+      {step === "browser" && caps && (
+        <BrowserModelStep
+          caps={caps}
+          initial={draft?.path === "browser" ? draft : undefined}
           onBack={() => setStep("device")}
           onContinue={(settings) => {
             setDraft(settings);
@@ -52,7 +75,7 @@ export function App() {
       {step === "test" && draft && (
         <TestStep
           settings={draft}
-          onBack={() => setStep("server")}
+          onBack={() => setStep(draft.path === "browser" && caps ? "browser" : draft.path === "browser" ? "device" : "server")}
           onPassed={() => {
             saveSettings(draft);
             setSaved(draft);
@@ -71,6 +94,7 @@ export function App() {
           }}
           onChangeSetup={() => {
             clearSettings();
+            releaseBrowserModel();
             setSaved(undefined);
             setStep("device");
           }}

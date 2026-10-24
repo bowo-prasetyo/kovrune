@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../../agent/self-check.ts";
-import { LocalEndpointModel } from "../../models/local-endpoint.ts";
-import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../servers.ts";
+import { LoadProgressView } from "../LoadProgressView.tsx";
+import { describeModelError, describeSetup, openModel } from "../models.ts";
+import { SERVER_PRESETS } from "../servers.ts";
 import type { Settings } from "../settings.ts";
+import { useModelLoad } from "../useModelLoad.ts";
 
 type TestState =
+  | { phase: "waiting" }
   | { phase: "running"; step: 1 | 2 }
   | { phase: "done"; result: SelfCheckResult }
   | { phase: "error"; message: string };
@@ -23,40 +26,49 @@ export function TestStep({
   onBack: () => void;
   onPassed: () => void;
 }) {
-  const [state, setState] = useState<TestState>({ phase: "running", step: 1 });
+  const load = useModelLoad(settings);
+  const [state, setState] = useState<TestState>({ phase: "waiting" });
   const [attempt, setAttempt] = useState(0);
-  const preset = SERVER_PRESETS[settings.serverKind];
+  const ready = load.state.phase === "ready";
+  const experimental = settings.path === "local-server" && SERVER_PRESETS[settings.serverKind].support === "experimental";
 
   useEffect(() => {
+    if (!ready) return;
     const controller = new AbortController();
     setState({ phase: "running", step: 1 });
-    const model = new LocalEndpointModel({
-      baseUrl: settings.baseUrl,
-      model: settings.model,
-      contextLength: settings.contextLength,
-      extraBody: preset.extraBody,
-    });
-    runSelfCheck(model, {
-      signal: controller.signal,
-      onStep: (step) => setState({ phase: "running", step }),
-    })
+    openModel(settings)
+      .then((model) =>
+        runSelfCheck(model, {
+          signal: controller.signal,
+          onStep: (step) => setState({ phase: "running", step }),
+        }),
+      )
       .then((result) => setState({ phase: "done", result }))
       .catch((error) => {
-        if (!controller.signal.aborted) setState({ phase: "error", message: describeConnectionError(error, settings.baseUrl) });
+        if (!controller.signal.aborted) setState({ phase: "error", message: describeModelError(error, settings) });
       });
     return () => controller.abort();
-  }, [settings, preset, attempt]);
+  }, [settings, ready, attempt]);
 
   return (
     <section>
       <h2>Test the model</h2>
       <p>
-        {modelLabel(settings.model)} on {preset.label} at <code>{settings.baseUrl}</code>
+        {describeSetup(settings)}
+        {settings.path === "local-server" && (
+          <>
+            {" "}
+            at <code>{settings.baseUrl}</code>
+          </>
+        )}
       </p>
+
+      <LoadProgressView state={load.state} onRetry={load.retry} />
 
       {state.phase === "running" && (
         <p className="progress" aria-live="polite">
-          {STEP_TEXT[state.step]} This usually takes under a minute.
+          {STEP_TEXT[state.step]} This usually takes under a minute
+          {settings.path === "browser" ? " on a capable GPU" : ""}.
         </p>
       )}
 
@@ -77,16 +89,25 @@ export function TestStep({
         </div>
       )}
 
-      {state.phase === "done" && state.result.passed && preset.support === "experimental" && (
+      {state.phase === "done" && !state.result.passed && settings.path === "browser" && (
         <p className="warning">
-          {preset.label} passed the test but is experimental. If research tasks repeat the same step, switch to llama.cpp
-          server.
+          If the model gave garbled output, this GPU may not run browser models correctly. A local model server runs the
+          same model on the CPU instead.
+        </p>
+      )}
+
+      {state.phase === "done" && state.result.passed && experimental && (
+        <p className="warning">
+          {settings.path === "local-server" && SERVER_PRESETS[settings.serverKind].label} passed the test but is
+          experimental. If research tasks repeat the same step, switch to llama.cpp server.
         </p>
       )}
 
       <div className="actions">
         <button onClick={onBack}>Back</button>
-        {state.phase !== "running" && <button onClick={() => setAttempt((n) => n + 1)}>Test again</button>}
+        {(state.phase === "done" || state.phase === "error") && (
+          <button onClick={() => setAttempt((n) => n + 1)}>Test again</button>
+        )}
         {state.phase === "done" && state.result.passed && (
           <button className="primary" onClick={onPassed}>
             Save and continue

@@ -23,7 +23,7 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
   return new WebLLMModel(engine, worker, { id: options.modelId, runtime: "webllm", contextLength });
 }
 
-class WebLLMModel implements LanguageModel {
+export class WebLLMModel implements LanguageModel {
   readonly info: ModelInfo;
   private readonly engine: WebWorkerMLCEngine;
   private readonly worker: Worker;
@@ -39,33 +39,53 @@ class WebLLMModel implements LanguageModel {
   }
 
   async *generate(request: GenerationRequest): AsyncIterable<GenerationChunk> {
-    const stream = await this.engine.chat.completions.create({
-      messages: request.messages,
-      max_tokens: request.maxTokens,
-      temperature: request.temperature ?? 0,
-      stream: true,
-      stream_options: { include_usage: true },
-      response_format: request.responseSchema
-        ? { type: "json_object", schema: JSON.stringify(request.responseSchema) }
-        : undefined,
-      // Qwen3-family models think by default; the benchmark measures direct answers.
-      extra_body: /^Qwen3/i.test(this.info.id) ? { enable_thinking: false } : undefined,
+    const { signal } = request;
+    signal?.throwIfAborted();
+    // A stop must not wait for the engine: on a slow GPU the next token can be minutes away.
+    // The engine is interrupted and winds down in its worker.
+    let onAbort = () => {};
+    const stopped = new Promise<never>((_, reject) => {
+      onAbort = () => {
+        this.engine.interruptGenerate();
+        reject(signal!.reason);
+      };
+      signal?.addEventListener("abort", onAbort, { once: true });
     });
+    stopped.catch(() => {});
+    const untilStopped = <T>(promise: Promise<T>) => (signal ? Promise.race([promise, stopped]) : promise);
 
-    const onAbort = () => this.engine.interruptGenerate();
-    request.signal?.addEventListener("abort", onAbort);
     try {
+      const stream = await untilStopped(
+        this.engine.chat.completions.create({
+          messages: request.messages,
+          max_tokens: request.maxTokens,
+          temperature: request.temperature ?? 0,
+          stream: true,
+          stream_options: { include_usage: true },
+          response_format: request.responseSchema
+            ? { type: "json_object", schema: JSON.stringify(request.responseSchema) }
+            : undefined,
+          // Qwen3-family models think by default; the benchmark measures direct answers.
+          extra_body: /^Qwen3/i.test(this.info.id) ? { enable_thinking: false } : undefined,
+        }),
+      );
+      const chunks = stream[Symbol.asyncIterator]();
       let usage: GenerationChunk["usage"];
-      for await (const chunk of stream) {
+      while (true) {
+        const next = await untilStopped(chunks.next());
+        if (next.done) break;
+        const chunk = next.value;
         if (chunk.usage) {
           usage = { promptTokens: chunk.usage.prompt_tokens, completionTokens: chunk.usage.completion_tokens };
         }
         const text = chunk.choices[0]?.delta?.content;
         if (text) yield { text, done: false };
       }
+      // interruptGenerate can end the stream quietly; report the stop like a cancelled fetch.
+      signal?.throwIfAborted();
       yield { text: "", done: true, usage };
     } finally {
-      request.signal?.removeEventListener("abort", onAbort);
+      signal?.removeEventListener("abort", onAbort);
     }
   }
 
