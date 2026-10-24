@@ -185,24 +185,27 @@ Full evaluation set, harness 0.3.0. Each model is the same Q4_K_M GGUF file the 
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Qwen3.5-2B | 13/22 (59%) | 4/12 (33%) | 100% research, 95.5% coding | 13/22 (59%) | 87% research, 38% coding | ❌ research 59% (needs 60%) | [json](../eval/results/native-qwen3.5-2b-q4km.json) |
 | Llama-3.2-3B-Instruct | 7/22 (32%) | 3/12 (25%) | 100% | 4/22 (18%) | 83% research, 19% coding | ❌ | [json](../eval/results/native-llama-3.2-3b-q4km.json) |
-| Qwen3.5-4B | *running* | | | | | | |
+| Qwen3.5-4B | **16/22 (73%)** | **8/12 (67%)** | 100% | 7/22 (32%) | 51% research, 50% coding | ✅ research 73%, valid actions 100% | [json](../eval/results/native-qwen3.5-4b-q4km.json) |
 
 Constrained research results by task kind:
 
-| Kind | Qwen3.5-2B | Llama-3.2-3B |
-| --- | --- | --- |
-| Lookup (9) | 7 | 3 |
-| Multi-hop (5) | 2 | 2 |
-| Comparison (2) | 2 | 1 |
-| Contradiction (3) | 2 | 0 |
-| Unanswerable (3) | 0 | 1 |
+| Kind | Qwen3.5-2B | Llama-3.2-3B | Qwen3.5-4B |
+| --- | --- | --- | --- |
+| Lookup (9) | 7 | 3 | 8 |
+| Multi-hop (5) | 2 | 2 | 4 |
+| Comparison (2) | 2 | 1 | 2 |
+| Contradiction (3) | 2 | 0 | 2 |
+| Unanswerable (3) | 0 | 1 | 0 |
 
-What these runs show so far:
+What these runs show:
 
-- **Qwen3.5-2B is at the research threshold** (59% against 60%: one task short). It handles single lookups and comparisons well, but **answers every unanswerable question with an invented answer** (0/3) and struggles with multi-hop questions.
-- **Coding is weak for both** (25–33%), well below what an agent needs for code changes.
-- **Constrained decoding is essential.** Without it, valid action rates fall to 83–87% for research and 19–38% for coding, because code inside JSON strings is easy to break.
-- **Llama-3.2-3B is clearly weaker** than the smaller Qwen3.5-2B on research (32%).
+- **Qwen3.5-4B passes the quality criteria** (research 73%, valid actions 100%) and is the only candidate that does. It also handles multi-hop questions (4/5) and coding (67%) far better than the 2B and 3B models.
+- **Qwen3.5-2B is one task short** of the research threshold (59%), and coding is weak (33%).
+- **Llama-3.2-3B is clearly weaker** than the smaller Qwen3.5-2B (research 32%).
+- **No model handles unanswerable questions**: all three invented an answer for nearly every question the documents cannot answer (1 correct refusal out of 9). For a research tool this is the most serious quality gap, and the M1 agent needs a mitigation (for example, an explicit "evidence check" step before answering) rather than relying on the model.
+- **Constrained decoding is essential.** Without it, valid action rates fall to 51–87% for research and 19–50% for coding. Qwen3.5-4B drops from 73% to 32% research success.
+
+**Next step for the decision:** measure the speed of Qwen3.5-4B in the browser on class 2 hardware. It is available as `Qwen3.5-4B-q4f16_1-MLC` in WebLLM (about 3.9 GB of VRAM). It is not available through wllama, because its 2.6 GB GGUF file exceeds wllama's 2 GB file limit. WebLLM uses a different 4-bit quantization (q4f16_1) from these GGUF runs, so the class 2 run should include the full set to confirm quality holds.
 
 ### Speed (browser runs on reference hardware)
 
