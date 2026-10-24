@@ -4,11 +4,13 @@ M0 decides whether models small enough to run in a browser can do Kovrune's agen
 
 ## M0 status
 
+**Decision: provisional go (browser-first, with the local-server path as a first-class option).** Quality and native speed are measured; browser speed on class 2 is estimated, not yet measured. The provisional go becomes final, or is reversed, after the [class 2 confirmation run](#class-2-confirmation-run) early in M1.
+
 | Question | Answer so far | Evidence |
 | --- | --- | --- |
 | **Quality:** can a browser-sized model do the tasks? | **Yes, with Qwen3.5-4B** (research 73%, coding 67%, 100% valid actions). Qwen3.5-2B is one task short (59%). | [Quality results](#quality-native-runs) |
 | **Native speed:** is it fast enough outside the browser? | **Yes, even on class 1.** Qwen3.5-2B on an 8 GB laptop through llama.cpp server: 10.6 tokens/s, 20 s median research task. | [Field notes](#field-notes-not-gate-results) |
-| **Browser speed:** is it fast enough in the browser on class 2? | **Open.** Needs a WebLLM run of `Qwen3.5-4B-q4f16_1-MLC` on a class 2 machine. | — |
+| **Browser speed:** is it fast enough in the browser on class 2? | **Expected yes, not measured.** Estimated 13–25 tokens/s on 16 GB Apple Silicon and more on mid-range GPUs, against a gate of 10. Needs a WebLLM run of `Qwen3.5-4B-q4f16_1-MLC` on a class 2 machine. | [Browser speed estimate](#browser-speed-estimate-class-2) |
 
 Two cross-cutting findings so far:
 
@@ -197,6 +199,43 @@ If no candidate passes on quality, M0 is a no-go for browser-first without needi
 - **No-go (endpoint-first):** no browser candidate passes on class 2. The local endpoint adapter becomes the primary path for agent work in M1; the browser runtime is positioned for lighter tasks (single-step Q&A, embeddings), and the roadmap is adjusted.
 
 Either way, class 1 and class 3 results set the minimum and recommended hardware published with M1.
+
+### Provisional go
+
+With only class 1 hardware available to the project, M0 records a **provisional go**: quality and native speed pass, and browser speed on class 2 is expected to pass on the estimate below. M1 planning proceeds on that basis, with these conditions:
+
+- **The local-server adapter stays a first-class path in M1** whatever the class 2 result, because class 1 machines need it.
+- **The class 2 confirmation run is a gating check in M1's first two weeks.** If it fails, M0 becomes a no-go for browser-first and M1 switches to endpoint-first as described above.
+- **Unanswerable questions need a mitigation in M1** regardless of runtime.
+
+### Browser speed estimate (class 2)
+
+This is arithmetic, not a measurement. Generating each token reads all model weights once, so decode speed is limited by memory bandwidth. `Qwen3.5-4B-q4f16_1-MLC` has about 2.5 GB of weights. The WebLLM authors report that WebLLM retains up to about 80% of native performance ([WebLLM paper, arXiv:2412.15803](https://arxiv.org/abs/2412.15803)); the estimate assumes 50–60% of the bandwidth ceiling to leave margin.
+
+| Class 2 example | Memory bandwidth | Ceiling | Estimate | Gate (≥ 10 tok/s) |
+| --- | --- | --- | --- | --- |
+| Apple M1, 16 GB | ~68 GB/s | ~27 tok/s | ~13–16 tok/s | Pass, thin margin |
+| Apple M2 / M3, 16 GB | ~100 GB/s | ~40 tok/s | ~20–25 tok/s | Pass |
+| Laptop RTX 4060, 8 GB | ~256 GB/s | ~100 tok/s | ~50 tok/s or more | Pass |
+
+Prompt processing on a GPU usually runs at hundreds of tokens per second, and native runs finished research tasks in 2–4 calls, so a median research task of about 20–40 s is expected against the 60 s limit.
+
+What the estimate cannot rule out:
+
+- **WebGPU driver problems.** WebGPU produced broken output on the class 1 laptop's Intel GPU (through wllama).
+- **The thin margin on the slowest class 2 machines.** A 30% error moves a base M1 below the gate.
+- **Graphics memory.** The model needs about 3.9 GB; GPUs with 4–6 GB are borderline.
+- **Quality of the WebLLM quantization.** WebLLM uses q4f16, not the Q4_K_M GGUF files that passed the quality runs.
+
+### Class 2 confirmation run
+
+One run on one class 2 machine settles the open question:
+
+- WebLLM, `Qwen3.5-4B-q4f16_1-MLC`, full task set, constrained mode, hardware class 2.
+- About 1–2 hours including the 2.5 GB download.
+- Submitted with the [benchmark result issue template](../.github/ISSUE_TEMPLATE/m0-benchmark-result.md).
+
+The go becomes final if the run passes the gate. If it fails on speed only, the model is retried on a faster class 2 machine before concluding; if it fails on quality, the q4f16 quantization is the suspect, and the next step is a WebLLM run of Qwen3.5-2B and a check of the quantization.
 
 ## Results
 
