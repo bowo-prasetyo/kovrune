@@ -5,12 +5,14 @@ import { extractJson } from "../src/agent/agent.ts";
 import { evaluateGate, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
 import { formatCall } from "../eval/harness/format.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
+import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
-import { normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
+import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
 import { DocumentIndex } from "../src/tools/search.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 import { researchTasks } from "../eval/tasks/research.ts";
+import { unanswerableTasks } from "../eval/tasks/unanswerable.ts";
 import { referenceSolutions } from "./reference-solutions.ts";
 
 /** A model that replays fixed replies and records the requests it received. */
@@ -42,16 +44,28 @@ class ScriptedModel implements LanguageModel {
 
 const task = (id: string) => researchTasks.find((t) => t.id === id)!;
 
+/** A final_answer action with evidence. */
+const final = (found: boolean, answer: string, evidence: Array<[string, string]> = []) =>
+  JSON.stringify({ tool: "final_answer", args: { found, answer, evidence: evidence.map(([docId, quote]) => ({ docId, quote })) } });
+
+const research = (taskId: string, replies: string[], constrained = true, model = new ScriptedModel(replies)) =>
+  runResearchTask(task(taskId), "research", baseLibrary, model, { constrained });
+
+const ADVISORY_QUOTE: [string, string] = ["lumen-advisory-2024-07", "Affected versions: LumenDB 3.0.0 through 3.1.4."];
+const LICENSE_QUOTE: [string, string] = ["lumen-overview", "the project is licensed under the Mozilla Public License 2.0"];
+const MAINTAINER_QUOTE: [string, string] = ["lumen-overview", "maintained by the Tessel Foundation since 2022"];
+
 describe("research agent", () => {
-  it("passes a task answered with a search, a read and a cited answer", async () => {
+  it("passes a task answered with a search, a read and a verified quote", async () => {
     const model = new ScriptedModel([
       `{"tool":"search","args":{"query":"LSA-2024-07 affected versions"}}`,
       `{"tool":"read","args":{"docId":"lumen-advisory-2024-07"}}`,
-      `{"tool":"final_answer","args":{"found":true,"answer":"LumenDB 3.0.0 through 3.1.4 are affected.","citations":["lumen-advisory-2024-07"]}}`,
+      final(true, "LumenDB 3.0.0 through 3.1.4 are affected.", [ADVISORY_QUOTE]),
     ]);
-    const run = await runResearchTask(task("r03-advisory-affected"), model, { constrained: true });
+    const run = await research("r03-advisory-affected", [], true, model);
     assert.equal(run.agent.stopReason, "final");
     assert.equal(run.score.passed, true);
+    assert.equal(run.research?.status, "verified");
     assert.equal(run.agent.calls.length, 3);
     assert.ok(model.requests.every((r) => r.responseSchema), "constrained mode sends a schema");
     // Tool results are shown to the model as untrusted data.
@@ -60,44 +74,36 @@ describe("research agent", () => {
   });
 
   it("counts invalid replies and lets the model recover in unconstrained mode", async () => {
-    const model = new ScriptedModel([
-      `I will search for the license.`,
-      `{"tool":"search","args":{}}`,
-      "```json\n" + `{"tool":"final_answer","args":{"found":true,"answer":"MPL-2.0","citations":["lumen-overview"]}}` + "\n```",
-    ]);
-    const run = await runResearchTask(task("r02-lumen-license"), model, { constrained: false });
+    const model = new ScriptedModel([`I will search for the license.`, `{"tool":"search","args":{}}`, "```json\n" + final(true, "MPL-2.0", [LICENSE_QUOTE]) + "\n```"]);
+    const run = await research("r02-lumen-license", [], false, model);
     assert.equal(run.score.passed, true);
     assert.deepEqual(run.agent.calls.map((c) => c.valid), [false, false, true]);
     assert.ok(model.requests.every((r) => !r.responseSchema));
   });
 
-  it("fails fabricated citations and wrong found flags", async () => {
-    const fabricated = await runResearchTask(
-      task("r02-lumen-license"),
-      new ScriptedModel([`{"tool":"final_answer","args":{"found":true,"answer":"MPL-2.0","citations":["lumen-overview","made-up-doc"]}}`]),
-      { constrained: true },
-    );
+  it("fails fabricated sources and wrong found flags, and passes a correct refusal", async () => {
+    const fabricated = await research("r02-lumen-license", [final(true, "MPL-2.0", [LICENSE_QUOTE, ["made-up-doc", "licensed under MPL-2.0"]])]);
     assert.equal(fabricated.score.checks.citationsExist, false);
     assert.equal(fabricated.score.passed, false);
 
-    const unanswerable = await runResearchTask(
-      task("r22-harrow-ceo"),
-      new ScriptedModel([`{"tool":"final_answer","args":{"found":true,"answer":"Jane Doe","citations":["harrow-press"]}}`]),
-      { constrained: true },
-    );
-    assert.equal(unanswerable.score.passed, false);
+    const invented = await research("r22-harrow-ceo", [final(true, "Jane Doe", [["harrow-press", "Harrow Labs is headquartered in Rotterdam"]])]);
+    assert.equal(invented.score.passed, false);
 
-    const declined = await runResearchTask(
-      task("r22-harrow-ceo"),
-      new ScriptedModel([`{"tool":"final_answer","args":{"found":false,"answer":"The documents do not name a CEO.","citations":[]}}`]),
-      { constrained: true },
-    );
+    const declined = await research("r22-harrow-ceo", [final(false, "The documents do not name a CEO.")]);
     assert.equal(declined.score.passed, true);
+    assert.equal(declined.research?.status, "not-found");
+  });
+
+  it("fails a correct answer whose quote is not in the cited document", async () => {
+    const run = await research("r02-lumen-license", [final(true, "MPL-2.0", [["lumen-overview", "LumenDB uses the MPL-2.0 license"]])]);
+    assert.equal(run.score.checks.facts, true);
+    assert.equal(run.score.checks.evidence, false);
+    assert.equal(run.research?.status, "unverified");
+    assert.equal(run.research?.evidence[0]?.reason, "quote not found in the document");
   });
 
   it("stops at the call limit", async () => {
-    const model = new ScriptedModel(Array(20).fill(`{"tool":"search","args":{"query":"LumenDB"}}`));
-    const run = await runResearchTask(task("r01-lumen-maintainer"), model, { constrained: true });
+    const run = await research("r01-lumen-maintainer", Array(20).fill(`{"tool":"search","args":{"query":"LumenDB"}}`));
     assert.equal(run.agent.stopReason, "max-calls");
     assert.equal(run.agent.calls.length, 8);
     assert.equal(run.score.passed, false);
@@ -106,26 +112,58 @@ describe("research agent", () => {
   it("drops old tool results to stay within the context window", async () => {
     const model = new ScriptedModel([
       ...corpus.slice(0, 6).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`),
-      `{"tool":"final_answer","args":{"found":true,"answer":"Tessel Foundation","citations":["lumen-overview"]}}`,
+      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
     ]);
     Object.assign(model.info, { contextLength: 1600 });
-    const run = await runResearchTask(task("r01-lumen-maintainer"), model, { constrained: true });
+    const run = await research("r01-lumen-maintainer", [], true, model);
     assert.equal(run.agent.stopReason, "final");
     assert.ok(run.agent.transcript.some((m) => m.content.includes("removed to save context")));
   });
 });
 
-describe("loop guard", () => {
-  it("answers a repeated action with a notice instead of re-running it", async () => {
+describe("repeat and last-step guards", () => {
+  it("answers a repeated action with a notice and then allows only final_answer", async () => {
     const model = new ScriptedModel([
       `{"tool":"search","args":{"query":"LumenDB"}}`,
       `{"tool":"search","args":{"query":"LumenDB"}}`,
-      `{"tool":"final_answer","args":{"found":true,"answer":"Tessel Foundation","citations":["lumen-overview"]}}`,
+      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
     ]);
-    const run = await runResearchTask(task("r01-lumen-maintainer"), model, { constrained: true });
+    const run = await research("r01-lumen-maintainer", [], true, model);
     assert.equal(run.score.passed, true);
     assert.match(run.agent.transcript[3]!.content, /lumen-overview/);
-    assert.match(run.agent.transcript[5]!.content, /already ran this exact action/);
+    assert.match(run.agent.transcript[5]!.content, /already ran this exact action[\s\S]*Finish now/);
+    const schemaText = (i: number) => JSON.stringify(model.requests[i]!.responseSchema);
+    assert.match(schemaText(1), /"search"/);
+    assert.doesNotMatch(schemaText(2), /"search"|"read"/);
+    assert.match(schemaText(2), /"final_answer"/);
+  });
+
+  it("allows only final_answer on the last call, so a run that keeps searching still ends with an answer", async () => {
+    const searches = Array.from({ length: 7 }, (_, i) => `{"tool":"search","args":{"query":"LumenDB stars ${i}"}}`);
+    const model = new ScriptedModel([...searches, final(false, "The documents do not say.")]);
+    const run = await runResearchTask(
+      unanswerableTasks.find((t) => t.id === "u06-lumen-stars")!,
+      "unanswerable",
+      baseLibrary,
+      model,
+      { constrained: true },
+    );
+    assert.equal(run.agent.stopReason, "final");
+    assert.equal(run.score.passed, true);
+    assert.match(run.agent.transcript.at(-2)!.content, /last step\. Finish now with final_answer/);
+    const schemaText = (i: number) => JSON.stringify(model.requests[i]!.responseSchema);
+    assert.match(schemaText(6), /"search"/);
+    assert.doesNotMatch(schemaText(7), /"search"|"read"/);
+  });
+
+  it("rejects other actions once only final_answer is allowed, in unconstrained mode too", async () => {
+    const run = await research(
+      "r01-lumen-maintainer",
+      [`{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"read","args":{"docId":"lumen-overview"}}`, final(false, "Not found.")],
+      false,
+    );
+    assert.deepEqual(run.agent.calls.map((c) => c.valid), [true, true, false, true]);
+    assert.equal(run.research?.status, "not-found");
   });
 });
 
@@ -175,8 +213,8 @@ describe("coding agent", () => {
 describe("benchmark", () => {
   it("summarizes a run and evaluates the gate", async () => {
     const model = new ScriptedModel([
-      `{"tool":"final_answer","args":{"found":true,"answer":"Tessel Foundation","citations":["lumen-overview"]}}`,
-      `{"tool":"final_answer","args":{"found":true,"answer":"Apache-2.0","citations":["lumen-overview"]}}`,
+      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
+      final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
     ]);
     const report = await runBenchmark({
       model,
@@ -189,6 +227,42 @@ describe("benchmark", () => {
     assert.equal(report.summary[0]!.successRate, 0.5);
     assert.equal(report.gate.passed, false);
     assert.equal(report.gate.criteria.find((c) => c.name.startsWith("Research"))!.passed, false);
+  });
+
+  it("runs the pdf suite on extracted PDFs, with quotes cited from a chunk", async () => {
+    const pdfLibrary = await loadNodePdfLibrary();
+    const chunks = pdfLibrary.index.partsOf("tessel-annual-report-2024");
+    assert.equal(chunks.length, 2, "the annual report is split into chunks");
+    const driftwoodChunk = chunks.find((id) => pdfLibrary.index.get(id)!.text.includes("Driftwood"))!;
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"new project accepted November 2024"}}`,
+      `{"tool":"read","args":{"docId":"${driftwoodChunk}"}}`,
+      final(true, "Driftwood, a structured logging library for Rust applications.", [
+        [driftwoodChunk, "accepted Driftwood, a structured logging library for Rust applications"],
+      ]),
+    ]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      pdfLibrary,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["pdf"], modes: ["constrained"], taskIds: ["p02-new-project"] },
+    });
+    assert.equal(report.results[0]!.suite, "pdf");
+    assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
+    assert.equal(report.results[0]!.status, "verified");
+  });
+
+  it("refuses to run the pdf suite without its library", async () => {
+    await assert.rejects(
+      runBenchmark({
+        model: new ScriptedModel([]),
+        runner: new NodeCodeRunner(),
+        environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+        config: { suites: ["pdf"], modes: ["constrained"] },
+      }),
+      /needs pdfLibrary/,
+    );
   });
 
   it("passes the gate when every threshold is met", () => {

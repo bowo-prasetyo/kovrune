@@ -152,8 +152,14 @@ export async function runAgent(options: {
   onCall?: (call: CallRecord, index: number) => void;
 }): Promise<AgentRun> {
   const { model, tools, finalTool, config, signal } = options;
+  const constrain = config.constrained && model.supportsConstrainedDecoding();
   const schema = actionSchema(tools);
-  const responseSchema = config.constrained && model.supportsConstrainedDecoding() ? actionJsonSchema(tools) : undefined;
+  const responseSchema = constrain ? actionJsonSchema(tools) : undefined;
+  // After a repeated action, only the final tool is allowed (the repeat guard).
+  const finalOnly = tools.filter((t) => t.name === finalTool);
+  const finalSchema = actionSchema(finalOnly);
+  const finalResponseSchema = constrain ? actionJsonSchema(finalOnly) : undefined;
+  let forceFinal = false;
   const transcript: ChatMessage[] = [
     { role: "system", content: systemPrompt(options.system, tools) },
     { role: "user", content: options.task },
@@ -163,13 +169,26 @@ export async function runAgent(options: {
   const budget = model.info.contextLength - config.maxTokensPerCall - (config.contextReserve ?? 128);
 
   while (calls.length < config.maxCalls) {
+    // The last-step guard: small models can keep rephrasing searches until the budget runs out,
+    // so the last call allows only the final tool and the model is told to finish.
+    if (!forceFinal && calls.length > 0 && calls.length === config.maxCalls - 1) {
+      forceFinal = true;
+      transcript.at(-1)!.content += `\n\nThis is your last step. Finish now with ${finalTool}, using what you have found so far.`;
+    }
     if (!fitToContext(transcript, budget)) {
       return { stopReason: "context-overflow", calls, transcript };
     }
 
     let result: Awaited<ReturnType<typeof callForAction>>;
     try {
-      result = await callForAction({ model, messages: transcript, schema, responseSchema, maxTokens: config.maxTokensPerCall, signal });
+      result = await callForAction({
+        model,
+        messages: transcript,
+        schema: forceFinal ? finalSchema : schema,
+        responseSchema: forceFinal ? finalResponseSchema : responseSchema,
+        maxTokens: config.maxTokensPerCall,
+        signal,
+      });
     } catch (error) {
       return { stopReason: "error", error: error instanceof Error ? error.message : String(error), calls, transcript };
     }
@@ -181,7 +200,9 @@ export async function runAgent(options: {
       transcript.push({ role: "assistant", content: text.slice(0, 400) });
       transcript.push({
         role: "user",
-        content: `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of the listed actions.`,
+        content: forceFinal
+          ? `Your reply was not a valid action (${record.error}). Reply with exactly one ${finalTool} JSON object.`
+          : `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of the listed actions.`,
       });
       continue;
     }
@@ -191,12 +212,14 @@ export async function runAgent(options: {
     if (action.tool === finalTool) {
       return { stopReason: "final", final: action.args, calls, transcript };
     }
-    // Tools are deterministic, so repeating an action cannot help; say so instead of re-running it.
+    // Tools are deterministic, so repeating an action cannot help. Small models tend to
+    // loop instead of answering, so a repeat ends the search: the next call must be final.
     const repeated = executed.has(actionText);
     executed.add(actionText);
+    forceFinal ||= repeated;
     const tool = tools.find((t) => t.name === action.tool)!;
     const observation = repeated
-      ? `You already ran this exact action and its result has not changed. Choose a different action, or finish with ${finalTool}.`
+      ? `You already ran this exact action and its result has not changed. Finish now with ${finalTool}, using what you have found so far.`
       : tool.execute
         ? await tool.execute(action.args)
         : "OK";

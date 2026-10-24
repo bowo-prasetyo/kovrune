@@ -38,7 +38,7 @@ Comparing the two shows how much constrained decoding matters for each model ([d
 
 ## Evaluation set
 
-34 tasks in [`eval/tasks/`](../eval/tasks/), all scored without a model judge.
+34 tasks in [`eval/tasks/`](../eval/tasks/), all scored without a model judge. Harness 0.5.0 (M1 slice 2) adds 12 more in two new suites, for 46 in total; see [M1 additions](#m1-additions-harness-050).
 
 ### Research: 22 tasks
 
@@ -52,7 +52,16 @@ The agent answers questions using `search`, `read`, and `final_answer` over a fi
 | Contradiction | 3 | Prefer a later correction over an earlier claim |
 | Unanswerable | 3 | Report `found: false` instead of inventing an answer |
 
-A research task passes when the agent finishes, reports `found` correctly, includes every required fact (any accepted spelling), cites at least one acceptable document for each required source, and cites no document that does not exist.
+A research task passes when the agent finishes, reports `found` correctly, includes every required fact (any accepted spelling), cites at least one acceptable document for each required source, and cites no document that does not exist. From harness 0.5.0, citations are evidence items `{docId, quote}`, and an answerable task also needs every quote to be found word for word in its document (the app's **Verified** status).
+
+### M1 additions (harness 0.5.0)
+
+| Suite | Tasks | What it tests |
+| --- | --- | --- |
+| `unanswerable` | 8 | Questions about the same corpus that it does not answer; the agent must report `found: false`. With the original 3, refusals are measured on 11 questions |
+| `pdf` | 4 | Questions over two PDFs in [`eval/tasks/pdfs/`](../eval/tasks/pdfs/), extracted with pdf.js as the app does. The annual report is long enough to be split into chunks; one task also needs a corpus document |
+
+The PDFs are generated from [`pdf-sources.ts`](../eval/tasks/pdf-sources.ts) by `node eval/tasks/make-pdfs.ts`; `npm test` checks the committed files are current and extract word for word. Reports keep each suite on its own line, so the original 22 research tasks stay comparable with M0 runs (allowing for the evidence requirement).
 
 ### Coding: 12 tasks
 
@@ -139,7 +148,7 @@ npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model hf.co/uns
 
 Notes for Ollama: set `OLLAMA_CONTEXT_LENGTH=4096` and `OLLAMA_NUM_PARALLEL=1` for the service. Without `reasoning_effort`, Qwen3.5 thinks first, and Ollama returns the thinking separately with an empty answer until it finishes, which the harness sees as invalid replies. In WSL, give WSL enough memory (`memory=6GB` in `.wslconfig` on an 8 GB machine); with the default of half the RAM, Ollama was killed by the out-of-memory killer during coding tasks.
 
-Options: `--preset full|quick`, `--suites research,coding`, `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--ignore-self-check`, `--notes "..."`. Press Ctrl+C to stop early; the report still includes the completed tasks.
+Options: `--preset full|quick`, `--suites research,unanswerable,pdf,coding` (the default), `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--ignore-self-check`, `--notes "..."`. Press Ctrl+C to stop early; the report still includes the completed tasks.
 
 ### What happens during a run
 
@@ -155,7 +164,7 @@ Options: `--preset full|quick`, `--suites research,coding`, `--modes constrained
 
 | Set | Tasks | Use |
 | --- | --- | --- |
-| Full | All 34 | Gate results. Only a complete full run of both suites can pass the gate. |
+| Full | All 46 (34 before harness 0.5.0) | Gate results. Only a complete full run of all suites can pass the gate. |
 | Quick | 8: `r01`, `r03`, `r10`, `r16`, `r17`, `r20`, `c01`, `c03` | First checks and slow machines. Covers every task kind; not enough for the gate. |
 
 On slow machines, start with the Quick set in constrained mode only. Use the self-check's time estimate to decide whether a full run is practical.
@@ -178,7 +187,7 @@ A **single run** passes the gate when, in constrained mode:
 
 | Criterion | Threshold |
 | --- | --- |
-| Complete run of the full evaluation set | All 34 tasks, both suites, not stopped early |
+| Complete run of the full evaluation set | All 46 tasks, all four suites, not stopped early (34 tasks and two suites before harness 0.5.0) |
 | Research task success | ≥ 60% |
 | Valid action rate (all suites) | ≥ 95% |
 | Decode speed | ≥ 10 tokens/s |
@@ -328,3 +337,4 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.2.0 | Self-check after loading, live per-call logs, partial reports, quick preset, full-set gate criterion |
 | 0.3.0 | Search matches word forms (light stemming) and picks snippets by term rarity; a repeated identical action gets a notice instead of a re-run; `run_tests` reports how many visible tests pass; console output from submitted code is discarded |
 | 0.4.0 | Two-step self-check: a warm-up action, then a check that the model acts on a tool result; speed is measured on the warm call. Task scoring is unchanged from 0.3.0, so task results remain comparable |
+| 0.5.0 | M1 slice 2. Research answers carry evidence quotes, and answerable tasks need every quote verified; a repeated action restricts the next call to `final_answer` (repeat guard); long documents are split into chunks; new `unanswerable` (8) and `pdf` (4) suites. Research results are stricter than 0.4.0, so compare them with care |

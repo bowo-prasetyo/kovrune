@@ -5,7 +5,21 @@ import { runBenchmark, type BenchmarkConfig, type Mode, type Preset, type Report
 import { formatCall, formatReport } from "../harness/format.ts";
 import { BrowserCodeRunner } from "../harness/sandbox.ts";
 import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../../src/agent/self-check.ts";
+import { ResearchLibrary } from "../../src/agent/research.ts";
+import { loadBrowserPdfJs } from "../../src/documents/pdf-browser.ts";
 import { corpus } from "../tasks/corpus.ts";
+import { loadPdfDocuments } from "../tasks/pdf.ts";
+
+const pdfUrls = import.meta.glob("../tasks/pdfs/*.pdf", { query: "?url", import: "default", eager: true }) as Record<string, string>;
+
+async function loadBrowserPdfLibrary(): Promise<ResearchLibrary> {
+  const documents = await loadPdfDocuments(async (id) => {
+    const url = pdfUrls[`../tasks/pdfs/${id}.pdf`];
+    if (!url) throw new Error(`Missing PDF: ${id}`);
+    return new Uint8Array(await (await fetch(url)).arrayBuffer());
+  }, await loadBrowserPdfJs());
+  return new ResearchLibrary([...corpus, ...documents]);
+}
 import type { SuiteName } from "../harness/suites.ts";
 
 export interface BrowserRunOptions {
@@ -127,6 +141,7 @@ async function run(options: BrowserRunOptions): Promise<Report> {
     const report = await runBenchmark({
       model,
       runner: new BrowserCodeRunner(),
+      pdfLibrary: options.config.suites.includes("pdf") ? await loadBrowserPdfLibrary() : undefined,
       config: options.config,
       selfCheck,
       signal: controller.signal,

@@ -1,0 +1,64 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 1506 >>
+stream
+BT
+72 720 Td
+/F1 15 Tf
+32 TL
+(Brisk Tuning Guide \(for Brisk 1.4\)) Tj
+T*
+/F1 11 Tf
+16 TL
+(This guide explains how to choose Brisk settings for common workloads. It) Tj T*
+(applies to Brisk 1.4 and later. All recommendations were measured on an 8-core) Tj T*
+(laptop.) Tj T*
+T*
+(Choosing a level. For log files and other data that is written once and rarely) Tj T*
+(read, use level 3: it compresses at over 400 MB/s while saving most of the space) Tj T*
+(that higher levels save. For database backups, use level 9, which is the best) Tj T*
+(balance when backups are read back regularly. Use level 13 only for cold) Tj T*
+(archives that are almost never read; it can use up to 1.5 GiB of memory during) Tj T*
+(compression.) Tj T*
+T*
+(Dictionaries. Small files compress poorly because there is little repeated data) Tj T*
+(inside each file. For collections of small files under 16 KiB, train a) Tj T*
+(dictionary first with brisk train --samples <directory> --size 112K. The) Tj T*
+(recommended dictionary size is 112 KiB; larger dictionaries rarely help and slow) Tj T*
+(down decompression.) Tj T*
+T*
+(Threads. Brisk uses one thread per CPU core by default. Above 8 threads the) Tj T*
+(speed gain is small, so on large servers set --threads 8 to leave cores free for) Tj T*
+(other work.) Tj T*
+T*
+(Checking results. Run brisk bench --level <n> on a sample of your data before) Tj T*
+(changing settings in production. The benchmark prints the compression ratio and) Tj T*
+(the speed for each level.) Tj T*
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000212 00000 n 
+0000000338 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1896
+%%EOF

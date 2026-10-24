@@ -1,23 +1,25 @@
 import { useState } from "react";
+import { ResearchScreen } from "./research/ResearchScreen.tsx";
+import type { LibraryDocument } from "./research/library.ts";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
-import { ReadyStep } from "./steps/ReadyStep.tsx";
 import { ServerStep } from "./steps/ServerStep.tsx";
 import { TestStep } from "./steps/TestStep.tsx";
 import { clearSettings, loadSettings, saveSettings, type Settings } from "./settings.ts";
 
-type Step = "device" | "server" | "test" | "ready";
+type Step = "device" | "server" | "test" | "research";
 
 const STEP_LABELS: Array<[Step, string]> = [
   ["device", "Your device"],
   ["server", "Model server"],
   ["test", "Test model"],
-  ["ready", "Ready"],
 ];
 
 export function App() {
   const [saved, setSaved] = useState<Settings | undefined>(loadSettings);
   const [draft, setDraft] = useState<Settings | undefined>(saved);
-  const [step, setStep] = useState<Step>(saved ? "ready" : "device");
+  const [step, setStep] = useState<Step>(saved ? "research" : "device");
+  // Kept here, not in the research screen, so documents survive re-testing the model.
+  const [documents, setDocuments] = useState<LibraryDocument[]>([]);
 
   return (
     <main>
@@ -26,13 +28,15 @@ export function App() {
         <p className="tagline">Research with an AI model that runs on your own machine.</p>
       </header>
 
-      <ol className="steps" aria-label="Setup steps">
-        {STEP_LABELS.map(([id, label]) => (
-          <li key={id} aria-current={id === step ? "step" : undefined}>
-            {label}
-          </li>
-        ))}
-      </ol>
+      {step !== "research" && (
+        <ol className="steps" aria-label="Setup steps">
+          {STEP_LABELS.map(([id, label]) => (
+            <li key={id} aria-current={id === step ? "step" : undefined}>
+              {label}
+            </li>
+          ))}
+        </ol>
+      )}
 
       {step === "device" && <DeviceStep onContinue={() => setStep("server")} />}
       {step === "server" && (
@@ -52,13 +56,15 @@ export function App() {
           onPassed={() => {
             saveSettings(draft);
             setSaved(draft);
-            setStep("ready");
+            setStep("research");
           }}
         />
       )}
-      {step === "ready" && saved && (
-        <ReadyStep
+      {step === "research" && saved && (
+        <ResearchScreen
           settings={saved}
+          documents={documents}
+          onDocumentsChange={setDocuments}
           onRetest={() => {
             setDraft(saved);
             setStep("test");

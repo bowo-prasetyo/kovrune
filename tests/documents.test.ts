@@ -1,0 +1,128 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { answerStatus, checkEvidence, normalizeForMatch } from "../src/agent/evidence.ts";
+import { ResearchLibrary } from "../src/agent/research.ts";
+import { chunkDocument, parentId } from "../src/documents/chunk.ts";
+import { detectKind, extractText, htmlToText, type PdfJsLike } from "../src/documents/extract.ts";
+import { corpus } from "../eval/tasks/corpus.ts";
+
+describe("evidence check", () => {
+  const texts: Record<string, string> = {
+    doc: "LumenDB 3.0, released in March 2024, is licensed under the “Mozilla Public License 2.0”.\nIt is maintained by\nthe Tessel Foundation.",
+  };
+  const resolve = (id: string) => texts[id];
+
+  it("verifies quotes regardless of case, whitespace, curly quotes and edge punctuation", () => {
+    const [checked] = checkEvidence([{ docId: "doc", quote: '"maintained by the TESSEL foundation."' }], resolve);
+    assert.equal(checked!.verified, true);
+    const [curly] = checkEvidence([{ docId: "doc", quote: 'licensed under the "Mozilla Public License 2.0"' }], resolve);
+    assert.equal(curly!.verified, true);
+  });
+
+  it("rejects missing documents, invented wording and quotes under three words", () => {
+    const checked = checkEvidence(
+      [
+        { docId: "nope", quote: "maintained by the Tessel Foundation" },
+        { docId: "doc", quote: "maintained by the Apache Foundation" },
+        { docId: "doc", quote: "Tessel Foundation" },
+      ],
+      resolve,
+    );
+    assert.deepEqual(
+      checked.map((c) => c.reason),
+      ["no such document", "quote not found in the document", "quote shorter than 3 words"],
+    );
+  });
+
+  it("gives each answer a status", () => {
+    const verified = checkEvidence([{ docId: "doc", quote: "maintained by the Tessel Foundation" }], resolve);
+    const unverified = checkEvidence([{ docId: "doc", quote: "made up words entirely" }], resolve);
+    assert.equal(answerStatus(true, verified), "verified");
+    assert.equal(answerStatus(true, unverified), "unverified");
+    assert.equal(answerStatus(true, []), "unverified");
+    assert.equal(answerStatus(false, []), "not-found");
+  });
+
+  it("normalizes dashes and non-breaking spaces", () => {
+    assert.equal(normalizeForMatch("3.0–3.1 versions"), "3.0-3.1 versions");
+  });
+});
+
+describe("chunking", () => {
+  it("leaves short documents unchanged, so the M0 corpus keeps its IDs", () => {
+    for (const doc of corpus) assert.deepEqual(chunkDocument(doc), [{ ...doc, text: doc.text.trim() }], doc.id);
+  });
+
+  it("splits long documents at paragraph boundaries with part IDs and titles", () => {
+    const paragraphs = Array.from({ length: 6 }, (_, i) => `Paragraph ${i + 1}. ${"word ".repeat(80).trim()}.`);
+    const chunks = chunkDocument({ id: "report", title: "Report", text: paragraphs.join("\n\n") }, 1000);
+    assert.ok(chunks.length > 1);
+    assert.deepEqual(chunks.map((c) => c.id), chunks.map((_, i) => `report#${i + 1}`));
+    assert.equal(chunks[0]!.title, `Report (part 1 of ${chunks.length})`);
+    assert.ok(chunks.every((c) => c.text.length <= 1000));
+    assert.equal(chunks.map((c) => c.text).join("\n\n"), paragraphs.join("\n\n"));
+  });
+
+  it("breaks a single long paragraph into sentences and words", () => {
+    const text = `${"Short sentence here. ".repeat(60)}${"x".repeat(10)} ${"longword ".repeat(200)}`;
+    const chunks = chunkDocument({ id: "d", title: "D", text }, 500);
+    assert.ok(chunks.every((c) => c.text.length <= 500), String(chunks.map((c) => c.text.length)));
+    assert.equal(chunks.map((c) => c.text).join(" ").replace(/\s+/g, " "), text.trim().replace(/\s+/g, " "));
+  });
+
+  it("maps chunk IDs back to their document", () => {
+    assert.equal(parentId("report#3"), "report");
+    assert.equal(parentId("lumen-overview"), "lumen-overview");
+    assert.equal(parentId("issue#nine"), "issue#nine");
+  });
+
+  it("verifies quotes against the whole document when the model cites a chunk", () => {
+    const text = `${"Intro paragraph. ".repeat(150)}\n\nThe budget for 2025 assumes income of EUR 450,000.`;
+    const library = new ResearchLibrary([{ id: "report", title: "Report", text }]);
+    const parts = library.index.partsOf("report");
+    assert.ok(parts.length > 1);
+    assert.equal(library.textFor(parts[0]!), text);
+    assert.equal(library.documentFor(parts.at(-1)!)!.id, "report");
+  });
+});
+
+describe("text extraction", () => {
+  it("detects supported file types", () => {
+    assert.equal(detectKind("paper.PDF"), "pdf");
+    assert.equal(detectKind("page.htm"), "html");
+    assert.equal(detectKind("notes.md"), "markdown");
+    assert.equal(detectKind("notes.txt"), "text");
+    assert.equal(detectKind("data", "text/plain"), "text");
+    assert.equal(detectKind("sheet.xlsx"), undefined);
+  });
+
+  it("turns HTML into readable text", () => {
+    const html = `<html><head><title>T</title><style>p{color:red}</style><script>alert(1)</script></head>
+      <body><h1>Report</h1><p>Income was EUR&nbsp;412,000 &amp; rising.</p><ul><li>One</li><li>Two</li></ul><!-- hidden --></body></html>`;
+    const text = htmlToText(html);
+    assert.doesNotMatch(text, /alert|color:red|hidden|</);
+    assert.match(text, /Report\n\nIncome was EUR 412,000 & rising\.\n\nOne\n\nTwo/);
+  });
+
+  it("decodes text files and rejects unsupported ones", async () => {
+    const file = (name: string, content: string) => ({ name, arrayBuffer: async () => new TextEncoder().encode(content).buffer as ArrayBuffer });
+    const noPdf = async (): Promise<PdfJsLike> => {
+      throw new Error("not needed");
+    };
+    assert.deepEqual(await extractText(file("a.md", "# Title\r\n\r\nBody"), noPdf), { kind: "markdown", text: "# Title\n\nBody", warning: undefined });
+    assert.match((await extractText(file("empty.txt", "  "), noPdf)).warning ?? "", /no text/);
+    await assert.rejects(extractText(file("a.docx", "x"), noPdf), /Unsupported file type/);
+  });
+
+  it("warns when a PDF has no text layer", async () => {
+    const emptyPdf: PdfJsLike = {
+      getDocument: () => ({
+        promise: Promise.resolve({ numPages: 1, getPage: async () => ({ getTextContent: async () => ({ items: [] }) }) }),
+        destroy: async () => {},
+      }),
+    };
+    const result = await extractText({ name: "scan.pdf", arrayBuffer: async () => new ArrayBuffer(4) }, async () => emptyPdf);
+    assert.equal(result.text, "");
+    assert.match(result.warning ?? "", /scanned/);
+  });
+});

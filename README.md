@@ -10,7 +10,7 @@ See [`docs/design.md`](docs/design.md) for the product definition, architecture,
 ## Status
 
 - **M0 (benchmark gate): provisional go.** See [`docs/m0-benchmark.md`](docs/m0-benchmark.md#m0-status). Help confirm it by running the benchmark on a 16 GB laptop: [issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9).
-- **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). Slice 1 adds the app's setup wizard; asking questions about your documents comes in slice 2.
+- **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). The app sets up a local model server (slice 1) and answers questions about your own documents with verified quotes (slice 2). The browser path comes in slice 3.
 
 ## Running the app
 
@@ -27,6 +27,7 @@ You need Node.js 22 or newer and a local model server. [llama.cpp server](https:
    npm run dev
    ```
 3. Follow the setup wizard: it checks your device, connects to the server, and tests the model in about a minute. Your setup is saved in the browser.
+4. Add documents (PDF, text, Markdown or HTML) and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document: **Verified** means every quote was found word for word; **Unverified** means some were not, so check the answer yourself; **Not found in your sources** means the model found no answer in your documents. Documents stay on your device and are kept only until you reload the page. Scanned PDFs without a text layer cannot be read.
 
 Nothing is sent to an online AI service: the app talks only to the model server you connect it to.
 

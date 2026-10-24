@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | In progress: slice 1 (engine move, app skeleton, local-server setup) |
+| Status | In progress: slices 1 and 2 done; next is slice 3 (browser path). See [Progress](#progress) |
 | Depends on | M0 provisional go ([`m0-benchmark.md`](m0-benchmark.md#m0-status)) |
 | Team | Project owner (decisions, reviews, laptop testing) and Claude (implementation, tests, benchmark runs, docs) |
 
@@ -49,6 +49,7 @@
 6. **Trust features.**
    - **Evidence check.** `final_answer` must include, for each citation, a short verbatim quote. The app checks that each quote appears in the cited source (ignoring whitespace and case). If none verify, the answer is shown as **unverified**. The evidence step also gives the model an explicit "the sources do not contain the answer" path.
    - **Repeat guard.** After two identical actions, the next call allows only `final_answer`, enforced through the constrained-decoding schema.
+   - **Last-step guard** (added in slice 2). The last call a task is allowed also accepts only `final_answer`, and the model is told to finish with what it has found. Without it, small models rephrased searches until the budget ran out on questions the documents do not answer (4 of 11 in the first slice 2 run).
    - **"Not found in your sources"** is a first-class result, not an error.
 7. **Evaluation continuity.** The M0 evaluation set keeps running on the moved engine. M1 adds tasks for the new behaviour (below) and reports them separately, so M0 comparisons stay valid.
 
@@ -84,6 +85,38 @@ Total: about 6–8 weeks elapsed.
 - **Evidence scoring**: a research task also requires a quote that verifies against a cited document.
 
 These change the evaluation set, so reports bump the harness version and keep the original 22 research tasks as a separate line for comparison with M0.
+
+## Progress
+
+### Slice 1: engine and skeleton (done)
+
+The engine moved into `src/`, and the app gained the setup wizard. On native llama.cpp, the Qwen3.5-4B results were identical to M0, task by task ([`slice1-regression-qwen3.5-4b-q4km.json`](../eval/results/slice1-regression-qwen3.5-4b-q4km.json)). The class 2 gate is still open in issue #9.
+
+### Slice 2: research over your documents (done)
+
+The app now has a document library (PDF, text, Markdown, HTML; kept in memory until M2), a question box with a live step trace and a Stop button, and a result view. The view shows **Verified**, **Unverified** or **Not found in your sources**, with each quote marked as found or not found in its document. The evaluation adds the `unanswerable` and `pdf` suites (harness 0.5.0).
+
+Exit check, Qwen3.5-4B (Q4_K_M) on native llama.cpp, constrained, 4 CPU threads in the cloud container ([`slice2-qwen3.5-4b-q4km.json`](../eval/results/slice2-qwen3.5-4b-q4km.json)):
+
+| Target | Result |
+| --- | --- |
+| Original research set ≥ 73%, now with verified quotes required | 19/22 (86%); M0 was 16/22 without quotes |
+| Correct refusals ≥ 2/3 (11 unanswerable questions) | 11/11; in M0, the three models refused 1 of 9 times in total |
+| Valid actions ≥ 95% | 100% |
+| Every answer judged correct has a verified quote | Yes (the scoring requires it) |
+| PDF suite | 3/4 |
+
+The first run without the last-step guard reached 7/11 refusals. The model never invented an answer, but it kept rephrasing searches until it ran out of calls on four questions. The last-step guard turned exactly those four into correct refusals and changed no other result.
+
+Remaining failures:
+- r04 gives only one of the two fixed versions.
+- r12 cites a related document instead of the expected one.
+- r19 names the wrong library after a correction.
+- p04 decides that a two-part question is unanswerable.
+
+Decode speed in the container is about 7 tokens/s, which is not a class 1 or class 2 measurement.
+
+Still open for the slice: the owner asks a question about one of their own PDFs on the class 1 laptop.
 
 ## Acceptance
 
