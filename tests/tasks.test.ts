@@ -3,20 +3,41 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { codingTasks } from "../eval/tasks/coding.ts";
-import { corpus } from "../eval/tasks/corpus.ts";
-import { researchTasks } from "../eval/tasks/research.ts";
+import { pdfTasks } from "../eval/tasks/pdf.ts";
+import { pdfSources, sourceText } from "../eval/tasks/pdf-sources.ts";
+import { renderPdf } from "../eval/tasks/make-pdfs.ts";
+import { researchTasks, type ResearchTask } from "../eval/tasks/research.ts";
+import { unanswerableTasks } from "../eval/tasks/unanswerable.ts";
+import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { referenceSolutions } from "./reference-solutions.ts";
+import { readFile } from "node:fs/promises";
 
 const runner = new NodeCodeRunner();
-const docsById = new Map(corpus.map((doc) => [doc.id, doc]));
+const pdfLibrary = await loadNodePdfLibrary();
 
 describe("evaluation set", () => {
-  it("has 20-50 tasks with unique IDs", () => {
-    const ids = [...researchTasks, ...codingTasks].map((t) => t.id);
-    assert.ok(ids.length >= 20 && ids.length <= 50, `${ids.length} tasks`);
+  it("has 46 tasks with unique IDs: 22 research, 8 unanswerable, 4 PDF, 12 coding", () => {
+    const ids = [...researchTasks, ...unanswerableTasks, ...pdfTasks, ...codingTasks].map((t) => t.id);
+    assert.deepEqual([researchTasks.length, unanswerableTasks.length, pdfTasks.length, codingTasks.length], [22, 8, 4, 12]);
     assert.equal(new Set(ids).size, ids.length);
   });
+
+  it("has 11 unanswerable questions in total, enough to measure refusals", () => {
+    const all = [...researchTasks, ...unanswerableTasks].filter((t) => !t.answerable);
+    assert.equal(all.length, 11);
+    assert.ok(all.every((t) => t.facts.length === 0 && t.citations.length === 0));
+  });
+
+  for (const source of pdfSources) {
+    it(`${source.id}.pdf is up to date with pdf-sources.ts and extracts word for word`, async () => {
+      const committed = await readFile(new URL(`../eval/tasks/pdfs/${source.id}.pdf`, import.meta.url));
+      assert.ok(committed.equals(renderPdf(source)), "regenerate with: node eval/tasks/make-pdfs.ts");
+      const extracted = pdfLibrary.documentFor(source.id)!.text;
+      const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+      assert.equal(norm(extracted), norm(`${source.title} ${sourceText(source)}`));
+    });
+  }
 
   for (const task of codingTasks) {
     it(`${task.id}: reference solution passes every test`, async () => {
@@ -35,8 +56,9 @@ describe("evaluation set", () => {
     }
   }
 
-  for (const task of researchTasks) {
+  for (const task of [...researchTasks, ...unanswerableTasks, ...pdfTasks] as ResearchTask[]) {
     it(`${task.id}: references real documents and supported facts`, () => {
+      const docsById = new Map(pdfLibrary.documents.map((doc) => [doc.id, doc]));
       for (const group of task.citations) {
         for (const id of group) assert.ok(docsById.has(id), `unknown document ${id}`);
       }

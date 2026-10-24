@@ -1,0 +1,96 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 2530 >>
+stream
+BT
+72 720 Td
+/F1 15 Tf
+32 TL
+(Tessel Foundation Annual Report 2024) Tj
+T*
+/F1 11 Tf
+16 TL
+(This report summarises the Tessel Foundation's work, finances and projects for) Tj T*
+(the calendar year 2024. It was approved by the steering committee, chaired in) Tj T*
+(2024 by Ana Lindqvist, at its February 2025 meeting.) Tj T*
+T*
+(Highlights. The foundation's two projects both shipped major releases in 2024.) Tj T*
+(Quillstate 2.0 was released in February, and LumenDB 3.0 in March, followed by) Tj T*
+(LumenDB 3.2 in September. The security team handled one advisory for LumenDB) Tj T*
+(during the year and published it with a coordinated fix.) Tj T*
+T*
+(Sponsors and income. In 2024 the foundation was supported by 27 sponsoring) Tj T*
+(organisations, up from 19 in 2023. Total income for 2024 was EUR 412,000.) Tj T*
+(Sponsorships provided EUR 301,000, individual donations EUR 87,000, and income) Tj T*
+(from the Embedded Data Days workshop EUR 24,000.) Tj T*
+T*
+(Spending. Total spending for 2024 was EUR 365,000, leaving a surplus of EUR) Tj T*
+(47,000 that is held as a reserve for future security work. The largest single) Tj T*
+(expense was external security audits of LumenDB and Quillstate, which cost EUR) Tj T*
+(96,000. Maintainer stipends cost EUR 84,000, continuous integration and hosting) Tj T*
+(infrastructure EUR 58,000, and travel support for contributors EUR 31,000. The) Tj T*
+(remaining EUR 96,000 covered legal, accounting and administrative costs.) Tj T*
+T*
+(Governance. The steering committee met eleven times in 2024. It approved four) Tj T*
+(RFCs, including the LumenDB snapshot-pinning RFC adopted for version 3.2. All) Tj T*
+(decisions were recorded on the public mailing list. The next steering committee) Tj T*
+(election is scheduled for March 2025, when two of the five seats are up for) Tj T*
+(election.) Tj T*
+T*
+(Security. The private security team received six vulnerability reports in 2024.) Tj T*
+(Five were found not to be vulnerabilities or were already fixed. One led to a) Tj T*
+(published advisory for LumenDB's backup restore function. The foundation plans) Tj T*
+(to repeat external audits every two years.) Tj T*
+T*
+(New projects. In November 2024 the steering committee accepted Driftwood, a) Tj T*
+(structured logging library for Rust applications, as the foundation's third) Tj T*
+(project. Driftwood was created in 2023 by Lena Hartmann and will move its) Tj T*
+(repository to the foundation in early 2025. No other project applications were) Tj T*
+(received in 2024.) Tj T*
+T*
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 270 >>
+stream
+BT
+72 720 Td
+/F1 11 Tf
+16 TL
+(Outlook for 2025. The foundation's priorities for 2025 are the LumenDB 4.0) Tj T*
+(release, onboarding Driftwood, and growing the number of sponsoring) Tj T*
+(organisations to 35. The budget for 2025 assumes income of EUR 450,000.) Tj T*
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000218 00000 n 
+0000000344 00000 n 
+0000002926 00000 n 
+0000003052 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+3373
+%%EOF

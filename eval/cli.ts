@@ -15,6 +15,7 @@ import { formatCall, formatReport } from "./harness/format.ts";
 import { NodeCodeRunner } from "./harness/sandbox.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { corpus } from "./tasks/corpus.ts";
+import { loadNodePdfLibrary } from "./harness/pdf-node.ts";
 import type { SuiteName } from "./harness/suites.ts";
 
 const { values } = parseArgs({
@@ -24,7 +25,7 @@ const { values } = parseArgs({
     context: { type: "string", default: "4096" },
     "api-key": { type: "string" },
     "extra-body": { type: "string" },
-    suites: { type: "string", default: "research,coding" },
+    suites: { type: "string", default: "research,unanswerable,pdf,coding" },
     modes: { type: "string", default: "constrained,unconstrained" },
     preset: { type: "string", default: "full" },
     tasks: { type: "string" },
@@ -73,9 +74,11 @@ if (!selfCheck.passed && !values["ignore-self-check"]) {
   process.exit(1);
 }
 
+const suites = values.suites.split(",") as SuiteName[];
 const report = await runBenchmark({
   model,
   runner: new NodeCodeRunner(),
+  pdfLibrary: suites.includes("pdf") ? await loadNodePdfLibrary() : undefined,
   selfCheck,
   signal: controller.signal,
   environment: {
@@ -94,7 +97,7 @@ const report = await runBenchmark({
     notes: values.notes,
   },
   config: {
-    suites: values.suites.split(",") as SuiteName[],
+    suites,
     modes: values.modes.split(",") as Mode[],
     preset: values.preset as Preset,
     taskIds: values.tasks?.split(","),

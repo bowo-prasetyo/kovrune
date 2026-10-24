@@ -52,6 +52,11 @@ export class DocumentIndex {
     return this.docs.find((doc) => doc.id === docId);
   }
 
+  /** IDs of the chunks of a chunked document (`${docId}#1`, `${docId}#2`, ...). */
+  partsOf(docId: string): string[] {
+    return this.docs.filter((doc) => doc.id.startsWith(`${docId}#`)).map((doc) => doc.id);
+  }
+
   /** Rarer terms carry more weight, in ranking and in choosing snippets. */
   private idf(term: string): number {
     const df = this.docFreq.get(term) ?? 0;

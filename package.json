@@ -21,6 +21,7 @@
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.85",
     "@wllama/wllama": "3.8.1",
+    "pdfjs-dist": "6.4.299",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "4.6.7"

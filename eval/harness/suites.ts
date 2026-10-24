@@ -2,16 +2,21 @@
 
 import { z } from "zod";
 import type { LanguageModel } from "../../src/models/types.ts";
-import { codingTasks, type CodingTask } from "../tasks/coding.ts";
+import { type CodingTask } from "../tasks/coding.ts";
 import { corpus } from "../tasks/corpus.ts";
-import { researchTasks, type ResearchTask } from "../tasks/research.ts";
+import { type ResearchTask } from "../tasks/research.ts";
 import { runAgent, type AgentRun, type AgentTool, type CallRecord } from "../../src/agent/agent.ts";
-import { createResearchTools, RESEARCH_SYSTEM, type ResearchFinal } from "../../src/tools/research.ts";
-import { DocumentIndex } from "../../src/tools/search.ts";
+import { ResearchLibrary, runResearch, type ResearchResult } from "../../src/agent/research.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
 
-export type SuiteName = "research" | "coding";
+/**
+ * research: the 22 M0 research tasks; unanswerable: 8 more questions the corpus
+ * cannot answer; pdf: 4 tasks over PDF documents; coding: 12 coding tasks.
+ */
+export type SuiteName = "research" | "unanswerable" | "pdf" | "coding";
+
+export const ALL_SUITES: SuiteName[] = ["research", "unanswerable", "pdf", "coding"];
 
 export interface TaskOptions {
   constrained: boolean;
@@ -25,28 +30,23 @@ export interface TaskRun {
   kind: string;
   score: Score;
   agent: AgentRun;
+  /** Research tasks: the answer's status and evidence, for reports. */
+  research?: ResearchResult;
 }
 
-const corpusIds = new Set(corpus.map((doc) => doc.id));
-export const researchTools = createResearchTools(new DocumentIndex(corpus));
+/** The base corpus as a research library; the pdf suite adds the PDF documents. */
+export const baseLibrary = new ResearchLibrary(corpus);
 
 export async function runResearchTask(
   task: ResearchTask,
+  suite: Exclude<SuiteName, "coding">,
+  library: ResearchLibrary,
   model: LanguageModel,
   { constrained, signal, onCall }: TaskOptions,
 ): Promise<TaskRun> {
-  const agent = await runAgent({
-    model,
-    system: RESEARCH_SYSTEM,
-    task: task.question,
-    tools: researchTools,
-    finalTool: "final_answer",
-    config: { constrained, maxCalls: 8, maxTokensPerCall: 256 },
-    signal,
-    onCall,
-  });
-  const score = scoreResearch(task, agent.final as ResearchFinal | undefined, corpusIds);
-  return { suite: "research", taskId: task.id, kind: task.kind, score, agent };
+  const research = await runResearch({ question: task.question, library, model, constrained, signal, onCall });
+  const score = scoreResearch(task, research, library);
+  return { suite, taskId: task.id, kind: task.kind, score, agent: research.agent, research };
 }
 
 /** Removes Markdown fences and module syntax the sandbox cannot evaluate. */

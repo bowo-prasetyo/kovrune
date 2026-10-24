@@ -2,13 +2,16 @@
 
 import type { LanguageModel, Runtime } from "../../src/models/types.ts";
 import { codingTasks } from "../tasks/coding.ts";
-import { researchTasks } from "../tasks/research.ts";
+import { pdfTasks } from "../tasks/pdf.ts";
+import { researchTasks, type ResearchTask } from "../tasks/research.ts";
+import { unanswerableTasks } from "../tasks/unanswerable.ts";
+import type { ResearchLibrary } from "../../src/agent/research.ts";
 import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import type { SelfCheckResult } from "../../src/agent/self-check.ts";
-import { runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
+import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.4.0";
+export const HARNESS_VERSION = "0.5.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -70,6 +73,10 @@ export interface TaskResult {
   /** Each call's action, abbreviated, e.g. 'search {"query":"LumenDB"}' or 'invalid: ...'. */
   actions: string[];
   final?: string;
+  /** Research tasks: the answer's status (verified, unverified, not-found, no-answer). */
+  status?: string;
+  /** Research tasks: whether each quote was found in its document. */
+  evidence?: Array<{ docId: string; verified: boolean; reason?: string }>;
 }
 
 export interface Summary {
@@ -141,6 +148,8 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     wallMs: Math.round(wallMs),
     actions: actionTrace(run),
     final: final ? JSON.stringify(final).slice(0, 600) : undefined,
+    status: run.research?.status,
+    evidence: run.research?.evidence.map(({ docId, verified, reason }) => ({ docId, verified, ...(reason ? { reason } : {}) })),
   };
 }
 
@@ -190,13 +199,13 @@ export function selectedTaskIds(config: BenchmarkConfig): string[] | undefined {
 
 /** Whether a run covers the whole evaluation set in both suites. */
 export function isFullSetRun(config: BenchmarkConfig, complete: boolean): boolean {
-  return complete && !selectedTaskIds(config) && config.suites.includes("research") && config.suites.includes("coding");
+  return complete && !selectedTaskIds(config) && ALL_SUITES.every((suite) => config.suites.includes(suite));
 }
 
 export function evaluateGate(summary: Summary[], fullSetRun: boolean): GateResult {
   const coverage: GateCriterion = {
     name: "Complete run of the full evaluation set",
-    threshold: "all 34 tasks, both suites",
+    threshold: "all 46 tasks, all four suites",
     actual: fullSetRun ? "yes" : "no (subset, preset, or stopped early)",
     passed: fullSetRun,
   };
@@ -248,19 +257,33 @@ export async function runBenchmark(options: {
   selfCheck?: SelfCheckResult;
   onResult?: (result: TaskResult, done: number, total: number) => void;
   onCall?: (call: CallRecord, index: number) => void;
+  /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
+  pdfLibrary?: ResearchLibrary;
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
   const { model, config, runner, signal, onCall } = options;
   const ids = selectedTaskIds(config);
   const wanted = (id: string) => !ids || ids.includes(id);
-  const research = config.suites.includes("research") ? researchTasks.filter((t) => wanted(t.id)) : [];
+  const pick = (suite: SuiteName, tasks: ResearchTask[]) => (config.suites.includes(suite) ? tasks.filter((t) => wanted(t.id)) : []);
+  const pdf = pick("pdf", pdfTasks);
+  if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
+  const researchSuites = [
+    { suite: "research" as const, tasks: pick("research", researchTasks), library: baseLibrary },
+    { suite: "unanswerable" as const, tasks: pick("unanswerable", unanswerableTasks), library: baseLibrary },
+    { suite: "pdf" as const, tasks: pdf, library: options.pdfLibrary ?? baseLibrary },
+  ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
-  const total = (research.length + coding.length) * config.modes.length;
+  const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;
   const results: TaskResult[] = [];
 
   const queue = config.modes.flatMap((mode) => [
-    ...research.map((task) => ({ mode, run: (o: { constrained: boolean }) => runResearchTask(task, model, { ...o, signal, onCall }) })),
+    ...researchSuites.flatMap(({ suite, tasks, library }) =>
+      tasks.map((task) => ({
+        mode,
+        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, signal, onCall }),
+      })),
+    ),
     ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),
   ]);
   for (const item of queue) {
