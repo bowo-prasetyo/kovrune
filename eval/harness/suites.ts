@@ -114,7 +114,14 @@ export async function runCodingTask(
       execute: async ({ code }: { code: string }) => {
         const run = await runner.run(normalizeCode(code), task.visibleTests);
         if (run.error) return `Error: ${run.error}`;
-        return run.outcomes.map((o) => `${o.passed ? "PASS" : "FAIL"} ${o.expr}${o.detail ? `: ${o.detail}` : ""}`).join("\n");
+        const lines = run.outcomes.map((o) => `${o.passed ? "PASS" : "FAIL"} ${o.expr}${o.detail ? `: ${o.detail}` : ""}`);
+        const passed = run.outcomes.filter((o) => o.passed).length;
+        lines.push(
+          passed === run.outcomes.length
+            ? `All ${passed} visible tests pass.`
+            : `${passed} of ${run.outcomes.length} visible tests pass.`,
+        );
+        return lines.join("\n");
       },
     },
     {

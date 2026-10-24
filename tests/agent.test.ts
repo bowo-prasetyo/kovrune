@@ -115,6 +115,20 @@ describe("research agent", () => {
   });
 });
 
+describe("loop guard", () => {
+  it("answers a repeated action with a notice instead of re-running it", async () => {
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"final_answer","args":{"found":true,"answer":"Tessel Foundation","citations":["lumen-overview"]}}`,
+    ]);
+    const run = await runResearchTask(task("r01-lumen-maintainer"), model, { constrained: true });
+    assert.equal(run.score.passed, true);
+    assert.match(run.agent.transcript[3]!.content, /lumen-overview/);
+    assert.match(run.agent.transcript[5]!.content, /already ran this exact action/);
+  });
+});
+
 describe("coding agent", () => {
   it("runs visible tests, then scores the submission on hidden tests", async () => {
     const coding = codingTasks.find((t) => t.id === "c06-fix-median")!;
@@ -134,6 +148,18 @@ describe("coding agent", () => {
     const model = new ScriptedModel([JSON.stringify({ tool: "final_answer", args: { code: shortcut } })]);
     const run = await runCodingTask(coding, model, new NodeCodeRunner(), { constrained: true });
     assert.equal(run.score.passed, false);
+  });
+
+  it("summarizes visible test results and discards console output", async () => {
+    const coding = codingTasks.find((t) => t.id === "c01-slugify")!;
+    const noisy = `function slugify(t) { console.log("noise"); return t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }`;
+    const model = new ScriptedModel([
+      JSON.stringify({ tool: "run_tests", args: { code: noisy } }),
+      JSON.stringify({ tool: "final_answer", args: { code: noisy } }),
+    ]);
+    const run = await runCodingTask(coding, model, new NodeCodeRunner(), { constrained: true });
+    assert.match(run.agent.transcript[3]!.content, /All 2 visible tests pass\./);
+    assert.equal(run.score.passed, true);
   });
 
   it("times out infinite loops", async () => {
@@ -247,6 +273,12 @@ describe("helpers", () => {
   it("extracts JSON from prose, fences and think blocks", () => {
     assert.deepEqual(extractJson('<think>hmm</think>Sure: {"a": {"b": 1}} done'), { a: { b: 1 } });
     assert.throws(() => extractJson("no json here"));
+  });
+
+  it("matches different word forms in search and snippets", () => {
+    const hits = new CorpusIndex(corpus).search("Who maintains LumenDB?");
+    assert.equal(hits[0]?.docId, "lumen-overview");
+    assert.match(hits[0]!.snippet, /maintained by the Tessel Foundation/);
   });
 
   it("ranks the advisory first for an advisory query", () => {

@@ -13,8 +13,15 @@ const STOP_WORDS = new Set(
   "a an and are as at be by did do does for from has have how in is it its of on or since that the this to was what when which who why with".split(" "),
 );
 
+/** Light suffix stripping so "maintain", "maintains" and "maintained" match. */
+function stem(token: string): string {
+  if (/\d/.test(token)) return token;
+  const match = /^(.{3,}?)(?:ing|ed|es|s|e)$/.exec(token);
+  return match ? match[1]! : token;
+}
+
 function tokenize(text: string): string[] {
-  return (text.toLowerCase().match(/[a-z0-9]+(?:[.-][a-z0-9]+)*/g) ?? []).filter((t) => !STOP_WORDS.has(t));
+  return (text.toLowerCase().match(/[a-z0-9]+(?:[.-][a-z0-9]+)*/g) ?? []).filter((t) => !STOP_WORDS.has(t)).map(stem);
 }
 
 export class CorpusIndex {
@@ -40,19 +47,22 @@ export class CorpusIndex {
     return this.docs.find((doc) => doc.id === docId);
   }
 
+  /** Rarer terms carry more weight, in ranking and in choosing snippets. */
+  private idf(term: string): number {
+    const df = this.docFreq.get(term) ?? 0;
+    return Math.log(1 + (this.docs.length - df + 0.5) / (df + 0.5));
+  }
+
   search(query: string, limit = 3): SearchHit[] {
     const terms = [...new Set(tokenize(query))];
     const k1 = 1.2;
     const b = 0.75;
-    const n = this.docs.length;
     const scored = this.docs.map((doc, i) => {
       let score = 0;
       for (const term of terms) {
         const tf = this.termFreqs[i]!.get(term) ?? 0;
         if (!tf) continue;
-        const df = this.docFreq.get(term) ?? 0;
-        const idf = Math.log(1 + (n - df + 0.5) / (df + 0.5));
-        score += (idf * tf * (k1 + 1)) / (tf + k1 * (1 - b + (b * this.lengths[i]!) / this.avgLength));
+        score += (this.idf(term) * tf * (k1 + 1)) / (tf + k1 * (1 - b + (b * this.lengths[i]!) / this.avgLength));
       }
       return { doc, score };
     });
@@ -60,17 +70,17 @@ export class CorpusIndex {
       .filter((s) => s.score > 0)
       .sort((x, y) => y.score - x.score)
       .slice(0, limit)
-      .map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms) }));
+      .map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
   }
 }
 
-function bestSnippet(text: string, terms: string[], maxLength = 220): string {
+function bestSnippet(text: string, terms: string[], weight: (term: string) => number, maxLength = 220): string {
   const sentences = text.split(/(?<=[.!?:])\s+|\n+/).filter((s) => s.trim());
   let best = sentences[0] ?? "";
   let bestScore = -1;
   for (const sentence of sentences) {
     const tokens = new Set(tokenize(sentence));
-    const score = terms.filter((t) => tokens.has(t)).length;
+    const score = terms.filter((t) => tokens.has(t)).reduce((sum, t) => sum + weight(t), 0);
     if (score > bestScore) {
       best = sentence;
       bestScore = score;
