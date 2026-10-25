@@ -11,7 +11,7 @@ import type { CodeRunner } from "./sandbox.ts";
 import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.7.0";
+export const HARNESS_VERSION = "0.8.0";
 
 export type Mode = "constrained" | "unconstrained";
 

@@ -54,10 +54,25 @@ export function checkEvidence(items: EvidenceItem[], resolveText: (docId: string
     if (quote.split(" ").filter(Boolean).length < MIN_QUOTE_WORDS) {
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
     }
-    if (normalizeForMatch(text).includes(quote)) return { ...item, verified: true };
+    if (containsWords(normalizeForMatch(text), quote)) return { ...item, verified: true };
     const closest = closestPassage(item.quote, text);
     return { ...item, verified: false, reason: "quote not found in the document", ...(closest ? { closest } : {}) };
   });
+}
+
+const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{N}]/u.test(ch);
+
+/**
+ * Whether `quote` occurs in `text` starting and ending on word boundaries, so a quote
+ * cut mid-word (e.g. "can sometimes match hum…") does not match "human".
+ */
+function containsWords(text: string, quote: string): boolean {
+  for (let at = text.indexOf(quote); at >= 0; at = text.indexOf(quote, at + 1)) {
+    const before = isWordChar(text[at - 1]) && isWordChar(quote[0]);
+    const after = isWordChar(text[at + quote.length]) && isWordChar(quote.at(-1));
+    if (!before && !after) return true;
+  }
+  return false;
 }
 
 export function answerStatus(found: boolean, checked: CheckedEvidence[]): AnswerStatus {
@@ -65,16 +80,21 @@ export function answerStatus(found: boolean, checked: CheckedEvidence[]): Answer
   return checked.some((c) => c.verified) ? "verified" : "unverified";
 }
 
-/** Below this share of the quote's words, a passage is not "close": the quote is invented rather than altered. */
+/** Below this share of the quote's words, a passage is not worth a look. */
 const MIN_SHARED = 0.5;
+/**
+ * The share of the quote's words that must match the passage in order for it to count as
+ * "close". Below it the quote is mostly invented, and a word-by-word diff is noise.
+ */
+const MIN_IN_ORDER = 0.7;
 
 const wordKey = (word: string) => normalizeForMatch(word).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
 
 /**
  * The passage of `text` closest to a quote that is not in it word for word, as a word-level
  * diff, so a reader can see what the model changed. Small models often keep the start of a
- * real sentence and finish it from memory. Returns undefined when no passage shares at least
- * half the quote's words.
+ * real sentence and finish it from memory. Returns undefined unless at least 70% of the
+ * quote's words appear, in order, in one passage.
  */
 export function closestPassage(quote: string, text: string): DiffPart[] | undefined {
   const q = quote.split(/\s+/).filter(Boolean);
@@ -112,6 +132,7 @@ export function closestPassage(quote: string, text: string): DiffPart[] | undefi
       lcs[i]![j] = qKeys[i] === w[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
     }
   }
+  if (lcs[0]![0]! < q.length * MIN_IN_ORDER) return undefined;
   const steps: Array<{ kind: DiffPart["kind"]; word: string }> = [];
   let i = 0;
   let j = 0;

@@ -191,12 +191,12 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
       </>
     );
   }
-  const status = describeStatus(result.status, result.evidence.length);
+  const status = describeStatus(result.status, result.evidence);
   return (
     <div className={`result ${result.status}`} role="status">
       {sourceErrors}
       <p>
-        <span className={`status ${result.status}`}>{status.label}</span> {status.detail}
+        <span className={`status ${status.tone}`}>{status.label}</span> {status.detail}
       </p>
       {result.final?.answer && <p className="answer">{result.final.answer}</p>}
       {result.evidence.length > 0 && (

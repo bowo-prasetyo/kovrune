@@ -52,7 +52,11 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       }
     },
     onRepeat: () => ({ hint: `Searching ${source.label} is no longer available: read one of the results with read.` }),
+    // The user's documents come first: small models otherwise skip them for the open sources
+    // (seen on the class 1 laptop, where a question about the user's PDF was answered from Wikipedia).
+    available: () => !hasDocuments || searchedDocuments,
   }));
+  let searchedDocuments = false;
   // Document IDs are limited to ones the task has seen, so under constrained decoding the
   // model cannot read or cite a mistyped ID (seen: "wikiped:Ada_Lovelace", a bare "W7150387116").
   const localIds = index.ids();
@@ -66,6 +70,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       usage: `{"tool":"search","args":{"query":"..."}} searches the documents and returns IDs, titles and snippets.`,
       args: z.object({ query: z.string() }).strict(),
       execute: async ({ query }: { query: string }) => {
+        searchedDocuments = true;
         const hits = index.search(query);
         if (!hits.length) return "No matching documents.";
         return hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");

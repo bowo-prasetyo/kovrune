@@ -47,11 +47,17 @@ describe("research screen helpers", () => {
 
 describe("answer status and cleanup", () => {
   it("says only what the quote check proves", () => {
-    assert.equal(describeStatus("verified", 1).label, "Quotes found");
-    assert.match(describeStatus("verified", 1).detail, /Check that the quotes support the whole answer/);
-    assert.equal(describeStatus("unverified", 2).label, "Quotes not found");
-    assert.equal(describeStatus("unverified", 0).label, "No quotes");
-    assert.equal(describeStatus("not-found", 0).label, "Not found in your sources");
+    const ok = { verified: true };
+    const bad = { verified: false };
+    assert.equal(describeStatus("verified", [ok, ok]).label, "Quotes found");
+    assert.match(describeStatus("verified", [ok]).detail, /Check that the quotes support the whole answer/);
+    // The "How does LLM think?" live check: one of three quotes failed, and the label said "Every quote".
+    const partial = describeStatus("verified", [bad, ok, ok]);
+    assert.equal(partial.label, "Some quotes not found (2 of 3 found)");
+    assert.equal(partial.tone, "unverified");
+    assert.equal(describeStatus("unverified", [bad, bad]).label, "Quotes not found");
+    assert.equal(describeStatus("unverified", []).label, "No quotes");
+    assert.equal(describeStatus("not-found", []).label, "Not found in your sources");
   });
 
   it("removes internal part labels from answers", () => {
