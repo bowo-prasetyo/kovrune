@@ -4,7 +4,9 @@
 
 import { chunkDocument, parentId } from "../documents/chunk.ts";
 import type { LanguageModel } from "../models/types.ts";
-import { createResearchTools, RESEARCH_SYSTEM, type ResearchFinal } from "../tools/research.ts";
+import { SourceSession, type Citation } from "../sources/session.ts";
+import type { OpenSource } from "../sources/types.ts";
+import { createResearchTools, researchSystem, type ResearchFinal } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
@@ -17,6 +19,10 @@ export interface ResearchResult {
   final?: ResearchFinal;
   /** Evidence with each quote checked against its document. */
   evidence: CheckedEvidence[];
+  /** Where cited open-source documents came from, by document ID. */
+  citations: Record<string, Citation>;
+  /** Open sources that failed during the question, in plain words. */
+  sourceErrors: string[];
   agent: AgentRun;
 }
 
@@ -47,26 +53,37 @@ export async function runResearch(options: {
   question: string;
   library: ResearchLibrary;
   model: LanguageModel;
+  /** Open sources the agent may search besides the library (none by default). */
+  sources?: OpenSource[];
   constrained?: boolean;
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
 }): Promise<ResearchResult> {
-  const { library } = options;
+  const { library, signal } = options;
+  const sources = options.sources ?? [];
+  const session = sources.length ? new SourceSession(sources, options.question, signal) : undefined;
   const agent = await runAgent({
     model: options.model,
-    system: RESEARCH_SYSTEM,
+    system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label) }),
     task: options.question,
-    tools: createResearchTools(library.index),
+    tools: createResearchTools(library.index, session),
     finalTool: "final_answer",
     config: { constrained: options.constrained ?? true, ...RESEARCH_LIMITS },
-    signal: options.signal,
+    signal,
     onCall: options.onCall,
   });
   const raw = agent.final as ResearchFinal | undefined;
-  if (!raw) return { status: "no-answer", evidence: [], agent };
+  const sourceErrors = () => [...(session?.errors ?? [])];
+  if (!raw) return { status: "no-answer", evidence: [], citations: {}, sourceErrors: sourceErrors(), agent };
   const final = { ...raw, answer: withoutPartLabels(raw.answer) };
-  const evidence = checkEvidence(final.evidence, (id) => library.textFor(id));
-  return { status: answerStatus(final.found, evidence), final, evidence, agent };
+  await session?.ensure(final.evidence.map((e) => e.docId));
+  const evidence = checkEvidence(final.evidence, (id) => library.textFor(id) ?? session?.textFor(id));
+  const citations: Record<string, Citation> = {};
+  for (const { docId } of final.evidence) {
+    const citation = session?.citation(docId);
+    if (citation) citations[docId] = citation;
+  }
+  return { status: answerStatus(final.found, evidence), final, evidence, citations, sourceErrors: sourceErrors(), agent };
 }
 
 /** Chunk titles such as "Report (part 2 of 5)" are internal; models sometimes copy them into answers. */

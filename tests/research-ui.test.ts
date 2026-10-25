@@ -4,6 +4,7 @@ import type { CallRecord } from "../src/agent/agent.ts";
 import { documentId, formatBytes } from "../src/app/research/library.ts";
 import { describeCall, describeNoAnswer, describeStatus } from "../src/app/research/trace.ts";
 import { withoutPartLabels } from "../src/agent/research.ts";
+import { defaultLanguage, openSourcesFor, parseSourcePrefs } from "../src/app/research/sources.ts";
 
 const call = (fields: Partial<CallRecord>): CallRecord => ({
   valid: true,
@@ -31,7 +32,7 @@ describe("research screen helpers", () => {
 
   it("describes each agent step in plain language", () => {
     const title = (id: string) => (id === "report#2" ? "Report" : undefined);
-    assert.equal(describeCall(call({ tool: "search", args: { query: "income" } }), title), "Searching for “income”");
+    assert.equal(describeCall(call({ tool: "search", args: { query: "income" } }), title), "Searching your documents for “income”");
     assert.equal(describeCall(call({ tool: "read", args: { docId: "report#2" } }), title), "Reading Report");
     assert.equal(describeCall(call({ tool: "read", args: { docId: "x" } }), title), "Reading x");
     assert.match(describeCall(call({ tool: "final_answer", args: { found: false } }), title), /don't answer/);
@@ -63,5 +64,34 @@ describe("answer status and cleanup", () => {
 
   it("never ends a document ID with a hyphen after shortening", () => {
     assert.equal(documentId("PapyrusTutorial_OnActivityDiagrams_v0.2_d20110719.pdf", new Set()), "papyrustutorial-onactivitydiagrams-v0-2");
+  });
+});
+
+describe("open source preferences", () => {
+  it("are off by default, with Wikipedia in the browser's language", () => {
+    assert.deepEqual(parseSourcePrefs(null, "ja-JP"), { wikipedia: false, language: "ja", openalex: false });
+    assert.equal(parseSourcePrefs(null, undefined).language, "en");
+    assert.equal(defaultLanguage("zh-Hant-TW"), "zh");
+  });
+
+  it("ignore malformed or unsafe stored values", () => {
+    assert.deepEqual(parseSourcePrefs('{"wikipedia":"yes","language":"evil.com/x","openalex":true}', "en-US"), {
+      wikipedia: false,
+      language: "en",
+      openalex: true,
+    });
+    assert.equal(parseSourcePrefs("{not json", "en").wikipedia, false);
+  });
+
+  it("create only the chosen sources", () => {
+    assert.deepEqual(openSourcesFor({ wikipedia: true, language: "ja", openalex: false }).map((s) => s.label), ["Wikipedia (ja)"]);
+    assert.deepEqual(openSourcesFor({ wikipedia: false, language: "en", openalex: true }).map((s) => s.name), ["openalex"]);
+    assert.deepEqual(openSourcesFor({ wikipedia: false, language: "en", openalex: false }), []);
+  });
+
+  it("describe open-source steps in the trace", () => {
+    assert.equal(describeCall(call({ tool: "search_wikipedia", args: { query: "Ada" } }), () => undefined), "Searching Wikipedia for “Ada”");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "wikipedia:Ada_Lovelace#3" } }), () => undefined), "Reading Wikipedia: Ada Lovelace");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "openalex:W123" } }), () => undefined), "Reading OpenAlex work W123");
   });
 });

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { DeviceCapabilities } from "./device.ts";
+import { HELP_URL } from "./help.ts";
 import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
 import type { LibraryDocument } from "./research/library.ts";
@@ -28,9 +29,25 @@ export function App() {
   return (
     <main>
       <header>
-        <h1>Kovrune</h1>
+        <div className="title-row">
+          <h1>Kovrune</h1>
+          <a href={HELP_URL} target="_blank" rel="noreferrer">
+            Help
+          </a>
+        </div>
         <p className="tagline">Research with an AI model that runs on your own machine.</p>
       </header>
+
+      {step === "device" && !saved && !draft && (
+        <section className="welcome">
+          <h2>Welcome</h2>
+          <p>
+            Kovrune answers questions about your documents, and optionally Wikipedia and scholarly papers, with an AI model
+            that runs on your computer. Every answer quotes its sources, and Kovrune checks that each quote is really there.
+          </p>
+          <p>Setup takes a few minutes: choose where the model runs, connect to it or download it, and test it.</p>
+        </section>
+      )}
 
       {step !== "research" && (
         <ol className="steps" aria-label="Setup steps">

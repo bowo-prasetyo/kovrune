@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | In progress: slices 1–3 built; slice 3 waits on a class 2 run. Next is slice 4 (open sources and polish). See [Progress](#progress) |
+| Status | In progress: slices 1, 2 done; slice 3 waits on a class 2 run; slice 4 built, waiting on the usability test. See [Progress](#progress) |
 | Depends on | M0 provisional go ([`m0-benchmark.md`](m0-benchmark.md#m0-status)) |
 | Team | Project owner (decisions, reviews, laptop testing) and Claude (implementation, tests, benchmark runs, docs) |
 
@@ -148,7 +148,14 @@ Before and after, the same Qwen3.5-2B on 8 questions about the extracted text (6
 
 The full benchmark with Qwen3.5-4B (harness 0.6.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4, valid actions 100% ([`slice2-fix-qwen3.5-4b-q4km.json`](../eval/results/slice2-fix-qwen3.5-4b-q4km.json)).
 
-Still open for the slice: the same question on the class 1 laptop, after this change.
+**Second class 1 run, after the fix.** Same laptop, PDF and Qwen3.5-2B, with the fix merged:
+- **Model test:** passed in 21 s at 13.8 tokens/s. The first run's 8.4 tokens/s was probably slowed by another process competing for memory.
+- **"How to create an activity diagram?"**
+  - The model searched twice with the same query. The guard took away search, and the model then read the slides.
+  - The answer listed all five steps from slides 3–5: Papyrus perspective, New › Other… › Papyrus Project, project name, UML language, UML Activity Diagram.
+  - Its quote was correct, and the label read **Quotes found**.
+
+This completes the slice 2 exit check: the owner asked about one of their own PDFs on the class 1 laptop and got a correct, cited answer whose quote checked out. The unanswerable question earlier got a correct **Not found in your sources**.
 
 ### Slice 3: browser path (built; class 2 run pending)
 
@@ -184,9 +191,40 @@ Tested in the cloud container:
 
 Still open for the slice:
 - **Class 2 check.** The same research task works in the browser on a class 2 machine (issue #9 or a tester).
-- **Class 1 check.** On the class 1 laptop, the advisor recommends the local server.
+- ~~**Class 1 check.** On the class 1 laptop, the advisor recommends the local server.~~ Done: the device step recommended a local server because of the integrated Intel graphics.
 
 Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work.
+
+### Slice 4: open sources and polish (built; usability test pending)
+
+- **Open sources.**
+  - Wikipedia (MediaWiki Action API, any language edition) and OpenAlex (scholarly works) can be searched besides the user's documents. Both are off by default and chosen under **Search in**.
+  - With either one ticked, questions work without any documents.
+  - The agent gets `search_wikipedia` and `search_openalex` tools. `read` fetches an article or work. A long Wikipedia article is split into parts, and the part that best matches the question is returned first.
+  - Fetched text is kept for the question, so quotes are checked against exactly what the model read. A cited article the model never read is fetched for the check, so an invented quote still fails.
+  - Citations link to the source and show the retrieval time (scope item 5).
+  - With no open source ticked, the tools and system prompt are exactly the benchmark's. A full Qwen3.5-4B run confirmed results unchanged task for task.
+- **Privacy text.** The research screen says what goes to Wikipedia or OpenAlex: the model's search words and the pages it reads, not the user's documents or the question as typed.
+- **Error states.**
+  - Source failures (offline, HTTP errors, missing articles) become tool results the agent can act on, and are shown in plain words.
+  - Stop also cancels source requests.
+  - An error boundary replaces a blank page after a crash with a message and a Reload button.
+- **Onboarding.** A welcome note before setup, a Help link to the user guide, and a getting-started hint with example questions on an empty research screen.
+- **User documentation.** [`user-guide.md`](user-guide.md) covers:
+  - starting the app;
+  - both model paths;
+  - llama.cpp setup on Linux and WSL, including the snags from the class 1 run;
+  - asking questions;
+  - what the answer labels mean;
+  - privacy;
+  - troubleshooting.
+- **Usability test.** [`usability-test.md`](usability-test.md) has the protocol, tasks, questions and results sheet for 3–5 participants.
+
+Not tested live: the cloud container's network policy blocks `en.wikipedia.org` and `api.openalex.org`. The adapters are unit-tested against responses shaped like the documented APIs. The first live check is on the owner's laptop.
+
+Still open for the slice:
+- run the usability test (owner);
+- check Wikipedia and OpenAlex live.
 
 ## Acceptance
 
