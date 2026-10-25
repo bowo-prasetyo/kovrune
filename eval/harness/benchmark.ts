@@ -9,9 +9,10 @@ import type { ResearchLibrary } from "../../src/agent/research.ts";
 import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import type { SelfCheckResult } from "../../src/agent/self-check.ts";
+import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.12.0";
+export const HARNESS_VERSION = "0.13.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -77,6 +78,10 @@ export interface TaskResult {
   status?: string;
   /** Research tasks: whether each quote was found in its document. */
   evidence?: Array<{ docId: string; verified: boolean; reason?: string }>;
+  /** Research tasks: how many answer sentences were long enough to judge, and how many a found quote backs. */
+  support?: { judged: number; backed: number };
+  /** Research tasks: whether the app would label the answer "Quotes found". */
+  quotesFound?: boolean;
 }
 
 export interface Summary {
@@ -91,6 +96,11 @@ export interface Summary {
   /** Prompt tokens per second of time to first token (includes prompt-cache effects). */
   prefillTokensPerSecond: number;
   medianTaskSeconds: number;
+  /**
+   * Research suites: answers the app would label "Quotes found", and how many of those failed
+   * their task. Their ratio is the false reassurance rate (docs/design.md §1.6).
+   */
+  falseReassurance?: { labelled: number; wrong: number };
 }
 
 export interface GateCriterion {
@@ -126,6 +136,9 @@ export const GATE = {
   medianResearchTaskSeconds: 60,
 };
 
+/** Target for the false reassurance rate on Qwen3.5-4B (docs/design.md §1.6); reported, not part of the gate. */
+export const FALSE_REASSURANCE_TARGET = 0.1;
+
 function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
   const calls = run.agent.calls;
   const final = run.agent.final;
@@ -150,6 +163,12 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     final: final ? JSON.stringify(final).slice(0, 600) : undefined,
     status: run.research?.status,
     evidence: run.research?.evidence.map(({ docId, verified, reason }) => ({ docId, verified, ...(reason ? { reason } : {}) })),
+    ...(run.research
+      ? {
+          support: run.research.support && { judged: run.research.support.judged, backed: run.research.support.backed },
+          quotesFound: labelledQuotesFound(run.research.status, run.research.evidence, run.research.support),
+        }
+      : {}),
   };
 }
 
@@ -179,6 +198,7 @@ export function summarize(results: TaskResult[]): Summary[] {
     const decodeMs = group.reduce((s, r) => s + Math.max(r.modelMs - r.ttftMs, 0), 0);
     const ttftMs = group.reduce((s, r) => s + r.ttftMs, 0);
     const passed = group.filter((r) => r.passed).length;
+    const labelled = group.filter((r) => r.quotesFound);
     return {
       suite: group[0]!.suite,
       mode: group[0]!.mode,
@@ -189,8 +209,25 @@ export function summarize(results: TaskResult[]): Summary[] {
       decodeTokensPerSecond: round(decodeMs ? (group.reduce((s, r) => s + r.completionTokens, 0) / decodeMs) * 1000 : 0, 1),
       prefillTokensPerSecond: round(ttftMs ? (group.reduce((s, r) => s + r.promptTokens, 0) / ttftMs) * 1000 : 0, 1),
       medianTaskSeconds: round(median(group.map((r) => r.wallMs / 1000)), 1),
+      ...(group.some((r) => r.quotesFound !== undefined)
+        ? { falseReassurance: { labelled: labelled.length, wrong: labelled.filter((r) => !r.passed).length } }
+        : {}),
     };
   });
+}
+
+/**
+ * The false reassurance rate over the constrained research suites: of the answers labelled
+ * "Quotes found", the share that failed their task. Undefined when no answer was so labelled.
+ */
+export function falseReassurance(summary: Summary[]): { labelled: number; wrong: number; rate?: number } {
+  const counts = summary
+    .filter((s) => s.mode === "constrained" && s.falseReassurance)
+    .reduce((sum, s) => ({ labelled: sum.labelled + s.falseReassurance!.labelled, wrong: sum.wrong + s.falseReassurance!.wrong }), {
+      labelled: 0,
+      wrong: 0,
+    });
+  return { ...counts, ...(counts.labelled ? { rate: round(counts.wrong / counts.labelled, 3) } : {}) };
 }
 
 export function selectedTaskIds(config: BenchmarkConfig): string[] | undefined {

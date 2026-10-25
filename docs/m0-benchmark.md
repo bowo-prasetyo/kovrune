@@ -28,6 +28,7 @@ For each model, runtime, and hardware class:
 | Decode speed | Completion tokens per second of generation time after the first token |
 | Prefill speed | Prompt tokens per second of time-to-first-token. Includes prompt-cache effects, so it is an *effective* rate |
 | Median task time | Median wall-clock seconds per task, including tool execution |
+| False reassurance (research suites) | Of the answers the app would label **Quotes found**, the share whose task fails. Reported per suite and over the constrained research suites, against the target in [design §1.6](design.md#16-success-metrics); not part of the gate. Added in harness 0.13.0 |
 
 Each suite runs in two modes:
 
@@ -345,3 +346,4 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.10.0 | A search that found results must be followed by a read before that search tool is offered again, so the model no longer spends its steps rewording searches. When no other tool is available, `final_answer` is. With open sources (not used in the evaluation), every ticked source must be searched before `final_answer`, the prompt asks for an answer that combines them, and each source adds two calls to the limit. Task sets are unchanged |
 | 0.11.0 | Quote matching ignores list markers standing alone ("•", "–", "-" and similar), which models swap or drop when quoting slides. A reply cut off at the token limit gets a notice saying so and asking for a shorter answer, instead of the general "not a valid action". Re-checking every quote in the 0.10.0 report gives the same result, and the 0.10.0 run had no invalid replies, so results are comparable with 0.10.0 |
 | 0.12.0 | A reply cut off at the token limit is retried with 1,024 tokens instead of 512, asking for the same answer with one-sentence quotes (older tool results make room). Only a second cut-off asks for a shorter answer. With open sources (not used in the evaluation), the prompt asks for one-sentence quotes. The closest-passage diff no longer pairs different symbols. The 0.10.0 run had no invalid replies, so results are comparable with 0.10.0 and 0.11.0 |
+| 0.13.0 | Reports add, for each research task, how many answer sentences a found quote backs (`support`) and whether the app would label the answer **Quotes found** (`quotesFound`), and for each research suite the false reassurance counts (`falseReassurance`). The agent, task sets and scoring are unchanged, so results are comparable with 0.10.0–0.12.0 |
