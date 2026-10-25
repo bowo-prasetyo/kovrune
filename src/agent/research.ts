@@ -48,6 +48,11 @@ export class ResearchLibrary {
     return this.byId.get(parentId(id))?.text;
   }
 
+  /** A PDF's page offsets in the text textFor returns, for a document or chunk ID. */
+  pageStartsFor(id: string): number[] | undefined {
+    return this.byId.get(parentId(id))?.pageStarts;
+  }
+
   /** The document a document or chunk ID belongs to. */
   documentFor(id: string): SourceDocument | undefined {
     return this.byId.get(parentId(id));
@@ -90,7 +95,11 @@ export async function runResearch(options: {
   if (!raw) return { status: "no-answer", evidence: [], citations: {}, sourceErrors: sourceErrors(), agent };
   const final = { ...raw, answer: withoutPartLabels(raw.answer) };
   await session?.ensure(final.evidence.map((e) => e.docId));
-  const evidence = checkEvidence(final.evidence, (id) => library.textFor(id) ?? session?.textFor(id));
+  const evidence = checkEvidence(
+    final.evidence,
+    (id) => library.textFor(id) ?? session?.textFor(id),
+    (id) => library.pageStartsFor(id),
+  );
   const citations: Record<string, Citation> = {};
   for (const { docId } of final.evidence) {
     const citation = session?.citation(docId);

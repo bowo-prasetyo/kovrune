@@ -6,6 +6,8 @@ export interface SourceDocument {
   id: string;
   title: string;
   text: string;
+  /** PDFs: where each page starts in `text` (see extractPdfText). */
+  pageStarts?: number[];
 }
 
 export interface SearchHit {

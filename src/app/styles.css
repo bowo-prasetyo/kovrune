@@ -384,6 +384,27 @@ textarea {
   border-color: var(--accent);
 }
 
+.evidence .context {
+  margin-left: 1.4em;
+  font-size: 0.9em;
+}
+
+.evidence .context summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.evidence .context blockquote {
+  margin-left: 0;
+  white-space: pre-line;
+}
+
+.evidence .context mark {
+  background: var(--callout);
+  color: inherit;
+  border-bottom: 2px solid var(--accent);
+}
+
 .evidence .reason {
   display: block;
   margin-left: 1.4em;

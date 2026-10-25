@@ -12,6 +12,8 @@ export interface LibraryDocument {
   kind: DocumentKind;
   bytes: number;
   pages?: number;
+  /** PDFs: where each page starts in `text`, so quotes can be cited by page. */
+  pageStarts?: number[];
   warning?: string;
 }
 
@@ -42,6 +44,7 @@ export async function readDocument(file: File, taken: Set<string>): Promise<Libr
     kind: extracted.kind,
     bytes: file.size,
     pages: extracted.pages,
+    pageStarts: extracted.pageStarts,
     warning: extracted.warning,
   };
 }
