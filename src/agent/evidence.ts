@@ -34,6 +34,9 @@ export function normalizeForMatch(text: string): string {
     .replace(/[“”„‟]/g, '"')
     .replace(/[‐-―−]/g, "-")
     .replace(/ /g, " ")
+    // List markers standing alone are layout, not words: slides use "•" and "–" bullets, and
+    // models quoting them swap one for the other or drop them.
+    .replace(/(^|\s)[-•·▪◦‣●*](?=\s|$)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
 }
