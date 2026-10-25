@@ -11,6 +11,14 @@ export interface CheckedEvidence extends EvidenceItem {
   verified: boolean;
   /** Why a quote did not verify. */
   reason?: string;
+  /** For a quote that is close to a passage but not word for word: that passage, marked up against the quote. */
+  closest?: DiffPart[];
+}
+
+/** A run of words that both texts share, or that only the quote or only the source has. */
+export interface DiffPart {
+  kind: "same" | "quote-only" | "source-only";
+  text: string;
 }
 
 export type AnswerStatus = "verified" | "unverified" | "not-found";
@@ -46,13 +54,89 @@ export function checkEvidence(items: EvidenceItem[], resolveText: (docId: string
     if (quote.split(" ").filter(Boolean).length < MIN_QUOTE_WORDS) {
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
     }
-    return normalizeForMatch(text).includes(quote)
-      ? { ...item, verified: true }
-      : { ...item, verified: false, reason: "quote not found in the document" };
+    if (normalizeForMatch(text).includes(quote)) return { ...item, verified: true };
+    const closest = closestPassage(item.quote, text);
+    return { ...item, verified: false, reason: "quote not found in the document", ...(closest ? { closest } : {}) };
   });
 }
 
 export function answerStatus(found: boolean, checked: CheckedEvidence[]): AnswerStatus {
   if (!found) return "not-found";
   return checked.some((c) => c.verified) ? "verified" : "unverified";
+}
+
+/** Below this share of the quote's words, a passage is not "close": the quote is invented rather than altered. */
+const MIN_SHARED = 0.5;
+
+const wordKey = (word: string) => normalizeForMatch(word).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+
+/**
+ * The passage of `text` closest to a quote that is not in it word for word, as a word-level
+ * diff, so a reader can see what the model changed. Small models often keep the start of a
+ * real sentence and finish it from memory. Returns undefined when no passage shares at least
+ * half the quote's words.
+ */
+export function closestPassage(quote: string, text: string): DiffPart[] | undefined {
+  const q = quote.split(/\s+/).filter(Boolean);
+  const qKeys = q.map(wordKey);
+  const words = text.split(/\s+/).filter(Boolean);
+  const keys = words.map(wordKey);
+  if (!q.length || !words.length) return undefined;
+
+  // Find the window sharing the most quote words; windows can be shorter or longer than the quote.
+  const wanted = new Map<string, number>();
+  for (const k of qKeys) wanted.set(k, (wanted.get(k) ?? 0) + 1);
+  let best = { start: 0, end: 0, shared: 0 };
+  for (const size of new Set([q.length, Math.ceil(q.length * 1.5), Math.ceil(q.length * 2)])) {
+    const width = Math.min(size, words.length);
+    const have = new Map<string, number>();
+    let shared = 0;
+    const add = (k: string, d: number) => {
+      const before = Math.min(have.get(k) ?? 0, wanted.get(k) ?? 0);
+      have.set(k, (have.get(k) ?? 0) + d);
+      shared += Math.min(have.get(k)!, wanted.get(k) ?? 0) - before;
+    };
+    for (let i = 0; i < words.length; i++) {
+      add(keys[i]!, 1);
+      if (i >= width) add(keys[i - width]!, -1);
+      if (i >= width - 1 && shared > best.shared) best = { start: i - width + 1, end: i + 1, shared };
+    }
+  }
+  if (best.shared < q.length * MIN_SHARED) return undefined;
+
+  // Word-level diff of the quote against that window (longest common subsequence).
+  const w = keys.slice(best.start, best.end);
+  const lcs = Array.from({ length: q.length + 1 }, () => new Array<number>(w.length + 1).fill(0));
+  for (let i = q.length - 1; i >= 0; i--) {
+    for (let j = w.length - 1; j >= 0; j--) {
+      lcs[i]![j] = qKeys[i] === w[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
+    }
+  }
+  const steps: Array<{ kind: DiffPart["kind"]; word: string }> = [];
+  let i = 0;
+  let j = 0;
+  while (i < q.length || j < w.length) {
+    if (i < q.length && j < w.length && qKeys[i] === w[j]) {
+      steps.push({ kind: "same", word: words[best.start + j]! });
+      i++;
+      j++;
+    } else if (j < w.length && (i >= q.length || lcs[i]![j + 1]! > lcs[i + 1]![j]!)) {
+      steps.push({ kind: "source-only", word: words[best.start + j]! });
+      j++;
+    } else {
+      steps.push({ kind: "quote-only", word: q[i]! });
+      i++;
+    }
+  }
+  // The window's edges can hold source words around the passage; drop them.
+  while (steps[0]?.kind === "source-only") steps.shift();
+  while (steps.at(-1)?.kind === "source-only") steps.pop();
+
+  const parts: DiffPart[] = [];
+  for (const step of steps) {
+    const last = parts.at(-1);
+    if (last?.kind === step.kind) last.text += ` ${step.word}`;
+    else parts.push({ kind: step.kind, text: step.word });
+  }
+  return parts;
 }

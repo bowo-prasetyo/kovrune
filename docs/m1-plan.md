@@ -238,9 +238,17 @@ Both services worked live from the owner's browser: searches returned the right 
 
 With the fix, the full Qwen3.5-4B benchmark (harness 0.7.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4, valid actions 100%. The 8 Papyrus questions on Qwen3.5-2B give the same status for every question. The live typos are replayed in unit tests: after the two searches, `read` accepts exactly `wikipedia:Ada_Lovelace` and `openalex:W7150387116`.
 
-Still open for the slice:
-- run the usability test (owner);
-- check Wikipedia and OpenAlex live again after the fix.
+**Second live checks, after the fix.** Both now read the right document.
+- **OpenAlex, "How does LLM think?"** The model read `openalex:W7150387116` ("How LLMs Might Think") and quoted its abstract word for word: **Quotes found**, with a fair summary.
+- **Wikipedia, "Who was Ada Lovelace?"** The model read the article but **misquoted** it.
+  - Its quote kept the article's first sentence up to "an English mathematician and", then finished with "computer programmer", taken from the article's third sentence.
+  - The article says "and writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose computer".
+  - **Quotes not found** was correct, and the answer's claim of "the first person to be awarded a patent" is not in the article.
+  - The owner, comparing the two sentences, first read them as identical.
+
+So the app now shows, for a quote that is close but not word for word, the **closest passage** in the source as a word-level diff: words only in the source are highlighted, words only in the quote are struck out. The case is a unit test with the article's real first paragraph. The **Quotes found** text now says "in the source it cites" instead of "in your documents".
+
+Still open for the slice: run the usability test (owner). Wikipedia and OpenAlex are confirmed working live.
 
 ## Acceptance
 

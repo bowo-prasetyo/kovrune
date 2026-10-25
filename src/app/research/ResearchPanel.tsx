@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
+import type { DiffPart } from "../../agent/evidence.ts";
 import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/research.ts";
 import { describeModelError, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
@@ -210,6 +211,7 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
                 <SourceName docId={item.docId} result={result} library={library} />
                 <blockquote>{item.quote}</blockquote>
                 {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}
+                {item.closest && <ClosestPassage parts={item.closest} />}
               </li>
             ))}
           </ul>
@@ -233,5 +235,24 @@ function SourceName({ docId, result, library }: { docId: string; result: Researc
         ({citation.source}, retrieved {retrieved})
       </span>
     </span>
+  );
+}
+
+/** The source passage nearest a failed quote, with the words the model changed marked. */
+function ClosestPassage({ parts }: { parts: DiffPart[] }) {
+  return (
+    <div className="closest">
+      <span className="hint">
+        Closest passage in the source (<ins>added</ins> = in the source, <del>struck</del> = only in the quote):
+      </span>
+      <blockquote>
+        {parts.map((part, i) => {
+          const text = (i > 0 ? " " : "") + part.text;
+          if (part.kind === "source-only") return <ins key={i}>{text}</ins>;
+          if (part.kind === "quote-only") return <del key={i}>{text}</del>;
+          return <span key={i}>{text}</span>;
+        })}
+      </blockquote>
+    </div>
   );
 }

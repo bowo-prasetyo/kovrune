@@ -48,7 +48,7 @@ describe("research screen helpers", () => {
 describe("answer status and cleanup", () => {
   it("says only what the quote check proves", () => {
     assert.equal(describeStatus("verified", 1).label, "Quotes found");
-    assert.match(describeStatus("verified", 1).detail, /Check that they support the whole answer/);
+    assert.match(describeStatus("verified", 1).detail, /Check that the quotes support the whole answer/);
     assert.equal(describeStatus("unverified", 2).label, "Quotes not found");
     assert.equal(describeStatus("unverified", 0).label, "No quotes");
     assert.equal(describeStatus("not-found", 0).label, "Not found in your sources");

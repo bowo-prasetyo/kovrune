@@ -449,3 +449,21 @@ a {
 .getting-started p {
   margin: 0 0 6px;
 }
+
+.closest {
+  margin: 6px 0 0 1.4em;
+}
+
+.closest blockquote {
+  margin-left: 0;
+}
+
+ins {
+  text-decoration: none;
+  background: var(--callout);
+  font-weight: 600;
+}
+
+del {
+  color: var(--muted);
+}
