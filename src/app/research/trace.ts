@@ -20,9 +20,9 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
     case "search":
       return `Searching your documents for “${String(args.query ?? "")}”${found(call.resultCount, "document")}`;
     case "search_wikipedia":
-      return `Searching Wikipedia for “${String(args.query ?? "")}”${found(call.resultCount, "result")}`;
+      return `Searching Wikipedia for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_openalex":
-      return `Searching OpenAlex for “${String(args.query ?? "")}”${found(call.resultCount, "result")}`;
+      return `Searching OpenAlex for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "read": {
       const id = String(args.docId ?? "");
       if (id.startsWith("wikipedia:")) return `Reading Wikipedia: ${id.slice(10).replace(/#\d+$/, "").replace(/_/g, " ")}`;

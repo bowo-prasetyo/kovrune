@@ -52,6 +52,8 @@ export async function getJson(fetchImpl: FetchLike, label: string, url: string, 
     if (signal?.aborted) throw error;
     throw new SourceError(`${label} could not be reached. Check your internet connection.`);
   }
+  // OpenAlex limits how often anonymous users may search; on the class 1 laptop a day of testing hit it.
+  if (response.status === 429) throw new SourceError(`${label} is busy (too many requests). Try again in a few minutes.`);
   if (!response.ok) throw new SourceError(`${label} returned an error (HTTP ${response.status}).`);
   return response.json();
 }

@@ -21,7 +21,7 @@ export interface AgentTool {
    * Returns the observation shown to the model, optionally with how many results it holds
    * (for the user's trace). Not called for the final tool.
    */
-  execute?: (args: any) => Promise<string | { text: string; resultCount: number }>;
+  execute?: (args: any) => Promise<string | ToolResult>;
   /**
    * What to tell the model when it repeats this action. By default a repeated tool is
    * no longer allowed; with keepAfterRepeat it stays available (for example to read
@@ -33,6 +33,15 @@ export interface AgentTool {
    * The final tool is allowed regardless on the last step, after repeats, or when nothing else is.
    */
   available?: () => boolean;
+}
+
+/** A tool's observation with what the user's trace shows about it. */
+export interface ToolResult {
+  text: string;
+  /** How many results the observation holds (searches). */
+  resultCount?: number;
+  /** True when the tool could not do its work, e.g. a source that could not be reached. */
+  failed?: boolean;
 }
 
 export interface AgentConfig {
@@ -63,6 +72,8 @@ export interface CallRecord {
   cutOff?: boolean;
   /** How many results the tool's observation held, for tools that report it (searches). */
   resultCount?: number;
+  /** True when the tool reported that it failed. */
+  failed?: boolean;
   ttftMs: number;
   totalMs: number;
   /** Start of the raw model output, kept for invalid replies to help diagnose them. */
@@ -186,7 +197,7 @@ export async function runAgent(options: {
   signal?: AbortSignal;
   /** Called after every model call, valid or not, for live progress. */
   onCall?: (call: CallRecord, index: number) => void;
-  /** Called once a tool has run, with the same record, now carrying its resultCount if any. */
+  /** Called once a tool has run, with the same record, now carrying its resultCount or failed flag. */
   onResult?: (call: CallRecord, index: number) => void;
 }): Promise<AgentRun> {
   const { model, tools, finalTool, config, signal } = options;
@@ -295,7 +306,8 @@ export async function runAgent(options: {
       if (typeof result === "string") observation = result;
       else {
         observation = result.text;
-        record.resultCount = result.resultCount;
+        if (result.resultCount !== undefined) record.resultCount = result.resultCount;
+        if (result.failed) record.failed = true;
         options.onResult?.(record, calls.length);
       }
     }

@@ -340,6 +340,17 @@ Checked in the container, with Wikipedia and OpenAlex mocked (five results each)
 - **Qwen3.5-2B:** cut off once, then the full answer within 1,024 tokens. Its first section is the Papyrus project steps from the PDF. The six sections after it ("Click on the "Activity" icon…", "Save the diagram") are invented, each with an invented quote. All seven quotes failed, and the label was **Quotes not found**. So here the long answer was not correct. With more room the model showed that, and the check flagged it, instead of the answer being cut short to something that looked better.
 - **Qwen3.5-4B:** no cut-off. Seven steps, all from the PDF, 161 s. Two quotes verified; the third joined lines from two slides and failed correctly.
 
+**Ninth and tenth live checks, on the preview site (harness 0.12.0).** "What is an activity diagram and how to create it?", with the Papyrus PDF, Wikipedia and OpenAlex, on the class 1 laptop.
+- **Qwen3.5-2B** answered only the first half, quoting two OpenAlex abstracts. Both quotes are real, but they say only that activity diagrams are part of UML. The definition sentence came from Wikipedia's snippet, uncited. The "how to create" half was dropped, although the model had read the PDF. This is the same limit seen in the container: the 2B model combines sources poorly.
+- **Qwen3.5-4B** answered both halves: Wikipedia's definition and the Papyrus steps, with three, then five, verified quotes over two runs. One sentence per run had no quote behind it, the first slightly wrong: activity diagrams model "state transitions", which is what state machine diagrams do.
+  - Model test: 5.5 tokens/s, against 8.4 for the 2B model. Self-check 52 s.
+  - The question took about 7 minutes; the model test had estimated "up to 7.3 min".
+- **OpenAlex answered HTTP 429** once, after a day of testing: it limits how often anonymous users may search. The answer continued from the other sources as designed. The warning now says "OpenAlex is busy (too many requests). Try again in a few minutes.", and the search's step ends with ": failed" instead of stopping mid-sentence.
+- **Recommendation for class 1:**
+  - Qwen3.5-2B for quick questions one document answers;
+  - Qwen3.5-4B for questions that need several sources, or when accuracy matters more than speed.
+  - The user guide gives both, with these timings and how to switch. The device step's advice is unchanged: it recommends the local server for this laptop.
+
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
