@@ -71,6 +71,14 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
     available: () => !unread.has(`search_${source.name}`) && openSourcesOpen(),
   }));
   const openSourcesOpen = () => !hasDocuments || readDocument || (searchedDocuments && !foundDocuments);
+  // final_answer waits for the unsearched sources, and the model has to be told: on the class 1
+  // check Qwen3.5-2B, unable to answer and not told why, read the PDF part after part instead.
+  const nextSources = (observation: string) => {
+    const unsearched = (session?.sources ?? []).filter((source) => !searchedSources.has(source.name));
+    return unsearched.length && openSourcesOpen()
+      ? `${observation}\n\nBefore you answer, also search ${unsearched.map((source) => source.label).join(" and ")} (${unsearched.map((source) => `search_${source.name}`).join(", ")}).`
+      : observation;
+  };
   // Document IDs are limited to ones the task has seen, so under constrained decoding the
   // model cannot read or cite a mistyped ID (seen: "wikiped:Ada_Lovelace", a bare "W7150387116").
   const localIds = index.ids();
@@ -87,7 +95,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
         searchedDocuments = true;
         const hits = index.search(query);
         foundDocuments ||= hits.length > 0;
-        if (!hits.length) return "No matching documents.";
+        if (!hits.length) return nextSources("No matching documents.");
         unread.add("search");
         return hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
       },
@@ -101,7 +109,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       execute: async ({ docId }: { docId: string }) => {
         if (session?.sourceFor(docId)) {
           unread.clear();
-          return session.read(docId);
+          return nextSources(await session.read(docId));
         }
         const doc = index.get(docId);
         if (!doc) {
@@ -112,7 +120,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
         }
         readDocument = true;
         unread.clear();
-        return `[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`;
+        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`);
       },
       onRepeat: ({ docId }: { docId: string }) => {
         const parts = session?.sourceFor(docId) ? session.partsOf(docId) : index.partsOf(parentId(docId));

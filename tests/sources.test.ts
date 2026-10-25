@@ -228,6 +228,9 @@ describe("research with Wikipedia", () => {
     assert.deepEqual(tools(2), ["search", "read", "search_wikipedia"], "Wikipedia must be searched before the answer");
     assert.deepEqual(tools(3), ["search", "read", "final_answer"]);
     assert.equal(result.agent.stopReason, "final");
+    // Told why it cannot answer yet; Qwen3.5-2B, not told, read the PDF part after part instead.
+    assert.match(result.agent.transcript[5]!.content, /Before you answer, also search Wikipedia \(search_wikipedia\)\.$/);
+    assert.doesNotMatch(result.agent.transcript[7]!.content, /Before you answer/);
   });
 
   it("searches every ticked source before the answer, and tells the model to combine them", async () => {
