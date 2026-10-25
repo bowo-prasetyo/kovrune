@@ -58,6 +58,11 @@ export function ResearchPanel({
           steps.push(describeCall(call, titleFor));
           setState({ phase: "running", steps: [...steps] });
         },
+        // A search's step is shown as it starts, and gets its result count once it has run.
+        onResult: (call: CallRecord, index: number) => {
+          steps[index - 1] = describeCall(call, titleFor);
+          setState({ phase: "running", steps: [...steps] });
+        },
       });
       if (abort.signal.aborted) setState({ phase: "stopped", steps });
       else if (result.agent.stopReason === "error")

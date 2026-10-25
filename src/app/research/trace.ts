@@ -3,6 +3,10 @@
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
 
+/** ": 5 results", ": 1 document", ": nothing found", or nothing while the search runs. */
+const found = (count: number | undefined, noun: string) =>
+  count === undefined ? "" : count === 0 ? ": nothing found" : `: ${count} ${noun}${count === 1 ? "" : "s"}`;
+
 const shorten = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
 
 export function describeCall(call: CallRecord, titleFor: (docId: string) => string | undefined): string {
@@ -14,11 +18,11 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
   const args = call.args ?? {};
   switch (call.tool) {
     case "search":
-      return `Searching your documents for “${String(args.query ?? "")}”`;
+      return `Searching your documents for “${String(args.query ?? "")}”${found(call.resultCount, "document")}`;
     case "search_wikipedia":
-      return `Searching Wikipedia for “${String(args.query ?? "")}”`;
+      return `Searching Wikipedia for “${String(args.query ?? "")}”${found(call.resultCount, "result")}`;
     case "search_openalex":
-      return `Searching OpenAlex for “${String(args.query ?? "")}”`;
+      return `Searching OpenAlex for “${String(args.query ?? "")}”${found(call.resultCount, "result")}`;
     case "read": {
       const id = String(args.docId ?? "");
       if (id.startsWith("wikipedia:")) return `Reading Wikipedia: ${id.slice(10).replace(/#\d+$/, "").replace(/_/g, " ")}`;

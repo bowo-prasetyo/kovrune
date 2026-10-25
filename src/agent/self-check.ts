@@ -13,7 +13,7 @@
 import type { ChatMessage, LanguageModel } from "../models/types.ts";
 import { createResearchTools, RESEARCH_SYSTEM } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
-import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, systemPrompt } from "./agent.ts";
+import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, systemPrompt } from "./agent.ts";
 
 export interface SelfCheckResult {
   passed: boolean;
@@ -94,7 +94,7 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
   const search = researchTools.find((t) => t.name === "search")!;
   messages.push(
     { role: "assistant", content: JSON.stringify({ tool: "search", args: { query: SELF_CHECK_QUERY } }) },
-    { role: "user", content: `${OBSERVATION_PREFIX}${await search.execute!({ query: SELF_CHECK_QUERY })}` },
+    { role: "user", content: `${OBSERVATION_PREFIX}${observationText(await search.execute!({ query: SELF_CHECK_QUERY }))}` },
   );
   options.onStep?.(2);
   const second = await callForAction({ model, messages, schema, responseSchema, maxTokens: 96, signal });

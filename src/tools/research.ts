@@ -55,9 +55,9 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       try {
         const hits = await source.search(query, session?.signal);
         session?.noteHits(hits.map((h) => h.id));
-        if (!hits.length) return `No matching ${source.label} results.`;
+        if (!hits.length) return { text: `No matching ${source.label} results.`, resultCount: 0 };
         unread.add(`search_${source.name}`);
-        return hits.map((h) => `[${h.id}] ${h.title}\n${h.snippet}`).join("\n\n");
+        return { text: hits.map((h) => `[${h.id}] ${h.title}\n${h.snippet}`).join("\n\n"), resultCount: hits.length };
       } catch (error) {
         if (error instanceof SourceError) return session!.noteError(error.message);
         throw error;
@@ -95,9 +95,11 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
         searchedDocuments = true;
         const hits = index.search(query);
         foundDocuments ||= hits.length > 0;
-        if (!hits.length) return nextSources("No matching documents.");
+        // Counted in documents, not passages: a PDF found in three passages is one document to the user.
+        if (!hits.length) return { text: nextSources("No matching documents."), resultCount: 0 };
         unread.add("search");
-        return hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
+        const text = hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
+        return { text, resultCount: new Set(hits.map((h) => parentId(h.docId))).size };
       },
       onRepeat: () => ({ hint: "Searching is no longer available: read one of the documents it found with read." }),
       available: () => !unread.has("search"),

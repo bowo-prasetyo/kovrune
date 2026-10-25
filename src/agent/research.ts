@@ -60,6 +60,8 @@ export async function runResearch(options: {
   constrained?: boolean;
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
+  /** Called when a search has run, with its result count. */
+  onResult?: (call: CallRecord, index: number) => void;
 }): Promise<ResearchResult> {
   const { library, signal } = options;
   const sources = options.sources ?? [];
@@ -78,6 +80,7 @@ export async function runResearch(options: {
     },
     signal,
     onCall: options.onCall,
+    onResult: options.onResult,
   });
   const raw = agent.final as ResearchFinal | undefined;
   const sourceErrors = () => [...(session?.errors ?? [])];
