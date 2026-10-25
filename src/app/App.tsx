@@ -36,7 +36,7 @@ export function App() {
             Help
           </a>
         </div>
-        <p className="tagline">Research with an AI model that runs on your own machine.</p>
+        <p className="tagline">Your documents. Your machine. Answers you can check.</p>
       </header>
 
       {step === "device" && !saved && !draft && (

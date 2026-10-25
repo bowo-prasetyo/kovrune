@@ -1,11 +1,16 @@
 # Kovrune
-Think Freely. Build Together. Stay Decentralized. 
+Your documents. Your machine. Answers you can check.
 
-An open-source, browser-first, peer-to-peer agentic AI ecosystem for research and software development.
+Kovrune is an open-source, local-first research app. Ask a question about your own documents, and optionally Wikipedia and scholarly papers, and get an answer that quotes its sources. Kovrune checks that every quote is really in the source. The AI model runs on your computer, in the browser or on a local model server, so nothing is sent to an online AI service.
 
-## Design
+## Where we're going
 
-See [`docs/design.md`](docs/design.md) for the product definition, architecture, security model, and roadmap.
+Research is the first part of a longer plan, captured in the project's motto: *Think Freely. Build Together. Stay Decentralized.* These are planned, not built:
+
+- **A coding agent** that proposes changes and checks them by running tests in a sandbox in the browser (milestone M2.5).
+- **Kovrune Circles:** small groups of invited peers, such as a lab or a team, who can hand tasks to each other's agents (M3 and later).
+
+Kovrune has no tokens, no blockchain and no central AI service. See [`docs/design.md`](docs/design.md) for the product definition, architecture, security model, and roadmap.
 
 ## Status
 
