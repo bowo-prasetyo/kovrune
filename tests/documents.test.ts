@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { answerStatus, checkEvidence, normalizeForMatch } from "../src/agent/evidence.ts";
+import { answerStatus, checkEvidence, closestPassage, normalizeForMatch } from "../src/agent/evidence.ts";
 import { ResearchLibrary } from "../src/agent/research.ts";
 import { chunkDocument, parentId } from "../src/documents/chunk.ts";
 import { detectKind, extractText, htmlToText, type PdfJsLike } from "../src/documents/extract.ts";
@@ -124,5 +124,45 @@ describe("text extraction", () => {
     const result = await extractText({ name: "scan.pdf", arrayBuffer: async () => new ArrayBuffer(4) }, async () => emptyPdf);
     assert.equal(result.text, "");
     assert.match(result.warning ?? "", /scanned/);
+  });
+});
+
+describe("closest passage for a quote that is not word for word", () => {
+  // The first paragraph of the Wikipedia article as read on the class 1 laptop (October 2026).
+  const ARTICLE =
+    "Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was an English mathematician and writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose computer, the analytical engine. She was the first to recognise the machine had applications beyond pure calculation. Lovelace is often considered the first computer programmer.";
+  // The quote Qwen3.5-2B gave: a real start, finished from memory.
+  const QUOTE =
+    "Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was an English mathematician and computer programmer.";
+
+  it("shows what the model changed in the class 1 Ada Lovelace quote", () => {
+    const [checked] = checkEvidence([{ docId: "wikipedia:Ada_Lovelace", quote: QUOTE }], () => ARTICLE);
+    assert.equal(checked!.verified, false);
+    const parts = checked!.closest!;
+    assert.match(parts[0]!.text, /^Augusta Ada King, .* was an English mathematician and$/);
+    assert.deepEqual(parts.slice(1), [
+      { kind: "source-only", text: "writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose" },
+      { kind: "same", text: "computer," },
+      { kind: "quote-only", text: "programmer." },
+    ]);
+  });
+
+  it("gives nothing for an invented quote, and nothing for a verified one", () => {
+    const [invented] = checkEvidence([{ docId: "d", quote: "she invented the telephone in 1876" }], () => ARTICLE);
+    assert.equal(invented!.closest, undefined);
+    const [real] = checkEvidence([{ docId: "d", quote: "the first to recognise the machine had applications" }], () => ARTICLE);
+    assert.equal(real!.verified, true);
+    assert.equal(real!.closest, undefined);
+  });
+
+  it("finds a changed word in the middle of a long document", () => {
+    const text = `${"Unrelated filler sentence here. ".repeat(500)}The recommended dictionary size is 112 KiB for small files. ${"More filler. ".repeat(500)}`;
+    const parts = closestPassage("The recommended dictionary size is 128 KiB for small files.", text)!;
+    assert.deepEqual(parts, [
+      { kind: "same", text: "The recommended dictionary size is" },
+      { kind: "quote-only", text: "128" },
+      { kind: "source-only", text: "112" },
+      { kind: "same", text: "KiB for small files." },
+    ]);
   });
 });

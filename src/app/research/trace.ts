@@ -49,7 +49,7 @@ export function describeStatus(status: AnswerStatus, evidenceCount: number): { l
     case "verified":
       return {
         label: "Quotes found",
-        detail: "Every quote below is word for word in your documents. Check that they support the whole answer.",
+        detail: "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
       };
     case "unverified":
       return evidenceCount
