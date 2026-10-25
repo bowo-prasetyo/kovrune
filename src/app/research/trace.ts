@@ -55,11 +55,11 @@ export function describeStatus(status: AnswerStatus, evidenceCount: number): { l
       return evidenceCount
         ? {
             label: "Quotes not found",
-            detail: "Some quotes below are not in your documents. The answer may be wrong; check it against your documents.",
+            detail: "Some quotes below are not in the sources they cite. The answer may be wrong; check it against the sources.",
           }
         : {
             label: "No quotes",
-            detail: "The model gave no quotes from your documents, so nothing backs this answer. Check it against your documents.",
+            detail: "The model answered without quoting any source, so nothing backs this answer. Check it before relying on it.",
           };
     case "not-found":
       return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched." };

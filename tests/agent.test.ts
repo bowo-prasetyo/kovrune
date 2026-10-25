@@ -83,8 +83,9 @@ describe("research agent", () => {
   });
 
   it("fails fabricated sources and wrong found flags, and passes a correct refusal", async () => {
-    const fabricated = await research("r02-lumen-license", [final(true, "MPL-2.0", [LICENSE_QUOTE, ["made-up-doc", "licensed under MPL-2.0"]])]);
-    assert.equal(fabricated.score.checks.citationsExist, false);
+    // A made-up document ID is rejected as an invalid action, constrained or not.
+    const fabricated = await research("r02-lumen-license", [final(true, "MPL-2.0", [LICENSE_QUOTE, ["made-up-doc", "licensed under MPL-2.0"]])], false);
+    assert.equal(fabricated.agent.calls[0]!.valid, false);
     assert.equal(fabricated.score.passed, false);
 
     const invented = await research("r22-harrow-ceo", [final(true, "Jane Doe", [["harrow-press", "Harrow Labs is headquartered in Rotterdam"]])]);
