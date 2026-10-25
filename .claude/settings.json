@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone --depth 1 https://github.com/ggml-org/llama.cpp)",
+      "Bash(git clone --depth 1 https://github.com/ggml-org/llama.cpp *)",
+      "Bash(cmake -B build *)",
+      "Bash(cmake --build build *)",
+      "Bash(curl -L -o * https://huggingface.co/unsloth/Qwen3.5-*)",
+      "Bash(*/build/bin/llama-server *)"
+    ]
+  }
+}
