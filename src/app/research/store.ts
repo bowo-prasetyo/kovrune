@@ -1,44 +1,50 @@
-// Saves the user's documents in the browser, so they are still there after a reload
-// (issue #34). Only the extracted text and its metadata are stored, never the original
-// file. The database is Kovrune's own: model downloads live in WebLLM's storage, so
-// removing documents never removes a model.
+// Saves the user's documents and past answers in the browser, so they are still there
+// after a reload (issue #34). For documents, only the extracted text and its metadata are
+// stored, never the original file. The database is Kovrune's own: model downloads live in
+// WebLLM's storage, so removing documents or answers never removes a model.
 
+import type { SavedAnswer } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 
-export interface DocumentStore {
+/** Saved records of one kind, oldest first. */
+export interface RecordStore<T extends { id: string }> {
   /** False when the browser does not let the page save data, e.g. in some private windows. */
   readonly persistent: boolean;
-  /** Saved documents, oldest first. */
-  list(): Promise<LibraryDocument[]>;
-  put(doc: LibraryDocument): Promise<void>;
+  list(): Promise<T[]>;
+  put(record: T): Promise<void>;
   remove(id: string): Promise<void>;
 }
 
-/** Keeps documents for this page only; used when the browser has no usable IndexedDB. */
-export class MemoryDocumentStore implements DocumentStore {
+export type DocumentStore = RecordStore<LibraryDocument>;
+export type AnswerStore = RecordStore<SavedAnswer>;
+
+export interface Stores {
+  documents: DocumentStore;
+  answers: AnswerStore;
+}
+
+/** Keeps records for this page only; used when the browser has no usable IndexedDB. */
+export class MemoryStore<T extends { id: string }> implements RecordStore<T> {
   readonly persistent = false;
-  private readonly docs = new Map<string, LibraryDocument>();
+  private readonly records = new Map<string, T>();
 
   async list() {
-    return [...this.docs.values()];
+    return [...this.records.values()];
   }
-  async put(doc: LibraryDocument) {
-    this.docs.delete(doc.id);
-    this.docs.set(doc.id, doc);
+  async put(record: T) {
+    this.records.delete(record.id);
+    this.records.set(record.id, record);
   }
   async remove(id: string) {
-    this.docs.delete(id);
+    this.records.delete(id);
   }
 }
 
 const DB_NAME = "kovrune";
-const DB_VERSION = 1;
+// Version 1 had documents only; version 2 adds answers and keeps the saved documents.
+const DB_VERSION = 2;
 const DOCUMENTS = "documents";
-
-/** A stored document, with when it was added so the library keeps its order. */
-interface StoredDocument extends LibraryDocument {
-  addedAt: number;
-}
+const ANSWERS = "answers";
 
 const done = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
@@ -46,24 +52,31 @@ const done = <T>(request: IDBRequest<T>) =>
     request.onerror = () => reject(request.error);
   });
 
-class IndexedDbDocumentStore implements DocumentStore {
+/** A stored record, with when it was saved so lists keep their order. */
+type Stored<T> = T & { savedAt: number };
+
+class IndexedDbStore<T extends { id: string }> implements RecordStore<T> {
   readonly persistent = true;
   private readonly db: IDBDatabase;
-  constructor(db: IDBDatabase) {
+  private readonly name: string;
+  constructor(db: IDBDatabase, name: string) {
     this.db = db;
+    this.name = name;
   }
 
   private store(mode: IDBTransactionMode) {
-    return this.db.transaction(DOCUMENTS, mode).objectStore(DOCUMENTS);
+    return this.db.transaction(this.name, mode).objectStore(this.name);
   }
 
   async list() {
-    const stored = await done(this.store("readonly").getAll() as IDBRequest<StoredDocument[]>);
-    return stored.sort((a, b) => a.addedAt - b.addedAt).map(({ addedAt: _addedAt, ...doc }) => doc);
+    const stored = await done(this.store("readonly").getAll() as IDBRequest<Array<Stored<T> & { addedAt?: number }>>);
+    // Documents saved by database version 1 have "addedAt" instead of "savedAt".
+    const time = (r: Stored<T> & { addedAt?: number }) => r.savedAt ?? r.addedAt ?? 0;
+    return stored.sort((a, b) => time(a) - time(b)).map(({ savedAt: _s, addedAt: _a, ...record }) => record as unknown as T);
   }
 
-  async put(doc: LibraryDocument) {
-    await done(this.store("readwrite").put({ ...doc, addedAt: Date.now() } satisfies StoredDocument));
+  async put(record: T) {
+    await done(this.store("readwrite").put({ ...record, savedAt: Date.now() }));
   }
 
   async remove(id: string) {
@@ -71,31 +84,45 @@ class IndexedDbDocumentStore implements DocumentStore {
   }
 }
 
+const memoryStores = (): Stores => ({ documents: new MemoryStore(), answers: new MemoryStore() });
+
 /**
- * Opens the saved-documents database. Falls back to a memory store when IndexedDB is missing
- * or refused (private windows, blocked site data), so the library still works for the visit.
+ * Opens the database. Falls back to memory stores when IndexedDB is missing or refused
+ * (private windows, blocked site data), so the library and answers still work for the visit.
  */
-export async function openDocumentStore(factory: IDBFactory | undefined = globalThis.indexedDB): Promise<DocumentStore> {
-  if (!factory) return new MemoryDocumentStore();
+export async function openStores(factory: IDBFactory | undefined = globalThis.indexedDB): Promise<Stores> {
+  if (!factory) return memoryStores();
   try {
     const request = factory.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(DOCUMENTS)) request.result.createObjectStore(DOCUMENTS, { keyPath: "id" });
+      for (const name of [DOCUMENTS, ANSWERS]) {
+        if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, { keyPath: "id" });
+      }
     };
-    return new IndexedDbDocumentStore(await done(request));
+    const db = await done(request);
+    // Let a newer version of the app, opened in another tab, upgrade the database.
+    db.onversionchange = () => db.close();
+    return { documents: new IndexedDbStore(db, DOCUMENTS), answers: new IndexedDbStore(db, ANSWERS) };
   } catch {
-    return new MemoryDocumentStore();
+    return memoryStores();
   }
 }
 
+let shared: Promise<Stores> | undefined;
+
+/** The page's stores, opened once. */
+export function sharedStores(): Promise<Stores> {
+  return (shared ??= openStores());
+}
+
 /**
- * The writes that bring the store from `saved` to `current`: documents to put and IDs to
- * remove. Documents are never edited in place, so one already saved under its ID is unchanged.
+ * The writes that bring the store from `saved` to `current`: records to put and IDs to
+ * remove. Records are never edited in place, so one already saved under its ID is unchanged.
  */
-export function storeChanges(
+export function storeChanges<T extends { id: string }>(
   saved: ReadonlyArray<{ id: string }>,
-  current: LibraryDocument[],
-): { put: LibraryDocument[]; remove: string[] } {
+  current: T[],
+): { put: T[]; remove: string[] } {
   const savedIds = new Set(saved.map((d) => d.id));
   const currentIds = new Set(current.map((d) => d.id));
   return {

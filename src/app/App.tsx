@@ -4,7 +4,7 @@ import { BUILD, REPO_URL } from "./build-info.ts";
 import { HELP_URL } from "./help.ts";
 import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
-import { useSavedDocuments } from "./research/useSavedDocuments.ts";
+import { useSavedAnswers, useSavedDocuments } from "./research/useSavedDocuments.ts";
 import { clearSettings, loadSettings, saveSettings, type Settings } from "./settings.ts";
 import { BrowserModelStep } from "./steps/BrowserModelStep.tsx";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
@@ -26,6 +26,7 @@ export function App() {
   const [caps, setCaps] = useState<DeviceCapabilities>();
   // Kept here, not in the research screen, so documents survive re-testing the model; saved in the browser.
   const library = useSavedDocuments();
+  const history = useSavedAnswers();
 
   return (
     <main>
@@ -105,6 +106,7 @@ export function App() {
         <ResearchScreen
           settings={saved}
           library={library}
+          history={history}
           onRetest={() => {
             setDraft(saved);
             setStep("test");

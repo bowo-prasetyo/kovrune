@@ -1,7 +1,7 @@
 // Scholarly works through the OpenAlex API, which allows cross-origin requests.
 // Abstracts come as an inverted index (word -> positions) and are rebuilt here.
 
-import { getJson, SourceError, type FetchLike, type OpenSource } from "./types.ts";
+import { getJson, SourceError, type FetchLike, type OpenSource, type WorkInfo } from "./types.ts";
 
 const PREFIX = "openalex:";
 const API = "https://api.openalex.org/works";
@@ -57,6 +57,16 @@ export function workText(work: Work): string {
   return lines.filter(Boolean).join("\n");
 }
 
+/** A work's reference details. */
+export function workInfo(work: Work): WorkInfo {
+  return {
+    authors: (work.authorships ?? []).map((a) => a.author?.display_name).filter((name): name is string => Boolean(name)),
+    ...(work.publication_year ? { year: work.publication_year } : {}),
+    ...(work.doi ? { doi: work.doi.replace(/^https:\/\/doi\.org\//, "") } : {}),
+    ...(work.primary_location?.source?.display_name ? { venue: work.primary_location.source.display_name } : {}),
+  };
+}
+
 export function createOpenAlex(fetchImpl: FetchLike = fetch): OpenSource {
   return {
     name: "openalex",
@@ -85,6 +95,7 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch): OpenSource {
         text: workText(work),
         url: work.doi ?? `https://openalex.org/${key}`,
         retrievedAt: new Date().toISOString(),
+        work: workInfo(work),
       };
     },
   };

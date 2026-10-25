@@ -16,6 +16,17 @@ export interface FetchedDocument {
   url: string;
   /** ISO time the text was retrieved, shown with citations. */
   retrievedAt: string;
+  /** Scholarly works: what a reference needs, e.g. for a BibTeX export. */
+  work?: WorkInfo;
+}
+
+export interface WorkInfo {
+  authors: string[];
+  year?: number;
+  /** Without the "https://doi.org/" prefix. */
+  doi?: string;
+  /** The journal, conference or repository. */
+  venue?: string;
 }
 
 export interface OpenSource {

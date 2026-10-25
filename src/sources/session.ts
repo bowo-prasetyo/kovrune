@@ -4,13 +4,15 @@
 
 import { chunkDocument, parentId } from "../documents/chunk.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
-import { SourceError, type FetchedDocument, type OpenSource } from "./types.ts";
+import { SourceError, type FetchedDocument, type OpenSource, type WorkInfo } from "./types.ts";
 
 export interface Citation {
   title: string;
   url: string;
   retrievedAt: string;
   source: string;
+  /** Scholarly works: authors, year, DOI and venue. */
+  work?: WorkInfo;
 }
 
 export class SourceSession {
@@ -103,7 +105,8 @@ export class SourceSession {
     const entry = this.fetched.get(parentId(id));
     const source = this.sourceFor(id);
     if (!entry || !source) return undefined;
-    return { title: entry.doc.title, url: entry.doc.url, retrievedAt: entry.doc.retrievedAt, source: source.label };
+    const { title, url, retrievedAt, work } = entry.doc;
+    return { title, url, retrievedAt, source: source.label, ...(work ? { work } : {}) };
   }
 
   private async load(id: string, source: OpenSource, signal?: AbortSignal) {

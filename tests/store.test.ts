@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { LibraryDocument } from "../src/app/research/library.ts";
-import { MemoryDocumentStore, openDocumentStore, savedTextBytes, storeChanges } from "../src/app/research/store.ts";
+import { MemoryStore, openStores, savedTextBytes, storeChanges } from "../src/app/research/store.ts";
 
 const doc = (id: string, text = "Some text."): LibraryDocument => ({
   id,
@@ -28,7 +28,7 @@ describe("saved documents", () => {
   });
 
   it("keeps documents in memory, in the order they were added", async () => {
-    const store = new MemoryDocumentStore();
+    const store = new MemoryStore<LibraryDocument>();
     assert.equal(store.persistent, false);
     await store.put(doc("a"));
     await store.put(doc("b"));
@@ -42,10 +42,12 @@ describe("saved documents", () => {
 
   it("falls back to memory when the browser has no usable IndexedDB", async () => {
     // No IndexedDB at all, as in Node.
-    assert.equal((await openDocumentStore(undefined)).persistent, false);
+    const none = await openStores(undefined);
+    assert.equal(none.documents.persistent, false);
+    assert.equal(none.answers.persistent, false);
     // open() throws, as some browsers do with storage blocked.
     const throwing = { open: () => { throw new DOMException("blocked", "SecurityError"); } } as unknown as IDBFactory;
-    assert.equal((await openDocumentStore(throwing)).persistent, false);
+    assert.equal((await openStores(throwing)).documents.persistent, false);
     // open() fails asynchronously, as in a private window that refuses storage.
     const failing = {
       open: () => {
@@ -54,7 +56,7 @@ describe("saved documents", () => {
         return request;
       },
     } as unknown as IDBFactory;
-    const store = await openDocumentStore(failing);
+    const store = (await openStores(failing)).documents;
     assert.equal(store.persistent, false);
     await store.put(doc("a"));
     assert.equal((await store.list()).length, 1, "the fallback still works for the visit");

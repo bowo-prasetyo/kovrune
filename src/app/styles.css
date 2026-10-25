@@ -500,3 +500,32 @@ footer.build {
   color: var(--muted);
   font-size: 0.8em;
 }
+
+/* Past answers */
+
+.past {
+  padding: 0;
+  list-style: none;
+}
+
+.past > li {
+  border-top: 1px solid var(--line);
+  padding: 8px 0;
+}
+
+.past > li > details > summary {
+  cursor: pointer;
+}
+
+.past-question {
+  font-weight: 600;
+}
+
+.past-steps {
+  margin-top: 8px;
+}
+
+.past-steps summary {
+  color: var(--muted);
+  cursor: pointer;
+}
