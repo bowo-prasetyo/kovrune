@@ -59,11 +59,11 @@ For someone who can't join a session but has a capable GPU. It can go by email, 
 
 ### English
 
-> **Help wanted: run Kovrune's AI model in your browser (about 20 minutes)**
+> **Help wanted: run Kovrune's AI model in your browser (about 20 minutes, nothing to install)**
 >
 > Kovrune can now run its research agent entirely in the browser with WebLLM. We need one check on real hardware: a **Mac with Apple silicon (M1 or newer)**, or a **PC with a recent NVIDIA or AMD GPU**, in Chrome or Edge.
 >
-> 1. `git clone https://github.com/bowo-prasetyo/kovrune.git && cd kovrune && npm ci && npm run dev`, then open the printed address.
+> 1. Open <https://bowo-prasetyo.github.io/kovrune/> in Chrome or Edge. (Nothing to install; this is a preview built from the project's `main` branch.)
 > 2. On **Your device**, note what Kovrune recommends, then choose **Run in this browser**.
 > 3. Choose **Qwen3.5-4B** (a 2.4 GB download, once) and press **Download and test**. Note how long the download and the model test take, and the speed the test reports.
 > 4. Add any PDF with selectable text, and ask one question it answers and one it doesn't.
@@ -78,11 +78,11 @@ For someone who can't join a session but has a capable GPU. It can go by email, 
 
 ### 日本語
 
-> **お願い:Kovrune の AI モデルをブラウザで動かしてみてください(約20分)**
+> **お願い:Kovrune の AI モデルをブラウザで動かしてみてください(約20分、インストール不要)**
 >
 > Kovrune は、リサーチ用のエージェントをブラウザだけで(WebLLM で)動かせるようになりました。実機での確認が1件必要です。対象は **Apple シリコン(M1 以降)搭載の Mac**、または**最近の NVIDIA/AMD GPU 搭載の PC** で、ブラウザは Chrome か Edge です。
 >
-> 1. `git clone https://github.com/bowo-prasetyo/kovrune.git && cd kovrune && npm ci && npm run dev` を実行し、表示されたアドレスを開きます。
+> 1. Chrome または Edge で <https://bowo-prasetyo.github.io/kovrune/> を開きます(インストールは不要です。プロジェクトの `main` ブランチから作られたプレビュー版です)。
 > 2. **Your device** の画面で Kovrune がどちらを勧めるかをメモしてから、**Run in this browser** を選びます。
 > 3. **Qwen3.5-4B**(初回のみ 2.4 GB のダウンロード)を選び、**Download and test** を押します。ダウンロードとモデルテストにかかった時間、およびテストが表示した速度をメモしてください。
 > 4. 文字を選択できる PDF を1つ追加し、その PDF で答えられる質問と答えられない質問を1つずつ尋ねます。

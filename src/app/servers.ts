@@ -1,5 +1,7 @@
 // Local model servers the app can connect to (docs/m1-plan.md, decision D2).
 
+import { isPublicHttpsPage } from "./build-info.ts";
+
 export type ServerKind = "llama.cpp" | "ollama" | "other";
 
 export interface ServerPreset {
@@ -43,10 +45,17 @@ export const RECOMMENDED_GGUF = {
 };
 
 /** A user-facing explanation for a failed connection. */
-export function describeConnectionError(error: unknown, baseUrl: string): string {
+export function describeConnectionError(
+  error: unknown,
+  baseUrl: string,
+  fromPublicPage = typeof location !== "undefined" && isPublicHttpsPage(location),
+): string {
   const message = error instanceof Error ? error.message : String(error);
   if (error instanceof TypeError || /fetch failed|Failed to fetch|NetworkError/i.test(message)) {
-    return `Couldn't reach ${baseUrl}. Check that the server is running at that address and allows requests from this page (llama.cpp allows them by default; Ollama needs this page's address in OLLAMA_ORIGINS).`;
+    const base = `Couldn't reach ${baseUrl}. Check that the server is running at that address and allows requests from this page (llama.cpp allows them by default; Ollama needs this page's address in OLLAMA_ORIGINS).`;
+    return fromPublicPage
+      ? `${base} This page is on the web, so your browser must also allow it to reach a server on this computer: if the browser asked about devices on your local network, choose Allow, then connect again.`
+      : base;
   }
   return message;
 }

@@ -14,9 +14,9 @@ See [`docs/design.md`](docs/design.md) for the product definition, architecture,
 
 ## Running the app
 
-The [user guide](docs/user-guide.md) covers setup step by step, including llama.cpp on Windows with WSL, and troubleshooting. The short version:
+**Try the preview:** <https://bowo-prasetyo.github.io/kovrune/> in Chrome or Edge. It is published from `main` by GitHub Actions and is not yet a signed release.
 
-You need Node.js 22 or newer. Start the app and open the address it prints:
+The [user guide](docs/user-guide.md) covers setup step by step, including llama.cpp on Windows with WSL, and troubleshooting. To run the app locally instead, you need Node.js 22 or newer; start it and open the address it prints:
 
 ```bash
 npm ci

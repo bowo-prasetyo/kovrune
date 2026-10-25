@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { DeviceCapabilities } from "./device.ts";
+import { BUILD, REPO_URL } from "./build-info.ts";
 import { HELP_URL } from "./help.ts";
 import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
@@ -116,6 +117,15 @@ export function App() {
             setStep("device");
           }}
         />
+      )}
+      {BUILD.kind === "preview" && (
+        <footer className="build">
+          Preview build{" "}
+          <a href={`${REPO_URL}/commit/${BUILD.commit}`} target="_blank" rel="noreferrer">
+            {BUILD.commit}
+          </a>{" "}
+          ({BUILD.date}), published from <code>main</code> by GitHub Actions. Not yet a signed release.
+        </footer>
       )}
     </main>
   );

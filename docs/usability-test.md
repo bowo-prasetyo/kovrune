@@ -22,7 +22,7 @@ Invitation texts, in English and Japanese, are in [`tester-invitation.md`](teste
 Each session takes about 45 minutes, in person or over a screen share. One moderator also takes notes.
 
 **Before:**
-- Check the participant has Node.js 22 or newer and git, or let installing them count as part of setup.
+- The app itself needs only Chrome or Edge (the preview site). For the local-server path, llama.cpp setup is part of the test; Node.js and git are needed only to run the app locally.
 - Don't install anything else for them.
 - For the local-server path, they follow the [user guide](user-guide.md) from section 3. Hand them the guide, not instructions of your own.
 
@@ -34,7 +34,7 @@ Each session takes about 45 minutes, in person or over a screen share. One moder
 
 Start the timer at task 1 and stop it when the first answer appears in task 4.
 
-1. "Using this guide, start Kovrune on your computer." (`git clone` … `npm run dev`, then open the address.)
+1. "Open Kovrune and get it ready to use." Give them the preview link, <https://bowo-prasetyo.github.io/kovrune/>, and the [user guide](user-guide.md). Running it locally with `npm run dev` is only needed if the preview cannot reach their local server.
 2. "Set Kovrune up so that it can answer questions." This covers the device step, the model (the local server or the browser download) and the model test. A browser download of 1–2.4 GB counts toward the time; note its share separately.
 3. "Add your PDF."
 4. "Ask the question you brought, and tell me whether you trust the answer, and why."
