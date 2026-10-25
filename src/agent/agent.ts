@@ -25,6 +25,8 @@ export interface AgentTool {
    * another part of a document).
    */
   onRepeat?: (args: any) => { hint: string; keepAfterRepeat?: boolean };
+  /** Checked before every model call; a tool that is not available is left out of the schema. */
+  available?: () => boolean;
 }
 
 export interface AgentConfig {
@@ -195,8 +197,9 @@ export async function runAgent(options: {
     }
 
     // Rebuilt every call: argument schemas can depend on what the task has found so far.
-    const schema = actionSchema(allowed);
-    const responseSchema = constrain ? actionJsonSchema(allowed) : undefined;
+    const callable = allowed.filter((t) => t.available?.() ?? true);
+    const schema = actionSchema(callable);
+    const responseSchema = constrain ? actionJsonSchema(callable) : undefined;
     let result: Awaited<ReturnType<typeof callForAction>>;
     try {
       result = await callForAction({
@@ -220,7 +223,7 @@ export async function runAgent(options: {
         role: "user",
         content: forceFinal
           ? `Your reply was not a valid action (${record.error}). Reply with exactly one ${finalTool} JSON object.`
-          : `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of these actions: ${allowed.map((t) => t.name).join(", ")}.`,
+          : `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of these actions: ${callable.map((t) => t.name).join(", ")}.`,
       });
       continue;
     }

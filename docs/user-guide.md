@@ -98,7 +98,7 @@ Then, in the app: **Use a local model server** → keep the address `http://127.
 ## 4. Ask questions
 
 1. **Add documents:** PDF, text, Markdown or HTML, with **Choose files** or by dropping them on the page. **Show text** shows what Kovrune read from a file.
-2. **Choose where to search.** Your documents are always searched. Tick **Wikipedia** (with its language) or **OpenAlex** (scholarly papers) to search those too; with either ticked, you can ask questions without adding documents.
+2. **Choose where to search.** Your documents are always searched, and searched first: the model can use Wikipedia or OpenAlex only after looking in your documents. Tick **Wikipedia** (with its language) or **OpenAlex** (scholarly papers) to search those too; with either ticked, you can ask questions without adding documents.
 3. **Type a question and press Ask.** You see each step: what the model searched for and what it read. **Stop** ends the run at any time.
 
 Tips:
@@ -115,11 +115,12 @@ Each answer has a label:
 | Label | Meaning |
 | --- | --- |
 | **Quotes found** | Every quote is word for word in its source. This proves the quotes are real, **not** that the answer is right: check that they support the whole answer. |
-| **Quotes not found** | Some quotes aren't in the cited source. The answer may be wrong. |
+| **Some quotes not found (2 of 3 found)** | Only some quotes are in their sources. Check the answer against the sources, starting with the quotes marked ✗. |
+| **Quotes not found** | None of the quotes are in the cited sources. The answer may be wrong. |
 | **No quotes** | The model answered without quoting anything, so nothing backs the answer. |
 | **Not found in your sources** | The model found no answer in what it searched. This is often the right answer. |
 
-Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from. For a quote that is close to the source but not word for word, Kovrune shows the **closest passage** with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did. Wikipedia and OpenAlex sources link to the page and show when it was retrieved.
+Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from. Quotes must match whole words. For a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the **closest passage** with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did. Wikipedia and OpenAlex sources link to the page and show when it was retrieved.
 
 ## 6. Privacy
 

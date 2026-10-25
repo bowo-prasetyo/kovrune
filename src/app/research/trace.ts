@@ -44,24 +44,37 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
  * The status line for an answer. A quote check proves the quotes are in the documents,
  * not that they support every part of the answer, so the wording says only that.
  */
-export function describeStatus(status: AnswerStatus, evidenceCount: number): { label: string; detail: string } {
+export function describeStatus(
+  status: AnswerStatus,
+  evidence: Array<{ verified: boolean }>,
+): { label: string; detail: string; tone: AnswerStatus } {
+  const found = evidence.filter((e) => e.verified).length;
   switch (status) {
     case "verified":
-      return {
-        label: "Quotes found",
-        detail: "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
-      };
+      return found === evidence.length
+        ? {
+            label: "Quotes found",
+            detail: "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
+            tone: "verified",
+          }
+        : {
+            label: `Some quotes not found (${found} of ${evidence.length} found)`,
+            detail: "The quotes marked ✗ are not in the sources they cite. Check the answer against the sources.",
+            tone: "unverified",
+          };
     case "unverified":
-      return evidenceCount
+      return evidence.length
         ? {
             label: "Quotes not found",
-            detail: "Some quotes below are not in the sources they cite. The answer may be wrong; check it against the sources.",
+            detail: "The quotes below are not in the sources they cite. The answer may be wrong; check it against the sources.",
+            tone: "unverified",
           }
         : {
             label: "No quotes",
             detail: "The model answered without quoting any source, so nothing backs this answer. Check it before relying on it.",
+            tone: "unverified",
           };
     case "not-found":
-      return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched." };
+      return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched.", tone: "not-found" };
   }
 }

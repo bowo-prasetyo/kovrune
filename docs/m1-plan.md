@@ -248,6 +248,23 @@ With the fix, the full Qwen3.5-4B benchmark (harness 0.7.0) is unchanged task fo
 
 So the app now shows, for a quote that is close but not word for word, the **closest passage** in the source as a word-level diff: words only in the source are highlighted, words only in the quote are struck out. The case is a unit test with the article's real first paragraph. The **Quotes found** text now says "in the source it cites" instead of "in your documents".
 
+**Third live checks, with the closest passage.** Three questions, with the Papyrus PDF added and both sources ticked:
+- **"How to create an activity diagram?"** The model **skipped the PDF**. It searched and read Wikipedia's "Activity diagram" article and gave a generic UML answer, supported by one real but thin quote ("diamonds represent decisions;"). The prompt asks for the user's documents first; Qwen3.5-2B did not follow it.
+- **"Who was Ada Lovelace?"**
+  - The first misquote got a useful diff: "writer chiefly known for…" in the source against "computer programmer" in the quote.
+  - Two further "quotes" were mostly invented ("Algorithm No. 62", a "Charles Babbage Medal … in 1936"). The closest-passage matcher still found passages sharing common words such as "the", "computer" and "Babbage", and showed a meaningless word mix.
+- **"How does LLM think?"**
+  - One of three quotes failed, but the label read **Quotes found: Every quote below is word for word**. An answer is marked verified when *any* quote checks out.
+  - Another quote ended mid-word ("…can sometimes match hum…", from a cut-off search snippet) and passed, because "hum" is inside "human".
+
+Fixes (harness 0.8.0):
+- **Documents first.** When the user has documents, Wikipedia and OpenAlex searches become available only after the model has searched the documents. This is enforced through the schema, like the ID limit.
+- **Closest passage only for mostly real quotes:** at least 70% of the quote's words must match one passage in order.
+- **Honest partial label:** **Some quotes not found (2 of 3 found)**.
+- **Whole-word matching** for quotes.
+
+Each case is a unit test, using the article lead the owner pasted (`tests/fixtures/ada-lovelace-lead.txt`). The full Qwen3.5-4B benchmark (harness 0.8.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4.
+
 Still open for the slice: run the usability test (owner). Wikipedia and OpenAlex are confirmed working live.
 
 ## Acceptance

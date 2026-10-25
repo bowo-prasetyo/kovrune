@@ -199,6 +199,26 @@ describe("research with Wikipedia", () => {
     assert.match(JSON.stringify(model.requests[3]!.responseSchema), /"const":"final_answer"[\s\S]*"enum":\["wikipedia:Ada_Lovelace"/);
   });
 
+  it("makes the model search the user's documents before Wikipedia", async () => {
+    // Class 1 live check: with the Papyrus PDF added and Wikipedia ticked, the model went straight to Wikipedia.
+    const library = new ResearchLibrary([{ id: "papyrus", title: "Papyrus tutorial", text: "Select the Papyrus perspective. Create a Papyrus project with an Activity Diagram." }]);
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"create activity diagram"}}`,
+      `{"tool":"search_wikipedia","args":{"query":"activity diagram"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+    ]);
+    await runResearch({ question: "How to create an activity diagram?", library, model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
+    const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(tools(0), ["search", "read", "final_answer"]);
+    assert.deepEqual(tools(1), ["search", "read", "search_wikipedia", "final_answer"]);
+  });
+
+  it("offers open sources at once when there are no documents", async () => {
+    const model = new ScriptedModel([JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } })]);
+    await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
+    assert.match(JSON.stringify(model.requests[0]!.responseSchema), /"search_wikipedia"/);
+  });
+
   it("rejects a mistyped ID in unconstrained mode with an error the model can act on", async () => {
     const model = new ScriptedModel([
       `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,

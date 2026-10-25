@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { answerStatus, checkEvidence, closestPassage, normalizeForMatch } from "../src/agent/evidence.ts";
 import { ResearchLibrary } from "../src/agent/research.ts";
@@ -164,5 +165,37 @@ describe("closest passage for a quote that is not word for word", () => {
       { kind: "source-only", text: "112" },
       { kind: "same", text: "KiB for small files." },
     ]);
+  });
+});
+
+describe("quote checks from the second live run", () => {
+  const ADA = readFileSync(new URL("./fixtures/ada-lovelace-lead.txt", import.meta.url), "utf8");
+  const check = (quote: string, text = ADA) => checkEvidence([{ docId: "wikipedia:Ada_Lovelace", quote }], () => text)[0]!;
+
+  it("still shows the diff for a real sentence finished from memory", () => {
+    const misquote = check(
+      "Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was an English mathematician and computer programmer.",
+    );
+    assert.equal(misquote.verified, false);
+    assert.ok(misquote.closest?.some((p) => p.kind === "source-only" && p.text.startsWith("writer chiefly known")));
+  });
+
+  it("shows no passage for quotes that are mostly invented", () => {
+    for (const invented of [
+      "She is best known for her work on the Analytical Engine, a mechanical device capable of performing a wide range of calculations, which she described as 'the analysis engine of the future.' She is widely recognized as the first person to write an algorithm intended to be processed by a computer, which she called 'Algorithm No. 62' for the Analytical Engine.",
+      "She received the first computer programming award, the Charles Babbage Medal for the Analytical Engine, in 1936.",
+    ]) {
+      const checked = check(invented);
+      assert.equal(checked.verified, false);
+      assert.equal(checked.closest, undefined, invented.slice(0, 40));
+    }
+  });
+
+  it("matches whole words only", () => {
+    const abstract =
+      "Analogical reasoning — the capacity to identify and map structural relationships between different domains — is fundamental to human cognition and learning. Recent studies have shown that large language models (LLMs) can sometimes match human performance on analogical reasoning tasks.";
+    assert.equal(check("Recent studies have shown that large language models (LLMs) can sometimes match hum…", abstract).verified, false);
+    assert.equal(check("Recent studies have shown that large language models (LLMs) can sometimes match human", abstract).verified, true);
+    assert.equal(check("“Recent studies have shown that”", abstract).verified, true, "quotes and edge punctuation still ignored");
   });
 });
