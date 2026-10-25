@@ -141,7 +141,8 @@ Each answer has a label:
 
 | Label | Meaning |
 | --- | --- |
-| **Quotes found** | Every quote is word for word in its source. This proves the quotes are real, **not** that the answer is right: check that they support the whole answer. |
+| **Quotes found** | Every quote is word for word in its source, and every sentence of the answer shares most of its words with a quote. This proves the quotes are real, **not** that the answer is right: check that they support the whole answer. |
+| **3 of 5 sentences backed by a quote** | Every quote is in its source, but the sentences marked ⚠ share few words with any quote. Small models often add details from memory next to real quotes; check the marked sentences against the sources. |
 | **Some quotes not found (2 of 3 found)** | Only some quotes are in their sources. Check the answer against the sources, starting with the quotes marked ✗. |
 | **Quotes not found** | None of the quotes are in the cited sources. The answer may be wrong. |
 | **No quotes** | The model answered without quoting anything, so nothing backs the answer. |

@@ -10,6 +10,7 @@ import { createResearchTools, researchSystem, type ResearchFinal } from "../tool
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import { sentenceSupport, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -21,6 +22,8 @@ export interface ResearchResult {
   final?: ResearchFinal;
   /** Evidence with each quote checked against its document. */
   evidence: CheckedEvidence[];
+  /** Which answer sentences the verified quotes back; absent without an answer. */
+  support?: SentenceSupport;
   /** Where cited open-source documents came from, by document ID. */
   citations: Record<string, Citation>;
   /** Open sources that failed during the question, in plain words. */
@@ -93,7 +96,8 @@ export async function runResearch(options: {
     const citation = session?.citation(docId);
     if (citation) citations[docId] = citation;
   }
-  return { status: answerStatus(final.found, evidence), final, evidence, citations, sourceErrors: sourceErrors(), agent };
+  const support = sentenceSupport(final.answer, evidence, (id) => library.documentFor(id)?.title ?? citations[id]?.title);
+  return { status: answerStatus(final.found, evidence), final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
 }
 
 /** Chunk titles such as "Report (part 2 of 5)" are internal; models sometimes copy them into answers. */
