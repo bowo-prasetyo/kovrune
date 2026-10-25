@@ -8,13 +8,19 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
   const args = call.args ?? {};
   switch (call.tool) {
     case "search":
-      return `Searching for “${String(args.query ?? "")}”`;
+      return `Searching your documents for “${String(args.query ?? "")}”`;
+    case "search_wikipedia":
+      return `Searching Wikipedia for “${String(args.query ?? "")}”`;
+    case "search_openalex":
+      return `Searching OpenAlex for “${String(args.query ?? "")}”`;
     case "read": {
       const id = String(args.docId ?? "");
+      if (id.startsWith("wikipedia:")) return `Reading Wikipedia: ${id.slice(10).replace(/#\d+$/, "").replace(/_/g, " ")}`;
+      if (id.startsWith("openalex:")) return `Reading OpenAlex work ${id.slice(9).replace(/#\d+$/, "")}`;
       return `Reading ${titleFor(id) ?? id}`;
     }
     case "final_answer":
-      return args.found === false ? "Concluding that the documents don't answer this" : "Writing the answer";
+      return args.found === false ? "Concluding that the sources don't answer this" : "Writing the answer";
     default:
       return String(call.tool);
   }
@@ -56,6 +62,6 @@ export function describeStatus(status: AnswerStatus, evidenceCount: number): { l
             detail: "The model gave no quotes from your documents, so nothing backs this answer. Check it against your documents.",
           };
     case "not-found":
-      return { label: "Not found in your sources", detail: "The model did not find the answer in your documents." };
+      return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched." };
   }
 }

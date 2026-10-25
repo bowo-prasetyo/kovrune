@@ -4,6 +4,7 @@ import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/r
 import { describeModelError, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import type { LibraryDocument } from "./library.ts";
+import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
 import { describeCall, describeNoAnswer, describeStatus } from "./trace.ts";
 
 type RunState =
@@ -25,9 +26,17 @@ export function ResearchPanel({
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<RunState>({ phase: "idle" });
   const controller = useRef<AbortController>(undefined);
+  const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
-  const canAsk = modelReady && !running && usable.length > 0 && question.trim().length > 0;
+  const anyOpenSource = prefs.wikipedia || prefs.openalex;
+  const canAsk = modelReady && !running && (usable.length > 0 || anyOpenSource) && question.trim().length > 0;
+
+  function updatePrefs(change: Partial<SourcePrefs>) {
+    const next = { ...prefs, ...change };
+    setPrefs(next);
+    saveSourcePrefs(next);
+  }
 
   async function ask() {
     const abort = new AbortController();
@@ -42,6 +51,7 @@ export function ResearchPanel({
         question: question.trim(),
         library,
         model,
+        sources: openSourcesFor(prefs),
         signal: abort.signal,
         onCall: (call: CallRecord) => {
           steps.push(describeCall(call, titleFor));
@@ -61,14 +71,63 @@ export function ResearchPanel({
   return (
     <section>
       <h2>Ask a question</h2>
+      {state.phase === "idle" && usable.length === 0 && (
+        <div className="callout getting-started">
+          <p>
+            <strong>Getting started:</strong> add a PDF or text file above, then ask something it answers, for example
+            "What does this report say about income in 2024?" or "How do I create a new project?".
+          </p>
+          <p>
+            Questions about one document work best. With a small model, an answer takes a minute or two; you can watch
+            each step below and stop at any time.
+          </p>
+        </div>
+      )}
       <form
         onSubmit={(event) => {
           event.preventDefault();
           if (canAsk) void ask();
         }}
       >
+        <fieldset className="sources">
+          <legend>Search in</legend>
+          <label className="choice">
+            <input type="checkbox" checked disabled />
+            Your documents ({usable.length})
+          </label>
+          <label className="choice">
+            <input type="checkbox" checked={prefs.wikipedia} disabled={running} onChange={(e) => updatePrefs({ wikipedia: e.target.checked })} />
+            Wikipedia
+          </label>
+          {prefs.wikipedia && (
+            <label className="inline">
+              Language{" "}
+              <select value={prefs.language} disabled={running} onChange={(e) => updatePrefs({ language: e.target.value })}>
+                {(WIKIPEDIA_LANGUAGES.some(([code]) => code === prefs.language)
+                  ? WIKIPEDIA_LANGUAGES
+                  : [[prefs.language, prefs.language] as [string, string], ...WIKIPEDIA_LANGUAGES]
+                ).map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="choice">
+            <input type="checkbox" checked={prefs.openalex} disabled={running} onChange={(e) => updatePrefs({ openalex: e.target.checked })} />
+            OpenAlex (scholarly papers)
+          </label>
+          {anyOpenSource && (
+            <p className="hint">
+              The search words the model chooses, and the articles it opens, are requested from{" "}
+              {[prefs.wikipedia && "Wikipedia", prefs.openalex && "OpenAlex"].filter(Boolean).join(" and ")}. Your documents and
+              your question as typed stay on this computer.
+            </p>
+          )}
+        </fieldset>
         <label>
-          Question about your documents
+          Question
           <textarea
             rows={3}
             value={question}
@@ -77,7 +136,9 @@ export function ResearchPanel({
             onChange={(event) => setQuestion(event.target.value)}
           />
         </label>
-        {usable.length === 0 && <p className="hint">Add at least one document with text to ask a question.</p>}
+        {usable.length === 0 && !anyOpenSource && (
+          <p className="hint">Add a document above, or tick Wikipedia or OpenAlex, to ask a question.</p>
+        )}
         <div className="actions">
           {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run
               that ends during the Stop click would turn it back into Ask and submit the form again. */}
@@ -114,16 +175,25 @@ export function ResearchPanel({
 }
 
 function ResultView({ result, library }: { result: ResearchResult; library: ResearchLibrary }) {
+  const sourceErrors = result.sourceErrors.map((message) => (
+    <p key={message} className="warning">
+      {message} The answer is based on the other sources only.
+    </p>
+  ));
   if (result.status === "no-answer") {
     return (
-      <p className="warning" role="status">
-        {describeNoAnswer(result.agent.stopReason, result.agent.error)}
-      </p>
+      <>
+        {sourceErrors}
+        <p className="warning" role="status">
+          {describeNoAnswer(result.agent.stopReason, result.agent.error)}
+        </p>
+      </>
     );
   }
   const status = describeStatus(result.status, result.evidence.length);
   return (
     <div className={`result ${result.status}`} role="status">
+      {sourceErrors}
       <p>
         <span className={`status ${result.status}`}>{status.label}</span> {status.detail}
       </p>
@@ -137,7 +207,7 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
                 <span className="mark" aria-label={item.verified ? "Found in the document" : "Not in the document"}>
                   {item.verified ? "✓" : "✗"}
                 </span>{" "}
-                <span className="source">{library.documentFor(item.docId)?.title ?? item.docId}</span>
+                <SourceName docId={item.docId} result={result} library={library} />
                 <blockquote>{item.quote}</blockquote>
                 {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}
               </li>
@@ -146,5 +216,22 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
         </>
       )}
     </div>
+  );
+}
+
+/** A cited document's name; open-source documents link to where they came from, with the retrieval time. */
+function SourceName({ docId, result, library }: { docId: string; result: ResearchResult; library: ResearchLibrary }) {
+  const citation = result.citations[docId];
+  if (!citation) return <span className="source">{library.documentFor(docId)?.title ?? docId}</span>;
+  const retrieved = new Date(citation.retrievedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  return (
+    <span className="source">
+      <a href={citation.url} target="_blank" rel="noreferrer">
+        {citation.title}
+      </a>{" "}
+      <span className="hint">
+        ({citation.source}, retrieved {retrieved})
+      </span>
+    </span>
   );
 }

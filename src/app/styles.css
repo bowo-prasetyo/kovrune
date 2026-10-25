@@ -411,3 +411,41 @@ label.choice .hint {
   display: block;
   margin-left: 1.6em;
 }
+
+fieldset.sources label.choice {
+  display: inline-block;
+  margin: 4px 16px 4px 0;
+}
+
+label.inline {
+  display: inline-block;
+  margin: 4px 16px 4px 0;
+}
+
+label.inline select {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.welcome {
+  margin-bottom: 16px;
+}
+
+.getting-started p {
+  margin: 0 0 6px;
+}

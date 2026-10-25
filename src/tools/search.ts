@@ -48,6 +48,11 @@ export class DocumentIndex {
     this.avgLength = this.lengths.reduce((a, b) => a + b, 0) / Math.max(docs.length, 1);
   }
 
+  /** Number of indexed documents and parts. */
+  get size(): number {
+    return this.docs.length;
+  }
+
   get(docId: string): SourceDocument | undefined {
     return this.docs.find((doc) => doc.id === docId);
   }
