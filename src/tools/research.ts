@@ -20,9 +20,9 @@ If the documents do not contain the answer, set "found" to false, say what is mi
 export function researchSystem(options: { documents: boolean; sources: string[] }): string {
   if (!options.sources.length) return RESEARCH_SYSTEM;
   const where = options.documents
-    ? `You can also search ${options.sources.join(" and ")}. Look in the user's documents first; use the other sources when the documents do not answer the question.`
+    ? `You can also search ${options.sources.join(" and ")}. Look in the user's documents first: search them and read what you find; use the other sources when the documents do not answer the question.`
     : `Search ${options.sources.join(" and ")} to find documents.`;
-  return `${RESEARCH_SYSTEM}\n${where}`;
+  return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read.`;
 }
 
 /** Documents longer than this are truncated when read, to fit small context windows. */
@@ -52,11 +52,15 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       }
     },
     onRepeat: () => ({ hint: `Searching ${source.label} is no longer available: read one of the results with read.` }),
-    // The user's documents come first: small models otherwise skip them for the open sources
-    // (seen on the class 1 laptop, where a question about the user's PDF was answered from Wikipedia).
-    available: () => !hasDocuments || searchedDocuments,
+    // The user's documents come first: small models otherwise skip them for the open sources.
+    // On the class 1 laptop a question about the user's PDF was answered from Wikipedia, first
+    // without searching the PDF and then, with a search required, without reading it. So the
+    // open sources open up once a document has been read, or when searching them found nothing.
+    available: () => !hasDocuments || readDocument || (searchedDocuments && !foundDocuments),
   }));
   let searchedDocuments = false;
+  let foundDocuments = false;
+  let readDocument = false;
   // Document IDs are limited to ones the task has seen, so under constrained decoding the
   // model cannot read or cite a mistyped ID (seen: "wikiped:Ada_Lovelace", a bare "W7150387116").
   const localIds = index.ids();
@@ -72,6 +76,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       execute: async ({ query }: { query: string }) => {
         searchedDocuments = true;
         const hits = index.search(query);
+        foundDocuments ||= hits.length > 0;
         if (!hits.length) return "No matching documents.";
         return hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
       },
@@ -90,6 +95,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
             ? `Document "${docId}" is long and split into parts: ${parts.join(", ")}. Read the part you need, or search to find it.`
             : `No document with ID "${docId}". Use an ID returned by search.`;
         }
+        readDocument = true;
         return `[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`;
       },
       onRepeat: ({ docId }: { docId: string }) => {

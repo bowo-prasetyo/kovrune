@@ -197,5 +197,6 @@ describe("quote checks from the second live run", () => {
     assert.equal(check("Recent studies have shown that large language models (LLMs) can sometimes match hum…", abstract).verified, false);
     assert.equal(check("Recent studies have shown that large language models (LLMs) can sometimes match human", abstract).verified, true);
     assert.equal(check("“Recent studies have shown that”", abstract).verified, true, "quotes and edge punctuation still ignored");
+    assert.equal(check("is fundamental to human cognition and learning. […]", abstract).verified, true, "a snippet's […] marker is ignored");
   });
 });

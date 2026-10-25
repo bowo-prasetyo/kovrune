@@ -39,7 +39,8 @@ export function normalizeForMatch(text: string): string {
 }
 
 function stripEdgePunctuation(text: string): string {
-  return text.replace(/^[\s"'.,;:…-]+|[\s"'.,;:…-]+$/g, "");
+  // Also drops the "[…]" that marks a shortened search snippet.
+  return text.replace(/^[\s"'.,;:…\[\]-]+|[\s"'.,;:…\[\]-]+$/g, "");
 }
 
 /**
