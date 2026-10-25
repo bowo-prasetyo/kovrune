@@ -82,7 +82,7 @@ On a laptop with 8 GB of memory and integrated Intel graphics, both run on the p
 | Model | Model test speed | A question about one PDF | A question using a PDF, Wikipedia and OpenAlex |
 | --- | --- | --- | --- |
 | Qwen3.5-2B | about 8 tokens/s | 1–2 minutes | 2–3 minutes, often from one source only |
-| Qwen3.5-4B | about 5.5 tokens/s | 2–4 minutes | about 7 minutes, combining the sources |
+| Qwen3.5-4B | about 5.5 tokens/s | 3–4 minutes (estimated from the speed) | about 7 minutes, combining the sources |
 
 The model test shows your own speed and how long a research task can take. You can download both models and switch between them ([below](#switch-models)).
 
