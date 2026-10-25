@@ -13,6 +13,13 @@ export function formatReport(report: Report): string {
     ...(report.selfCheck
       ? [`Self-check: ${report.selfCheck.passed ? "passed" : "failed"}, ${report.selfCheck.decodeTokensPerSecond} tokens/s.`]
       : []),
+    ...(report.field
+      ? [
+          report.field.localTasks
+            ? `Field suite: ${report.field.committedTasks} committed tasks and ${report.field.localTasks} local tasks over ${report.field.localDocuments} local documents; with local tasks, results are not comparable with other runs.`
+            : `Field suite: ${report.field.committedTasks} committed tasks.`,
+        ]
+      : []),
     "",
     "| Suite | Mode | Passed | Success | Valid actions | Decode tok/s | Prefill tok/s | Median task s | Quotes found, wrong |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",

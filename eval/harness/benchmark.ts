@@ -12,7 +12,7 @@ import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.13.0";
+export const HARNESS_VERSION = "0.14.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -123,6 +123,8 @@ export interface Report {
   environment: Environment;
   config: BenchmarkConfig;
   selfCheck?: SelfCheckResult;
+  /** Runs with the field suite: its committed and local task counts (local tasks make a run not comparable with others'). */
+  field?: { committedTasks: number; localTasks: number; localDocuments: number };
   summary: Summary[];
   gate: GateResult;
   results: TaskResult[];
@@ -296,6 +298,8 @@ export async function runBenchmark(options: {
   onCall?: (call: CallRecord, index: number) => void;
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
+  /** Required for the field suite (see eval/harness/field.ts). */
+  field?: { library: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -305,10 +309,13 @@ export async function runBenchmark(options: {
   const pick = (suite: SuiteName, tasks: ResearchTask[]) => (config.suites.includes(suite) ? tasks.filter((t) => wanted(t.id)) : []);
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
+  if (config.suites.includes("field") && !options.field) throw new Error("The field suite needs field (loadFieldSuite).");
+  const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
     { suite: "research" as const, tasks: pick("research", researchTasks), library: baseLibrary },
     { suite: "unanswerable" as const, tasks: pick("unanswerable", unanswerableTasks), library: baseLibrary },
     { suite: "pdf" as const, tasks: pdf, library: options.pdfLibrary ?? baseLibrary },
+    { suite: "field" as const, tasks: field, library: options.field?.library ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;
@@ -342,6 +349,15 @@ export async function runBenchmark(options: {
     environment: options.environment,
     config,
     selfCheck: options.selfCheck,
+    ...(options.field && config.suites.includes("field")
+      ? {
+          field: {
+            committedTasks: options.field.tasks.length - options.field.local.tasks,
+            localTasks: options.field.local.tasks,
+            localDocuments: options.field.local.documents,
+          },
+        }
+      : {}),
     summary,
     gate: evaluateGate(summary, isFullSetRun(config, complete)),
     results,

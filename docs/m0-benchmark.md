@@ -167,6 +167,7 @@ Options: `--preset full|quick`, `--suites research,unanswerable,pdf,coding` (the
 | --- | --- | --- |
 | Full | All 46 (34 before harness 0.5.0) | Gate results. Only a complete full run of all suites can pass the gate. |
 | Quick | 8: `r01`, `r03`, `r10`, `r16`, `r17`, `r20`, `c01`, `c03` | First checks and slow machines. Covers every task kind; not enough for the gate. |
+| Field | 24 over real documents, plus any local ones (`--suites field`) | Judging prompt and guard changes on real text; reported separately and not part of the gate. See [`eval/field/README.md`](../eval/field/README.md). |
 
 On slow machines, start with the Quick set in constrained mode only. Use the self-check's time estimate to decide whether a full run is practical.
 
@@ -347,3 +348,4 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.11.0 | Quote matching ignores list markers standing alone ("•", "–", "-" and similar), which models swap or drop when quoting slides. A reply cut off at the token limit gets a notice saying so and asking for a shorter answer, instead of the general "not a valid action". Re-checking every quote in the 0.10.0 report gives the same result, and the 0.10.0 run had no invalid replies, so results are comparable with 0.10.0 |
 | 0.12.0 | A reply cut off at the token limit is retried with 1,024 tokens instead of 512, asking for the same answer with one-sentence quotes (older tool results make room). Only a second cut-off asks for a shorter answer. With open sources (not used in the evaluation), the prompt asks for one-sentence quotes. The closest-passage diff no longer pairs different symbols. The 0.10.0 run had no invalid replies, so results are comparable with 0.10.0 and 0.11.0 |
 | 0.13.0 | Reports add, for each research task, how many answer sentences a found quote backs (`support`) and whether the app would label the answer **Quotes found** (`quotesFound`), and for each research suite the false reassurance counts (`falseReassurance`). The agent, task sets and scoring are unchanged, so results are comparable with 0.10.0–0.12.0 |
+| 0.14.0 | New `field` suite: 24 questions over four real documents (a how-to manual, an 18-page PDF report, a licence, an encyclopedia article), plus local documents and tasks in `eval/field/local/`. It runs only with `--suites field` and is not part of the gate. Reports from runs with it record how many tasks were local. The other suites, the agent and scoring are unchanged, so their results are comparable with 0.10.0–0.13.0 |

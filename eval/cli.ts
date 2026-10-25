@@ -3,6 +3,8 @@
 //   npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model qwen3:4b \
 //     --context 8192 --hardware-class 2 --out eval/results/qwen3-4b-ollama.json
 //
+// The field suite (real documents, eval/field/) runs only when named: --suites field.
+//
 // Press Ctrl+C to stop early; the completed tasks are still reported and written.
 // Browser runtimes (WebLLM, wllama) are benchmarked with the page in eval/browser/.
 
@@ -16,6 +18,7 @@ import { NodeCodeRunner } from "./harness/sandbox.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { corpus } from "./tasks/corpus.ts";
 import { loadNodePdfLibrary } from "./harness/pdf-node.ts";
+import { loadFieldSuite } from "./harness/field.ts";
 import type { SuiteName } from "./harness/suites.ts";
 
 const { values } = parseArgs({
@@ -79,6 +82,7 @@ const report = await runBenchmark({
   model,
   runner: new NodeCodeRunner(),
   pdfLibrary: suites.includes("pdf") ? await loadNodePdfLibrary() : undefined,
+  field: suites.includes("field") ? await loadFieldSuite() : undefined,
   selfCheck,
   signal: controller.signal,
   environment: {
