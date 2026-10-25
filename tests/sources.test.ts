@@ -162,7 +162,7 @@ describe("research with Wikipedia", () => {
         args: {
           found: true,
           answer: "A method for calculating Bernoulli numbers.",
-          evidence: [{ docId: "wikipedia:Ada_Lovelace#14", quote: "a method for calculating Bernoulli numbers" }],
+          evidence: [{ docId: "wikipedia:Ada_Lovelace", quote: "a method for calculating Bernoulli numbers" }],
         },
       }),
     ]);
@@ -173,13 +173,47 @@ describe("research with Wikipedia", () => {
       sources: [createWikipedia("en", fetchImpl)],
     });
     assert.equal(result.status, "verified");
-    assert.equal(result.citations["wikipedia:Ada_Lovelace#14"]?.url, "https://en.wikipedia.org/wiki/Ada_Lovelace");
-    assert.match(result.citations["wikipedia:Ada_Lovelace#14"]!.retrievedAt, /^\d{4}-\d\d-\d\dT/);
+    assert.equal(result.citations["wikipedia:Ada_Lovelace"]?.url, "https://en.wikipedia.org/wiki/Ada_Lovelace");
+    assert.match(result.citations["wikipedia:Ada_Lovelace"]!.retrievedAt, /^\d{4}-\d\d-\d\dT/);
     assert.match(model.requests[0]!.messages[0]!.content, /Search Wikipedia/);
+  });
+
+  it("only lets the model read and cite IDs it has seen, so the class 1 typos cannot happen", async () => {
+    const replies = [
+      `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
+      `{"tool":"search_openalex","args":{"query":"LLM"}}`,
+      `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+    ];
+    const model = new ScriptedModel(replies);
+    const openalex = createOpenAlex(fakeFetch([[/\/works\?/, { results: [{ id: "https://openalex.org/W7150387116", display_name: "How LLMs Might Think" }] }]]));
+    await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes)), openalex] });
+    const readIds = (i: number) => {
+      const schema = JSON.stringify(model.requests[i]!.responseSchema);
+      return schema.match(/"const":"read"[\s\S]*?"enum":(\[[^\]]*\])/)?.[1];
+    };
+    // After both searches, read accepts exactly the two result IDs: not "wikiped:Ada_Lovelace", not a bare "W7150387116".
+    assert.equal(readIds(2), JSON.stringify(["wikipedia:Ada_Lovelace", "openalex:W7150387116"]));
+    // After reading the long article, its parts can be read and cited too.
+    assert.match(readIds(3)!, /"wikipedia:Ada_Lovelace#2"/);
+    assert.match(JSON.stringify(model.requests[3]!.responseSchema), /"const":"final_answer"[\s\S]*"enum":\["wikipedia:Ada_Lovelace"/);
+  });
+
+  it("rejects a mistyped ID in unconstrained mode with an error the model can act on", async () => {
+    const model = new ScriptedModel([
+      `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
+      `{"tool":"read","args":{"docId":"wikiped:Ada_Lovelace"}}`,
+      `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+    ]);
+    const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, constrained: false, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
+    assert.deepEqual(result.agent.calls.map((c) => c.valid), [true, false, true, true]);
+    assert.match(result.agent.transcript[5]!.content, /not a valid action/);
   });
 
   it("fetches a cited article it never read, so an invented quote still fails", async () => {
     const model = new ScriptedModel([
+      `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
       JSON.stringify({
         tool: "final_answer",
         args: { found: true, answer: "x", evidence: [{ docId: "wikipedia:Ada_Lovelace", quote: "she invented the telephone in 1876" }] },

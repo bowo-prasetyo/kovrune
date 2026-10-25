@@ -48,6 +48,17 @@ export class DocumentIndex {
     this.avgLength = this.lengths.reduce((a, b) => a + b, 0) / Math.max(docs.length, 1);
   }
 
+  /** Every ID a tool may be given: documents, their parts, and the documents that were split into parts. */
+  ids(): string[] {
+    const ids = new Set<string>();
+    for (const doc of this.docs) {
+      ids.add(doc.id);
+      const hash = doc.id.lastIndexOf("#");
+      if (hash > 0 && /^\d+$/.test(doc.id.slice(hash + 1))) ids.add(doc.id.slice(0, hash));
+    }
+    return [...ids];
+  }
+
   /** Number of indexed documents and parts. */
   get size(): number {
     return this.docs.length;

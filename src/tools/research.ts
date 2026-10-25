@@ -43,6 +43,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
     execute: async ({ query }: { query: string }) => {
       try {
         const hits = await source.search(query, session?.signal);
+        session?.noteHits(hits.map((h) => h.id));
         if (!hits.length) return `No matching ${source.label} results.`;
         return hits.map((h) => `[${h.id}] ${h.title}\n${h.snippet}`).join("\n\n");
       } catch (error) {
@@ -52,6 +53,13 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
     },
     onRepeat: () => ({ hint: `Searching ${source.label} is no longer available: read one of the results with read.` }),
   }));
+  // Document IDs are limited to ones the task has seen, so under constrained decoding the
+  // model cannot read or cite a mistyped ID (seen: "wikiped:Ada_Lovelace", a bare "W7150387116").
+  const localIds = index.ids();
+  const docId = () => {
+    const known = [...localIds, ...(session?.knownIds() ?? [])];
+    return known.length ? z.enum(known as [string, ...string[]]) : z.string();
+  };
   const tools: AgentTool[] = [
     {
       name: "search",
@@ -67,7 +75,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
     {
       name: "read",
       usage: `{"tool":"read","args":{"docId":"..."}} returns the full text of a document.`,
-      args: z.object({ docId: z.string() }).strict(),
+      args: () => z.object({ docId: docId() }).strict(),
       execute: async ({ docId }: { docId: string }) => {
         if (session?.sourceFor(docId)) return session.read(docId);
         const doc = index.get(docId);
@@ -90,13 +98,14 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
     {
       name: "final_answer",
       usage: `{"tool":"final_answer","args":{"found":true,"answer":"...","evidence":[{"docId":"doc-id","quote":"words copied exactly from the document"}]}} finishes the task.`,
-      args: z
-        .object({
-          found: z.boolean(),
-          answer: z.string(),
-          evidence: z.array(z.object({ docId: z.string(), quote: z.string() }).strict()),
-        })
-        .strict(),
+      args: () =>
+        z
+          .object({
+            found: z.boolean(),
+            answer: z.string(),
+            evidence: z.array(z.object({ docId: docId(), quote: z.string() }).strict()),
+          })
+          .strict(),
     },
   ];
   // Without documents of the user's own, only the open sources can be searched.

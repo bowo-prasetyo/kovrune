@@ -20,6 +20,7 @@ export class SourceSession {
   /** Source failures during the question, e.g. "Wikipedia could not be reached.", shown to the user. */
   readonly errors = new Set<string>();
   private readonly question: string;
+  private readonly seen = new Set<string>();
   private readonly fetched = new Map<string, { doc: FetchedDocument; parts: SourceDocument[] }>();
 
   constructor(sources: OpenSource[], question: string, signal?: AbortSignal) {
@@ -55,6 +56,22 @@ export class SourceSession {
       `[${part.id}] ${doc.title} (part ${number} of ${parts.length})\n${part.text}\n\n` +
       `Other parts: ${doc.id}#1 to ${doc.id}#${parts.length}.`
     );
+  }
+
+  /** Records search results, so their IDs become ones the model may read and cite. */
+  noteHits(ids: string[]): void {
+    for (const id of ids) this.seen.add(id);
+  }
+
+  /** IDs the model may read or cite: search results, fetched documents and their parts. */
+  knownIds(): string[] {
+    const ids = new Set(this.seen);
+    for (const [id, { doc, parts }] of this.fetched) {
+      ids.add(id);
+      ids.add(doc.id);
+      for (const part of parts) ids.add(part.id);
+    }
+    return [...ids];
   }
 
   /** Records a source failure and returns it as the tool result. */

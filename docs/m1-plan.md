@@ -220,11 +220,27 @@ Known limitation: WebLLM fetches its compiled model libraries from the `main` br
   - troubleshooting.
 - **Usability test.** [`usability-test.md`](usability-test.md) has the protocol, tasks, questions and results sheet for 3–5 participants.
 
-Not tested live: the cloud container's network policy blocks `en.wikipedia.org` and `api.openalex.org`. The adapters are unit-tested against responses shaped like the documented APIs. The first live check is on the owner's laptop.
+The cloud container's network policy blocks `en.wikipedia.org` and `api.openalex.org`, so the adapters were first unit-tested against responses shaped like the documented APIs.
+
+#### First live checks (class 1, Qwen3.5-2B)
+
+Both services worked live from the owner's browser: searches returned the right articles and papers. Both answers still went wrong, for the same reason: **the model typed document IDs that did not exist.**
+
+- **Wikipedia, "Who was Ada Lovelace?"**
+  - The search returned `wikipedia:Ada_Lovelace`, but the model read `wikiped:Ada_Lovelace` twice. Both reads failed.
+  - It then answered from the snippet and its own memory, inventing an "Algorithm No. 62" and a 2009 award.
+  - Its quote, the article's real first sentence, was rejected as "no such document" because it was filed under the mistyped ID. The label read **Quotes not found**.
+- **OpenAlex, "How does LLM think?"**
+  - The search found relevant papers, but the model read the bare ID `W7150387116`, without the `openalex:` prefix, twice. Both reads failed.
+  - It summarized the snippets without quoting anything (**No quotes**), and called that an answer while saying the sources had "no direct answer".
+
+**Fix (harness 0.7.0).** The `docId` in `read` and in `final_answer` evidence is now an enum of the IDs the task has seen: the user's documents and their parts, search results, and fetched articles and their parts. It is rebuilt before every model call. Under constrained decoding a mistyped ID cannot be produced; unconstrained, it is rejected as an invalid action and the model is told so. The labels now say "not in the sources they cite" and "without quoting any source" instead of "your documents". The evidence reason now reads "the model cited a document ID it never found".
+
+With the fix, the full Qwen3.5-4B benchmark (harness 0.7.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4, valid actions 100%. The 8 Papyrus questions on Qwen3.5-2B give the same status for every question. The live typos are replayed in unit tests: after the two searches, `read` accepts exactly `wikipedia:Ada_Lovelace` and `openalex:W7150387116`.
 
 Still open for the slice:
 - run the usability test (owner);
-- check Wikipedia and OpenAlex live.
+- check Wikipedia and OpenAlex live again after the fix.
 
 ## Acceptance
 

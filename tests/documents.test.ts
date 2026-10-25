@@ -30,7 +30,7 @@ describe("evidence check", () => {
     );
     assert.deepEqual(
       checked.map((c) => c.reason),
-      ["no such document", "quote not found in the document", "quote shorter than 3 words"],
+      ["the model cited a document ID it never found", "quote not found in the document", "quote shorter than 3 words"],
     );
   });
 

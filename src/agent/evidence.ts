@@ -41,7 +41,7 @@ function stripEdgePunctuation(text: string): string {
 export function checkEvidence(items: EvidenceItem[], resolveText: (docId: string) => string | undefined): CheckedEvidence[] {
   return items.map((item) => {
     const text = resolveText(item.docId);
-    if (text === undefined) return { ...item, verified: false, reason: "no such document" };
+    if (text === undefined) return { ...item, verified: false, reason: "the model cited a document ID it never found" };
     const quote = stripEdgePunctuation(normalizeForMatch(item.quote));
     if (quote.split(" ").filter(Boolean).length < MIN_QUOTE_WORDS) {
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
