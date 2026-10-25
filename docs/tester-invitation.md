@@ -21,6 +21,7 @@ Each comes in English and Japanese; edit names, dates and contact details before
 >
 > What you'd need:
 > - a laptop or desktop (Windows, macOS or Linux) where you can install software;
+> - some experience with the terminal (command line), for example installing R or Python packages. Setup may involve typing a few commands from a guide;
 > - Chrome or Edge;
 > - one PDF of your own with selectable text (a report, manual or paper), and one question you know it answers. You decide what to share; I won't keep your document.
 >
@@ -43,6 +44,7 @@ Each comes in English and Japanese; edit names, dates and contact details before
 >
 > ご用意いただきたいもの:
 > - ソフトウェアをインストールできるノートパソコンまたはデスクトップ(Windows、macOS、Linux のいずれか)
+> - ターミナル(コマンドライン)を使った経験(R や Python のパッケージのインストールなど)。セットアップでは、手順書に沿っていくつかのコマンドを入力していただくことがあります
 > - Chrome または Edge
 > - 文字を選択できる PDF を1つ(報告書、マニュアル、論文など)と、その PDF に答えが書かれている質問を1つ。どの文書を使うかはお任せします。文書をこちらで保存することはありません。
 >
