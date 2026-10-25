@@ -18,7 +18,7 @@ Today, a user opens Kovrune in a browser, picks a compatible model from Hugging 
 
 ## 0. Revision notes
 
-**Revision 3** narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
+**Revision 3** narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). §1.4 names the first audience: technical researchers who are comfortable with a terminal. The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
 
 Revision 2 followed a product and feasibility audit of the first draft. The main changes:
 
@@ -77,13 +77,15 @@ A browser-first architecture reduces deployment friction but introduces constrai
 
 ### 1.4 Target users
 
-The first audience is **privacy-conscious researchers and developers with reasonably capable laptops or desktops**:
+The first audience is **technical researchers: privacy-conscious researchers and developers who are comfortable with a terminal**, on reasonably capable laptops or desktops:
 
-- They want AI help with literature, technical research, and code without sending data to a hosted provider.
-- They are comfortable downloading a multi-gigabyte model, or already run Ollama or LM Studio.
+- They want AI help with literature, technical research, and their own documents without sending data to a hosted provider.
+- They can install and start a local model server by following written steps (the user guide's llama.cpp setup), or already run llama.cpp, Ollama or LM Studio. They are comfortable downloading a multi-gigabyte model.
 - Some work in small groups (a lab, a team, an open-source project) and would share work with people they know.
 
-"Ordinary users" on low-memory devices and phones are **not** the first audience. Realistic minimum hardware for the browser runtime is roughly 8 GB of RAM and a WebGPU-capable browser; the exact floor is set by the M0 benchmark (§12).
+This audience can use Kovrune on every supported machine today: in the browser where the GPU allows, and through a local model server everywhere else, including class 1 laptops.
+
+People who won't use a terminal are **not** the first audience. They could use only the browser path, which needs a capable GPU and is not yet measured on class 2 hardware ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). They become a target once the browser path is confirmed and setup needs no terminal on the machines they use. "Ordinary users" on low-memory devices and phones are not the first audience either. Realistic minimum hardware for the browser runtime is roughly 8 GB of RAM and a WebGPU-capable browser; the exact floor is set by the M0 benchmark (§12).
 
 **Primary job to be done:** "Help me answer a question from my own documents and open scholarly sources, using a model I control, with quotes I can check."
 
@@ -99,7 +101,7 @@ A second job, "help me work on a codebase", is the target of the coding agent (M
 
 Kovrune's position: **private research over your own documents and open scholarly sources, with every quote checked against its source, from a model on your own machine: in the browser where the GPU allows, or on your own model server.**
 
-The browser path needs no installation, but only on capable GPUs, and that is not yet measured on class 2 hardware (§12, M0 outcome). On other machines the user installs a local model server.
+The browser path needs no installation, but only on capable GPUs, and that is not yet measured on class 2 hardware (§12, M0 outcome). On other machines the user installs a local model server. If the class 2 run fails, the browser is no longer presented as the default path, and the position becomes "local-first, in the browser when your GPU allows".
 
 Later milestones are compared with different alternatives:
 

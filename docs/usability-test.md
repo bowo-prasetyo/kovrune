@@ -7,11 +7,13 @@ The protocol for the usability test in [M1 slice 4](m1-plan.md#slices). It check
 
 ## Participants
 
-Recruit 3–5 people who haven't used Kovrune. Aim for a mix:
+Recruit 3–5 people who haven't used Kovrune, from the first audience in [`design.md` §1.4](design.md#14-target-users): **technical researchers**, that is, researchers and developers who are comfortable with a terminal. Each should have installed software from the command line before, for example R or Python packages, or a developer tool. They don't need to have run a model server.
+
+Aim for a mix:
 
 - at least one on a **class 1** laptop (8 GB of memory, integrated graphics), who will use the local-server path;
 - at least one on a **class 2** machine (Apple silicon, or a recent NVIDIA or AMD GPU), who will use the browser path. This also covers the open slice 3 check;
-- at least two who aren't software developers, but who are comfortable installing apps and typing commands they are given.
+- at least two researchers who use a terminal but don't develop software for a living, such as scientists who work in R or Python.
 
 Each person brings a PDF of their own (a report, manual or paper with selectable text) and knows one question it answers.
 
@@ -57,7 +59,7 @@ Questions 1, 2 and 5 check whether the trust and privacy messages come across. A
 Copy this for each participant.
 
 ```text
-Participant:            P_  (developer / non-developer)
+Participant:            P_  (researcher / developer)
 Machine:                OS, CPU, RAM, GPU; hardware class 1/2/3
 Path:                   browser / local server (llama.cpp / Ollama)
 Model:                  Qwen3.5-4B / 2B
