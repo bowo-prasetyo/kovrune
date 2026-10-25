@@ -83,6 +83,7 @@ Answers to questions:   1 ______ 2 ______ 3 ______ 4 ______ 5 ______
 Summarize the sessions in `m1-plan.md` under slice 4:
 
 - **Counts:** how many of N completed setup and task 4 without help (target ≥ 3 of 5), and the time to first answer per participant (target under 15 minutes).
+- **False reassurance:** of the answers labelled **Quotes found** in tasks 4–6, how many the participant or moderator judged wrong or only partly right (the "answer correct?" line of the results sheet). Report it as "N of M" across all sessions; the target is under 10% ([`design.md` §1.6](design.md#16-success-metrics)). Note which of them the participant trusted.
 - **Findings:** where people got stuck, which messages were misread, and how answer quality compared with each participant's own judgement.
 
 Each finding should be specific enough to fix, for example "P2 thought the Test model step had frozen during the 40-second check". Open an issue for each one that needs a code or docs change.

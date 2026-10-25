@@ -357,6 +357,15 @@ Checked in the container, with Wikipedia and OpenAlex mocked (five results each)
 - The live cases are unit tests: the fifth check's next-token claims, the Ada Lovelace checks' "Algorithm No. 62" and Babbage Medal, and the ninth check's "state transitions" are marked, and the sentences their quotes do back are not.
 - On the recorded Qwen3.5-4B benchmark answers (`slice2-qwen3.5-4b-q4km.json` and `slice2-fix-qwen3.5-4b-q4km.json`), no sentence of a verified answer is marked. Benchmark scoring is unchanged: the marks only change what the app shows.
 
+**False reassurance rate ([issue #32](https://github.com/bowo-prasetyo/kovrune/issues/32)).** This tracks how often an answer labelled **Quotes found** is wrong or only partly right. The target is under 10% on Qwen3.5-4B ([design §1.6](design.md#16-success-metrics)).
+- **Benchmark:** from harness 0.13.0, reports count the answers labelled **Quotes found** and how many of them failed their task.
+- **Baseline:** recomputed from the last recorded Qwen3.5-4B report (`slice2-fix-qwen3.5-4b-q4km.json`, harness 0.6.0), with the 0.13.0 label rule. It is **3 of 22, 14%**, above the target. The three are failures listed under slice 2:
+  - r04 gives one of the two fixed versions;
+  - r12 cites a related document;
+  - r19 names the wrong library after a correction.
+  Each has real quotes, and each sentence is backed by them, so neither check catches it.
+- **Live checks and the usability test:** from now on, each write-up records how many answers labelled **Quotes found** were wrong or only partly right.
+
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
 - The browser path and the open sources work from the preview unchanged: WebLLM needs HTTPS, which Pages provides, and Wikipedia and OpenAlex accept requests from any site.
 - The local-server path goes from a public HTTPS page to `http://127.0.0.1`. llama.cpp's CORS default allows it; Ollama needs the site in `OLLAMA_ORIGINS`.

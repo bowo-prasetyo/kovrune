@@ -3,8 +3,9 @@ import { describe, it } from "node:test";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import { z } from "zod";
 import { extractJson, runAgent } from "../src/agent/agent.ts";
-import { evaluateGate, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
-import { formatCall } from "../eval/harness/format.ts";
+import { evaluateGate, falseReassurance, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
+import { formatCall, formatReport } from "../eval/harness/format.ts";
+import { labelledQuotesFound } from "../src/agent/support.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
@@ -342,6 +343,46 @@ describe("benchmark", () => {
     assert.equal(report.summary[0]!.successRate, 0.5);
     assert.equal(report.gate.passed, false);
     assert.equal(report.gate.criteria.find((c) => c.name.startsWith("Research"))!.passed, false);
+  });
+
+  it("counts wrong answers labelled Quotes found as false reassurance", async () => {
+    const model = new ScriptedModel([
+      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
+      // A real quote, but the wrong license: the label would read "Quotes found".
+      final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
+    ]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["research", "coding"], modes: ["constrained"], taskIds: ["r01-lumen-maintainer", "r02-lumen-license", "c01-slugify"] },
+    });
+    assert.deepEqual(
+      report.results.map((r) => [r.taskId, r.passed, r.quotesFound]),
+      [
+        ["r01-lumen-maintainer", true, true],
+        ["r02-lumen-license", false, true],
+        ["c01-slugify", false, undefined],
+      ],
+    );
+    assert.deepEqual(report.summary.find((s) => s.suite === "research")!.falseReassurance, { labelled: 2, wrong: 1 });
+    assert.equal(report.summary.find((s) => s.suite === "coding")!.falseReassurance, undefined);
+    assert.deepEqual(falseReassurance(report.summary), { labelled: 2, wrong: 1, rate: 0.5 });
+    assert.match(formatReport(report), /1 of 2 answers labelled "Quotes found" failed their task, 50% \(target under 10%/);
+  });
+
+  it("does not count answers with missing quotes or unbacked sentences as reassuring", () => {
+    const result = (taskId: string, quotesFound: boolean): TaskResult => ({
+      suite: "research", taskId, kind: "lookup", mode: "constrained", passed: false, checks: {}, stopReason: "final",
+      calls: 1, validCalls: 1, promptTokens: 0, completionTokens: 0, estimatedTokens: false,
+      modelMs: 0, ttftMs: 0, wallMs: 0, actions: [], quotesFound,
+    });
+    const summary = summarize([result("a", false), result("b", false)]);
+    assert.deepEqual(falseReassurance(summary), { labelled: 0, wrong: 0 });
+    assert.equal(labelledQuotesFound("verified", [{ verified: true }, { verified: false }]), false);
+    assert.equal(labelledQuotesFound("verified", [{ verified: true }], { judged: 3, backed: 2 }), false);
+    assert.equal(labelledQuotesFound("verified", [{ verified: true }], { judged: 3, backed: 3 }), true);
+    assert.equal(labelledQuotesFound("not-found", []), false);
   });
 
   it("runs the pdf suite on extracted PDFs, with quotes cited from a chunk", async () => {

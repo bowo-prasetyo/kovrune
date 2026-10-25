@@ -4,7 +4,7 @@
 // few words with them are marked. This is a word-overlap heuristic, not a proof.
 
 import { stem } from "../tools/search.ts";
-import type { CheckedEvidence } from "./evidence.ts";
+import type { AnswerStatus, CheckedEvidence } from "./evidence.ts";
 
 export interface AnswerSentence {
   /** The sentence as written, with the whitespace after it, so the sentences join back into the answer. */
@@ -96,4 +96,18 @@ export function sentenceSupport(
     return { text, backed: isBacked };
   });
   return { sentences, judged, backed };
+}
+
+/**
+ * Whether the app labels an answer "Quotes found": a quote checked out, every quote is in its
+ * source, and every judged sentence is backed. This is the label a reader is most likely to take
+ * as "the answer is right", so the share of such answers that are wrong is tracked as the
+ * false reassurance rate (docs/design.md §1.6).
+ */
+export function labelledQuotesFound(
+  status: AnswerStatus | "no-answer",
+  evidence: Array<{ verified: boolean }>,
+  support?: { judged: number; backed: number },
+): boolean {
+  return status === "verified" && evidence.every((e) => e.verified) && (!support || support.backed === support.judged);
 }

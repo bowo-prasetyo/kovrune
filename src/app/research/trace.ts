@@ -2,6 +2,7 @@
 
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
+import { labelledQuotesFound } from "../../agent/support.ts";
 
 /** ": 5 results", ": 1 document", ": nothing found", or nothing while the search runs. */
 const found = (count: number | undefined, noun: string) =>
@@ -65,21 +66,21 @@ export function describeStatus(
   const coverage = support && `${support.backed} of ${support.judged} sentences backed by a quote`;
   switch (status) {
     case "verified":
-      if (found === evidence.length && unbacked > 0) {
+      if (labelledQuotesFound(status, evidence, support)) {
         return {
-          label: coverage!,
-          detail:
-            "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with any quote. They may come from the model's memory; check them against the sources.",
-          tone: "unverified",
+          label: "Quotes found",
+          detail: support?.judged
+            ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
+            : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
+          tone: "verified",
         };
       }
       return found === evidence.length
         ? {
-            label: "Quotes found",
-            detail: support?.judged
-              ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
-              : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
-            tone: "verified",
+            label: coverage!,
+            detail:
+              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with any quote. They may come from the model's memory; check them against the sources.",
+            tone: "unverified",
           }
         : {
             label: `Some quotes not found (${found} of ${evidence.length} found)`,

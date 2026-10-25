@@ -1,5 +1,5 @@
 import type { CallRecord } from "../../src/agent/agent.ts";
-import type { Report } from "./benchmark.ts";
+import { FALSE_REASSURANCE_TARGET, falseReassurance, type Report } from "./benchmark.ts";
 
 /** Markdown summary of one report, used by the CLI, the browser page and results tables. */
 export function formatReport(report: Report): string {
@@ -14,18 +14,32 @@ export function formatReport(report: Report): string {
       ? [`Self-check: ${report.selfCheck.passed ? "passed" : "failed"}, ${report.selfCheck.decodeTokensPerSecond} tokens/s.`]
       : []),
     "",
-    "| Suite | Mode | Passed | Success | Valid actions | Decode tok/s | Prefill tok/s | Median task s |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    "| Suite | Mode | Passed | Success | Valid actions | Decode tok/s | Prefill tok/s | Median task s | Quotes found, wrong |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...report.summary.map(
       (s) =>
-        `| ${s.suite} | ${s.mode} | ${s.passed}/${s.tasks} | ${(s.successRate * 100).toFixed(0)}% | ${(s.validActionRate * 100).toFixed(0)}% | ${s.decodeTokensPerSecond} | ${s.prefillTokensPerSecond} | ${s.medianTaskSeconds} |`,
+        `| ${s.suite} | ${s.mode} | ${s.passed}/${s.tasks} | ${(s.successRate * 100).toFixed(0)}% | ${(s.validActionRate * 100).toFixed(0)}% | ${s.decodeTokensPerSecond} | ${s.prefillTokensPerSecond} | ${s.medianTaskSeconds} | ${s.falseReassurance ? `${s.falseReassurance.wrong} of ${s.falseReassurance.labelled}` : "–"} |`,
     ),
     "",
+    ...reassuranceLine(report),
     `**Gate: ${report.gate.passed ? "PASS" : "FAIL"}**`,
     "",
     ...report.gate.criteria.map((c) => `- ${c.passed ? "✅" : "❌"} ${c.name}: ${c.actual} (needs ${c.threshold})`),
   ];
   return lines.join("\n");
+}
+
+/** The false reassurance rate over the constrained research suites, with its target; nothing without research suites. */
+function reassuranceLine(report: Report): string[] {
+  if (!report.summary.some((s) => s.mode === "constrained" && s.falseReassurance)) return [];
+  const { labelled, wrong, rate } = falseReassurance(report.summary);
+  const target = `target under ${FALSE_REASSURANCE_TARGET * 100}%, not part of the gate`;
+  return [
+    rate === undefined
+      ? `False reassurance (constrained research suites): no answer was labelled "Quotes found" (${target}).`
+      : `False reassurance (constrained research suites): ${wrong} of ${labelled} answers labelled "Quotes found" failed their task, ${(rate * 100).toFixed(0)}% (${target}).`,
+    "",
+  ];
 }
 
 /** One progress line per model call, e.g. `  call 2: search {"query":"..."} (14.2 s, 3.1 tok/s)`. */
