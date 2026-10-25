@@ -1,0 +1,21 @@
+// Which build of the app this is, set by vite.config.ts at build time.
+
+export interface BuildInfo {
+  kind: "preview" | "development";
+  /** Short commit hash for preview builds, empty otherwise. */
+  commit: string;
+  date: string;
+}
+
+declare const __KOVRUNE_BUILD__: BuildInfo | undefined;
+
+export const BUILD: BuildInfo =
+  typeof __KOVRUNE_BUILD__ === "undefined" ? { kind: "development", commit: "", date: "" } : __KOVRUNE_BUILD__;
+
+/** The repository the preview is built from, for the footer link. */
+export const REPO_URL = "https://github.com/bowo-prasetyo/kovrune";
+
+/** Whether the page was opened over HTTPS from a public site, where reaching a local server needs the browser's permission. */
+export function isPublicHttpsPage(location: { protocol: string; hostname: string }): boolean {
+  return location.protocol === "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+}

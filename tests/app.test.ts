@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { recommendPath } from "../src/app/device.ts";
+import { isPublicHttpsPage } from "../src/app/build-info.ts";
 import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
 import { parseSettings } from "../src/app/settings.ts";
 import { listModels } from "../src/models/local-endpoint.ts";
@@ -108,5 +109,19 @@ describe("architecture", () => {
       const source = await readFile(file, "utf8");
       assert.doesNotMatch(source, /from\s+["'][^"']*\beval\//, `${file} imports from eval/`);
     }
+  });
+});
+
+describe("preview site", () => {
+  it("knows when the page is on the public web", () => {
+    assert.equal(isPublicHttpsPage({ protocol: "https:", hostname: "bowo-prasetyo.github.io" }), true);
+    assert.equal(isPublicHttpsPage({ protocol: "http:", hostname: "localhost" }), false);
+    assert.equal(isPublicHttpsPage({ protocol: "https:", hostname: "localhost" }), false);
+  });
+
+  it("explains the browser's local network permission on the public site", () => {
+    const error = new TypeError("Failed to fetch");
+    assert.match(describeConnectionError(error, "http://127.0.0.1:8080/v1", true), /choose Allow/);
+    assert.doesNotMatch(describeConnectionError(error, "http://127.0.0.1:8080/v1", false), /choose Allow/);
   });
 });

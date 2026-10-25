@@ -58,7 +58,7 @@
 | Item | Milestone |
 | --- | --- |
 | Saving tasks and documents between sessions (beyond settings) | M2 |
-| Signed reproducible builds, CSP, hosting | M2 |
+| Signed reproducible builds, CSP, production hosting (an unsigned preview has been published from `main` since slice 4) | M2 |
 | Coding agent and sandboxed execution | M2.5 |
 | Peer-to-peer collaboration | M3+ |
 | Embedding-based search (Transformers.js) | After M1, if keyword search proves the bottleneck |
@@ -293,6 +293,11 @@ Both cases are unit tests. The full Qwen3.5-4B benchmark (harness 0.9.0) is unch
   - **Quotes found** with "Check that the quotes support the whole answer" is accurate, but a reader could take it as more than it is.
 
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
+
+**Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
+- The browser path and the open sources work from the preview unchanged: WebLLM needs HTTPS, which Pages provides, and Wikipedia and OpenAlex accept requests from any site.
+- The local-server path goes from a public HTTPS page to `http://127.0.0.1`. Recent Chrome and Edge ask the user to allow access to devices on the local network; the connection error and the user guide say so. llama.cpp's CORS default allows it; Ollama needs the site in `OLLAMA_ORIGINS`.
+- Not yet checked from the real site: the build was tested under the `/kovrune/` path locally, but the permission prompt only appears on a real HTTPS site. The first check is the owner's laptop.
 
 Still open for the slice: run the usability test (owner), using [`usability-test.md`](usability-test.md) and the invitation in [`tester-invitation.md`](tester-invitation.md). Wikipedia and OpenAlex are confirmed working live.
 

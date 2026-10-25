@@ -12,7 +12,11 @@ Kovrune answers questions about your documents, and optionally Wikipedia and sch
 
 ## 1. Start the app
 
-You need [Node.js](https://nodejs.org/) 22 or newer and git. In a terminal:
+**Use the preview site:** open <https://bowo-prasetyo.github.io/kovrune/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way (section 2).
+
+The preview is published automatically from the latest `main` by GitHub Actions; the commit it was built from is shown at the bottom of the page. It is not yet a signed release (that comes in milestone M2), so if you prefer to run code you built yourself, run the app locally instead.
+
+**Or run it locally.** You need [Node.js](https://nodejs.org/) 22 or newer and git. In a terminal:
 
 ```bash
 git clone https://github.com/bowo-prasetyo/kovrune.git
@@ -21,9 +25,7 @@ npm ci
 npm run dev
 ```
 
-Open the address it prints, usually `http://localhost:5173/`, in Chrome or Edge.
-
-To update later, in the same `kovrune` folder:
+Open the address it prints, usually `http://localhost:5173/`, in Chrome or Edge. To update later, in the same `kovrune` folder:
 
 ```bash
 git pull
@@ -32,6 +34,8 @@ npm run dev
 ```
 
 On Windows with WSL, run these commands in the WSL terminal and open the address in your Windows browser.
+
+Settings and downloaded browser models are stored per site: the preview site and a local copy each have their own.
 
 ## 2. Choose where the model runs
 
@@ -95,6 +99,8 @@ cd ~/llama.cpp/build/bin
 
 Then, in the app: **Use a local model server** → keep the address `http://127.0.0.1:8080/v1` → **Connect** → **Test this model**.
 
+**On the preview site,** the page is on the web and the server is on your computer, so the browser may ask whether the site may access devices on your local network. Choose **Allow**. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).
+
 ## 4. Ask questions
 
 1. **Add documents:** PDF, text, Markdown or HTML, with **Choose files** or by dropping them on the page. **Show text** shows what Kovrune read from a file.
@@ -140,6 +146,7 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 | `failed to open GGUF file ... No such file or directory` | Wrong model path | `find ~ -name "*.gguf"` and use the full path of your model (not a `ggml-vocab` file) |
 | `HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev` |
 | **Connect** says it couldn't reach the server | The server isn't running, listens only inside WSL, or uses another port | Start it with `--host 0.0.0.0`; if Windows still can't reach WSL, use the address from `hostname -I` in WSL |
+| **Connect** fails on the preview site but works with `npm run dev` | The browser blocked the web page from reaching your computer | Allow local network access when the browser asks, or in the site's settings (the icon left of the address bar). Safari may block it entirely; use Chrome or Edge |
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |
