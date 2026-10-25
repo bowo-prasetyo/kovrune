@@ -45,7 +45,7 @@ Then add documents (PDF, text, Markdown or HTML), or tick Wikipedia or OpenAlex 
 - **Some quotes not found**, **Quotes not found** or **No quotes**: the answer isn't fully backed by its sources, so check it yourself. For a quote that is nearly right, the closest passage in the source is shown with the differences marked.
 - **Not found in your sources**: the model found no answer in your documents.
 
-Documents stay on your device: their text is saved in your browser, so they are still there after a reload. Answers are not saved yet. Scanned PDFs without a text layer cannot be read.
+Documents and answers stay on your device: they are saved in your browser, so they are still there after a reload. An answer can be exported as Markdown, with its quotes and sources, and the papers it cites as BibTeX. Scanned PDFs without a text layer cannot be read.
 
 Nothing you type or add is sent to an online AI service. The app's network requests are the model download (Hugging Face, plus WebLLM's runtime library from GitHub), the model server you connect it to, and, only when you tick them, Wikipedia and OpenAlex searches.
 

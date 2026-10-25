@@ -107,6 +107,7 @@ describe("OpenAlex source", () => {
     assert.match(doc.text, /Ashish Vaswani, Noam Shazeer\. 2017\. arXiv/);
     assert.match(doc.text, /Abstract: The dominant sequence models/);
     assert.equal(doc.url, "https://doi.org/10.48550/arxiv.1706.03762");
+    assert.deepEqual(doc.work, { authors: ["Ashish Vaswani", "Noam Shazeer"], year: 2017, doi: "10.48550/arxiv.1706.03762", venue: "arXiv" });
     assert.ok(fetchImpl.urls.every((u) => u.startsWith("https://api.openalex.org/works")));
     await assert.rejects(openalex.fetch("openalex:../../etc"), /not an OpenAlex work ID/);
   });

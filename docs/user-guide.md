@@ -150,6 +150,16 @@ Each answer has a label:
 
 Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from. Quotes must match whole words; capitals, quote marks and list bullets don't matter. For a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the **closest passage** with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did. Wikipedia and OpenAlex sources link to the page and show when it was retrieved. For a quote from a PDF, the page it is on is shown next to the document's name, for example "p. 4". Under each quote that was found, **Show in the source** opens the passage around it, as it is in the document, with the quoted words highlighted.
 
+### Past answers and export
+
+Each finished answer is saved in the browser and listed under **Past answers**, newest first, with when it was asked and which model answered. Open one to see it as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document.
+
+- **Export as Markdown** saves the question, the label, the answer (with ⚠ marks), each quote with its source and page, and the steps, as a `.md` file.
+- **Export papers as BibTeX** appears when the answer cites OpenAlex papers, and saves a `.bib` file with their authors, year, venue and DOI.
+- **Delete** removes one answer; **Delete all saved answers** removes them all. Documents and models are kept.
+
+Exports are made in the browser; nothing is uploaded.
+
 ## 6. Privacy
 
 - **The model runs on your computer.** Nothing is sent to an online AI service.
@@ -158,7 +168,7 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub;
   - the local-server path talks only to the server address you entered.
-- **Saved in the browser:** your setup, your source choices, and the text extracted from your documents (not the original files). They stay on this computer, in this browser only. Answers aren't saved yet. Removing documents never removes a downloaded model; clearing the site's data in the browser settings removes everything, models included.
+- **Saved in the browser:** your setup, your source choices, and the text extracted from your documents (not the original files). Finished answers are saved too, with their quotes and steps. They stay on this computer, in this browser only. Removing documents or answers never removes a downloaded model; clearing the site's data in the browser settings removes everything, models included.
 
 ## 7. Troubleshooting
 

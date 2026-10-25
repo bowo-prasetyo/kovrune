@@ -2,17 +2,28 @@ import { useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
 import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
-import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/research.ts";
-import { describeModelError, openModel } from "../models.ts";
+import { ResearchLibrary, runResearch } from "../../agent/research.ts";
+import { describeModelError, describeSetup, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
+import {
+  answerToBibtex,
+  answerToMarkdown,
+  exportFileName,
+  formatTime,
+  shownSupport,
+  sourceTitle,
+  toSavedAnswer,
+  type SavedAnswer,
+} from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
-import { describeCall, describeNoAnswer, describePages, describeStatus } from "./trace.ts";
+import { describePages, describeCall, describeStatus } from "./trace.ts";
+import type { SavedRecords } from "./useSavedDocuments.ts";
 
 type RunState =
   | { phase: "idle" }
   | { phase: "running"; steps: string[] }
-  | { phase: "done"; steps: string[]; result: ResearchResult; library: ResearchLibrary }
+  | { phase: "done"; steps: string[]; answer: SavedAnswer }
   | { phase: "stopped"; steps: string[] }
   | { phase: "error"; steps: string[]; message: string };
 
@@ -20,10 +31,13 @@ export function ResearchPanel({
   settings,
   documents,
   modelReady,
+  history,
 }: {
   settings: Settings;
   documents: LibraryDocument[];
   modelReady: boolean;
+  /** Past answers, saved in the browser; each finished answer is added. */
+  history: SavedRecords<SavedAnswer>;
 }) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<RunState>({ phase: "idle" });
@@ -68,7 +82,11 @@ export function ResearchPanel({
       if (abort.signal.aborted) setState({ phase: "stopped", steps });
       else if (result.agent.stopReason === "error")
         setState({ phase: "error", steps, message: describeModelError(new Error(result.agent.error), settings) });
-      else setState({ phase: "done", steps, result, library });
+      else {
+        const answer = toSavedAnswer({ question: question.trim(), result, steps, library, model: describeSetup(settings) });
+        history.setRecords((answers) => [...answers, answer]);
+        setState({ phase: "done", steps, answer });
+      }
     } catch (error) {
       if (abort.signal.aborted) setState({ phase: "stopped", steps });
       else setState({ phase: "error", steps, message: describeModelError(error, settings) });
@@ -176,47 +194,150 @@ export function ResearchPanel({
           {state.message}
         </p>
       )}
-      {state.phase === "done" && <ResultView result={state.result} library={state.library} />}
+      {state.phase === "done" && (
+        <>
+          <ResultView answer={state.answer} live />
+          <div className="actions">
+            <ExportButtons answer={state.answer} />
+          </div>
+        </>
+      )}
+      <PastAnswers history={history} shownId={state.phase === "done" ? state.answer.id : undefined} />
     </section>
   );
 }
 
-function ResultView({ result, library }: { result: ResearchResult; library: ResearchLibrary }) {
-  const sourceErrors = result.sourceErrors.map((message) => (
+/** Saves text as a file through the browser's download, without any network request. */
+function download(fileName: string, text: string, type: string) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function ExportButtons({ answer }: { answer: SavedAnswer }) {
+  const bibtex = answerToBibtex(answer);
+  return (
+    <>
+      <button onClick={() => download(exportFileName(answer, "md"), answerToMarkdown(answer), "text/markdown")}>
+        Export as Markdown
+      </button>
+      {bibtex && (
+        <button onClick={() => download(exportFileName(answer, "bib"), bibtex, "application/x-bibtex")}>
+          Export papers as BibTeX
+        </button>
+      )}
+    </>
+  );
+}
+
+/** Earlier answers, newest first, each opened in place. The answer shown above is left out. */
+function PastAnswers({ history, shownId }: { history: SavedRecords<SavedAnswer>; shownId?: string }) {
+  const past = history.records.filter((a) => a.id !== shownId).reverse();
+  if (!history.store) return null;
+  return (
+    <section className="past-answers">
+      <h2>Past answers</h2>
+      {history.saveError && (
+        <p className="warning" role="alert">
+          {history.saveError}
+        </p>
+      )}
+      {past.length === 0 ? (
+        <p className="hint">
+          {history.store.persistent
+            ? "Answers are saved in this browser when they finish, and listed here."
+            : "This browser is not letting Kovrune save answers (for example in a private window), so they are listed only until you reload."}
+        </p>
+      ) : (
+        <>
+          <ul className="past">
+            {past.map((answer) => (
+              <li key={answer.id}>
+                <details>
+                  <summary>
+                    <span className="past-question">{answer.question}</span>{" "}
+                    <span className="hint">
+                      {formatTime(answer.askedAt)}, {answer.model}
+                    </span>
+                  </summary>
+                  <ResultView answer={answer} />
+                  {answer.steps.length > 0 && (
+                    <details className="past-steps">
+                      <summary>Steps</summary>
+                      <ol className="trace">
+                        {answer.steps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ol>
+                    </details>
+                  )}
+                  <div className="actions">
+                    <ExportButtons answer={answer} />
+                    <button onClick={() => history.setRecords((answers) => answers.filter((a) => a.id !== answer.id))}>
+                      Delete
+                    </button>
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+          <p className="hint">
+            Answers are saved in this browser only.{" "}
+            <button
+              className="link"
+              onClick={() => {
+                const shown = shownId ? " The answer shown above stays on screen until you ask again or reload." : "";
+                if (confirm(`Delete all saved answers? Documents and models are kept.${shown}`)) history.setRecords(() => []);
+              }}
+            >
+              Delete all saved answers
+            </button>
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
+/** An answer with its label and evidence; `live` for the answer just given, so screen readers announce it. */
+function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: boolean }) {
+  const sourceErrors = answer.sourceErrors.map((message) => (
     <p key={message} className="warning">
       {message} The answer is based on the other sources only.
     </p>
   ));
-  if (result.status === "no-answer") {
+  if (answer.status === "no-answer") {
     return (
       <>
         {sourceErrors}
-        <p className="warning" role="status">
-          {describeNoAnswer(result.agent.stopReason, result.agent.error)}
+        <p className="warning" role={live ? "status" : undefined}>
+          {answer.noAnswer}
         </p>
       </>
     );
   }
-  // Sentences are marked only when a quote checked out; otherwise the label already says nothing backs the answer.
-  const support = result.status === "verified" ? result.support : undefined;
-  const status = describeStatus(result.status, result.evidence, support);
+  const support = shownSupport(answer);
+  const status = describeStatus(answer.status, answer.evidence, support);
   return (
-    <div className={`result ${result.status}`} role="status">
+    <div className={`result ${answer.status}`} role={live ? "status" : undefined}>
       {sourceErrors}
       <p>
         <span className={`status ${status.tone}`}>{status.label}</span> {status.detail}
       </p>
-      {result.final?.answer && <Answer text={result.final.answer} support={support} />}
-      {result.evidence.length > 0 && (
+      {answer.answer && <Answer text={answer.answer} support={support} />}
+      {answer.evidence.length > 0 && (
         <>
           <h3>Evidence</h3>
           <ul className="evidence">
-            {result.evidence.map((item, i) => (
+            {answer.evidence.map((item, i) => (
               <li key={i} className={item.verified ? "verified" : "unverified"}>
                 <span className="mark" aria-label={item.verified ? "Found in the document" : "Not in the document"}>
                   {item.verified ? "✓" : "✗"}
                 </span>{" "}
-                <SourceName docId={item.docId} result={result} library={library} />
+                <SourceName docId={item.docId} answer={answer} />
                 {item.context?.pages && <span className="hint">, {describePages(item.context.pages)}</span>}
                 <blockquote>{item.quote}</blockquote>
                 {item.context && <InContext context={item.context} />}
@@ -258,9 +379,9 @@ function Answer({ text, support }: { text: string; support?: SentenceSupport }) 
 }
 
 /** A cited document's name; open-source documents link to where they came from, with the retrieval time. */
-function SourceName({ docId, result, library }: { docId: string; result: ResearchResult; library: ResearchLibrary }) {
-  const citation = result.citations[docId];
-  if (!citation) return <span className="source">{library.documentFor(docId)?.title ?? docId}</span>;
+function SourceName({ docId, answer }: { docId: string; answer: SavedAnswer }) {
+  const citation = answer.citations[docId];
+  if (!citation) return <span className="source">{sourceTitle(answer, docId)}</span>;
   const retrieved = new Date(citation.retrievedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
   return (
     <span className="source">
