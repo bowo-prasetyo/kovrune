@@ -132,7 +132,7 @@ Tips:
 
 - Ask about one document at a time, with words that appear in it.
 - With a small model, an answer takes a minute or two.
-- Documents are kept only until you reload the page.
+- Documents stay in the list after a reload: their text is saved in this browser. **Remove** deletes a document's saved copy. In a private window, or when the browser blocks site data, they are kept only until you reload, and the page says so.
 - Scanned PDFs (images without a text layer) can't be read.
 
 ## 5. Reading the answer
@@ -158,7 +158,7 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub;
   - the local-server path talks only to the server address you entered.
-- **Saved in the browser:** your setup and source choices. Documents and answers aren't saved.
+- **Saved in the browser:** your setup, your source choices, and the text extracted from your documents (not the original files). They stay on this computer, in this browser only. Answers aren't saved yet. Removing documents never removes a downloaded model; clearing the site's data in the browser settings removes everything, models included.
 
 ## 7. Troubleshooting
 

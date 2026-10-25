@@ -1,5 +1,5 @@
-// Settings kept in the browser between visits. Only setup choices are stored;
-// documents and tasks are not persisted until M2.
+// Settings kept in the browser between visits: the setup choices. Documents are
+// saved separately (research/store.ts); tasks are not persisted until M2.
 
 import { browserModelFor } from "../models/catalog.ts";
 import { SERVER_PRESETS, type ServerKind } from "./servers.ts";

@@ -1,5 +1,4 @@
-// The user's documents for this session. They live in memory only; saving them
-// between visits arrives in M2 (docs/m1-plan.md).
+// The user's documents: read from files here, and saved in the browser by store.ts.
 
 import { extractText, type DocumentKind } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";

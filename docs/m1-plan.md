@@ -57,7 +57,7 @@
 
 | Item | Milestone |
 | --- | --- |
-| Saving tasks and documents between sessions (beyond settings) | M2 |
+| Saving tasks and answers between sessions (documents are saved since [issue #34](https://github.com/bowo-prasetyo/kovrune/issues/34)) | M2 |
 | Signed reproducible builds, CSP, production hosting (an unsigned preview has been published from `main` since slice 4) | M2 |
 | Coding agent and sandboxed execution | M2.5 |
 | Peer-to-peer collaboration | M3+ |

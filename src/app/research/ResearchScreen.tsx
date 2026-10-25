@@ -3,19 +3,17 @@ import { describeSetup } from "../models.ts";
 import { useModelLoad } from "../useModelLoad.ts";
 import type { Settings } from "../settings.ts";
 import { DocumentLibrary } from "./DocumentLibrary.tsx";
-import type { LibraryDocument } from "./library.ts";
+import type { SavedDocuments } from "./useSavedDocuments.ts";
 import { ResearchPanel } from "./ResearchPanel.tsx";
 
 export function ResearchScreen({
   settings,
-  documents,
-  onDocumentsChange,
+  library,
   onRetest,
   onChangeSetup,
 }: {
   settings: Settings;
-  documents: LibraryDocument[];
-  onDocumentsChange: (update: (documents: LibraryDocument[]) => LibraryDocument[]) => void;
+  library: SavedDocuments;
   onRetest: () => void;
   onChangeSetup: () => void;
 }) {
@@ -34,8 +32,8 @@ export function ResearchScreen({
         </span>
       </div>
       <LoadProgressView state={load.state} onRetry={load.retry} />
-      <DocumentLibrary documents={documents} onChange={onDocumentsChange} />
-      <ResearchPanel settings={settings} documents={documents} modelReady={load.state.phase === "ready"} />
+      <DocumentLibrary library={library} />
+      <ResearchPanel settings={settings} documents={library.documents} modelReady={load.state.phase === "ready"} />
     </>
   );
 }
