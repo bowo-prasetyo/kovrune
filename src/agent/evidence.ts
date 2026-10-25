@@ -47,6 +47,9 @@ export function normalizeForMatch(text: string): string {
     .replace(/[“”„‟]/g, '"')
     .replace(/[‐-―−]/g, "-")
     .replace(/ /g, " ")
+    // Markdown emphasis and code marks are formatting, not words: models quoting "**Apps on
+    // device**" or "`llama-server`" drop them (field suite, issue #35).
+    .replace(/[*`]+|__/g, "")
     // List markers standing alone are layout, not words: slides use "•" and "–" bullets, and
     // models quoting them swap one for the other or drop them.
     .replace(/(^|\s)[-•·▪◦‣●*](?=\s|$)/g, "$1")

@@ -12,7 +12,7 @@ import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.14.0";
+export const HARNESS_VERSION = "0.15.0";
 
 export type Mode = "constrained" | "unconstrained";
 

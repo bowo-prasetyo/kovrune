@@ -33,6 +33,19 @@ describe("evidence check", () => {
     assert.equal(normalizeForMatch("well-known - x • y"), "well-known x y", "hyphens inside words stay");
   });
 
+  it("ignores Markdown emphasis and code marks, which models drop when quoting", () => {
+    // Field suite (issue #35): the user guide has "**On the preview site,** ... called **Apps on
+    // device**", the model quoted it without the asterisks, and the right answer failed its quote.
+    const guide = "**On the preview site,** the page is on the web. That permission is called **Apps on device**.";
+    const steps = "In the terminal where `llama-server` runs, press **Ctrl+C** to stop it. Set __max_tokens__ low.";
+    const check = (quote: string, text: string) => checkEvidence([{ docId: "d", quote }], () => text)[0]!.verified;
+    assert.equal(check("On the preview site, the page is on the web. That permission is called Apps on device.", guide), true);
+    assert.equal(check("That permission is called **Apps on device**", guide), true, "quotes that keep the marks still match");
+    assert.equal(check("In the terminal where llama-server runs, press Ctrl+C to stop it.", steps), true);
+    assert.equal(check("Set max_tokens low", steps), true, "underscores inside words stay");
+    assert.equal(check("That permission is called Apps on computer", guide), false, "words must still match");
+  });
+
   it("does not pair different symbols in the closest-passage diff", () => {
     // Class 1 preview check: the diff showed "Choose • Papyrus Project »", pairing the quote's "«"
     // with the source's "•" because neither has letters.
