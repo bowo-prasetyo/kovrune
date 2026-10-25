@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { CallRecord } from "../src/agent/agent.ts";
 import { documentId, formatBytes } from "../src/app/research/library.ts";
-import { describeCall, describeNoAnswer } from "../src/app/research/trace.ts";
+import { describeCall, describeNoAnswer, describeStatus } from "../src/app/research/trace.ts";
+import { withoutPartLabels } from "../src/agent/research.ts";
 
 const call = (fields: Partial<CallRecord>): CallRecord => ({
   valid: true,
@@ -40,5 +41,27 @@ describe("research screen helpers", () => {
   it("explains runs that end without an answer", () => {
     assert.match(describeNoAnswer("max-calls"), /all its steps/);
     assert.match(describeNoAnswer("error", "fetch failed"), /fetch failed/);
+  });
+});
+
+describe("answer status and cleanup", () => {
+  it("says only what the quote check proves", () => {
+    assert.equal(describeStatus("verified", 1).label, "Quotes found");
+    assert.match(describeStatus("verified", 1).detail, /Check that they support the whole answer/);
+    assert.equal(describeStatus("unverified", 2).label, "Quotes not found");
+    assert.equal(describeStatus("unverified", 0).label, "No quotes");
+    assert.equal(describeStatus("not-found", 0).label, "Not found in your sources");
+  });
+
+  it("removes internal part labels from answers", () => {
+    assert.equal(
+      withoutPartLabels("As the tutorial (part 1 of 10) says, select the perspective."),
+      "As the tutorial says, select the perspective.",
+    );
+    assert.equal(withoutPartLabels("Version 2 (part of the 3.x line)"), "Version 2 (part of the 3.x line)");
+  });
+
+  it("never ends a document ID with a hyphen after shortening", () => {
+    assert.equal(documentId("PapyrusTutorial_OnActivityDiagrams_v0.2_d20110719.pdf", new Set()), "papyrustutorial-onactivitydiagrams-v0-2");
   });
 });

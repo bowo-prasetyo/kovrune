@@ -9,7 +9,8 @@ import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
 
-export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 256 };
+// Search and read actions are short; the budget is for final answers, which carry quotes.
+export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512 };
 
 export interface ResearchResult {
   status: AnswerStatus | "no-answer";
@@ -61,8 +62,14 @@ export async function runResearch(options: {
     signal: options.signal,
     onCall: options.onCall,
   });
-  const final = agent.final as ResearchFinal | undefined;
-  if (!final) return { status: "no-answer", evidence: [], agent };
+  const raw = agent.final as ResearchFinal | undefined;
+  if (!raw) return { status: "no-answer", evidence: [], agent };
+  const final = { ...raw, answer: withoutPartLabels(raw.answer) };
   const evidence = checkEvidence(final.evidence, (id) => library.textFor(id));
   return { status: answerStatus(final.found, evidence), final, evidence, agent };
+}
+
+/** Chunk titles such as "Report (part 2 of 5)" are internal; models sometimes copy them into answers. */
+export function withoutPartLabels(answer: string): string {
+  return answer.replace(/\s*\(part \d+ of \d+\)/gi, "");
 }

@@ -7,6 +7,7 @@ import { formatCall } from "../eval/harness/format.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
+import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
 import { DocumentIndex } from "../src/tools/search.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
@@ -122,20 +123,53 @@ describe("research agent", () => {
 });
 
 describe("repeat and last-step guards", () => {
-  it("answers a repeated action with a notice and then allows only final_answer", async () => {
+  it("takes search away after a repeated search, so the model reads instead of answering from snippets", async () => {
     const model = new ScriptedModel([
       `{"tool":"search","args":{"query":"LumenDB"}}`,
       `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"read","args":{"docId":"lumen-overview"}}`,
       final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
     ]);
     const run = await research("r01-lumen-maintainer", [], true, model);
     assert.equal(run.score.passed, true);
-    assert.match(run.agent.transcript[3]!.content, /lumen-overview/);
-    assert.match(run.agent.transcript[5]!.content, /already ran this exact action[\s\S]*Finish now/);
+    assert.match(run.agent.transcript[5]!.content, /already ran this exact action[\s\S]*read one of the documents/);
     const schemaText = (i: number) => JSON.stringify(model.requests[i]!.responseSchema);
     assert.match(schemaText(1), /"search"/);
-    assert.doesNotMatch(schemaText(2), /"search"|"read"/);
-    assert.match(schemaText(2), /"final_answer"/);
+    assert.doesNotMatch(schemaText(2), /"search"/);
+    assert.match(schemaText(2), /"read"/);
+    assert.doesNotMatch(schemaText(3), /"search"/, "search stays unavailable for the rest of the task");
+    assert.match(schemaText(3), /"read"/);
+  });
+
+  it("allows only final_answer after a second repeat", async () => {
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"read","args":{"docId":"lumen-overview"}}`,
+      `{"tool":"read","args":{"docId":"lumen-overview"}}`,
+      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
+    ]);
+    const run = await research("r01-lumen-maintainer", [], true, model);
+    assert.equal(run.score.passed, true);
+    assert.match(run.agent.transcript.at(-2)!.content, /Finish now with final_answer/);
+    assert.doesNotMatch(JSON.stringify(model.requests[4]!.responseSchema), /"search"|"read"/);
+  });
+
+  it("points to the other parts when a part of a long document is read twice", async () => {
+    const text = Array.from({ length: 4 }, (_, i) => `Section ${i + 1}. ${"filler words here ".repeat(110)}`).join("\n\n");
+    const library = new ResearchLibrary([{ id: "guide", title: "Guide", text }]);
+    const [first, second] = library.index.partsOf("guide");
+    const model = new ScriptedModel([
+      `{"tool":"read","args":{"docId":"${first}"}}`,
+      `{"tool":"read","args":{"docId":"${first}"}}`,
+      `{"tool":"read","args":{"docId":"${second}"}}`,
+      final(false, "Not there."),
+    ]);
+    const result = await runResearch({ question: "q", library, model });
+    const observations = result.agent.transcript.filter((m) => m.role === "user").map((m) => m.content);
+    assert.match(observations[2]!, /other parts: guide#2, guide#3/);
+    assert.match(JSON.stringify(model.requests[2]!.responseSchema), /"read"/, "read stays available");
+    assert.equal(result.status, "not-found");
   });
 
   it("allows only final_answer on the last call, so a run that keeps searching still ends with an answer", async () => {
@@ -156,13 +190,14 @@ describe("repeat and last-step guards", () => {
     assert.doesNotMatch(schemaText(7), /"search"|"read"/);
   });
 
-  it("rejects other actions once only final_answer is allowed, in unconstrained mode too", async () => {
+  it("rejects tools that are no longer allowed, in unconstrained mode too", async () => {
     const run = await research(
       "r01-lumen-maintainer",
-      [`{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"read","args":{"docId":"lumen-overview"}}`, final(false, "Not found.")],
+      [`{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"search","args":{"query":"other"}}`, final(false, "Not found.")],
       false,
     );
     assert.deepEqual(run.agent.calls.map((c) => c.valid), [true, true, false, true]);
+    assert.match(run.agent.transcript[7]!.content, /one of these actions: read, final_answer/);
     assert.equal(run.research?.status, "not-found");
   });
 });

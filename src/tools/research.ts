@@ -3,6 +3,7 @@
 import { z } from "zod";
 import type { AgentTool } from "../agent/agent.ts";
 import type { EvidenceItem } from "../agent/evidence.ts";
+import { parentId } from "../documents/chunk.ts";
 import type { DocumentIndex } from "./search.ts";
 
 export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
@@ -30,6 +31,7 @@ export function createResearchTools(index: DocumentIndex): AgentTool[] {
         if (!hits.length) return "No matching documents.";
         return hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
       },
+      onRepeat: () => ({ hint: "Searching is no longer available: read one of the documents it found with read." }),
     },
     {
       name: "read",
@@ -45,6 +47,12 @@ export function createResearchTools(index: DocumentIndex): AgentTool[] {
         }
         return `[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`;
       },
+      onRepeat: ({ docId }: { docId: string }) => {
+        const others = index.partsOf(parentId(docId)).filter((id) => id !== docId);
+        return others.length
+          ? { hint: `This document has other parts: ${others.join(", ")}. Read another part, or search for something else.`, keepAfterRepeat: true }
+          : { hint: "Search for something else, or read another document." };
+      },
     },
     {
       name: "final_answer",
@@ -59,3 +67,4 @@ export function createResearchTools(index: DocumentIndex): AgentTool[] {
     },
   ];
 }
+

@@ -33,8 +33,8 @@ The setup wizard checks your device and recommends where to run the model:
 Either way, the wizard then tests the model (about a minute on capable hardware) and saves your setup in the browser.
 
 Then add documents (PDF, text, Markdown or HTML) and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document:
-- **Verified**: every quote was found word for word.
-- **Unverified**: some were not found, so check the answer yourself.
+- **Quotes found**: every quote is word for word in your documents. This proves the quotes are real, not that the answer is right; check that they support the whole answer.
+- **Quotes not found** or **No quotes**: the answer isn't backed by your documents, so check it yourself.
 - **Not found in your sources**: the model found no answer in your documents.
 
 Documents stay on your device and are kept only until you reload the page. Scanned PDFs without a text layer cannot be read.

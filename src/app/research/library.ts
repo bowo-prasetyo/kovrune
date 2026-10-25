@@ -25,8 +25,8 @@ export function documentId(fileName: string, taken: Set<string>): string {
       .replace(/\.[^.]+$/, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 40) || "document";
+      .slice(0, 40)
+      .replace(/^-+|-+$/g, "") || "document";
   let id = base;
   for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
   return id;

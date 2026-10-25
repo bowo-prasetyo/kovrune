@@ -47,8 +47,8 @@
 4. **Device advisor (D1).** It recommends the browser path when WebGPU is available, `shader-f16` is supported, and the adapter can fit the default model. Otherwise it recommends a local server. It never runs a model on WebGPU without the self-check passing.
 5. **Research sources.** The user's documents (chunked and searched with the benchmark's search, stemming included), plus Wikipedia and OpenAlex, which allow browser requests. Each source records its URL and retrieval time.
 6. **Trust features.**
-   - **Evidence check.** `final_answer` must include, for each citation, a short verbatim quote. The app checks that each quote appears in the cited source (ignoring whitespace and case). If none verify, the answer is shown as **unverified**. The evidence step also gives the model an explicit "the sources do not contain the answer" path.
-   - **Repeat guard.** After two identical actions, the next call allows only `final_answer`, enforced through the constrained-decoding schema.
+   - **Evidence check.** `final_answer` must include, for each citation, a short verbatim quote. The app checks that each quote appears in the cited source (ignoring whitespace and case), and labels the answer **Quotes found**, **Quotes not found** or **No quotes**. The labels say only what the check proves: a real quote does not show that the whole answer is right (see the class 1 field notes under slice 2). The evidence step also gives the model an explicit "the sources do not contain the answer" path.
+   - **Repeat guard.** A repeated action narrows what the model may do next, enforced through the constrained-decoding schema. A repeated search removes `search`, so the model can still read what it found. A repeated read of one part of a long document lists the other parts. A second repeat allows only `final_answer`.
    - **Last-step guard** (added in slice 2). The last call a task is allowed also accepts only `final_answer`, and the model is told to finish with what it has found. Without it, small models rephrased searches until the budget ran out on questions the documents do not answer (4 of 11 in the first slice 2 run).
    - **"Not found in your sources"** is a first-class result, not an error.
 7. **Evaluation continuity.** The M0 evaluation set keeps running on the moved engine. M1 adds tasks for the new behaviour (below) and reports them separately, so M0 comparisons stay valid.
@@ -116,7 +116,39 @@ Remaining failures:
 
 Decode speed in the container is about 7 tokens/s, which is not a class 1 or class 2 measurement.
 
-Still open for the slice: the owner asks a question about one of their own PDFs on the class 1 laptop.
+#### Class 1 field notes
+
+The owner's first test on the class 1 laptop used Qwen3.5-2B (Q4_K_M) on llama.cpp server in WSL, with a 35-page slide-deck PDF: an English Eclipse Papyrus tutorial whose slide templates also contain French placeholder text.
+
+- **Setup.** The device step recommended a local server ("Integrated Intel graphics"). The model test passed in 18.9 s at 8.4 tokens/s.
+- **Getting llama-server running took several tries:**
+  - an old server was still holding port 8080;
+  - the command used a placeholder model path;
+  - `-hf` failed because the build had no HTTPS support, so the GGUF was downloaded with `curl` instead.
+
+  The setup docs should cover these.
+- **Extraction.** All 35 pages were read (15,210 characters, 10 parts).
+- **Unanswerable question.** "Who is the CEO of Atos?" was answered **Not found in your sources**, although "Atos" appears on every slide.
+- **"How to create an activity diagram?"** came back labelled **Verified** with one real quote, but two of its three steps were wrong.
+  - The model searched twice. The old repeat guard then allowed only `final_answer`, so the model answered from search snippets without reading the slides.
+  - This led to three changes:
+    - the labels now say only that the quotes were found;
+    - a repeated search no longer forces an answer;
+    - research replies may use 512 tokens, because the longer answers that follow a read were being cut off at 256.
+
+Before and after, the same Qwen3.5-2B on 8 questions about the extracted text (6 answerable, 2 not), native llama.cpp in the cloud container. The owner's exact run did not reproduce here; a different llama.cpp build and CPU change the model's path.
+
+| | Before | After |
+| --- | --- | --- |
+| Wrong answer with quotes found ("Verified") | 2 | 1 |
+| Correct answer with quotes found | 3 | 3 |
+| Correct answer, quote not word for word | 1 | 1 |
+| Answerable question refused | 0 | 1 |
+| Unanswerable questions refused | 2/2 | 2/2 |
+
+The full benchmark with Qwen3.5-4B (harness 0.6.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4, valid actions 100% ([`slice2-fix-qwen3.5-4b-q4km.json`](../eval/results/slice2-fix-qwen3.5-4b-q4km.json)).
+
+Still open for the slice: the same question on the class 1 laptop, after this change.
 
 ### Slice 3: browser path (built; class 2 run pending)
 
