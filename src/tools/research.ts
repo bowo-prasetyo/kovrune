@@ -59,7 +59,7 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
         unread.add(`search_${source.name}`);
         return { text: hits.map((h) => `[${h.id}] ${h.title}\n${h.snippet}`).join("\n\n"), resultCount: hits.length };
       } catch (error) {
-        if (error instanceof SourceError) return session!.noteError(error.message);
+        if (error instanceof SourceError) return { text: session!.noteError(error.message), failed: true };
         throw error;
       }
     },

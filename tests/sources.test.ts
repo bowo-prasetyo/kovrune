@@ -61,7 +61,8 @@ describe("Wikipedia source", () => {
     const missing = createWikipedia("en", fakeFetch([[/prop=extracts/, { query: { pages: [{ title: "Nope", missing: true }] } }]]));
     await assert.rejects(missing.fetch("wikipedia:Nope"), /no article "Nope"/);
     await assert.rejects(createWikipedia("en", fakeFetch([])).search("x"), /could not be reached/);
-    await assert.rejects(createWikipedia("en", fakeFetch([[/./, {}, 429]])).search("x"), /HTTP 429/);
+    await assert.rejects(createWikipedia("en", fakeFetch([[/./, {}, 429]])).search("x"), /Wikipedia is busy \(too many requests\)/);
+    await assert.rejects(createWikipedia("en", fakeFetch([[/./, {}, 503]])).search("x"), /HTTP 503/);
   });
 });
 
@@ -320,5 +321,16 @@ describe("research with an unreachable source", () => {
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch([]))] });
     assert.equal(result.status, "not-found");
     assert.deepEqual(result.sourceErrors, ["Wikipedia could not be reached. Check your internet connection."]);
+    assert.equal(result.agent.calls[0]!.failed, true);
+  });
+
+  it("explains a rate limit in plain words", async () => {
+    // Class 1 preview check: after a day of testing, OpenAlex answered HTTP 429 and the warning only gave the code.
+    const model = new ScriptedModel([
+      `{"tool":"search_openalex","args":{"query":"activity diagram"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+    ]);
+    const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createOpenAlex(fakeFetch([[/\/works\?/, {}, 429]]))] });
+    assert.deepEqual(result.sourceErrors, ["OpenAlex is busy (too many requests). Try again in a few minutes."]);
   });
 });

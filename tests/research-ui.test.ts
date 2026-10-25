@@ -49,6 +49,8 @@ describe("research screen helpers", () => {
     assert.equal(search("search_openalex", 1), "Searching OpenAlex for “activity diagram”: 1 result");
     assert.equal(search("search_openalex", 0), "Searching OpenAlex for “activity diagram”: nothing found");
     assert.equal(search("search", 1), "Searching your documents for “activity diagram”: 1 document");
+    // The step used to stop mid-sentence when OpenAlex answered HTTP 429; the reason is in the warning.
+    assert.equal(describeCall(call({ tool: "search_openalex", args: { query: "x" }, failed: true }), () => undefined), "Searching OpenAlex for “x”: failed");
   });
 
   it("explains runs that end without an answer", () => {

@@ -74,8 +74,17 @@ Download one model file into a folder of your choice, for example `~/models`:
 
 | Model | Size | Use |
 | --- | --- | --- |
-| [Qwen3.5-4B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf) | 2.6 GB | Recommended: better answers |
-| [Qwen3.5-2B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf) | 1.2 GB | Lighter and faster, for 8 GB laptops |
+| [Qwen3.5-4B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf) | 2.6 GB | Better answers. Choose it when a question needs several sources (for example your PDF and Wikipedia), or when accuracy matters more than speed |
+| [Qwen3.5-2B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf) | 1.2 GB | Faster. Good for questions one of your documents answers; often answers from one source only |
+
+On a laptop with 8 GB of memory and integrated Intel graphics, both run on the processor:
+
+| Model | Model test speed | A question about one PDF | A question using a PDF, Wikipedia and OpenAlex |
+| --- | --- | --- | --- |
+| Qwen3.5-2B | about 8 tokens/s | 1–2 minutes | 2–3 minutes, often from one source only |
+| Qwen3.5-4B | about 5.5 tokens/s | 3–4 minutes (estimated from the speed) | about 7 minutes, combining the sources |
+
+The model test shows your own speed and how long a research task can take. You can download both models and switch between them ([below](#switch-models)).
 
 ```bash
 mkdir -p ~/models
@@ -98,6 +107,14 @@ cd ~/llama.cpp/build/bin
 - Wait for `listening on http://0.0.0.0:8080`, and leave the terminal open while you use Kovrune.
 
 Then, in the app: **Use a local model server** → keep the address `http://127.0.0.1:8080/v1` → **Connect** → **Test this model**.
+
+### Switch models
+
+1. In the terminal where `llama-server` runs, press **Ctrl+C** to stop it.
+2. Start it again with the other model file after `-m`, for example `./llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080`, and wait for `listening on`.
+3. In the app: **Change setup** → **Use a local model server** → **Connect** (it lists the new model) → **Test this model**. The header then names the new model.
+
+If the server fails to start or the computer becomes very slow with the bigger model, close other programs, especially browser tabs, and try again.
 
 **On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).
 
@@ -155,6 +172,7 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |
 | "Wikipedia could not be reached" | No internet connection, or the network blocks it | Check the connection; the research continues with the other sources |
+| "OpenAlex is busy (too many requests)" | OpenAlex limits how often anonymous users may search, and many questions in a short time reach the limit | Wait a few minutes. The answer meanwhile comes from your other sources, and the search's step in the trace ends with "failed" |
 | A PDF shows "No text found" | The PDF is scanned images | Use a PDF with selectable text |
 
 Still stuck? Open an issue at <https://github.com/bowo-prasetyo/kovrune/issues> with what you did, what you saw, and your OS and browser.
