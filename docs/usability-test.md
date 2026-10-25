@@ -15,6 +15,8 @@ Recruit 3–5 people who haven't used Kovrune. Aim for a mix:
 
 Each person brings a PDF of their own (a report, manual or paper with selectable text) and knows one question it answers.
 
+Invitation texts, in English and Japanese, are in [`tester-invitation.md`](tester-invitation.md).
+
 ## Session
 
 Each session takes about 45 minutes, in person or over a screen share. One moderator also takes notes.
