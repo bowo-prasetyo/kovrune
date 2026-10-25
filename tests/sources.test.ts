@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { createOpenAlex, rebuildAbstract } from "../src/sources/openalex.ts";
+import { createOpenAlex, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
 import { SourceSession } from "../src/sources/session.ts";
 import type { FetchLike } from "../src/sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../src/sources/wikipedia.ts";
@@ -75,6 +75,18 @@ describe("OpenAlex source", () => {
     abstract_inverted_index: { The: [0], dominant: [1], sequence: [2], models: [3, 6], are: [4], complex: [5] },
     primary_location: { source: { display_name: "arXiv" } },
   };
+
+  it("ends search snippets at a sentence end, not mid-word", () => {
+    // From the live check: the 240-character cut left "…can sometimes match hum…".
+    const abstract =
+      "Analogical reasoning — the capacity to identify and map structural relationships between different domains — is fundamental to human cognition and learning. Recent studies have shown that large language models (LLMs) can sometimes match humans in analogical reasoning tasks, opening the possibility that analogical reasoning might emerge from domain-general processes. However, it is still debated.";
+    assert.equal(
+      snippetOf(abstract),
+      "Analogical reasoning — the capacity to identify and map structural relationships between different domains — is fundamental to human cognition and learning. […]",
+    );
+    assert.equal(snippetOf("Short abstract."), "Short abstract.");
+    assert.match(snippetOf("word ".repeat(100).trim()), /^(word )+word \[…\]$/);
+  });
 
   it("rebuilds abstracts from the inverted index", () => {
     assert.equal(rebuildAbstract(work.abstract_inverted_index), "The dominant sequence models are complex models");
@@ -199,18 +211,31 @@ describe("research with Wikipedia", () => {
     assert.match(JSON.stringify(model.requests[3]!.responseSchema), /"const":"final_answer"[\s\S]*"enum":\["wikipedia:Ada_Lovelace"/);
   });
 
-  it("makes the model search the user's documents before Wikipedia", async () => {
-    // Class 1 live check: with the Papyrus PDF added and Wikipedia ticked, the model went straight to Wikipedia.
+  it("makes the model read the user's documents before Wikipedia", async () => {
+    // Class 1 live checks: with the Papyrus PDF added and Wikipedia ticked, the model first skipped
+    // the PDF, then, with a search required, searched it and still went to Wikipedia without reading it.
     const library = new ResearchLibrary([{ id: "papyrus", title: "Papyrus tutorial", text: "Select the Papyrus perspective. Create a Papyrus project with an Activity Diagram." }]);
     const model = new ScriptedModel([
-      `{"tool":"search","args":{"query":"create activity diagram"}}`,
-      `{"tool":"search_wikipedia","args":{"query":"activity diagram"}}`,
+      `{"tool":"search","args":{"query":"activity diagram"}}`,
+      `{"tool":"read","args":{"docId":"papyrus"}}`,
       JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
     ]);
     await runResearch({ question: "How to create an activity diagram?", library, model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
     const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
     assert.deepEqual(tools(0), ["search", "read", "final_answer"]);
-    assert.deepEqual(tools(1), ["search", "read", "search_wikipedia", "final_answer"]);
+    assert.deepEqual(tools(1), ["search", "read", "final_answer"], "a search with results is not enough");
+    assert.deepEqual(tools(2), ["search", "read", "search_wikipedia", "final_answer"]);
+  });
+
+  it("opens the other sources when the documents have nothing on the question", async () => {
+    const library = new ResearchLibrary([{ id: "papyrus", title: "Papyrus tutorial", text: "Select the Papyrus perspective." }]);
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"Ada Lovelace"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+    ]);
+    await runResearch({ question: "Who was Ada Lovelace?", library, model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
+    assert.match(JSON.stringify(model.requests[1]!.responseSchema), /"search_wikipedia"/);
+    assert.match(model.requests[0]!.messages[0]!.content, /quote only complete text/);
   });
 
   it("offers open sources at once when there are no documents", async () => {

@@ -24,6 +24,20 @@ export function rebuildAbstract(index: Record<string, number[]> | null | undefin
   return words.filter((w) => w !== undefined).join(" ");
 }
 
+/**
+ * The start of an abstract for search results, ending at a sentence end so a quote taken
+ * from it is complete text. A snippet cut mid-word ("…can sometimes match hum…") led a small
+ * model to invent the rest of the sentence. Falls back to whole words when the first sentence
+ * is very long.
+ */
+export function snippetOf(abstract: string, max = 320): string {
+  if (abstract.length <= max) return abstract;
+  const head = abstract.slice(0, max);
+  const sentenceEnd = Math.max(...[". ", "? ", "! "].map((mark) => head.lastIndexOf(mark)));
+  if (sentenceEnd > 0) return `${head.slice(0, sentenceEnd + 1)} […]`;
+  return `${head.slice(0, head.lastIndexOf(" "))} […]`;
+}
+
 function workId(work: Work): string {
   return PREFIX + work.id.replace(/^https:\/\/openalex\.org\//, "");
 }
@@ -57,7 +71,7 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch): OpenSource {
         return {
           id: workId(work),
           title: `${work.display_name ?? "Untitled"}${year}`,
-          snippet: abstract ? `${abstract.slice(0, 240)}${abstract.length > 240 ? "…" : ""}` : "No abstract.",
+          snippet: abstract ? snippetOf(abstract) : "No abstract.",
         };
       });
     },

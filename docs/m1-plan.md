@@ -265,6 +265,24 @@ Fixes (harness 0.8.0):
 
 Each case is a unit test, using the article lead the owner pasted (`tests/fixtures/ada-lovelace-lead.txt`). The full Qwen3.5-4B benchmark (harness 0.8.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4.
 
+**Fourth live checks, after harness 0.8.0.**
+- **"Who was Ada Lovelace?"** Worked as designed.
+  - The misquote got its closest-passage diff, and a second quote from the "Ada Lovelace Award" article checked out.
+  - The label read **Some quotes not found (1 of 2 found)**.
+  - An invented paper title ("On the Analytical Engine") was not backed by any quote.
+- **"How does LLM think?"** Worked as designed: **2 of 4 found**, and both failures were real misquotes.
+  - The model never read the OpenAlex paper. It took the snippet cut at "…can sometimes match hum…" and finished it as "human-level performance on tasks requiring analogical reasoning"; the abstract says "…match humans in analogical reasoning".
+  - Whole-word matching caught it.
+- **"How to create an activity diagram?"** Not enough.
+  - The trace now began with a search of the PDF, as required, but the model then went to Wikipedia without reading the PDF.
+  - The answer was correct for UML in general, with both quotes checking out, but not the Papyrus-specific answer the PDF gives.
+
+Fixes (harness 0.9.0):
+- **Read the documents first.** Wikipedia and OpenAlex searches become available once the model has *read* one of the user's documents, or when searching the documents found nothing, so questions the documents do not cover still reach the open sources.
+- **Complete snippets.** OpenAlex snippets end at a sentence end, marked "[…]", instead of mid-word after 240 characters. The prompt, with open sources only, says snippets can be cut off and to quote only complete text. A "[…]" at the edge of a quote is ignored by the check.
+
+Both cases are unit tests. The full Qwen3.5-4B benchmark (harness 0.9.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4.
+
 Still open for the slice: run the usability test (owner). Wikipedia and OpenAlex are confirmed working live.
 
 ## Acceptance
