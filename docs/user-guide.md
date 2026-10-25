@@ -104,7 +104,10 @@ Then, in the app: **Use a local model server** → keep the address `http://127.
 ## 4. Ask questions
 
 1. **Add documents:** PDF, text, Markdown or HTML, with **Choose files** or by dropping them on the page. **Show text** shows what Kovrune read from a file.
-2. **Choose where to search.** Your documents are always searched, and come first: the model can use Wikipedia or OpenAlex only after it has read one of your documents, or when searching your documents found nothing. Tick **Wikipedia** (with its language) or **OpenAlex** (scholarly papers) to search those too; with either ticked, you can ask questions without adding documents.
+2. **Choose where to search.** Your documents are always searched. Tick **Wikipedia** (with its language) or **OpenAlex** (scholarly papers) to search those too; with either ticked, you can ask questions without adding documents.
+   - Your documents come first: the model reads what it finds in them before it may search the others.
+   - Then every source you ticked is searched before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
+   - Each ticked source adds a step or two, so an answer takes a little longer. Leave them unticked for answers from your documents only.
 3. **Type a question and press Ask.** You see each step: what the model searched for and what it read. **Stop** ends the run at any time.
 
 Tips:

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { extractJson } from "../src/agent/agent.ts";
+import { z } from "zod";
+import { extractJson, runAgent } from "../src/agent/agent.ts";
 import { evaluateGate, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
 import { formatCall } from "../eval/harness/format.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
@@ -124,10 +125,11 @@ describe("research agent", () => {
 });
 
 describe("repeat and last-step guards", () => {
+  // A search that finds something must be followed by a read (next test), so these use searches that find nothing.
   it("takes search away after a repeated search, so the model reads instead of answering from snippets", async () => {
     const model = new ScriptedModel([
-      `{"tool":"search","args":{"query":"LumenDB"}}`,
-      `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"search","args":{"query":"qqqzz"}}`,
+      `{"tool":"search","args":{"query":"qqqzz"}}`,
       `{"tool":"read","args":{"docId":"lumen-overview"}}`,
       final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
     ]);
@@ -144,8 +146,8 @@ describe("repeat and last-step guards", () => {
 
   it("allows only final_answer after a second repeat", async () => {
     const model = new ScriptedModel([
-      `{"tool":"search","args":{"query":"LumenDB"}}`,
-      `{"tool":"search","args":{"query":"LumenDB"}}`,
+      `{"tool":"search","args":{"query":"qqqzz"}}`,
+      `{"tool":"search","args":{"query":"qqqzz"}}`,
       `{"tool":"read","args":{"docId":"lumen-overview"}}`,
       `{"tool":"read","args":{"docId":"lumen-overview"}}`,
       final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
@@ -174,7 +176,7 @@ describe("repeat and last-step guards", () => {
   });
 
   it("allows only final_answer on the last call, so a run that keeps searching still ends with an answer", async () => {
-    const searches = Array.from({ length: 7 }, (_, i) => `{"tool":"search","args":{"query":"LumenDB stars ${i}"}}`);
+    const searches = Array.from({ length: 7 }, (_, i) => `{"tool":"search","args":{"query":"qqqzz${"abcdefg"[i]}"}}`);
     const model = new ScriptedModel([...searches, final(false, "The documents do not say.")]);
     const run = await runResearchTask(
       unanswerableTasks.find((t) => t.id === "u06-lumen-stars")!,
@@ -194,12 +196,54 @@ describe("repeat and last-step guards", () => {
   it("rejects tools that are no longer allowed, in unconstrained mode too", async () => {
     const run = await research(
       "r01-lumen-maintainer",
-      [`{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"search","args":{"query":"LumenDB"}}`, `{"tool":"search","args":{"query":"other"}}`, final(false, "Not found.")],
+      [`{"tool":"search","args":{"query":"qqqzz"}}`, `{"tool":"search","args":{"query":"qqqzz"}}`, `{"tool":"search","args":{"query":"other"}}`, final(false, "Not found.")],
       false,
     );
     assert.deepEqual(run.agent.calls.map((c) => c.valid), [true, true, false, true]);
     assert.match(run.agent.transcript[7]!.content, /one of these actions: read, final_answer/);
     assert.equal(run.research?.status, "not-found");
+  });
+});
+
+describe("search before read", () => {
+  it("makes the model read what a search found before searching again", async () => {
+    // Class 1 live check: the model searched the Papyrus PDF five times with small rewordings
+    // before reading it, spending 5 of its 8 steps.
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"LumenDB maintainer"}}`,
+      `{"tool":"read","args":{"docId":"lumen-overview"}}`,
+      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
+    ]);
+    const run = await research("r01-lumen-maintainer", [], true, model);
+    assert.equal(run.score.passed, true);
+    const schemaText = (i: number) => JSON.stringify(model.requests[i]!.responseSchema);
+    assert.doesNotMatch(schemaText(1), /"search"/, "no second search before a read");
+    assert.match(schemaText(1), /"read"[\s\S]*"final_answer"/);
+    assert.match(schemaText(2), /"search"/, "search is back after the read");
+  });
+
+  it("still lets the model search again when a search found nothing", async () => {
+    const model = new ScriptedModel([`{"tool":"search","args":{"query":"qqqzz"}}`, final(false, "Not found.")]);
+    await research("r01-lumen-maintainer", [], true, model);
+    assert.match(JSON.stringify(model.requests[1]!.responseSchema), /"search"/);
+  });
+
+  it("falls back to final_answer when no other tool is available", async () => {
+    const model = new ScriptedModel([`{"tool":"search","args":{"query":"x"}}`, `{"tool":"final_answer","args":{}}`]);
+    let searched = false;
+    const run = await runAgent({
+      model,
+      system: "s",
+      task: "t",
+      tools: [
+        { name: "search", usage: "", args: z.object({ query: z.string() }).strict(), execute: async () => ((searched = true), "ok"), available: () => !searched },
+        { name: "final_answer", usage: "", args: z.object({}).strict(), available: () => false },
+      ],
+      finalTool: "final_answer",
+      config: { constrained: true, maxCalls: 4, maxTokensPerCall: 64 },
+    });
+    assert.equal(run.stopReason, "final");
+    assert.match(JSON.stringify(model.requests[1]!.responseSchema), /"final_answer"/);
   });
 });
 

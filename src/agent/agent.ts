@@ -25,7 +25,10 @@ export interface AgentTool {
    * another part of a document).
    */
   onRepeat?: (args: any) => { hint: string; keepAfterRepeat?: boolean };
-  /** Checked before every model call; a tool that is not available is left out of the schema. */
+  /**
+   * Checked before every model call; a tool that is not available is left out of the schema.
+   * The final tool is allowed regardless on the last step, after repeats, or when nothing else is.
+   */
   available?: () => boolean;
 }
 
@@ -197,7 +200,9 @@ export async function runAgent(options: {
     }
 
     // Rebuilt every call: argument schemas can depend on what the task has found so far.
-    const callable = allowed.filter((t) => t.available?.() ?? true);
+    // When finishing is forced, or nothing else is available, the final tool is always allowed.
+    const available = allowed.filter((t) => t.available?.() ?? true);
+    const callable = forceFinal || !available.length ? finalOnly : available;
     const schema = actionSchema(callable);
     const responseSchema = constrain ? actionJsonSchema(callable) : undefined;
     let result: Awaited<ReturnType<typeof callForAction>>;

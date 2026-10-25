@@ -292,6 +292,17 @@ Both cases are unit tests. The full Qwen3.5-4B benchmark (harness 0.9.0) is unch
   - But the quote is the article's paragraph on mental-health uses. It supports only a side remark about hallucinations and stigma, not the main claims ("statistical models that predict the next token", "lack true reasoning").
   - **Quotes found** with "Check that the quotes support the whole answer" is accurate, but a reader could take it as more than it is.
 
+**Sixth live check, on the preview site (harness 0.9.0).** "How to create an activity diagram?", with the Papyrus PDF added and Wikipedia ticked.
+- The answer was right: the five Papyrus steps, with a verified quote.
+- But the model searched the PDF five times, the last two identical, before reading it: 5 of its 8 steps.
+- It then stopped without searching Wikipedia. That was allowed, since the PDF answered, but the owner had ticked Wikipedia expecting it to be checked too, for example for what an activity diagram is in general.
+
+Fixes (harness 0.10.0):
+- **Read before searching again.** After a search finds results, that search tool is offered again only once the model has read something. A search that found nothing can still be reworded.
+- **Every ticked source is searched.** With Wikipedia or OpenAlex ticked, `final_answer` becomes available only once each of them has been searched, after the user's documents as before. A source that cannot be reached counts as searched.
+- **Combined answers.** The prompt asks the model to prefer the user's documents for what is specific to them, use the other sources for background and for what the documents do not cover, and say when sources disagree.
+- **More steps with open sources:** 8 calls, plus 2 for each ticked source.
+
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
