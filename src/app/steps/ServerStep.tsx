@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { listModels } from "../../models/local-endpoint.ts";
 import { describeConnectionError, modelLabel, RECOMMENDED_GGUF, SERVER_PRESETS, type ServerKind } from "../servers.ts";
+import { isPublicHttpsPage } from "../build-info.ts";
+import { accessState, addressSpaceOf, describeBlockedAccess } from "../local-access.ts";
 import type { ServerSettings } from "../settings.ts";
 
 export function ServerStep({
@@ -38,7 +40,7 @@ export function ServerStep({
       setModel((current) => (found.includes(current) ? current : found[0]!));
       setStatus({ busy: false });
     } catch (error) {
-      setStatus({ busy: false, error: describeConnectionError(error, baseUrl) });
+      setStatus({ busy: false, error: await explainFailure(error, baseUrl) });
     }
   }
 
@@ -147,4 +149,14 @@ export function ServerStep({
       )}
     </section>
   );
+}
+
+/** On the public site, a browser permission is the usual cause; name it when it is. */
+async function explainFailure(error: unknown, baseUrl: string): Promise<string> {
+  const space = addressSpaceOf(baseUrl);
+  if (space && error instanceof TypeError && isPublicHttpsPage(location)) {
+    const blocked = describeBlockedAccess(space, await accessState(space));
+    if (blocked) return blocked;
+  }
+  return describeConnectionError(error, baseUrl);
 }
