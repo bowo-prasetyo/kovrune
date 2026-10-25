@@ -228,6 +228,34 @@ describe("search before read", () => {
     assert.match(JSON.stringify(model.requests[1]!.responseSchema), /"search"/);
   });
 
+  it("tells the model when its reply was cut off at the token limit, so it shortens the answer", async () => {
+    // Class 1 preview check: with the PDF, Wikipedia and OpenAlex, Qwen3.5-2B's final answer hit
+    // the 512-token limit six times in a row; "not a valid action" made it write the same again.
+    const replies = [`{"tool":"final_answer","args":{"answer":"a very long answer`, `{"tool":"final_answer","args":{"answer":"short"}}`];
+    const requests: GenerationRequest[] = [];
+    const model: LanguageModel = {
+      info: { id: "m", runtime: "scripted", contextLength: 4096 },
+      supportsConstrainedDecoding: () => true,
+      dispose: async () => {},
+      async *generate(request: GenerationRequest) {
+        requests.push(request);
+        const text = replies.shift()!;
+        yield { text, done: false };
+        yield { text: "", done: true, usage: { promptTokens: 100, completionTokens: text.endsWith("}") ? 10 : 64 } };
+      },
+    };
+    const run = await runAgent({
+      model,
+      system: "s",
+      task: "t",
+      tools: [{ name: "final_answer", usage: "", args: z.object({ answer: z.string() }).strict() }],
+      finalTool: "final_answer",
+      config: { constrained: true, maxCalls: 4, maxTokensPerCall: 64 },
+    });
+    assert.equal(run.stopReason, "final");
+    assert.match(run.transcript[3]!.content, /^Your reply was cut off because it was too long\. Reply again, shorter/);
+  });
+
   it("falls back to final_answer when no other tool is available", async () => {
     const model = new ScriptedModel([`{"tool":"search","args":{"query":"x"}}`, `{"tool":"final_answer","args":{}}`]);
     let searched = false;

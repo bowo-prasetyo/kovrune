@@ -20,6 +20,19 @@ describe("evidence check", () => {
     assert.equal(curly!.verified, true);
   });
 
+  it("ignores list markers, which models swap or drop when quoting slides", () => {
+    // Class 1 preview check: the Papyrus PDF has "– Using", the model quoted "• Using", and the
+    // quote failed although every word is in the slide. Another quote dropped the "•" bullets.
+    const slide = "• Create a Papyrus project by :\n– Using the creation wizard :\n• Right click in Project\nExplorer view,";
+    const slides = "• Select the UML Activity Diagram.\n• A new project is initialized with\na model and an Activity diagram.";
+    const check = (quote: string, text: string) => checkEvidence([{ docId: "d", quote }], () => text)[0]!.verified;
+    assert.equal(check("Create a Papyrus project by : • Using the creation wizard : • Right click in Project Explorer view,", slide), true);
+    assert.equal(check("Select the UML Activity Diagram. A new project is initialized with a model", slides), true);
+    assert.equal(check("Create a Papyrus project by : Using the creation wizard", slide), true);
+    assert.equal(check("Create a Papyrus model by : Using the creation wizard", slide), false, "words must still match");
+    assert.equal(normalizeForMatch("well-known - x • y"), "well-known x y", "hyphens inside words stay");
+  });
+
   it("rejects missing documents, invented wording and quotes under three words", () => {
     const checked = checkEvidence(
       [

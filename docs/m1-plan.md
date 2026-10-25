@@ -315,6 +315,15 @@ Checked in the container with the Papyrus PDF's text and Wikipedia ticked. Wikip
   - The combined question: only Wikipedia's definition, without the Papyrus steps. Small models combine sources poorly.
   - A reminder to combine after the Wikipedia search made it worse: Qwen3.5-2B then answered both questions from the snippet alone. So it is not included.
 
+**Seventh live check, on the preview site (harness 0.10.0).** "How to create an activity diagram?" with Qwen3.5-2B, the Papyrus PDF, Wikipedia and OpenAlex.
+- The new order worked: one PDF search, a read, then a Wikipedia search and an OpenAlex search.
+- Then six replies in a row were "not a valid action". Reproduced in the container, with five results from each source: the final answer, full of quotes, hit the 512-token reply limit and was cut off. Told only "not a valid action", the model wrote the same answer again each time. The last-step notice finally produced a short answer.
+- Its one quote failed, although every word is in the slide: the PDF has "– Using the creation wizard" and the model wrote "• Using". The closest-passage view showed no difference, because it compares words only.
+
+Fixes (harness 0.11.0):
+- **Cut-off replies are named.** A reply that reaches the token limit gets "Your reply was cut off because it was too long. Reply again, shorter: a brief answer and only the few quotes that support it most". In the reproduction, the next reply was a valid answer with two of three quotes verified, the third being a real misquote ("Select the UML language" for "Select UML language").
+- **List markers are ignored** in quote matching, when they stand alone: "•", "–", "-" and similar. Re-checking the 24 quotes of the 0.10.0 benchmark report gives the same result for each.
+
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.

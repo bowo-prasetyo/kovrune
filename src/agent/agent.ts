@@ -224,11 +224,18 @@ export async function runAgent(options: {
 
     if (!action) {
       transcript.push({ role: "assistant", content: text.slice(0, 400) });
+      // A reply cut off at the token limit is not a format mistake: at temperature 0 the model
+      // writes the same long answer again unless told to shorten it. Seen with Qwen3.5-2B
+      // answering from a PDF, Wikipedia and OpenAlex: six cut-off replies in a row.
+      const cutOff = !record.estimatedTokens && record.completionTokens >= config.maxTokensPerCall;
+      const problem = cutOff
+        ? `Your reply was cut off because it was too long. Reply again, shorter: a brief answer and only the few quotes that support it most, each a single sentence.`
+        : `Your reply was not a valid action (${record.error}).`;
       transcript.push({
         role: "user",
         content: forceFinal
-          ? `Your reply was not a valid action (${record.error}). Reply with exactly one ${finalTool} JSON object.`
-          : `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of these actions: ${callable.map((t) => t.name).join(", ")}.`,
+          ? `${problem} Reply with exactly one ${finalTool} JSON object.`
+          : `${problem} Reply with exactly one JSON object using one of these actions: ${callable.map((t) => t.name).join(", ")}.`,
       });
       continue;
     }
