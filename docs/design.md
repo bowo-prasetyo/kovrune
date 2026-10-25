@@ -18,7 +18,7 @@ Today, a user opens Kovrune in a browser, picks a compatible model from Hugging 
 
 ## 0. Revision notes
 
-**Revision 3** narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). §1.4 names the first audience: technical researchers who are comfortable with a terminal. The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
+**Revision 3** narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). §1.4 names the first audience: technical researchers who are comfortable with a terminal. Sections that describe the full design now also say what M1 actually ships: §2.1 has an M1 column, and §3.2, §3.4, §7.4, §10 and §12 note where M1 differs, for example the GitHub Pages preview and model downloads that are not yet pinned or verified. The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
 
 Revision 2 followed a product and feasibility audit of the first draft. The main changes:
 
@@ -149,24 +149,24 @@ The central architectural rule: **the agent engine does not depend directly on a
 
 ### 2.1 Technology stack
 
-| Component | Choice | Purpose |
-| --- | --- | --- |
-| Language | TypeScript | Shared application and protocol types |
-| UI | React with Vite | Static browser application, installable as a PWA |
-| LLM inference (primary) | WebLLM | Fast in-browser text generation with JSON-schema and grammar-constrained decoding |
-| Embeddings, rerankers, small task models | Transformers.js | ONNX models via WebGPU or WASM |
-| GGUF models (advanced mode) | wllama (llama.cpp compiled to WebAssembly) | Access to the most common quantized format on Hugging Face |
-| Local model servers | OpenAI-compatible HTTP adapter | Ollama, LM Studio, llama.cpp server on the user's machine or LAN |
-| Model downloads | Hugging Face Hub file API | Discovery, pinned revisions, per-file SHA-256 |
-| Local persistence | IndexedDB for structured data; OPFS / Cache Storage for large files | Tasks, settings, model files |
-| Background processing | Web Workers | Keep the UI responsive during inference and execution |
-| Code execution | Pyodide (Python), QuickJS-wasm (JavaScript), in sandboxed workers | Running generated tests locally |
-| Tool schema | MCP-compatible tool definitions | Reuse the existing tool ecosystem |
-| P2P (prototype) | WebRTC data channels with pluggable signaling (e.g. Trystero) | Fast validation of trusted-circle collaboration |
-| P2P (if adopted) | js-libp2p with WebRTC, WebTransport, and circuit relay | Production transport, community relays |
-| Data validation | Zod | Validate every external message and tool input |
-| Testing | Vitest and Playwright | Unit, integration, cross-browser end-to-end |
-| Hosting | Cloudflare Pages or Netlify (custom headers), with signed, reproducible builds | See §7.4 |
+| Component | Choice | Purpose | In M1 |
+| --- | --- | --- | --- |
+| Language | TypeScript | Shared application and protocol types | Used |
+| UI | React with Vite | Static browser application, installable as a PWA | Used; not yet installable as a PWA |
+| LLM inference (primary) | WebLLM | Fast in-browser text generation with JSON-schema and grammar-constrained decoding | Used for the browser path |
+| Embeddings, rerankers, small task models | Transformers.js | ONNX models via WebGPU or WASM | Not shipped. Search uses keywords with stemming; revisit after M1 if keyword search proves the bottleneck |
+| GGUF models (advanced mode) | wllama (llama.cpp compiled to WebAssembly) | Access to the most common quantized format on Hugging Face | Not shipped in the app; used only by the M0 benchmark. Revisit if its WebGPU and CPU performance improve |
+| Local model servers | OpenAI-compatible HTTP adapter | Ollama, LM Studio, llama.cpp server on the user's machine or LAN | Used. llama.cpp server is supported, Ollama is experimental, LM Studio is untested |
+| Model downloads | Hugging Face Hub file API | Discovery, pinned revisions, per-file SHA-256 | WebLLM downloads the `main` revision, without hash checks; pinning and verification are M2 (§3.4) |
+| Local persistence | IndexedDB for structured data; OPFS / Cache Storage for large files | Tasks, settings, model files | Settings in `localStorage`; model files in WebLLM's browser cache. Documents and answers are not saved (M2) |
+| Background processing | Web Workers | Keep the UI responsive during inference and execution | WebLLM runs in a worker |
+| Code execution | Pyodide (Python), QuickJS-wasm (JavaScript), in sandboxed workers | Running generated tests locally | M2.5. The benchmark runs coding tasks in a plain worker, which is not a security boundary |
+| Tool schema | MCP-compatible tool definitions | Reuse the existing tool ecosystem | Tools are defined with Zod and sent to the model as JSON Schema; no MCP integration yet |
+| P2P (prototype) | WebRTC data channels with pluggable signaling (e.g. Trystero) | Fast validation of trusted-circle collaboration | M3 |
+| P2P (if adopted) | js-libp2p with WebRTC, WebTransport, and circuit relay | Production transport, community relays | Decided in M4 |
+| Data validation | Zod | Validate every external message and tool input | Used |
+| Testing | Vitest and Playwright | Unit, integration, cross-browser end-to-end | Node's built-in test runner for unit tests; end-to-end checks in headless Chromium are run by hand, not in CI |
+| Hosting | Cloudflare Pages or Netlify (custom headers), with signed, reproducible builds | See §7.4 | An unsigned preview on GitHub Pages; the target host and signed builds are M2 (§7.4) |
 
 These are starting choices. Package versions and browser compatibility are verified at the start of each milestone.
 
@@ -199,6 +199,8 @@ A repository of standard PyTorch weights does not mean those weights run in a br
 | **wllama** (advanced mode) | Running arbitrary compatible GGUF language models | GGUF |
 | **Local endpoint** | Larger models on the user's own server | Whatever the server supports |
 | **Browser built-in AI** (optional, experimental) | Zero-download fallback where available | Vendor-provided; labeled clearly as a vendor model |
+
+M1 ships two of these: WebLLM and the local endpoint (§2.1).
 
 ### 3.3 Common model interface
 
@@ -286,6 +288,8 @@ Each catalog entry records:
 - Capabilities and measured evaluation results per hardware class.
 - Declared license with a link to its terms; missing or ambiguous licenses are flagged.
 - Model card URL and known limitations.
+
+**In M1** this is not yet implemented. WebLLM fetches model weights from the `main` revision on Hugging Face and its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, without checking hashes. Pinning both to fixed revisions and verifying downloads are part of M2 (§12).
 
 Download workflow:
 
@@ -535,6 +539,8 @@ The host must allow custom response headers:
 
 GitHub Pages cannot set these headers, so the reference deployment uses a static host that can (for example Cloudflare Pages or Netlify). Anyone can self-host the same build; the documentation lists the required headers.
 
+**Until M2**, a preview is published to GitHub Pages from `main` as a stopgap, so testers need only a browser. It is unsigned, has no CSP or COOP/COEP headers, and says so in its footer. M1 does not need `SharedArrayBuffer`, and the app holds no identity keys yet, so the missing headers block nothing M1 ships. The move to a host that can set them is M2 work.
+
 ### 7.5 Privacy modes
 
 - **Local only (default):** no networking except model downloads and user-configured sources.
@@ -586,7 +592,7 @@ Reference hardware classes for benchmarks:
 
 ## 10. Repository structure
 
-Modules are added when their responsibilities become concrete; empty directories are not created in advance.
+Modules are added when their responsibilities become concrete; empty directories are not created in advance. The tree below is the full design. In M1, `src/` has `app/`, `agent/`, `models/`, `tools/`, `sources/` (Wikipedia and OpenAlex) and `documents/` (text extraction and chunking); `p2p/`, `storage/`, `security/` and `workers/` arrive with their milestones.
 
 ```
 kovrune/
@@ -642,7 +648,7 @@ A release does not claim that a model, browser, network feature, or security pro
 
 ## 12. Roadmap
 
-Each milestone delivers a usable result and has explicit acceptance criteria. The team should be roughly two to three engineers; M0–M2 is estimated at three to four months, and M3–M4 at a further three to four months including relay operations.
+Each milestone delivers a usable result and has explicit acceptance criteria. The team is two people: the project owner (decisions, reviews, testing on reference hardware) and Claude (implementation, tests, benchmark runs, documentation), as in [`m1-plan.md`](m1-plan.md). The original estimate assumed two to three engineers: three to four months for M0–M2, and a further three to four months for M3–M4 including relay operations. For M2 onward, treat these estimates as a hypothesis until they are re-planned for the actual team ([issue #36](https://github.com/bowo-prasetyo/kovrune/issues/36)).
 
 ### M0 — Benchmark gate (2–3 weeks)
 
@@ -654,20 +660,22 @@ Build the evaluation set and a minimal harness. Run 3–5 candidate models throu
 
 ### M1 — Local agent
 
-UI, model library, WebLLM adapter with constrained decoding, local endpoint adapter, verified downloads, bounded agent loop, and the MVP research workflow over user documents and CORS-friendly sources.
+UI, model library, WebLLM adapter with constrained decoding, local endpoint adapter, bounded agent loop, and the MVP research workflow over user documents and CORS-friendly sources.
 
 Adjusted after M0 (full plan in [`m1-plan.md`](m1-plan.md)):
 
 - A **device advisor** chooses the browser path on capable GPUs and a local server otherwise.
 - **llama.cpp server** is the supported local server; Ollama is experimental.
 - **PDF** documents are supported; wllama is not shipped.
+- **Pinned, verified model downloads** move to M2. M1's WebLLM downloads use the `main` revisions (§3.4).
+- An unsigned **preview** is published to GitHub Pages from `main`, as a stopgap until the M2 hosting (§7.4).
 - An **evidence check** (verified quotes) and a **repeat guard** address the M0 findings on invented answers and repeated actions.
 
 **Acceptance:** a user on reference hardware loads a catalog model or connects a local endpoint, runs a research task, and receives a cited result without any hosted inference service; the evaluation set passes at the M0 baseline. Detailed criteria are in [`m1-plan.md`](m1-plan.md#acceptance).
 
 ### M2 — Persistence and release hardening
 
-IndexedDB persistence, checkpoints, cancellation, storage management and backup, reproducible signed builds, CSP, and the hosting setup from §7.4.
+IndexedDB persistence, checkpoints, cancellation, storage management and backup, pinned and verified model downloads (§3.4), reproducible signed builds, CSP, and the hosting setup from §7.4, which replaces the GitHub Pages preview.
 
 **Acceptance:** interrupted tasks resume where possible; storage failures and eviction are handled gracefully; a release can be rebuilt bit-for-bit from its tag.
 
