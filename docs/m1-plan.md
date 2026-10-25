@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | In progress: slices 1, 2 done; slice 3 waits on a class 2 run; slice 4 built, waiting on the usability test. See [Progress](#progress) |
+| Status | In progress: slices 1, 2 done; slice 3 waits on a class 2 run; slice 4 built and checked live on class 1, waiting on the usability test. See [Progress](#progress) |
 | Depends on | M0 provisional go ([`m0-benchmark.md`](m0-benchmark.md#m0-status)) |
 | Team | Project owner (decisions, reviews, laptop testing) and Claude (implementation, tests, benchmark runs, docs) |
 
@@ -283,7 +283,18 @@ Fixes (harness 0.9.0):
 
 Both cases are unit tests. The full Qwen3.5-4B benchmark (harness 0.9.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4.
 
-Still open for the slice: run the usability test (owner). Wikipedia and OpenAlex are confirmed working live.
+**Fifth live checks, after harness 0.9.0.** All three questions now behave as designed.
+- **"How to create an activity diagram?"** Fixed.
+  - The model searched the PDF four times with small rewordings, then read it (the repeat guard moved it on), and never went to Wikipedia.
+  - The answer gave the five Papyrus steps from slides 3–5, with a verified quote. The quote was long: it spans three slides, including the repeated "Papyrus | © 2011…" footer, but it is genuine.
+- **"Who was Ada Lovelace?"** As before: **1 of 2 found**, with the misquote's closest passage shown. Invented details ("Algorithm A", a paper titled "On the Analytical Engine") have no quote behind them.
+- **"How does LLM think?"** The model read Wikipedia's "Large language model" article, and its one quote is real.
+  - But the quote is the article's paragraph on mental-health uses. It supports only a side remark about hallucinations and stigma, not the main claims ("statistical models that predict the next token", "lack true reasoning").
+  - **Quotes found** with "Check that the quotes support the whole answer" is accurate, but a reader could take it as more than it is.
+
+**Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
+
+Still open for the slice: run the usability test (owner), using [`usability-test.md`](usability-test.md) and the invitation in [`tester-invitation.md`](tester-invitation.md). Wikipedia and OpenAlex are confirmed working live.
 
 ## Acceptance
 
