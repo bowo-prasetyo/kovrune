@@ -2,7 +2,7 @@
   "name": "kovrune",
   "version": "0.0.0",
   "private": true,
-  "description": "Open-source, browser-first, peer-to-peer agentic AI ecosystem for research and software development.",
+  "description": "Open-source, local-first research app: answers about your own documents, with quotes checked against their sources, from a model on your own machine.",
   "license": "MPL-2.0",
   "type": "module",
   "engines": {

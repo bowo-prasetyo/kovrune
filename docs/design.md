@@ -1,24 +1,26 @@
 # Kovrune — Project Design
 
-**Think Freely. Build Together. Stay Decentralized.**
+**Your documents. Your machine. Answers you can check.**
 
-An open-source, browser-first, peer-to-peer agentic AI ecosystem for research and software development.
+An open-source, local-first research app: answers about the user's own documents and open scholarly sources, with every quote checked against its source, from a model on the user's own machine. Coding agents and collaboration in trusted circles are planned later milestones (§12).
 
 | | |
 | --- | --- |
-| Status | Draft, revision 2 (incorporates the product and feasibility audit) |
+| Status | Draft, revision 3 (positioning narrowed to the shipped research product; see §0) |
 | License | MPL-2.0 (see [`LICENSE`](../LICENSE)) |
 | Scope of this document | Product definition, architecture, security model, and roadmap |
 
 Kovrune is built around a simple idea: people should be able to run their own AI agents, choose their own models, and collaborate with people they trust without depending on a centralized AI provider.
 
-A user opens Kovrune in a browser, picks a compatible model from Hugging Face (or points Kovrune at a model server they already run), and runs an agent locally to conduct research or work on software. Optionally, they can exchange tasks with peers they have invited.
+Today, a user opens Kovrune in a browser, picks a compatible model from Hugging Face (or points Kovrune at a model server they already run), and runs a research agent locally over their documents and open sources. Later milestones add work on software and exchanging tasks with peers they have invited.
 
 ---
 
 ## 0. Revision notes
 
-This revision follows a product and feasibility audit of the first draft. The main changes:
+**Revision 3** narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
+
+Revision 2 followed a product and feasibility audit of the first draft. The main changes:
 
 | Change | Why |
 | --- | --- |
@@ -83,19 +85,28 @@ The first audience is **privacy-conscious researchers and developers with reason
 
 "Ordinary users" on low-memory devices and phones are **not** the first audience. Realistic minimum hardware for the browser runtime is roughly 8 GB of RAM and a WebGPU-capable browser; the exact floor is set by the M0 benchmark (§12).
 
-**Primary job to be done:** "Help me research a technical question or work on a codebase using a model I control, with sources and checks I can inspect."
+**Primary job to be done:** "Help me answer a question from my own documents and open scholarly sources, using a model I control, with quotes I can check."
+
+A second job, "help me work on a codebase", is the target of the coding agent (M2.5) and is not part of the current product.
 
 ### 1.5 Positioning
 
 | Alternative | What it offers | Where Kovrune differs |
 | --- | --- | --- |
-| Hosted assistants (cloud chat products) | Strong models, zero setup | Data leaves the device; vendor lock-in |
-| WebLLM Chat and similar demos | In-browser chat | No agent loop, tools, persistence, or collaboration |
-| Ollama + Open WebUI, Jan, LM Studio | Local models with a good UI | Requires installation; general chat rather than research and coding workflows with verification |
-| Local coding agents (Aider, Cline, OpenHands) | Strong coding workflows | Installation required; no browser-only path; no peer collaboration |
-| Volunteer compute networks (AI Horde, Petals) | Shared inference | Shares raw compute, not agent work; needs brokers or incentives |
+| Hosted assistants (cloud chat products) | Strong models, zero setup | Documents leave the device; vendor lock-in; citations are not checked against the source |
+| WebLLM Chat and similar demos | In-browser chat | No research loop over documents and sources, no quote checking |
+| Ollama + Open WebUI, Jan, LM Studio | Local models with a good UI | General chat rather than a research workflow whose quotes are checked; the app itself needs installing |
 
-Kovrune's position: **zero-install, local-first research and coding agents with built-in verification, that can scale up to your own model server and to trusted collaborators.**
+Kovrune's position: **private research over your own documents and open scholarly sources, with every quote checked against its source, from a model on your own machine: in the browser where the GPU allows, or on your own model server.**
+
+The browser path needs no installation, but only on capable GPUs, and that is not yet measured on class 2 hardware (§12, M0 outcome). On other machines the user installs a local model server.
+
+Later milestones are compared with different alternatives:
+
+| Milestone | Alternative | Where Kovrune would differ |
+| --- | --- | --- |
+| Coding agent (M2.5) | Local coding agents (Aider, Cline, OpenHands) | Browser path with sandboxed test runs; collaboration within circles |
+| Trusted circles (M3+) | Volunteer compute networks (AI Horde, Petals) | Shares agent tasks with invited peers, not raw compute; no brokers or incentives |
 
 ### 1.6 Success metrics
 
