@@ -355,6 +355,12 @@ textarea {
   font-size: 1.1em;
 }
 
+.answer .unbacked {
+  background: var(--warning);
+  color: inherit;
+  border-bottom: 2px dotted var(--muted);
+}
+
 .evidence {
   padding: 0;
   list-style: none;

@@ -19,7 +19,7 @@ const STOP_WORDS = new Set(
 );
 
 /** Light suffix stripping so "maintain", "maintains" and "maintained" match. */
-function stem(token: string): string {
+export function stem(token: string): string {
   if (/\d/.test(token)) return token;
   const match = /^(.{3,}?)(?:ing|ed|es|s|e)$/.exec(token);
   return match ? match[1]! : token;

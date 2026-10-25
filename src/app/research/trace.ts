@@ -52,24 +52,41 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 
 /**
  * The status line for an answer. A quote check proves the quotes are in the documents,
- * not that they support every part of the answer, so the wording says only that.
+ * not that they support every part of the answer, so the wording says only that. With
+ * `support`, the label also says how many of the answer's sentences a found quote backs.
  */
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
+  support?: { judged: number; backed: number },
 ): { label: string; detail: string; tone: AnswerStatus } {
   const found = evidence.filter((e) => e.verified).length;
+  const unbacked = support ? support.judged - support.backed : 0;
+  const coverage = support && `${support.backed} of ${support.judged} sentences backed by a quote`;
   switch (status) {
     case "verified":
+      if (found === evidence.length && unbacked > 0) {
+        return {
+          label: coverage!,
+          detail:
+            "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with any quote. They may come from the model's memory; check them against the sources.",
+          tone: "unverified",
+        };
+      }
       return found === evidence.length
         ? {
             label: "Quotes found",
-            detail: "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
+            detail: support?.judged
+              ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
+              : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
             tone: "verified",
           }
         : {
             label: `Some quotes not found (${found} of ${evidence.length} found)`,
-            detail: "The quotes marked ✗ are not in the sources they cite. Check the answer against the sources.",
+            detail:
+              "The quotes marked ✗ are not in the sources they cite." +
+              (unbacked > 0 ? ` ${coverage}; the others are marked ⚠.` : "") +
+              " Check the answer against the sources.",
             tone: "unverified",
           };
     case "unverified":

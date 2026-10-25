@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
 import type { DiffPart } from "../../agent/evidence.ts";
+import type { SentenceSupport } from "../../agent/support.ts";
 import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/research.ts";
 import { describeModelError, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
@@ -196,14 +197,16 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
       </>
     );
   }
-  const status = describeStatus(result.status, result.evidence);
+  // Sentences are marked only when a quote checked out; otherwise the label already says nothing backs the answer.
+  const support = result.status === "verified" ? result.support : undefined;
+  const status = describeStatus(result.status, result.evidence, support);
   return (
     <div className={`result ${result.status}`} role="status">
       {sourceErrors}
       <p>
         <span className={`status ${status.tone}`}>{status.label}</span> {status.detail}
       </p>
-      {result.final?.answer && <p className="answer">{result.final.answer}</p>}
+      {result.final?.answer && <Answer text={result.final.answer} support={support} />}
       {result.evidence.length > 0 && (
         <>
           <h3>Evidence</h3>
@@ -223,6 +226,32 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
         </>
       )}
     </div>
+  );
+}
+
+/** The answer, with the sentences no found quote backs marked. */
+function Answer({ text, support }: { text: string; support?: SentenceSupport }) {
+  const unbacked = support?.sentences.some((s) => s.backed === false);
+  if (!support || !unbacked) return <p className="answer">{text}</p>;
+  return (
+    <>
+      <p className="answer">
+        {support.sentences.map((sentence, i) =>
+          sentence.backed === false ? (
+            <mark key={i} className="unbacked" title="No found quote shares most of this sentence's words">
+              <span aria-label="Not backed by a quote">⚠ </span>
+              {sentence.text}
+            </mark>
+          ) : (
+            <span key={i}>{sentence.text}</span>
+          ),
+        )}
+      </p>
+      <p className="hint">
+        ⚠ marks sentences that share few words with any quote that was found. This is a word check, not a proof: a marked
+        sentence can still be right, and an unmarked one can still be wrong.
+      </p>
+    </>
   );
 }
 
