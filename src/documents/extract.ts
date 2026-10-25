@@ -8,6 +8,8 @@ export interface ExtractedDocument {
   kind: DocumentKind;
   text: string;
   pages?: number;
+  /** PDFs: where each page starts in `text`, by page number minus one (see extractPdfText). */
+  pageStarts?: number[];
   /** Shown to the user, e.g. when a PDF has no text layer. */
   warning?: string;
 }
@@ -55,7 +57,15 @@ export interface PdfJsLike {
   };
 }
 
-export async function extractPdfText(data: Uint8Array, pdfjs: PdfJsLike): Promise<{ text: string; pages: number }> {
+/**
+ * The text of a PDF, its page count, and where each page starts in the text, so a quote can be
+ * cited by page. `pageStarts[n - 1]` is page n's offset; a page without text starts where the
+ * next page does, so the last page whose start is at or before an offset is the one it is on.
+ */
+export async function extractPdfText(
+  data: Uint8Array,
+  pdfjs: PdfJsLike,
+): Promise<{ text: string; pages: number; pageStarts: number[] }> {
   // verbosity 0: errors only, so font warnings do not flood logs.
   const task = pdfjs.getDocument({ data, isEvalSupported: false, verbosity: 0 });
   try {
@@ -71,7 +81,14 @@ export async function extractPdfText(data: Uint8Array, pdfjs: PdfJsLike): Promis
       }
       pages.push(page.replace(/[ \t]+/g, " ").trim());
     }
-    return { text: pages.filter(Boolean).join("\n\n"), pages: pdf.numPages };
+    let text = "";
+    const pageStarts: number[] = [];
+    for (const page of pages) {
+      if (page && text) text += "\n\n";
+      pageStarts.push(text.length);
+      text += page;
+    }
+    return { text, pages: pdf.numPages, pageStarts };
   } finally {
     await task.destroy();
   }
@@ -85,11 +102,12 @@ export async function extractText(
   if (!kind) throw new Error(`Unsupported file type: ${file.name}. Use text, Markdown, HTML or PDF files.`);
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (kind === "pdf") {
-    const { text, pages } = await extractPdfText(bytes, await loadPdfJs());
+    const { text, pages, pageStarts } = await extractPdfText(bytes, await loadPdfJs());
     return {
       kind,
       text,
       pages,
+      pageStarts,
       warning: text.trim() ? undefined : "No text found. This PDF may be scanned images; Kovrune cannot read text from images.",
     };
   }

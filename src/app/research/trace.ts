@@ -106,3 +106,8 @@ export function describeStatus(
       return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched.", tone: "not-found" };
   }
 }
+
+/** "p. 4", or "pp. 3–5" for a quote that runs across pages. */
+export function describePages({ first, last }: { first: number; last: number }): string {
+  return first === last ? `p. ${first}` : `pp. ${first}–${last}`;
+}

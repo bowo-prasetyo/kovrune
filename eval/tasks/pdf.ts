@@ -50,8 +50,8 @@ export async function loadPdfDocuments(
 ): Promise<SourceDocument[]> {
   return Promise.all(
     pdfSources.map(async (source) => {
-      const { text } = await extractPdfText(await readPdf(source.id), pdfjs);
-      return { id: source.id, title: source.title, text };
+      const { text, pageStarts } = await extractPdfText(await readPdf(source.id), pdfjs);
+      return { id: source.id, title: source.title, text, pageStarts };
     }),
   );
 }

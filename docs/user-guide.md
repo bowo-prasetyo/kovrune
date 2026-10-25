@@ -148,7 +148,7 @@ Each answer has a label:
 | **No quotes** | The model answered without quoting anything, so nothing backs the answer. |
 | **Not found in your sources** | The model found no answer in what it searched. This is often the right answer. |
 
-Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from. Quotes must match whole words; capitals, quote marks and list bullets don't matter. For a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the **closest passage** with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did. Wikipedia and OpenAlex sources link to the page and show when it was retrieved.
+Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from. Quotes must match whole words; capitals, quote marks and list bullets don't matter. For a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the **closest passage** with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did. Wikipedia and OpenAlex sources link to the page and show when it was retrieved. For a quote from a PDF, the page it is on is shown next to the document's name, for example "p. 4". Under each quote that was found, **Show in the source** opens the passage around it, as it is in the document, with the quoted words highlighted.
 
 ## 6. Privacy
 

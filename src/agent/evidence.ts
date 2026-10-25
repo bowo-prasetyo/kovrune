@@ -13,6 +13,19 @@ export interface CheckedEvidence extends EvidenceItem {
   reason?: string;
   /** For a quote that is close to a passage but not word for word: that passage, marked up against the quote. */
   closest?: DiffPart[];
+  /** For a verified quote: the passage as it is in the source, with the text around it. */
+  context?: QuoteContext;
+}
+
+/** A verified quote in its source: the source's own text before, of, and after the quote. */
+export interface QuoteContext {
+  before: string;
+  passage: string;
+  after: string;
+  /** Whether text was cut off before `before` or after `after`. */
+  more: { before: boolean; after: boolean };
+  /** PDFs: the pages the passage is on. */
+  pages?: { first: number; last: number };
 }
 
 /** A run of words that both texts share, or that only the quote or only the source has. */
@@ -48,9 +61,14 @@ function stripEdgePunctuation(text: string): string {
 
 /**
  * Checks each quote against its document. `resolveText` returns the full text
- * for a document or chunk ID, or undefined when the ID does not exist.
+ * for a document or chunk ID, or undefined when the ID does not exist;
+ * `resolvePageStarts` returns a PDF's page offsets in that text.
  */
-export function checkEvidence(items: EvidenceItem[], resolveText: (docId: string) => string | undefined): CheckedEvidence[] {
+export function checkEvidence(
+  items: EvidenceItem[],
+  resolveText: (docId: string) => string | undefined,
+  resolvePageStarts: (docId: string) => number[] | undefined = () => undefined,
+): CheckedEvidence[] {
   return items.map((item) => {
     const text = resolveText(item.docId);
     if (text === undefined) return { ...item, verified: false, reason: "the model cited a document ID it never found" };
@@ -58,7 +76,10 @@ export function checkEvidence(items: EvidenceItem[], resolveText: (docId: string
     if (quote.split(" ").filter(Boolean).length < MIN_QUOTE_WORDS) {
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
     }
-    if (containsWords(normalizeForMatch(text), quote)) return { ...item, verified: true };
+    if (containsWords(normalizeForMatch(text), quote)) {
+      const context = quoteContext(item.quote, text, resolvePageStarts(item.docId));
+      return { ...item, verified: true, ...(context ? { context } : {}) };
+    }
     const closest = closestPassage(item.quote, text);
     return { ...item, verified: false, reason: "quote not found in the document", ...(closest ? { closest } : {}) };
   });
@@ -77,6 +98,59 @@ function containsWords(text: string, quote: string): boolean {
     if (!before && !after) return true;
   }
   return false;
+}
+
+/** Characters of source text shown on each side of a quote in its context. */
+const CONTEXT_CHARS = 240;
+
+const hasWordChar = (key: string) => /[\p{L}\p{N}]/u.test(key);
+
+/**
+ * Where a quote is in the source text, as character offsets of its first and last word. Words
+ * are compared as in the closest-passage diff, so case, quote marks and edge punctuation do not
+ * matter, and tokens without letters or digits (list markers, "«", "[…]") are skipped on both sides.
+ */
+export function locateQuote(quote: string, text: string): { start: number; end: number } | undefined {
+  const q = quote.split(/\s+/).map(wordKey).filter(hasWordChar);
+  if (!q.length) return undefined;
+  const words = [...text.matchAll(/\S+/g)]
+    .map((m) => ({ key: wordKey(m[0]), start: m.index, end: m.index + m[0].length }))
+    .filter((w) => hasWordChar(w.key));
+  for (let i = 0; i + q.length <= words.length; i++) {
+    if (q.every((key, j) => words[i + j]!.key === key)) return { start: words[i]!.start, end: words[i + q.length - 1]!.end };
+  }
+  return undefined;
+}
+
+/** The page an offset is on: the last page starting at or before it. */
+function pageAt(offset: number, pageStarts: number[]): number {
+  let page = 1;
+  for (let n = 0; n < pageStarts.length; n++) if (pageStarts[n]! <= offset) page = n + 1;
+  return page;
+}
+
+/** A verified quote with the source text around it, cut at word boundaries, and its pages in a PDF. */
+export function quoteContext(quote: string, text: string, pageStarts?: number[]): QuoteContext | undefined {
+  const at = locateQuote(quote, text);
+  if (!at) return undefined;
+  let from = Math.max(0, at.start - CONTEXT_CHARS);
+  let to = Math.min(text.length, at.end + CONTEXT_CHARS);
+  // Cut at whitespace, so no word is shown in part.
+  if (from > 0) {
+    const space = text.slice(from, at.start).search(/\s/);
+    from = space < 0 ? at.start : from + space + 1;
+  }
+  if (to < text.length) {
+    const space = Math.max(...[" ", "\n", "\t"].map((ch) => text.slice(at.end, to).lastIndexOf(ch)));
+    to = space < 0 ? at.end : at.end + space;
+  }
+  return {
+    before: text.slice(from, at.start),
+    passage: text.slice(at.start, at.end),
+    after: text.slice(at.end, to),
+    more: { before: from > 0, after: to < text.length },
+    ...(pageStarts?.length ? { pages: { first: pageAt(at.start, pageStarts), last: pageAt(at.end - 1, pageStarts) } } : {}),
+  };
 }
 
 export function answerStatus(found: boolean, checked: CheckedEvidence[]): AnswerStatus {

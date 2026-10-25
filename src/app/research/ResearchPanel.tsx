@@ -1,13 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
-import type { DiffPart } from "../../agent/evidence.ts";
+import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
 import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/research.ts";
 import { describeModelError, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import type { LibraryDocument } from "./library.ts";
 import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
-import { describeCall, describeNoAnswer, describeStatus } from "./trace.ts";
+import { describeCall, describeNoAnswer, describePages, describeStatus } from "./trace.ts";
 
 type RunState =
   | { phase: "idle" }
@@ -43,7 +43,7 @@ export function ResearchPanel({
   async function ask() {
     const abort = new AbortController();
     controller.current = abort;
-    const library = new ResearchLibrary(usable.map(({ id, title, text }) => ({ id, title, text })));
+    const library = new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts })));
     const titleFor = (id: string) => library.documentFor(id)?.title;
     const steps: string[] = [];
     setState({ phase: "running", steps });
@@ -217,7 +217,9 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
                   {item.verified ? "✓" : "✗"}
                 </span>{" "}
                 <SourceName docId={item.docId} result={result} library={library} />
+                {item.context?.pages && <span className="hint">, {describePages(item.context.pages)}</span>}
                 <blockquote>{item.quote}</blockquote>
+                {item.context && <InContext context={item.context} />}
                 {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}
                 {item.closest && <ClosestPassage parts={item.closest} />}
               </li>
@@ -269,6 +271,22 @@ function SourceName({ docId, result, library }: { docId: string; result: Researc
         ({citation.source}, retrieved {retrieved})
       </span>
     </span>
+  );
+}
+
+/** A verified quote where it is in the source, with the text around it. */
+function InContext({ context }: { context: QuoteContext }) {
+  return (
+    <details className="context">
+      <summary>Show in the source</summary>
+      <blockquote>
+        {context.more.before && "… "}
+        {context.before}
+        <mark>{context.passage}</mark>
+        {context.after}
+        {context.more.after && " …"}
+      </blockquote>
+    </details>
   );
 }
 
