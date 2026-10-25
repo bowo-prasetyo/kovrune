@@ -366,6 +366,11 @@ Checked in the container, with Wikipedia and OpenAlex mocked (five results each)
   Each has real quotes, and each sentence is backed by them, so neither check catches it.
 - **Live checks and the usability test:** from now on, each write-up records how many answers labelled **Quotes found** were wrong or only partly right.
 
+**Field suite ([issue #35](https://github.com/bowo-prasetyo/kovrune/issues/35)).** Since harness 0.10.0, prompt and guard changes have been driven by three live questions, and the synthetic research set no longer shows the behaviour being tuned: every change from 0.7.0 on left it unchanged task for task.
+- **The suite:** harness 0.14.0 adds a `field` suite: 24 questions over four real documents that may be committed (the user guide, the design document as an 18-page PDF, the MPL-2.0 text and Wikipedia's Ada Lovelace lead). Usability testers' documents can be added locally in `eval/field/local/` ([`eval/field/README.md`](../eval/field/README.md)).
+- **The rule:** from now on, a prompt or guard change must improve the field suite without regressing the research, unanswerable and pdf suites, on Qwen3.5-2B and Qwen3.5-4B.
+- **Not yet run with a model:** the first Qwen3.5-2B and Qwen3.5-4B results are to come from the class 1 laptop.
+
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
 - The browser path and the open sources work from the preview unchanged: WebLLM needs HTTPS, which Pages provides, and Wikipedia and OpenAlex accept requests from any site.
 - The local-server path goes from a public HTTPS page to `http://127.0.0.1`. llama.cpp's CORS default allows it; Ollama needs the site in `OLLAMA_ORIGINS`.
