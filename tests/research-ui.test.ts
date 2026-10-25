@@ -40,6 +40,17 @@ describe("research screen helpers", () => {
     assert.equal(describeCall(call({ valid: false, cutOff: true }), title), "The model's reply was cut off at the length limit; asking again with more room.");
   });
 
+  it("shows how many results a search found once it has run", () => {
+    // Class 1 preview check: "Searching Wikipedia for “activity diagram”" looked the same whether it
+    // found five articles or none, so the owner could not tell why the answer used only the PDF.
+    const search = (tool: string, resultCount?: number) => describeCall(call({ tool, args: { query: "activity diagram" }, resultCount }), () => undefined);
+    assert.equal(search("search_wikipedia"), "Searching Wikipedia for “activity diagram”", "while running");
+    assert.equal(search("search_wikipedia", 5), "Searching Wikipedia for “activity diagram”: 5 results");
+    assert.equal(search("search_openalex", 1), "Searching OpenAlex for “activity diagram”: 1 result");
+    assert.equal(search("search_openalex", 0), "Searching OpenAlex for “activity diagram”: nothing found");
+    assert.equal(search("search", 1), "Searching your documents for “activity diagram”: 1 document");
+  });
+
   it("explains runs that end without an answer", () => {
     assert.match(describeNoAnswer("max-calls"), /all its steps/);
     assert.match(describeNoAnswer("error", "fetch failed"), /fetch failed/);

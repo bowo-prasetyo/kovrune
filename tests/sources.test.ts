@@ -228,6 +228,8 @@ describe("research with Wikipedia", () => {
     assert.deepEqual(tools(2), ["search", "read", "search_wikipedia"], "Wikipedia must be searched before the answer");
     assert.deepEqual(tools(3), ["search", "read", "final_answer"]);
     assert.equal(result.agent.stopReason, "final");
+    // The trace gets result counts: documents counted as documents, not passages.
+    assert.deepEqual(result.agent.calls.map((c) => c.resultCount), [1, undefined, 1, undefined]);
     // Told why it cannot answer yet; Qwen3.5-2B, not told, read the PDF part after part instead.
     assert.match(result.agent.transcript[5]!.content, /Before you answer, also search Wikipedia \(search_wikipedia\)\.$/);
     assert.doesNotMatch(result.agent.transcript[7]!.content, /Before you answer/);
