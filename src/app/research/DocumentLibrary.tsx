@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { ACCEPT, formatBytes, readDocument, type LibraryDocument } from "./library.ts";
+import { ACCEPT, formatBytes, readDocument } from "./library.ts";
+import { savedTextBytes } from "./store.ts";
+import type { SavedDocuments } from "./useSavedDocuments.ts";
 
 const KIND_LABELS = { pdf: "PDF", html: "HTML", markdown: "Markdown", text: "Text" } as const;
 
-export function DocumentLibrary({
-  documents,
-  onChange,
-}: {
-  documents: LibraryDocument[];
-  onChange: (update: (documents: LibraryDocument[]) => LibraryDocument[]) => void;
-}) {
+export function DocumentLibrary({ library }: { library: SavedDocuments }) {
+  const { documents, setDocuments: onChange, store, saveError } = library;
+  // Adding waits for the saved documents, so a new file cannot take a saved one's ID.
+  const loading = !store;
   const [errors, setErrors] = useState<string[]>([]);
   const [reading, setReading] = useState(0);
   const [preview, setPreview] = useState<string>();
@@ -39,13 +38,13 @@ export function DocumentLibrary({
         className={dragging ? "dropzone dragging" : "dropzone"}
         onDragOver={(event) => {
           event.preventDefault();
-          setDragging(true);
+          if (!loading) setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
-          void addFiles([...event.dataTransfer.files]);
+          if (!loading) void addFiles([...event.dataTransfer.files]);
         }}
       >
         <p>Drop PDF, text, Markdown or HTML files here, or</p>
@@ -55,6 +54,7 @@ export function DocumentLibrary({
             type="file"
             multiple
             accept={ACCEPT}
+            disabled={loading}
             onChange={(event) => {
               void addFiles([...(event.target.files ?? [])]);
               event.target.value = "";
@@ -63,9 +63,23 @@ export function DocumentLibrary({
         </label>
       </div>
       <p className="hint">
-        Files are read on this device and never uploaded. They are kept only until you close or reload this page; saving
-        them arrives in a later update.
+        {loading
+          ? "Loading your saved documents…"
+          : store.persistent
+            ? "Files are read on this device and never uploaded. Their text is saved in this browser, so they are still here after a reload; Remove deletes the saved copy."
+            : "Files are read on this device and never uploaded. This browser is not letting Kovrune save them (for example in a private window), so they are kept only until you close or reload this page."}
       </p>
+      {store?.persistent && documents.length > 0 && (
+        <p className="hint">
+          Saved: {documents.length} document{documents.length === 1 ? "" : "s"}, {formatBytes(savedTextBytes(documents))} of
+          text. Removing documents does not remove downloaded models.
+        </p>
+      )}
+      {saveError && (
+        <p className="warning" role="alert">
+          {saveError}
+        </p>
+      )}
 
       {reading > 0 && (
         <p className="progress" aria-live="polite">

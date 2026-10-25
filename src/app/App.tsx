@@ -4,7 +4,7 @@ import { BUILD, REPO_URL } from "./build-info.ts";
 import { HELP_URL } from "./help.ts";
 import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
-import type { LibraryDocument } from "./research/library.ts";
+import { useSavedDocuments } from "./research/useSavedDocuments.ts";
 import { clearSettings, loadSettings, saveSettings, type Settings } from "./settings.ts";
 import { BrowserModelStep } from "./steps/BrowserModelStep.tsx";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
@@ -24,8 +24,8 @@ export function App() {
   const [draft, setDraft] = useState<Settings | undefined>(saved);
   const [step, setStep] = useState<Step>(saved ? "research" : "device");
   const [caps, setCaps] = useState<DeviceCapabilities>();
-  // Kept here, not in the research screen, so documents survive re-testing the model.
-  const [documents, setDocuments] = useState<LibraryDocument[]>([]);
+  // Kept here, not in the research screen, so documents survive re-testing the model; saved in the browser.
+  const library = useSavedDocuments();
 
   return (
     <main>
@@ -104,8 +104,7 @@ export function App() {
       {step === "research" && saved && (
         <ResearchScreen
           settings={saved}
-          documents={documents}
-          onDocumentsChange={setDocuments}
+          library={library}
           onRetest={() => {
             setDraft(saved);
             setStep("test");
