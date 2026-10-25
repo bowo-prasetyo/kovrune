@@ -92,7 +92,15 @@ const MIN_SHARED = 0.5;
  */
 const MIN_IN_ORDER = 0.7;
 
-const wordKey = (word: string) => normalizeForMatch(word).replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+// A token without letters or digits keeps itself as its key, so "«" and "•" are not paired in the
+// diff (seen: "Choose • Papyrus Project »"); list markers all share one key, as in the quote check.
+const wordKey = (word: string) => {
+  const normalized = normalizeForMatch(word);
+  const key = normalized.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+  if (key) return key;
+  if (/^[-•·▪◦‣●*]$/.test(word.replace(/[‐-―−]/g, "-"))) return "•";
+  return word.replace(/[.,;:!?]+$/, "") || word;
+};
 
 /**
  * The passage of `text` closest to a quote that is not in it word for word, as a word-level

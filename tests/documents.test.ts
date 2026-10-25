@@ -33,6 +33,17 @@ describe("evidence check", () => {
     assert.equal(normalizeForMatch("well-known - x • y"), "well-known x y", "hyphens inside words stay");
   });
 
+  it("does not pair different symbols in the closest-passage diff", () => {
+    // Class 1 preview check: the diff showed "Choose • Papyrus Project »", pairing the quote's "«"
+    // with the source's "•" because neither has letters.
+    const source = "• Select « New » > « Other ... », • Choose « Papyrus Project », – Or using the file menu action,";
+    const parts = closestPassage("Right click, Select « New » > « Other ... », Choose « Papyrus Project ».", source)!;
+    const shown = parts.filter((p) => p.kind !== "quote-only").map((p) => p.text).join(" ");
+    assert.match(shown, /Choose « Papyrus Project/);
+    assert.doesNotMatch(shown, /Choose •/);
+    assert.ok(parts.some((p) => p.kind === "same" && p.text.includes("Choose « Papyrus Project »")), "« and » pair with themselves");
+  });
+
   it("rejects missing documents, invented wording and quotes under three words", () => {
     const checked = checkEvidence(
       [

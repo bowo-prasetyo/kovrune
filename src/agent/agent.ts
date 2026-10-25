@@ -37,6 +37,12 @@ export interface AgentConfig {
   /** Hard cap on model calls, valid or not. */
   maxCalls: number;
   maxTokensPerCall: number;
+  /**
+   * The limit for a retry after a reply was cut off at maxTokensPerCall. A cut-off reply is
+   * unusable however good it was, and asking for a shorter one loses content, so the retry
+   * gets more room instead; older tool results make way for it.
+   */
+  cutOffMaxTokens?: number;
   /** Tokens kept free for the reply and chat-template overhead. */
   contextReserve?: number;
 }
@@ -50,6 +56,8 @@ export interface CallRecord {
   completionTokens: number;
   /** True when the runtime did not report usage and tokens were estimated from text length. */
   estimatedTokens: boolean;
+  /** True when the reply stopped at the token limit, so its JSON is unfinished. */
+  cutOff?: boolean;
   ttftMs: number;
   totalMs: number;
   /** Start of the raw model output, kept for invalid replies to help diagnose them. */
@@ -148,6 +156,7 @@ export async function callForAction(options: {
   } catch (error) {
     record.error = error instanceof Error ? error.message : String(error);
     record.output = text.slice(0, 200);
+    if (!record.estimatedTokens && record.completionTokens >= options.maxTokens) record.cutOff = true;
     return { record, text };
   }
 }
@@ -185,7 +194,8 @@ export async function runAgent(options: {
   ];
   const calls: CallRecord[] = [];
   const executed = new Set<string>();
-  const budget = model.info.contextLength - config.maxTokensPerCall - (config.contextReserve ?? 128);
+  // Raised for the next call after a reply was cut off at the limit.
+  let maxTokens = config.maxTokensPerCall;
 
   while (calls.length < config.maxCalls) {
     // The last-step guard: small models can keep rephrasing searches until the budget runs out,
@@ -195,6 +205,7 @@ export async function runAgent(options: {
       allow(finalOnly);
       transcript.at(-1)!.content += `\n\nThis is your last step. Finish now with ${finalTool}, using what you have found so far.`;
     }
+    const budget = model.info.contextLength - maxTokens - (config.contextReserve ?? 128);
     if (!fitToContext(transcript, budget)) {
       return { stopReason: "context-overflow", calls, transcript };
     }
@@ -212,7 +223,7 @@ export async function runAgent(options: {
         messages: transcript,
         schema,
         responseSchema,
-        maxTokens: config.maxTokensPerCall,
+        maxTokens,
         signal,
       });
     } catch (error) {
@@ -224,13 +235,17 @@ export async function runAgent(options: {
 
     if (!action) {
       transcript.push({ role: "assistant", content: text.slice(0, 400) });
-      // A reply cut off at the token limit is not a format mistake: at temperature 0 the model
-      // writes the same long answer again unless told to shorten it. Seen with Qwen3.5-2B
-      // answering from a PDF, Wikipedia and OpenAlex: six cut-off replies in a row.
-      const cutOff = !record.estimatedTokens && record.completionTokens >= config.maxTokensPerCall;
-      const problem = cutOff
-        ? `Your reply was cut off because it was too long. Reply again, shorter: a brief answer and only the few quotes that support it most, each a single sentence.`
-        : `Your reply was not a valid action (${record.error}).`;
+      // A reply cut off at the token limit is not a format mistake: told only that it was invalid,
+      // the model writes the same long answer again (seen with Qwen3.5-2B answering from a PDF,
+      // Wikipedia and OpenAlex: six cut-off replies in a row). The long answer may well be right,
+      // so the retry gets more room, and only if that is cut off too is a shorter answer asked for.
+      let problem = `Your reply was not a valid action (${record.error}).`;
+      if (record.cutOff && config.cutOffMaxTokens && maxTokens < config.cutOffMaxTokens) {
+        maxTokens = config.cutOffMaxTokens;
+        problem = `Your reply was cut off at the length limit before it was complete. You have more room now: reply again with the same answer, keeping each quote to one short sentence.`;
+      } else if (record.cutOff) {
+        problem = `Your reply was cut off at the length limit before it was complete. Reply again, shorter: a brief answer and only the quotes that support it most, each one short sentence.`;
+      }
       transcript.push({
         role: "user",
         content: forceFinal
@@ -240,6 +255,7 @@ export async function runAgent(options: {
       continue;
     }
 
+    maxTokens = config.maxTokensPerCall;
     const actionText = JSON.stringify(action);
     transcript.push({ role: "assistant", content: actionText });
     if (action.tool === finalTool) {

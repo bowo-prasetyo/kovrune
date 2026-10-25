@@ -23,7 +23,7 @@ export function researchSystem(options: { documents: boolean; sources: string[] 
   const where = options.documents
     ? `You can also search ${sources}. Look in the user's documents first: search them and read what you find. Then search ${sources} too, and combine what you find: prefer the user's documents for anything specific to them, use the other sources for background and for what the documents do not cover, and say so when sources disagree.`
     : `Search ${options.sources.length > 1 ? `each of ${sources}` : sources} to find documents.`;
-  return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read.`;
+  return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
 }
 
 /** Documents longer than this are truncated when read, to fit small context windows. */

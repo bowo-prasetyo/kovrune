@@ -228,10 +228,11 @@ describe("search before read", () => {
     assert.match(JSON.stringify(model.requests[1]!.responseSchema), /"search"/);
   });
 
-  it("tells the model when its reply was cut off at the token limit, so it shortens the answer", async () => {
+  it("retries a reply cut off at the token limit with more room, then asks for a shorter one", async () => {
     // Class 1 preview check: with the PDF, Wikipedia and OpenAlex, Qwen3.5-2B's final answer hit
     // the 512-token limit six times in a row; "not a valid action" made it write the same again.
-    const replies = [`{"tool":"final_answer","args":{"answer":"a very long answer`, `{"tool":"final_answer","args":{"answer":"short"}}`];
+    // A cut-off answer may be right, so the retry first gets more room rather than less content.
+    const replies = [`{"tool":"search","args":{"query":"x"}}`, `{"tool":"final_answer","args":{"answer":"long`, `{"tool":"final_answer","args":{"answer":"still long`, `{"tool":"final_answer","args":{"answer":"short"}}`];
     const requests: GenerationRequest[] = [];
     const model: LanguageModel = {
       info: { id: "m", runtime: "scripted", contextLength: 4096 },
@@ -241,19 +242,25 @@ describe("search before read", () => {
         requests.push(request);
         const text = replies.shift()!;
         yield { text, done: false };
-        yield { text: "", done: true, usage: { promptTokens: 100, completionTokens: text.endsWith("}") ? 10 : 64 } };
+        yield { text: "", done: true, usage: { promptTokens: 100, completionTokens: text.endsWith("}") ? 10 : request.maxTokens } };
       },
     };
     const run = await runAgent({
       model,
       system: "s",
       task: "t",
-      tools: [{ name: "final_answer", usage: "", args: z.object({ answer: z.string() }).strict() }],
+      tools: [
+        { name: "search", usage: "", args: z.object({ query: z.string() }).strict(), execute: async () => "ok" },
+        { name: "final_answer", usage: "", args: z.object({ answer: z.string() }).strict() },
+      ],
       finalTool: "final_answer",
-      config: { constrained: true, maxCalls: 4, maxTokensPerCall: 64 },
+      config: { constrained: true, maxCalls: 6, maxTokensPerCall: 64, cutOffMaxTokens: 128 },
     });
     assert.equal(run.stopReason, "final");
-    assert.match(run.transcript[3]!.content, /^Your reply was cut off because it was too long\. Reply again, shorter/);
+    assert.deepEqual(requests.map((r) => r.maxTokens), [64, 64, 128, 128]);
+    assert.deepEqual(run.calls.map((c) => c.cutOff), [undefined, true, true, undefined]);
+    assert.match(run.transcript[5]!.content, /cut off at the length limit[\s\S]*more room now: reply again with the same answer/);
+    assert.match(run.transcript[7]!.content, /cut off at the length limit[\s\S]*Reply again, shorter/);
   });
 
   it("falls back to final_answer when no other tool is available", async () => {

@@ -3,8 +3,14 @@
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
 
+const shorten = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
+
 export function describeCall(call: CallRecord, titleFor: (docId: string) => string | undefined): string {
-  if (!call.valid) return "The model's reply was not a valid action; asking again.";
+  if (!call.valid) {
+    return call.cutOff
+      ? "The model's reply was cut off at the length limit; asking again with more room."
+      : `The model's reply was not a valid action (${shorten(call.error ?? "unknown error")}); asking again.`;
+  }
   const args = call.args ?? {};
   switch (call.tool) {
     case "search":
