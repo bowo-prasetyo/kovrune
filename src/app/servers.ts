@@ -54,7 +54,7 @@ export function describeConnectionError(
   if (error instanceof TypeError || /fetch failed|Failed to fetch|NetworkError/i.test(message)) {
     const base = `Couldn't reach ${baseUrl}. Check that the server is running at that address and allows requests from this page (llama.cpp allows them by default; Ollama needs this page's address in OLLAMA_ORIGINS).`;
     return fromPublicPage
-      ? `${base} This page is on the web, so your browser must also allow it to reach a server on this computer: if the browser asked about devices on your local network, choose Allow, then connect again.`
+      ? `${base} This page is on the web, so your browser must also allow it to reach a server on this computer: in Chrome or Edge, click the icon left of the address bar, open Site settings, set "Apps on device" to Allow, then reload the page and connect again.`
       : base;
   }
   return message;

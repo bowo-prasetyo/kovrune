@@ -25,6 +25,7 @@ Each session takes about 45 minutes, in person or over a screen share. One moder
 - The app itself needs only Chrome or Edge (the preview site). For the local-server path, llama.cpp setup is part of the test; Node.js and git are needed only to run the app locally.
 - Don't install anything else for them.
 - For the local-server path, they follow the [user guide](user-guide.md) from section 3. Hand them the guide, not instructions of your own.
+- On the preview site, the first **Connect** to a local server needs the browser's **Apps on device** permission. Watch whether the participant notices the prompt and understands the app's message if it was blocked; record it as a finding either way.
 
 **Say at the start:** "We're testing the app, not you. Please think aloud: say what you're looking for and what you expect. I'll mostly stay quiet; if you're stuck, tell me, and I'll note where."
 

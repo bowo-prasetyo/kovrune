@@ -99,7 +99,7 @@ cd ~/llama.cpp/build/bin
 
 Then, in the app: **Use a local model server** → keep the address `http://127.0.0.1:8080/v1` → **Connect** → **Test this model**.
 
-**On the preview site,** the page is on the web and the server is on your computer, so the browser may ask whether the site may access devices on your local network. Choose **Allow**. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).
+**On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).
 
 ## 4. Ask questions
 
@@ -146,7 +146,7 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 | `failed to open GGUF file ... No such file or directory` | Wrong model path | `find ~ -name "*.gguf"` and use the full path of your model (not a `ggml-vocab` file) |
 | `HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev` |
 | **Connect** says it couldn't reach the server | The server isn't running, listens only inside WSL, or uses another port | Start it with `--host 0.0.0.0`; if Windows still can't reach WSL, use the address from `hostname -I` in WSL |
-| **Connect** fails on the preview site but works with `npm run dev` | The browser blocked the web page from reaching your computer | Allow local network access when the browser asks, or in the site's settings (the icon left of the address bar). Safari may block it entirely; use Chrome or Edge |
+| **Connect** fails on the preview site but works with `npm run dev`. The browser console (F12) shows "Permission was denied for this request to access the `loopback` address space" | The browser blocked the web page from reaching servers on your computer | Icon left of the address bar → **Site settings** → **Apps on device**: **Allow**, then reload. **Local network access** is not the one. Safari may block it entirely; use Chrome or Edge |
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |

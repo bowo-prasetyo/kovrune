@@ -296,8 +296,13 @@ Both cases are unit tests. The full Qwen3.5-4B benchmark (harness 0.9.0) is unch
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
 - The browser path and the open sources work from the preview unchanged: WebLLM needs HTTPS, which Pages provides, and Wikipedia and OpenAlex accept requests from any site.
-- The local-server path goes from a public HTTPS page to `http://127.0.0.1`. Recent Chrome and Edge ask the user to allow access to devices on the local network; the connection error and the user guide say so. llama.cpp's CORS default allows it; Ollama needs the site in `OLLAMA_ORIGINS`.
-- Not yet checked from the real site: the build was tested under the `/kovrune/` path locally, but the permission prompt only appears on a real HTTPS site. The first check is the owner's laptop.
+- The local-server path goes from a public HTTPS page to `http://127.0.0.1`. llama.cpp's CORS default allows it; Ollama needs the site in `OLLAMA_ORIGINS`.
+- **Checked on the class 1 laptop (Chrome).**
+  - The first **Connect** failed. The console showed "Permission was denied for this request to access the `loopback` address space", and the app only said it couldn't reach the server.
+  - Allowing **Local network access** did not help: that permission covers other devices on the network.
+  - Allowing **Apps on device** ("Access other apps and services on this device") alone fixed it, and the app connected and listed the model.
+  - The app now checks this permission when a connection from the public site fails, and names **Apps on device** in its message. The user guide's troubleshooting table has the console error.
+  - The site also has an icon now, which ends a harmless `favicon.ico` 404.
 
 Still open for the slice: run the usability test (owner), using [`usability-test.md`](usability-test.md) and the invitation in [`tester-invitation.md`](tester-invitation.md). Wikipedia and OpenAlex are confirmed working live.
 

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { recommendPath } from "../src/app/device.ts";
 import { isPublicHttpsPage } from "../src/app/build-info.ts";
+import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/local-access.ts";
 import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
 import { parseSettings } from "../src/app/settings.ts";
 import { listModels } from "../src/models/local-endpoint.ts";
@@ -121,7 +122,42 @@ describe("preview site", () => {
 
   it("explains the browser's local network permission on the public site", () => {
     const error = new TypeError("Failed to fetch");
-    assert.match(describeConnectionError(error, "http://127.0.0.1:8080/v1", true), /choose Allow/);
-    assert.doesNotMatch(describeConnectionError(error, "http://127.0.0.1:8080/v1", false), /choose Allow/);
+    assert.match(describeConnectionError(error, "http://127.0.0.1:8080/v1", true), /"Apps on device" to Allow/);
+    assert.doesNotMatch(describeConnectionError(error, "http://127.0.0.1:8080/v1", false), /Apps on device/);
+  });
+});
+
+describe("local network permission", () => {
+  it("tells this computer from the local network", () => {
+    assert.equal(addressSpaceOf("http://127.0.0.1:8080/v1"), "loopback");
+    assert.equal(addressSpaceOf("http://localhost:11434/v1"), "loopback");
+    assert.equal(addressSpaceOf("http://[::1]:8080/v1"), "loopback");
+    assert.equal(addressSpaceOf("http://192.168.1.20:8080/v1"), "local");
+    assert.equal(addressSpaceOf("http://172.28.144.1:8080/v1"), "local", "a WSL address");
+    assert.equal(addressSpaceOf("https://example.com/v1"), undefined);
+  });
+
+  it("reads the permission under the names Chrome has used, ignoring unknown ones", async () => {
+    const asked: string[] = [];
+    const permissions = {
+      query: async ({ name }: { name: string }) => {
+        asked.push(name);
+        if (name === "loopback-network") throw new TypeError("not a valid permission name");
+        return { state: "denied" };
+      },
+    };
+    assert.equal(await accessState("loopback", permissions), "denied");
+    assert.deepEqual(asked, ["loopback-network", "local-network-access"]);
+    assert.equal(await accessState("loopback", { query: async () => Promise.reject(new TypeError("x")) }), undefined);
+  });
+
+  it("names the setting to change: Apps on device for 127.0.0.1", () => {
+    // The class 1 preview check: "Permission was denied for this request to access the `loopback` address space".
+    const message = describeBlockedAccess("loopback", "denied")!;
+    assert.match(message, /blocking this site from reaching servers on this computer/);
+    assert.match(message, /"Apps on device" to Allow/);
+    assert.match(describeBlockedAccess("local", "prompt")!, /"Local network access"/);
+    assert.equal(describeBlockedAccess("loopback", "granted"), undefined);
+    assert.equal(describeBlockedAccess("loopback", undefined), undefined);
   });
 });
