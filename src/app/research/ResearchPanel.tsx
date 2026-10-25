@@ -4,7 +4,7 @@ import { ResearchLibrary, runResearch, type ResearchResult } from "../../agent/r
 import { describeModelError, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import type { LibraryDocument } from "./library.ts";
-import { describeCall, describeNoAnswer, STATUS_TEXT } from "./trace.ts";
+import { describeCall, describeNoAnswer, describeStatus } from "./trace.ts";
 
 type RunState =
   | { phase: "idle" }
@@ -121,7 +121,7 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
       </p>
     );
   }
-  const status = STATUS_TEXT[result.status];
+  const status = describeStatus(result.status, result.evidence.length);
   return (
     <div className={`result ${result.status}`} role="status">
       <p>
@@ -134,12 +134,12 @@ function ResultView({ result, library }: { result: ResearchResult; library: Rese
           <ul className="evidence">
             {result.evidence.map((item, i) => (
               <li key={i} className={item.verified ? "verified" : "unverified"}>
-                <span className="mark" aria-label={item.verified ? "Found in the document" : "Not verified"}>
+                <span className="mark" aria-label={item.verified ? "Found in the document" : "Not in the document"}>
                   {item.verified ? "✓" : "✗"}
                 </span>{" "}
                 <span className="source">{library.documentFor(item.docId)?.title ?? item.docId}</span>
                 <blockquote>{item.quote}</blockquote>
-                {!item.verified && item.reason && <span className="reason">Not verified: {item.reason}.</span>}
+                {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}
               </li>
             ))}
           </ul>

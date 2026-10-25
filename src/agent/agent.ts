@@ -15,6 +15,12 @@ export interface AgentTool {
   args: z.ZodObject;
   /** Returns the observation shown to the model. Not called for the final tool. */
   execute?: (args: any) => Promise<string>;
+  /**
+   * What to tell the model when it repeats this action. By default a repeated tool is
+   * no longer allowed; with keepAfterRepeat it stays available (for example to read
+   * another part of a document).
+   */
+  onRepeat?: (args: any) => { hint: string; keepAfterRepeat?: boolean };
 }
 
 export interface AgentConfig {
@@ -153,13 +159,19 @@ export async function runAgent(options: {
 }): Promise<AgentRun> {
   const { model, tools, finalTool, config, signal } = options;
   const constrain = config.constrained && model.supportsConstrainedDecoding();
-  const schema = actionSchema(tools);
-  const responseSchema = constrain ? actionJsonSchema(tools) : undefined;
-  // After a repeated action, only the final tool is allowed (the repeat guard).
+  // The repeat guard narrows the allowed tools: a repeated tool is removed (unless it
+  // asks to stay), and a second repeat, or the last call, allows only the final tool.
+  let allowed = tools;
+  let schema = actionSchema(allowed);
+  let responseSchema = constrain ? actionJsonSchema(allowed) : undefined;
+  const allow = (next: AgentTool[]) => {
+    allowed = next;
+    schema = actionSchema(allowed);
+    responseSchema = constrain ? actionJsonSchema(allowed) : undefined;
+  };
   const finalOnly = tools.filter((t) => t.name === finalTool);
-  const finalSchema = actionSchema(finalOnly);
-  const finalResponseSchema = constrain ? actionJsonSchema(finalOnly) : undefined;
   let forceFinal = false;
+  let repeats = 0;
   const transcript: ChatMessage[] = [
     { role: "system", content: systemPrompt(options.system, tools) },
     { role: "user", content: options.task },
@@ -173,6 +185,7 @@ export async function runAgent(options: {
     // so the last call allows only the final tool and the model is told to finish.
     if (!forceFinal && calls.length > 0 && calls.length === config.maxCalls - 1) {
       forceFinal = true;
+      allow(finalOnly);
       transcript.at(-1)!.content += `\n\nThis is your last step. Finish now with ${finalTool}, using what you have found so far.`;
     }
     if (!fitToContext(transcript, budget)) {
@@ -184,8 +197,8 @@ export async function runAgent(options: {
       result = await callForAction({
         model,
         messages: transcript,
-        schema: forceFinal ? finalSchema : schema,
-        responseSchema: forceFinal ? finalResponseSchema : responseSchema,
+        schema,
+        responseSchema,
         maxTokens: config.maxTokensPerCall,
         signal,
       });
@@ -202,7 +215,7 @@ export async function runAgent(options: {
         role: "user",
         content: forceFinal
           ? `Your reply was not a valid action (${record.error}). Reply with exactly one ${finalTool} JSON object.`
-          : `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of the listed actions.`,
+          : `Your reply was not a valid action (${record.error}). Reply with exactly one JSON object using one of these actions: ${allowed.map((t) => t.name).join(", ")}.`,
       });
       continue;
     }
@@ -213,16 +226,25 @@ export async function runAgent(options: {
       return { stopReason: "final", final: action.args, calls, transcript };
     }
     // Tools are deterministic, so repeating an action cannot help. Small models tend to
-    // loop instead of answering, so a repeat ends the search: the next call must be final.
+    // loop instead of answering, so a repeat narrows what they may do next.
     const repeated = executed.has(actionText);
     executed.add(actionText);
-    forceFinal ||= repeated;
     const tool = tools.find((t) => t.name === action.tool)!;
-    const observation = repeated
-      ? `You already ran this exact action and its result has not changed. Finish now with ${finalTool}, using what you have found so far.`
-      : tool.execute
-        ? await tool.execute(action.args)
-        : "OK";
+    let observation: string;
+    if (repeated) {
+      repeats++;
+      const { hint, keepAfterRepeat } = tool.onRepeat?.(action.args) ?? { hint: "" };
+      if (!keepAfterRepeat) allow(allowed.filter((t) => t.name !== tool.name));
+      if (repeats >= 2 || allowed.length === 1) {
+        forceFinal = true;
+        allow(finalOnly);
+      }
+      observation = forceFinal
+        ? `You already ran this exact action and its result has not changed. Finish now with ${finalTool}, using what you have found so far.`
+        : `You already ran this exact action and its result has not changed. ${hint ? `${hint} ` : ""}Otherwise finish with ${finalTool}.`;
+    } else {
+      observation = tool.execute ? await tool.execute(action.args) : "OK";
+    }
     transcript.push({ role: "user", content: `${OBSERVATION_PREFIX}${observation}` });
   }
   return { stopReason: "max-calls", calls, transcript };

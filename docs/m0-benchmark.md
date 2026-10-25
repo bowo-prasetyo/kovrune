@@ -76,7 +76,7 @@ The harness sandbox is not a security boundary; it only runs code the model unde
 ### Known limits
 
 - Fact checks are substring matches, so an answer that mentions the right value in the wrong role can still pass. Required citations and the number of fact groups per task reduce this, but results should be read alongside the recorded action traces.
-- Agent budgets are fixed: 8 calls and 256 output tokens per call for research; 6 calls and 768 tokens for coding.
+- Agent budgets are fixed: 8 calls and 512 output tokens per call for research (256 before harness 0.6.0); 6 calls and 768 tokens for coding.
 - 34 tasks give a coarse signal (one task is about 4.5 percentage points of research success). Treat differences under about 10 points as noise.
 
 ## Candidate models
@@ -338,3 +338,4 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.3.0 | Search matches word forms (light stemming) and picks snippets by term rarity; a repeated identical action gets a notice instead of a re-run; `run_tests` reports how many visible tests pass; console output from submitted code is discarded |
 | 0.4.0 | Two-step self-check: a warm-up action, then a check that the model acts on a tool result; speed is measured on the warm call. Task scoring is unchanged from 0.3.0, so task results remain comparable |
 | 0.5.0 | M1 slice 2. Research answers carry evidence quotes, and answerable tasks need every quote verified; a repeated action restricts the next call to `final_answer` (repeat guard); long documents are split into chunks; new `unanswerable` (8) and `pdf` (4) suites. Research results are stricter than 0.4.0, so compare them with care |
+| 0.6.0 | After the first test on a user's own PDF. A repeated search removes only `search`, so the model can still read what it found instead of answering from snippets; a repeated read of a long document's part lists the other parts; a second repeat allows only `final_answer`. Research replies may use 512 tokens (was 256), so long answers with quotes are not cut off. Task sets are unchanged |
