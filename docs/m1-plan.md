@@ -324,6 +324,22 @@ Fixes (harness 0.11.0):
 - **Cut-off replies are named.** A reply that reaches the token limit gets "Your reply was cut off because it was too long. Reply again, shorter: a brief answer and only the few quotes that support it most". In the reproduction, the next reply was a valid answer with two of three quotes verified, the third being a real misquote ("Select the UML language" for "Select UML language").
 - **List markers are ignored** in quote matching, when they stand alone: "•", "–", "-" and similar. Re-checking the 24 quotes of the 0.10.0 benchmark report gives the same result for each.
 
+**Eighth live check, on the preview site (harness 0.11.0).** The same question and sources, with Qwen3.5-2B.
+- One "not a valid action", then a short answer: the cut-off notice worked.
+- But the short answer had lost steps that earlier, longer answers had ("Fill the project name", "Select UML language"). The owner asked: what if the long answer was correct? A cut-off reply is unusable, but asking for a shorter one throws content away without knowing whether it was right.
+- Its one quote failed for a real reason: it left out "– Using the creation wizard :" from the middle of the slide text.
+- The closest-passage view showed "Choose • Papyrus Project »", pairing the quote's "«" with the source's "•", since neither has letters.
+
+Fixes (harness 0.12.0):
+- **More room, not less content.** A reply cut off at 512 tokens is retried with 1,024, asking for the same answer with one-sentence quotes. Older tool results are dropped to make room. Only a second cut-off asks for a shorter answer. On the class 1 laptop, 1,024 tokens from Qwen3.5-2B take about two minutes.
+- **One-sentence quotes** are asked for in the prompt when open sources are ticked, since long quotes are what fill the reply.
+- **The trace says why.** "The model's reply was cut off at the length limit; asking again with more room". Other invalid replies show their reason.
+- **The diff no longer pairs different symbols.** For the owner's quote it now marks exactly the missing "– Using the creation wizard :".
+
+Checked in the container, with Wikipedia and OpenAlex mocked (five results each):
+- **Qwen3.5-2B:** cut off once, then the full answer within 1,024 tokens. Its first section is the Papyrus project steps from the PDF. The six sections after it ("Click on the "Activity" icon…", "Save the diagram") are invented, each with an invented quote. All seven quotes failed, and the label was **Quotes not found**. So here the long answer was not correct. With more room the model showed that, and the check flagged it, instead of the answer being cut short to something that looked better.
+- **Qwen3.5-4B:** no cut-off. Seven steps, all from the PDF, 161 s. Two quotes verified; the third joined lines from two slides and failed correctly.
+
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.

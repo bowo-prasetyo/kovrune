@@ -36,7 +36,8 @@ describe("research screen helpers", () => {
     assert.equal(describeCall(call({ tool: "read", args: { docId: "report#2" } }), title), "Reading Report");
     assert.equal(describeCall(call({ tool: "read", args: { docId: "x" } }), title), "Reading x");
     assert.match(describeCall(call({ tool: "final_answer", args: { found: false } }), title), /don't answer/);
-    assert.match(describeCall(call({ valid: false }), title), /not a valid action/);
+    assert.match(describeCall(call({ valid: false, error: "no JSON object found" }), title), /not a valid action \(no JSON object found\); asking again/);
+    assert.equal(describeCall(call({ valid: false, cutOff: true }), title), "The model's reply was cut off at the length limit; asking again with more room.");
   });
 
   it("explains runs that end without an answer", () => {

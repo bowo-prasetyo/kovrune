@@ -13,7 +13,8 @@ import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } 
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
-export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512, callsPerSource: 2 };
+// A reply cut off at 512 tokens is retried with 1,024; at 8 tokens/s that is about two minutes.
+export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512, cutOffMaxTokens: 1024, callsPerSource: 2 };
 
 export interface ResearchResult {
   status: AnswerStatus | "no-answer";
@@ -73,6 +74,7 @@ export async function runResearch(options: {
       constrained: options.constrained ?? true,
       maxCalls: RESEARCH_LIMITS.maxCalls + RESEARCH_LIMITS.callsPerSource * sources.length,
       maxTokensPerCall: RESEARCH_LIMITS.maxTokensPerCall,
+      cutOffMaxTokens: RESEARCH_LIMITS.cutOffMaxTokens,
     },
     signal,
     onCall: options.onCall,
