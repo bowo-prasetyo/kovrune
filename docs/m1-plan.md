@@ -292,6 +292,29 @@ Both cases are unit tests. The full Qwen3.5-4B benchmark (harness 0.9.0) is unch
   - But the quote is the article's paragraph on mental-health uses. It supports only a side remark about hallucinations and stigma, not the main claims ("statistical models that predict the next token", "lack true reasoning").
   - **Quotes found** with "Check that the quotes support the whole answer" is accurate, but a reader could take it as more than it is.
 
+**Sixth live check, on the preview site (harness 0.9.0).** "How to create an activity diagram?", with the Papyrus PDF added and Wikipedia ticked.
+- The answer was right: the five Papyrus steps, with a verified quote.
+- But the model searched the PDF five times, the last two identical, before reading it: 5 of its 8 steps.
+- It then stopped without searching Wikipedia. That was allowed, since the PDF answered, but the owner had ticked Wikipedia expecting it to be checked too, for example for what an activity diagram is in general.
+
+Fixes (harness 0.10.0):
+- **Read before searching again.** After a search finds results, that search tool is offered again only once the model has read something. A search that found nothing can still be reworded.
+- **Every ticked source is searched.** With Wikipedia or OpenAlex ticked, `final_answer` becomes available only once each of them has been searched, after the user's documents as before. A source that cannot be reached counts as searched.
+- **Combined answers.** The prompt asks the model to prefer the user's documents for what is specific to them, use the other sources for background and for what the documents do not cover, and say when sources disagree.
+- **More steps with open sources:** 8 calls, plus 2 for each ticked source.
+- **Said when it matters.** While a ticked source is still unsearched, the result of reading a document (or of a document search that found nothing) ends with "Before you answer, also search Wikipedia". Without it, Qwen3.5-2B could not answer and did not know why, and read the PDF part after part until it ran out of steps.
+
+The full Qwen3.5-4B benchmark (harness 0.10.0) is unchanged task for task: research 19/22, refusals 11/11, PDF 3/4, valid actions 100%. It took 108 model calls for the 34 research, refusal and PDF tasks, against 122 with 0.9.0.
+
+Checked in the container with the Papyrus PDF's text and Wikipedia ticked. Wikipedia was mocked, with the API's real response shapes and the "Activity diagram" article's opening, because the container's network blocks it:
+- **Qwen3.5-4B**
+  - "How to create an activity diagram?": the Papyrus steps plus Wikipedia's definition. All six quotes verified, 78 s.
+  - "What is an activity diagram, and how do I create one in Papyrus?": the definition and the steps. One quote was Wikipedia's sentence cited as the PDF, and the check caught it: **3 of 4 found**, 72 s.
+- **Qwen3.5-2B**
+  - "How to create an activity diagram?": the Papyrus steps with a verified quote, 27 s. It searched Wikipedia but did not use it.
+  - The combined question: only Wikipedia's definition, without the Papyrus steps. Small models combine sources poorly.
+  - A reminder to combine after the Wikipedia search made it worse: Qwen3.5-2B then answered both questions from the snippet alone. So it is not included.
+
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.

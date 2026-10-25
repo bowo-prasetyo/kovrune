@@ -218,13 +218,52 @@ describe("research with Wikipedia", () => {
     const model = new ScriptedModel([
       `{"tool":"search","args":{"query":"activity diagram"}}`,
       `{"tool":"read","args":{"docId":"papyrus"}}`,
+      `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
       JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
     ]);
-    await runResearch({ question: "How to create an activity diagram?", library, model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
+    const result = await runResearch({ question: "How to create an activity diagram?", library, model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
     const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
-    assert.deepEqual(tools(0), ["search", "read", "final_answer"]);
-    assert.deepEqual(tools(1), ["search", "read", "final_answer"], "a search with results is not enough");
-    assert.deepEqual(tools(2), ["search", "read", "search_wikipedia", "final_answer"]);
+    assert.deepEqual(tools(0), ["search", "read"]);
+    assert.deepEqual(tools(1), ["read"], "a search with results is not enough, and is followed by a read");
+    assert.deepEqual(tools(2), ["search", "read", "search_wikipedia"], "Wikipedia must be searched before the answer");
+    assert.deepEqual(tools(3), ["search", "read", "final_answer"]);
+    assert.equal(result.agent.stopReason, "final");
+    // Told why it cannot answer yet; Qwen3.5-2B, not told, read the PDF part after part instead.
+    assert.match(result.agent.transcript[5]!.content, /Before you answer, also search Wikipedia \(search_wikipedia\)\.$/);
+    assert.doesNotMatch(result.agent.transcript[7]!.content, /Before you answer/);
+  });
+
+  it("searches every ticked source before the answer, and tells the model to combine them", async () => {
+    // Class 1 live check: the Papyrus PDF answered "How to create an activity diagram?" and the
+    // model stopped there, although the owner had ticked Wikipedia expecting it to be checked too.
+    const openalex = createOpenAlex(fakeFetch([[/\/works\?/, { results: [] }]]));
+    const model = new ScriptedModel([
+      `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
+      `{"tool":"search_openalex","args":{"query":"Ada Lovelace"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+    ]);
+    const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes)), openalex] });
+    const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(tools(0), ["read", "search_wikipedia", "search_openalex"]);
+    assert.deepEqual(tools(1), ["read", "search_openalex"], "OpenAlex is still to be searched");
+    assert.deepEqual(tools(2), ["read", "search_openalex", "final_answer"], "Wikipedia found results, so it waits for a read");
+    assert.equal(result.agent.stopReason, "final");
+    assert.match(model.requests[0]!.messages[0]!.content, /Search each of Wikipedia and OpenAlex/);
+    assert.match(researchSystem({ documents: true, sources: ["Wikipedia"] }), /Then search Wikipedia too, and combine what you find: prefer the user's documents/);
+  });
+
+  it("gives two more steps per ticked source", async () => {
+    const searches = Array.from({ length: 20 }, (_, i) => `{"tool":"search","args":{"query":"qqqzz${"abcdefghijklmnopqrst"[i]}"}}`);
+    const run = (sources: number) =>
+      runResearch({
+        question: "q",
+        library: new ResearchLibrary(corpus),
+        model: new ScriptedModel([...searches]),
+        sources: [createWikipedia("en", fakeFetch(wikipediaRoutes)), createOpenAlex(fakeFetch([]))].slice(0, sources),
+      });
+    assert.equal((await run(0)).agent.calls.length, 8);
+    assert.equal((await run(1)).agent.calls.length, 10);
+    assert.equal((await run(2)).agent.calls.length, 12);
   });
 
   it("opens the other sources when the documents have nothing on the question", async () => {

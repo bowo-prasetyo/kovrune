@@ -12,7 +12,8 @@ import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
-export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512 };
+// Each open source adds a search and a read, since every ticked source is searched.
+export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512, callsPerSource: 2 };
 
 export interface ResearchResult {
   status: AnswerStatus | "no-answer";
@@ -68,7 +69,11 @@ export async function runResearch(options: {
     task: options.question,
     tools: createResearchTools(library.index, session),
     finalTool: "final_answer",
-    config: { constrained: options.constrained ?? true, ...RESEARCH_LIMITS },
+    config: {
+      constrained: options.constrained ?? true,
+      maxCalls: RESEARCH_LIMITS.maxCalls + RESEARCH_LIMITS.callsPerSource * sources.length,
+      maxTokensPerCall: RESEARCH_LIMITS.maxTokensPerCall,
+    },
     signal,
     onCall: options.onCall,
   });
