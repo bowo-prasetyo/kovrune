@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
-import { connectionPolicy, contentSecurityPolicy, CSP_DIRECTIVES } from "../src/app/csp.ts";
+import { connectionPolicy, contentSecurityPolicy, CSP_DIRECTIVES, headersFile } from "../src/app/csp.ts";
 import { pinnedAppConfig } from "../src/models/pinned.ts";
 
 /**
@@ -70,5 +70,20 @@ describe("content security policy", () => {
     assert.equal(connectionPolicy("http://[::1]:8080/v1"), undefined);
     assert.equal(connectionPolicy("not a url"), undefined);
     assert.equal(connectionPolicy("http://localhost:11434/v1"), `${connectionPolicy()} http://localhost:11434`);
+  });
+
+  it("sends the same policy as a header where the host allows, and stops framing", () => {
+    const lines = headersFile().trimEnd().split("\n");
+    assert.equal(lines[0], "/*");
+    const headers = new Map(lines.slice(1).map((line) => {
+      assert.match(line, /^  [A-Za-z-]+: \S/);
+      const [name, ...value] = line.trim().split(": ");
+      return [name!, value.join(": ")];
+    }));
+    assert.equal(headers.get("Content-Security-Policy"), `${contentSecurityPolicy()}; frame-ancestors 'none'`);
+    assert.equal(headers.get("X-Frame-Options"), "DENY");
+    assert.equal(headers.get("X-Content-Type-Options"), "nosniff");
+    // Cloudflare Pages ignores header lines longer than 2,000 characters.
+    assert.ok(lines.every((line) => line.length < 2000));
   });
 });

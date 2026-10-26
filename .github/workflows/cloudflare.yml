@@ -1,0 +1,78 @@
+name: Cloudflare Pages
+
+# Publishes the app to Cloudflare Pages (design §7.4): main to the project's production
+# address, and each pull request from this repository to its own preview address.
+# The files are built here, with the pinned Node and lockfile, so they are what a
+# rebuild of the commit gives (docs/releases.md); Cloudflare only serves them, sending
+# the headers in dist/app/_headers.
+#
+# Needs the repository secrets CLOUDFLARE_API_TOKEN (permission: Account, Cloudflare
+# Pages, Edit) and CLOUDFLARE_ACCOUNT_ID.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT: kovrune
+  # Wrangler, Cloudflare's command-line tool, at a fixed version.
+  WRANGLER: wrangler@4.149.0
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  deploy:
+    # Pull requests from forks don't get the secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          KOVRUNE_BUILD: preview
+      - run: npm run checksums
+
+      - name: Create the Pages project if it doesn't exist
+        run: |
+          if npx --yes "$WRANGLER" pages project list | grep -Eq "[│| ]$PROJECT[ │|]"; then
+            echo "Project $PROJECT exists."
+          else
+            npx --yes "$WRANGLER" pages project create "$PROJECT" --production-branch main
+          fi
+
+      - name: Deploy
+        env:
+          BRANCH: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'main' }}
+        run: |
+          npx --yes "$WRANGLER" pages deploy dist/app --project-name "$PROJECT" --branch "$BRANCH" \
+            --commit-hash "$GITHUB_SHA" --commit-dirty=false | tee deploy.log
+          url=$(grep -oE 'https://[a-z0-9.-]+\.pages\.dev' deploy.log | tail -1)
+          if [ -z "$url" ]; then echo "No deployment address in Wrangler's output." >&2; exit 1; fi
+          echo "URL=$url" >> "$GITHUB_ENV"
+          echo "Deployed $GITHUB_SHA to $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check the served page and headers
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            curl -sS -D headers.txt -o index.html "$URL/" && grep -qi '^content-security-policy:.*frame-ancestors' headers.txt && break
+            sleep 10
+          done
+          cat headers.txt
+          grep -qi '^content-security-policy:.*frame-ancestors' headers.txt || { echo "The Content-Security-Policy header is missing." >&2; exit 1; }
+          cmp index.html dist/app/index.html || { echo "The served page differs from the build." >&2; exit 1; }
+          echo "Headers and page check out." >> "$GITHUB_STEP_SUMMARY"
