@@ -14,7 +14,7 @@ Before a change to the research prompt or the guards (repeat, last-step, read-be
 
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 and 0.17.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0 and 0.19.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,10 +22,12 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.15.0 | **17/24 (71%)** | 15/22 | 5/8 | 3/4 | 3 of 16 | [json](../results/field-fix-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.16.0 | 16/24 (67%) | 16/22 | 5/8 | 3/4 | 2 of 8 | [json](../results/field-0.16-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.17.0, not adopted | 18/24 (75%) | 16/22 | 5/8 | 3/4 | 0 of 8 | [json](../results/full-sentences-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.19.0 | 25/36 (69%): 16/24 and 9/12 in other languages | 16/22 | 5/8 | 3/4 | 2 of 11 | [json](../results/field-0.19-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.17.0, not adopted | 17/24 (71%) | 20/22 | 8/8 | 4/4 | 3 of 15 | [json](../results/full-sentences-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.19.0 | 31/36 (86%): 20/24 and 11/12 in other languages | 19/22 | 8/8 | 3/4 | 2 of 17 | [json](../results/field-0.19-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -39,6 +41,22 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **4B's field suite fell from 20 to 17.** In `f19` and `f06` the model now concluded "not found" without reading the document that answers. In `f07` it restated the question's premise as fact: "The keyboard shortcut to stop a running question in Kovrune is Ctrl+C."
 - **2B improved:** field from 16 to 18, false reassurance from 3 of 19 to 0 of 20.
 - **Not adopted:** the field suite regressed on 4B, which fails the [rule](#rule-for-prompt-and-guard-changes). The prompt is unchanged from 0.16.0.
+
+**Documents in other languages (0.19.0).** Harness 0.18.0 made search, quote checks and chunking work in any script. The suite now has three Wikipedia leads in Japanese (富士山), Chinese (长城) and French (Tour Eiffel), with 12 tasks asked in each document's language. Each document has a nearby wrong number, and one question its lead does not answer.
+
+| Task | 2B | 4B | What went wrong |
+| --- | --- | --- | --- |
+| `f28-fuji-last-eruption` | ❌ | ✅ | 2B answered "1936年", the year of the national park, with a real quote |
+| `f30-wall-length` | ✅ | ❌ | 4B said the length is not given, from the search snippets, without reading part 2 where it is |
+| `f32-wall-visitors` | ❌ | ✅ | 2B answered "43,721处", the number of wall sites, with a real quote |
+| `f33-eiffel-height` | ❌ | ✅ | 2B's answer (330 m) was right, but its quote left out the pronunciation "[tuʁɛfɛl]" without marking the gap, so it is not word for word |
+
+- **Both models handle the new languages about as well as English:** 4B passes 11 of the 12 tasks, and 2B 9.
+- **No false reassurance:** of the 7 answers labelled **Quotes found**, none is wrong. 2B's two wrong answers to unanswerable questions are numbers too short to judge, so they read **Quotes found, answer too short to check** (0.16.0).
+- **Most right answers are short too** ("3776.12 m", "2013年"), so only 4 of 4B's 11 right answers read **Quotes found**.
+- **4B sometimes answers in English** when it finds nothing ("The provided documents do not contain information about…" for a Japanese question).
+- **The 24 earlier tasks:** the new documents change the search statistics of the field library. Their results are the same on both models (20/24 and 16/24), but 3 tasks for 4B and 2 for 2B took other actions. One of them changed label: 4B's `f13` now says "not found" instead of a wrong answer labelled **Quotes found**. That is why 4B's false reassurance over all suites falls from 3 of 26 to 2 of 29; the label rule did not change.
+- **The other suites** use their own documents, and both models repeated the 0.16.0 baseline exactly.
 
 ### Runs repeat on one machine, not across machines
 
@@ -77,7 +95,7 @@ Frozen copies, so later edits to the originals do not change the suite. All seve
 | `great-wall-zh-lead.txt` | Encyclopedia article in Chinese | Lead of the Chinese Wikipedia article [长城](https://zh.wikipedia.org/wiki/%E9%95%BF%E5%9F%8E), revision 94640681 (29 September 2026), in Simplified Chinese (`zh-cn`), as plain text from the MediaWiki API | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 | `eiffel-tower-fr-lead.txt` | Encyclopedia article in French | Lead of the French Wikipedia article [Tour Eiffel](https://fr.wikipedia.org/wiki/Tour_Eiffel), revision 240706197 (25 October 2026), as plain text from the MediaWiki API | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
-The first 24 tasks in `tasks.ts` cover each English document, two questions that need two documents, and four questions none of them answers. One of those is the live checks' invented "first person to be awarded a patent"; the licence's patent clauses are a distractor.
+The first 24 tasks in `tasks.ts` cover each English document, two questions that need two documents, and four questions none of them answers. One of those is the live checks' invented "first person to be awarded a patent"; the licence's patent clauses are a distractor. Tasks `f25`–`f36` ask about the Japanese, Chinese and French documents in their own language: three questions each that the document answers, and one it does not.
 
 What the committed set still lacks is what users brought in the live checks and will bring to the usability test: slide decks (like the Papyrus tutorial), scanned-looking layouts, papers with columns and tables. Those documents are usually not ours to commit.
 
