@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SavedAnswer } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
-import { sharedStores, storeChanges, type RecordStore, type Stores } from "./store.ts";
+import { describeSaveError, sharedStores, storeChanges, type RecordStore, type Stores } from "./store.ts";
 
 export interface SavedRecords<T extends { id: string }> {
   records: T[];
@@ -50,11 +50,7 @@ function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => Rec
     if (put.length && store.persistent) void navigator.storage?.persist?.().catch(() => false);
     Promise.all([...put.map((record) => store.put(record)), ...remove.map((id) => store.remove(id))]).then(
       () => setSaveError(undefined),
-      (error: unknown) =>
-        setSaveError(
-          `A ${noun} could not be saved in this browser (${error instanceof Error ? error.message : String(error)}). ` +
-            "It can still be used until you reload the page.",
-        ),
+      (error: unknown) => setSaveError(describeSaveError(error, `a ${noun}`, "it can still be used until you reload the page.")),
     );
   }, [store, records, noun]);
 

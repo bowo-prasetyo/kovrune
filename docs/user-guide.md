@@ -183,6 +183,17 @@ Each finished answer is saved in the browser and listed under **Past answers**, 
 
 Exports are made in the browser; nothing is uploaded.
 
+### Storage and backup
+
+**Storage and backup**, at the bottom of the research screen, shows what Kovrune keeps in this browser:
+- **Space used:** how much Kovrune uses, and how much the browser allows it.
+- **Protected or not protected:** browsers may clear a site's data without asking when the disk runs low, and Safari after a week without use. **Ask the browser to keep it** asks for protection. Chrome and Edge decide from how you use the site, so they may decline at first.
+- **Downloaded models:** each one with its size, and **Delete** to free the space. The model in use can't be deleted; change the setup to another model first.
+
+**Download a backup** saves your documents' text and your saved answers in one `.json` file. **Restore from a backup** adds them back, in this browser after it cleared its data, or in another browser. Restoring only adds what is missing; a document with the same name but different text is added alongside the one already here. Models and the setup aren't in the backup: download the model again and redo the setup.
+
+If the browser's storage for Kovrune is full, saving a document or an answer fails with a message saying so. Free space under **Storage and backup**, for example by deleting a model you don't use, or free disk space.
+
 ## 6. Privacy
 
 - **The model runs on your computer.** Nothing is sent to an online AI service.

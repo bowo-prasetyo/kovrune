@@ -18,6 +18,7 @@ import {
 } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
+import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
@@ -294,16 +295,6 @@ export function ResearchPanel({
       <PastAnswers history={history} shownId={state.phase === "done" ? state.answer.id : undefined} />
     </section>
   );
-}
-
-/** Saves text as a file through the browser's download, without any network request. */
-function download(fileName: string, text: string, type: string) {
-  const url = URL.createObjectURL(new Blob([text], { type }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function ExportButtons({ answer }: { answer: SavedAnswer }) {

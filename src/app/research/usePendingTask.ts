@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { sharedStores, type TaskStore } from "./store.ts";
+import { describeSaveError, sharedStores, type TaskStore } from "./store.ts";
 import { TASK_ID, type SavedTask } from "./tasks.ts";
 
 export interface PendingTask {
@@ -43,11 +43,7 @@ export function usePendingTask(): PendingTask {
       .then(action)
       .then(
         () => setSaveError(undefined),
-        (error: unknown) =>
-          setSaveError(
-            `Progress on this question could not be saved in this browser (${error instanceof Error ? error.message : String(error)}), ` +
-              "so it can't continue after a reload.",
-          ),
+        (error: unknown) => setSaveError(describeSaveError(error, "progress on this question", "it can't continue after a reload.")),
       );
   }, []);
 

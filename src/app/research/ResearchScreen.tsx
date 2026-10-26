@@ -6,6 +6,7 @@ import { DocumentLibrary } from "./DocumentLibrary.tsx";
 import type { SavedAnswer } from "./answers.ts";
 import type { SavedDocuments, SavedRecords } from "./useSavedDocuments.ts";
 import { ResearchPanel } from "./ResearchPanel.tsx";
+import { StorageSection } from "./StorageSection.tsx";
 
 export function ResearchScreen({
   settings,
@@ -37,6 +38,7 @@ export function ResearchScreen({
       <LoadProgressView state={load.state} onRetry={load.retry} />
       <DocumentLibrary library={library} />
       <ResearchPanel settings={settings} documents={library.documents} modelReady={load.state.phase === "ready"} history={history} />
+      <StorageSection settings={settings} library={library} history={history} />
     </>
   );
 }

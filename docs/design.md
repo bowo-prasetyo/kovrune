@@ -317,6 +317,7 @@ Storage and security rules:
 
 - Storage can be evicted. Safari may clear script-written storage after 7 days without use unless the app is installed; the UI must handle re-downloading gracefully.
 - Detect quota errors and offer to remove unused models.
+- **Since M2 slice 3:** the research screen's **Storage and backup** section shows usage and quota, whether the browser agreed to persist the data, and the downloaded models with their sizes and a delete button. A backup file holds documents and answers and restores into any browser, adding only what is missing. Quota errors when saving name the cause and point to that section. Eviction itself can't be detected (the browser clears the record of what was there with the data), so the defences are the persistence request and the backup.
 - Never embed a private Hugging Face token in the app. Gated repositories use the user's own token, stored locally and sent only to Hugging Face.
 - Treat downloaded configuration files and metadata as untrusted input.
 - Never treat repository contents as permission to execute code.
@@ -677,7 +678,7 @@ So each estimate below has two parts. **Build** is Claude's work: implementation
 | Milestone | Build | Waits on | Elapsed |
 | --- | --- | --- | --- |
 | M1 (rest) | Fixes from the usability findings | Recruiting and running 3–5 usability sessions; a class 2 run | 2–4 weeks |
-| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); resuming interrupted questions (slice 2); reproducible builds and CSP (slice 4). Left: storage management and backup, signed releases with the new hosting | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
+| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); resuming interrupted questions (slice 2); storage management and backup (slice 3); reproducible builds and CSP (slice 4). Left: signed releases with the new hosting | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
 | M2.5 | 3–5 weeks: Pyodide and QuickJS sandboxes, coding tasks in the evaluation set | A decision to build it (below) | Not scheduled |
 | M3 | 3–4 weeks: identities, invitations, WebRTC transport, signaling | The go/no-go below; then a real circle of 2–5 people to test with, and a signaling server someone runs | 6–10 weeks after a go |
 | M4 | 4–6 weeks | M3 findings; relays operated by the owner or the circles | Re-plan after M3 |

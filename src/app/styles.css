@@ -529,3 +529,38 @@ footer.build {
   color: var(--muted);
   cursor: pointer;
 }
+
+details.storage {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+details.storage > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+details.storage h3 {
+  margin: 16px 0 4px;
+  font-size: 1em;
+}
+
+.stored-models {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stored-models li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+label.file-button.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
