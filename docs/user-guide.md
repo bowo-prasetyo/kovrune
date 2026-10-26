@@ -12,9 +12,11 @@ Kovrune answers questions about your documents, and optionally Wikipedia and sch
 
 ## 1. Start the app
 
-**Use the preview site:** open <https://bowo-prasetyo.github.io/kovrune/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way (section 2).
+**Use the preview site:** open <https://kovrune.pages.dev/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way (section 2).
 
-The preview is published automatically from the latest `main` by GitHub Actions; the commit it was built from is shown at the bottom of the page. It is not yet a signed release (that comes in milestone M2), so if you prefer to run code you built yourself, run the app locally instead.
+The preview is built automatically from the latest `main` by GitHub Actions and served by Cloudflare Pages; the commit it was built from is shown at the bottom of the page. It is not yet a signed release, so if you prefer to run code you built yourself, run the app locally instead.
+
+**Used the old address?** The preview used to be at `bowo-prasetyo.github.io/kovrune`, which now forwards here. Browsers keep saved data separately for each site, so if you saved documents or answers there, the old address shows how many and offers **Download a backup**; restore it here under **Storage and backup**. Models are downloaded again at the new address, and the browser asks for its permissions again.
 
 **Or run it locally.** You need [Node.js](https://nodejs.org/) 22 or newer and git. In a terminal:
 
@@ -116,7 +118,7 @@ Then, in the app: **Use a local model server** → keep the address `http://127.
 
 If the server fails to start or the computer becomes very slow with the bigger model, close other programs, especially browser tabs, and try again.
 
-**On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).
+**On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://kovrune.pages.dev`).
 
 ### Use a model server on another computer
 
@@ -217,6 +219,7 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |
+| The model test reports far fewer tokens/s than the table in [section 3](#download-a-model), and the first request is the slowest | The model is short of memory: other programs (large spreadsheets, many browser tabs) use it, so parts of the model are moved to disk. WSL gets only half the computer's memory by default | Close those programs and test again. With WSL, give it more memory: in `%UserProfile%\.wslconfig` put `[wsl2]` and `memory=6GB` on two lines, run `wsl --shutdown`, and start the server again. In WSL, `free -h` shows whether swap is in use |
 | "Wikipedia could not be reached" | No internet connection, or the network blocks it | Check the connection; the research continues with the other sources |
 | "OpenAlex is busy (too many requests)" | OpenAlex limits how often anonymous users may search, and many questions in a short time reach the limit | Wait a few minutes. The answer meanwhile comes from your other sources, and the search's step in the trace ends with "failed" |
 | A PDF shows "No text found" | The PDF is scanned images | Use a PDF with selectable text |

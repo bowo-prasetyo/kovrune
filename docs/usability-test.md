@@ -39,7 +39,7 @@ Each session takes about 45 minutes, in person or over a screen share. One moder
 
 Start the timer at task 1 and stop it when the first answer appears in task 4.
 
-1. "Open Kovrune and get it ready to use." Give them the preview link, <https://bowo-prasetyo.github.io/kovrune/>, and the [user guide](user-guide.md). Running it locally with `npm run dev` is only needed if the preview cannot reach their local server.
+1. "Open Kovrune and get it ready to use." Give them the preview link, <https://kovrune.pages.dev/>, and the [user guide](user-guide.md). Running it locally with `npm run dev` is only needed if the preview cannot reach their local server.
 2. "Set Kovrune up so that it can answer questions." This covers the device step, the model (the local server or the browser download) and the model test. A browser download of 1–2.4 GB counts toward the time; note its share separately.
 3. "Add your PDF."
 4. "Ask the question you brought, and tell me whether you trust the answer, and why."
@@ -65,6 +65,8 @@ Participant:            P_  (researcher / developer)
 Machine:                OS, CPU, RAM, GPU; hardware class 1/2/3
 Path:                   browser / local server (llama.cpp / Ollama)
 Model:                  Qwen3.5-4B / 2B
+Other programs open:    (e.g. Excel, many browser tabs; they slow the model on laptops)
+Model test speed:       __ tokens/s
 
 Task 1 start app:       done / with help / not done   time __   notes
 Task 2 setup:           done / with help / not done   time __   (download __ min)

@@ -19,7 +19,7 @@ Kovrune has no tokens, no blockchain and no central AI service. See [`docs/desig
 
 ## Running the app
 
-**Try the preview:** <https://bowo-prasetyo.github.io/kovrune/> in Chrome or Edge. It is published from `main` by GitHub Actions and is not yet a signed release.
+**Try the preview:** <https://kovrune.pages.dev/> in Chrome or Edge. It is built from `main` by GitHub Actions and served by Cloudflare Pages, and is not yet a signed release. The old address, `bowo-prasetyo.github.io/kovrune`, forwards there.
 
 The [user guide](docs/user-guide.md) covers setup step by step, including llama.cpp on Windows with WSL, and troubleshooting. To run the app locally instead, you need Node.js 22 or newer; start it and open the address it prints:
 

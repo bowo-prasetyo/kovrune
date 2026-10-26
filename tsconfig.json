@@ -33,6 +33,7 @@
     "src",
     "eval",
     "scripts",
+    "redirect",
     "tests"
   ]
 }

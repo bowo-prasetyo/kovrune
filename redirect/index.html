@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kovrune has moved</title>
+    <noscript><meta http-equiv="refresh" content="0; url=https://kovrune.pages.dev/" /></noscript>
+  </head>
+  <body>
+    <main>
+      <h1>Kovrune has moved</h1>
+      <p id="status">Kovrune is now at <a href="https://kovrune.pages.dev/">kovrune.pages.dev</a>. Taking you there…</p>
+      <div id="saved" hidden>
+        <p id="counts"></p>
+        <p>
+          Your browser keeps saved data separately for each site, so the new address can't see it. To take it with you:
+        </p>
+        <ol>
+          <li>Download a backup of it here.</li>
+          <li>Open the new address, and set up the model again.</li>
+          <li>Under <strong>Storage and backup</strong>, at the bottom of the research screen, choose <strong>Restore from a backup</strong>.</li>
+        </ol>
+        <p class="hint">
+          Downloaded models can't be moved: the new address downloads them again. The data here stays until you clear this
+          site's data in the browser.
+        </p>
+        <p class="actions">
+          <button id="backup" type="button">Download a backup</button>
+          <a class="button" href="https://kovrune.pages.dev/">Go to kovrune.pages.dev</a>
+        </p>
+      </div>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

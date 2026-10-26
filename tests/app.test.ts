@@ -6,6 +6,7 @@ import { recommendPath } from "../src/app/device.ts";
 import { isPublicHttpsPage } from "../src/app/build-info.ts";
 import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/local-access.ts";
 import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
+import { slowModelAdvice } from "../src/app/models.ts";
 import { parseSettings } from "../src/app/settings.ts";
 import { listModels } from "../src/models/local-endpoint.ts";
 
@@ -171,5 +172,23 @@ describe("local network permission", () => {
     assert.match(describeBlockedAccess("local", "prompt")!, /"Local network access"/);
     assert.equal(describeBlockedAccess("loopback", "granted"), undefined);
     assert.equal(describeBlockedAccess("loopback", undefined), undefined);
+  });
+});
+
+describe("slow model advice", () => {
+  const server = { path: "local-server", serverKind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", contextLength: 4096 } as const;
+
+  it("says nothing when a research question takes under ten minutes", () => {
+    assert.equal(slowModelAdvice({ ...server, model: "Qwen3.5-4B-Q4_K_M.gguf" }, 7.2), undefined);
+  });
+
+  it("names the usual cause, and the lighter model when there is one", () => {
+    const slow4b = slowModelAdvice({ ...server, model: "Qwen3.5-4B-Q4_K_M.gguf" }, 24.2)!;
+    assert.match(slow4b, /up to 24 minutes.*large spreadsheets.*Qwen3\.5-2B.*Switch models.*WSL/);
+    const slow2b = slowModelAdvice({ ...server, model: "/models/Qwen3.5-2B-Q4_K_M.gguf" }, 12)!;
+    assert.doesNotMatch(slow2b, /Qwen3\.5-2B/);
+    const browser = slowModelAdvice({ path: "browser", modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 }, 15)!;
+    assert.match(browser, /choose Qwen3\.5-2B/);
+    assert.doesNotMatch(browser, /WSL/);
   });
 });

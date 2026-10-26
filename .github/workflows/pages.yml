@@ -1,8 +1,8 @@
 name: Preview site
 
-# Publishes the app to GitHub Pages (https://bowo-prasetyo.github.io/kovrune/) from main.
-# This is a preview: unsigned, built by GitHub Actions. Releases are built from version tags
-# by release.yml (docs/releases.md).
+# The old preview address, https://bowo-prasetyo.github.io/kovrune/. The app has moved to
+# Cloudflare Pages (cloudflare.yml); this publishes the page that forwards there, and that
+# offers a backup to anyone with documents or answers saved at the old address (redirect/).
 
 on:
   push:
@@ -29,14 +29,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run build
-        env:
-          KOVRUNE_BASE: /kovrune/
-          KOVRUNE_BUILD: preview
+      - run: npm run build:redirect
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/app
+          path: dist/redirect
 
   deploy:
     needs: build
