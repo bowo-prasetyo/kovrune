@@ -24,6 +24,8 @@ export function describeLoadProgress(report: { progress: number; text: string },
   else if (report.text.startsWith("Loading model from cache")) text = `Loading the model from this browser's storage (${percent}%)`;
   else if (report.text.startsWith("Loading GPU shader modules")) text = "Preparing the GPU…";
   else if (report.text.startsWith("Finish loading")) text = "Model loaded.";
+  // CHECKING_DOWNLOAD in models/webllm.ts, not imported so WebLLM stays out of the main bundle.
+  else if (report.text.startsWith("Checking the downloaded files")) text = `Checking the download against its published checksums (${percent}%)`;
   else text = "Starting…";
   return { fraction: report.progress, text };
 }
@@ -102,9 +104,10 @@ export function describeSetup(settings: Settings): string {
 
 /** Whether a model is already in the browser's cache, and how much storage is free. */
 export async function browserStorage(modelId: string): Promise<{ freeMB: number; downloaded: boolean }> {
-  const { hasModelInCache } = await import("@mlc-ai/web-llm");
+  const { isDownloaded, pinnedModel } = await import("../models/pinned.ts");
+  const pinned = pinnedModel(modelId);
   const [downloaded, estimate] = await Promise.all([
-    hasModelInCache(modelId).catch(() => false),
+    pinned && typeof caches !== "undefined" ? isDownloaded(pinned, caches).catch(() => false) : false,
     navigator.storage?.estimate?.().catch(() => undefined),
   ]);
   const freeMB = estimate?.quota !== undefined ? (estimate.quota - (estimate.usage ?? 0)) / 1e6 : Infinity;
@@ -113,8 +116,9 @@ export async function browserStorage(modelId: string): Promise<{ freeMB: number;
 
 export async function deleteBrowserModel(modelId: string): Promise<void> {
   if (browserModel?.modelId === modelId) releaseBrowserModel();
-  const { deleteModelAllInfoInCache } = await import("@mlc-ai/web-llm");
-  await deleteModelAllInfoInCache(modelId);
+  const { deleteDownloads, pinnedModel, storedVerifiedFiles } = await import("../models/pinned.ts");
+  const pinned = pinnedModel(modelId);
+  if (pinned) await deleteDownloads(pinned, caches, storedVerifiedFiles());
 }
 
 /** Asks the browser not to evict the downloaded model when storage runs low. */
@@ -128,6 +132,9 @@ export function describeModelError(error: unknown, settings: Settings): string {
   const message = error instanceof Error ? error.message : String(error);
   if (/device.*lost|out of memory|OOM|allocation/i.test(message)) {
     return `The GPU ran out of memory or stopped responding (${message}). Try the lighter model, close other tabs, or use a local model server.`;
+  }
+  if (/Integrity verification failed/i.test(message)) {
+    return "The downloaded model did not match its published checksums, so it was deleted and not used. This usually means the download was damaged; it can also mean a file on the server was changed. Try again, and if it fails again, please report it at https://github.com/bowo-prasetyo/kovrune/issues.";
   }
   if (/Failed to fetch|NetworkError|network/i.test(message)) {
     return `The model download failed (${message}). Check your internet connection and try again; finished parts are kept.`;
