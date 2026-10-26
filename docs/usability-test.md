@@ -23,7 +23,11 @@ Invitation texts, in English and Japanese, are in [`tester-invitation.md`](teste
 
 Each session takes about 45 minutes, in person or over a screen share. One moderator also takes notes.
 
-**Before:**
+**Before the first session:**
+- **Keep the build the same for every session.** Each merge to `main` redeploys the preview, so hold changes that alter what's on screen until the last session. Record the commit shown at the bottom of the page on each results sheet.
+
+**Before each session:**
+- **Start fresh.** On a computer used for an earlier session, clear the site's data first: icon left of the address bar → **Site settings** → **Delete data**. This removes the previous participant's setup, documents and answers, and any downloaded model. Don't use a guest or private window instead: there the browser saves nothing, so documents, answers and interrupted questions don't survive a reload, and the page says so.
 - The app itself needs only Chrome or Edge (the preview site). For the local-server path, llama.cpp setup is part of the test; Node.js and git are needed only to run the app locally.
 - Don't install anything else for them.
 - For the local-server path, they follow the [user guide](user-guide.md) from section 3. Hand them the guide, not instructions of your own.
@@ -32,6 +36,13 @@ Each session takes about 45 minutes, in person or over a screen share. One moder
 **Say at the start:** "We're testing the app, not you. Please think aloud: say what you're looking for and what you expect. I'll mostly stay quiet; if you're stuck, tell me, and I'll note where."
 
 **Help rule:** if the participant asks for help or is stuck for 3 minutes, give the smallest hint that unblocks them and record it. A task completed after a hint counts as *with help*.
+
+**Watch for, without prompting** (record each on the results sheet):
+- **Back and reload.** Does the participant use the browser's **Back** button or reload the page, and does what happens match what they expected? Each screen has its own address, so Back moves between setup steps.
+- **Slow-model advice.** If the model test reports a slow speed, it suggests closing programs or a lighter model. Do they read it, and act on it?
+- **Interrupted question.** If they reload or close the page during a question, the page offers **Continue**. Do they understand it?
+- **Help.** Do they open **Help** (the user guide)? When, and did it answer what they were looking for?
+- **Storage and backup**, at the bottom of the research screen. Do they open it? It isn't part of any task, so not opening it is expected; note it if they look for it.
 
 **Optional add-on:** if the participant works in a research group and agrees, follow the session with the 15-minute [Circles interview](circles-interviews.md). It is a separate conversation with its own results sheet; ask it after the questions below, so it doesn't colour the usability results.
 
@@ -66,7 +77,8 @@ Machine:                OS, CPU, RAM, GPU; hardware class 1/2/3
 Path:                   browser / local server (llama.cpp / Ollama)
 Model:                  Qwen3.5-4B / 2B
 Other programs open:    (e.g. Excel, many browser tabs; they slow the model on laptops)
-Model test speed:       __ tokens/s
+Model test speed:       __ tokens/s   slow-model advice shown? yes / no   acted on? ______
+Build:                  commit __ (bottom of the page)
 
 Task 1 start app:       done / with help / not done   time __   notes
 Task 2 setup:           done / with help / not done   time __   (download __ min)
@@ -79,6 +91,10 @@ Task 6 Wikipedia:       done / skipped        label ______ correct? ______
 Time to first answer:   __ min (from task 1 to the first answer in task 4)
 Hints given:            where, and what was said
 Errors seen:            messages, as shown
+Back / reload:          used? where ______   did what they expected? yes / no ______
+Interrupted question:   seen? yes / no   understood Continue? ______
+Help opened:            when ______   found what they needed? ______
+Storage and backup:     opened? yes / no   why ______
 Answers to questions:   1 ______ 2 ______ 3 ______ 4 ______ 5 ______
 ```
 
@@ -89,6 +105,8 @@ Summarize the sessions in `m1-plan.md` under slice 4:
 - **Counts:** how many of N completed setup and task 4 without help (target ≥ 3 of 5), and the time to first answer per participant (target under 15 minutes).
 - **False reassurance:** of the answers labelled **Quotes found** in tasks 4–6, how many the participant or moderator judged wrong or only partly right (the "answer correct?" line of the results sheet). Report it as "N of M" across all sessions; the target is under 10% ([`design.md` §1.6](design.md#16-success-metrics)). Note which of them the participant trusted.
 - **Findings:** where people got stuck, which messages were misread, and how answer quality compared with each participant's own judgement.
+- **Navigation and help:** how many used Back or reload, and how many of those got what they expected; how many opened Help, and whether it helped; whether anyone saw the slow-model advice or the "Interrupted question" notice, and what they did. These are the first sessions with these features, so even one confusion is worth an issue.
+- **Build:** the commit every session ran; if they differ, say which sessions ran which.
 
 Each finding should be specific enough to fix, for example "P2 thought the Test model step had frozen during the 40-second check". Open an issue for each one that needs a code or docs change.
 
