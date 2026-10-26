@@ -1,7 +1,7 @@
 import { LoadProgressView } from "../LoadProgressView.tsx";
 import { describeSetup } from "../models.ts";
 import { useModelLoad } from "../useModelLoad.ts";
-import type { Settings } from "../settings.ts";
+import { describeLastTest, type Settings } from "../settings.ts";
 import { DocumentLibrary } from "./DocumentLibrary.tsx";
 import type { SavedAnswer } from "./answers.ts";
 import type { SavedDocuments, SavedRecords } from "./useSavedDocuments.ts";
@@ -29,7 +29,10 @@ export function ResearchScreen({
   return (
     <>
       <div className="setup-summary">
-        <span>{describeSetup(settings)}</span>
+        <span>
+          {describeSetup(settings)}
+          {settings.lastTest && <span className="hint">, {describeLastTest(settings.lastTest)}</span>}
+        </span>
         <span className="links">
           <button className="link" onClick={onRetest}>
             Test the model again

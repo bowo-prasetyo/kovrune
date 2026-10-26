@@ -2,12 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import type { DeviceCapabilities } from "./device.ts";
 import { BUILD, REPO_URL } from "./build-info.ts";
 import { HELP_URL } from "./help.ts";
-import { releaseBrowserModel } from "./models.ts";
+import { describeSetup, releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
 import { useSavedAnswers, useSavedDocuments } from "./research/useSavedDocuments.ts";
 import { restrictConnections } from "./csp.ts";
 import { pathForView, resolveRoute, routeFromPath, titleForView, type Step, type View } from "./routes.ts";
-import { clearSettings, loadDraft, loadSettings, saveDraft, saveSettings, type Settings } from "./settings.ts";
+import {
+  describeLastTest,
+  isChangingSetup,
+  loadDraft,
+  loadSettings,
+  saveDraft,
+  saveSettings,
+  setChangingSetup,
+  type Settings,
+} from "./settings.ts";
 import { BrowserModelStep } from "./steps/BrowserModelStep.tsx";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
 import { ServerStep } from "./steps/ServerStep.tsx";
@@ -26,12 +35,16 @@ const STEP_LABELS: Array<[Step[], string]> = [
 
 export function App() {
   const [saved, setSaved] = useState<Settings | undefined>(loadSettings);
-  const [draft, setDraft] = useState<Settings | undefined>(() => saved ?? loadDraft());
+  // While the setup is being changed, the saved one stays in use but the setup steps show;
+  // it is replaced only when a new setup passes its test ("Change setup", settings.ts).
+  const [changing, setChanging] = useState(() => !!saved && isChangingSetup());
+  const active = changing ? undefined : saved;
+  const [draft, setDraft] = useState<Settings | undefined>(() => (changing ? (loadDraft() ?? saved) : (saved ?? loadDraft())));
   const [caps, setCaps] = useState<DeviceCapabilities>();
   // The screen comes from the address (routes.ts), and the address follows the screen.
   const base = import.meta.env.BASE_URL;
   const [view, setView] = useState<View>(() =>
-    resolveRoute(routeFromPath(location.pathname, base), { saved: !!saved, draft: !!draft, caps: false }),
+    resolveRoute(routeFromPath(location.pathname, base), { saved: !!active, draft: !!draft, caps: false }),
   );
   const step = view.step;
   // Kept here, not in the research screen, so documents survive re-testing the model; saved in the browser.
@@ -47,8 +60,8 @@ export function App() {
   const setStep = (next: Step) => navigate({ step: next });
 
   // Back and Forward: show what the address asks for, if it can be shown now.
-  const context = useRef({ saved, draft, caps });
-  context.current = { saved, draft, caps };
+  const context = useRef({ saved: active, draft, caps });
+  context.current = { saved: active, draft, caps };
   useEffect(() => {
     const show = () => {
       const now = context.current;
@@ -64,8 +77,8 @@ export function App() {
 
   // The setup being made survives a reload, so a reload on its test stays there (per tab, in sessionStorage).
   useEffect(() => {
-    if (draft && !saved) saveDraft(draft);
-  }, [draft, saved]);
+    if (draft && !active) saveDraft(draft);
+  }, [draft, active]);
 
   // A bookmarked answer that isn't saved in this browser (removed, or saved elsewhere) opens nothing.
   useEffect(() => {
@@ -112,6 +125,33 @@ export function App() {
         </ol>
       )}
 
+      {changing && saved && step !== "research" && (
+        <div className="callout current-setup" role="status">
+          <p>
+            <strong>Current setup:</strong> {describeSetup(saved)}
+            {saved.path === "local-server" && (
+              <>
+                {" "}
+                at <code>{saved.baseUrl}</code>
+              </>
+            )}
+            {saved.lastTest ? `, ${describeLastTest(saved.lastTest)}` : ""}.
+          </p>
+          <p className="hint">It stays in use until a new setup passes its model test.</p>
+          <div className="actions">
+            <button
+              onClick={() => {
+                // A reload limits the page's connections to this setup's server again (csp.ts).
+                setChangingSetup(false);
+                location.assign(base);
+              }}
+            >
+              Keep current setup
+            </button>
+          </div>
+        </div>
+      )}
+
       {step === "device" && (
         <DeviceStep
           onChoose={(path, detected) => {
@@ -146,31 +186,43 @@ export function App() {
         <TestStep
           settings={draft}
           // Re-testing a saved setup goes back to research: editing it needs "Change setup", which reloads (csp.ts).
-          onBack={() => setStep(saved ? "research" : draft.path === "browser" && caps ? "browser" : draft.path === "browser" ? "device" : "server")}
-          onPassed={() => {
-            saveSettings(draft);
-            restrictConnectionsTo(draft);
-            setSaved(draft);
+          onBack={() => setStep(active ? "research" : draft.path === "browser" && caps ? "browser" : draft.path === "browser" ? "device" : "server")}
+          onPassed={(result) => {
+            const tested: Settings = {
+              ...draft,
+              lastTest: {
+                at: new Date().toISOString(),
+                tokensPerSecond: result.decodeTokensPerSecond,
+                maxTaskMinutes: result.maxResearchTaskMinutes,
+              },
+            };
+            saveSettings(tested);
+            setChangingSetup(false);
+            setChanging(false);
+            restrictConnectionsTo(tested);
+            setSaved(tested);
+            setDraft(tested);
             // In place of the test's address, so Back doesn't run the test again.
             navigate({ step: "research" }, "replace");
           }}
         />
       )}
-      {step === "research" && saved && (
+      {step === "research" && active && (
         <ResearchScreen
-          settings={saved}
+          settings={active}
           library={library}
           history={answers}
           openAnswerId={view.answerId}
           onOpenAnswer={(id) => (id ? navigate({ step: "research", answerId: id }) : navigate({ step: "research" }, "replace"))}
           onRetest={() => {
-            setDraft(saved);
+            setDraft(active);
             setStep("test");
           }}
           onChangeSetup={() => {
-            // The page's connections are limited to this setup's server; a reload lifts that for the new setup.
-            saveDraft(saved);
-            clearSettings();
+            // The page's connections are limited to this setup's server; a reload lifts that for the
+            // setup steps. The saved setup stays until a new one passes its test.
+            saveDraft(active);
+            setChangingSetup(true);
             location.assign(base);
           }}
         />

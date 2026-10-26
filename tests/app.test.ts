@@ -7,7 +7,7 @@ import { isPublicHttpsPage } from "../src/app/build-info.ts";
 import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/local-access.ts";
 import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
 import { slowModelAdvice } from "../src/app/models.ts";
-import { parseSettings } from "../src/app/settings.ts";
+import { describeLastTest, parseSettings } from "../src/app/settings.ts";
 import { listModels, LocalEndpointModel } from "../src/models/local-endpoint.ts";
 
 describe("device advisor", () => {
@@ -219,5 +219,27 @@ describe("API key for a model server", () => {
   it("explains a refused request", () => {
     const message = describeConnectionError(new Error('Server returned 401: {"error":{"message":"Invalid API Key"}}'), saved.baseUrl);
     assert.match(message, /refused the request \(401\).*needs an API key.*--api-key/);
+  });
+});
+
+describe("the last model test", () => {
+  const saved = { path: "local-server", serverKind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", model: "qwen", contextLength: 4096 } as const;
+  const lastTest = { at: "2026-10-26T05:10:00.000Z", tokensPerSecond: 1.6, maxTaskMinutes: 24.2 };
+
+  it("is saved with the setup, and ignored when malformed", () => {
+    assert.deepEqual(parseSettings(JSON.stringify({ ...saved, lastTest })), { ...saved, lastTest });
+    assert.deepEqual(parseSettings(JSON.stringify({ path: "browser", modelId: "Qwen3.5-2B-q4f32_1-MLC", lastTest })), {
+      path: "browser",
+      modelId: "Qwen3.5-2B-q4f32_1-MLC",
+      contextLength: 4096,
+      lastTest,
+    });
+    assert.deepEqual(parseSettings(JSON.stringify({ ...saved, lastTest: { at: "x" } })), saved);
+    assert.deepEqual(parseSettings(JSON.stringify({ ...saved, lastTest: null })), saved);
+  });
+
+  it("is described for the setup summary", () => {
+    assert.equal(describeLastTest(lastTest, "en-GB"), "tested 26 Oct, 1.6 tokens/s (a question can take up to 24 min)");
+    assert.match(describeLastTest({ ...lastTest, maxTaskMinutes: 0.4 }, "en-GB"), /can take under a minute\)$/);
   });
 });
