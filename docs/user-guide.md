@@ -181,7 +181,9 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 
 ### Past answers and export
 
-Each finished answer is saved in the browser and listed under **Past answers**, newest first, with when it was asked and which model answered. Open one to see it as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document.
+Each finished answer is saved in the browser and listed under **Past answers**, newest first, with when it was asked and which model answered. Open one to see it as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. An open answer has its own address (`…/answers/…`), so you can bookmark it; it opens only in the browser that saved it.
+
+The browser's **Back** and **Forward** buttons move between the setup steps and past answers, and a reload stays on the same screen.
 
 - **Export as Markdown** saves the question, the label, the answer (with ⚠ marks), each quote with its source and page, and the steps, as a `.md` file.
 - **Export papers as BibTeX** appears when the answer cites OpenAlex papers, and saves a `.bib` file with their authors, year, venue and DOI.

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
 import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
@@ -36,12 +36,18 @@ export function ResearchPanel({
   documents,
   modelReady,
   history,
+  openAnswerId,
+  onOpenAnswer,
 }: {
   settings: Settings;
   documents: LibraryDocument[];
   modelReady: boolean;
   /** Past answers, saved in the browser; each finished answer is added. */
   history: SavedRecords<SavedAnswer>;
+  /** The past answer the address opens (routes.ts). */
+  openAnswerId?: string;
+  /** Called when a past answer is opened, or closed (undefined). */
+  onOpenAnswer: (id: string | undefined) => void;
 }) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<RunState>({ phase: "idle" });
@@ -292,7 +298,12 @@ export function ResearchPanel({
           </div>
         </>
       )}
-      <PastAnswers history={history} shownId={state.phase === "done" ? state.answer.id : undefined} />
+      <PastAnswers
+        history={history}
+        shownId={state.phase === "done" ? state.answer.id : undefined}
+        openId={openAnswerId}
+        onOpen={onOpenAnswer}
+      />
     </section>
   );
 }
@@ -314,8 +325,22 @@ function ExportButtons({ answer }: { answer: SavedAnswer }) {
 }
 
 /** Earlier answers, newest first, each opened in place. The answer shown above is left out. */
-function PastAnswers({ history, shownId }: { history: SavedRecords<SavedAnswer>; shownId?: string }) {
+function PastAnswers({
+  history,
+  shownId,
+  openId,
+  onOpen,
+}: {
+  history: SavedRecords<SavedAnswer>;
+  shownId?: string;
+  openId?: string;
+  onOpen: (id: string | undefined) => void;
+}) {
   const past = history.records.filter((a) => a.id !== shownId).reverse();
+  // An answer opened by its address (a bookmark, Back or Forward) is brought into view.
+  useEffect(() => {
+    if (openId) document.getElementById(`answer-${openId}`)?.scrollIntoView({ block: "start" });
+  }, [openId, history.store]);
   if (!history.store) return null;
   return (
     <section className="past-answers">
@@ -335,8 +360,15 @@ function PastAnswers({ history, shownId }: { history: SavedRecords<SavedAnswer>;
         <>
           <ul className="past">
             {past.map((answer) => (
-              <li key={answer.id}>
-                <details>
+              <li key={answer.id} id={`answer-${answer.id}`}>
+                <details
+                  open={answer.id === openId}
+                  onToggle={(event) => {
+                    const open = event.currentTarget.open;
+                    if (open && answer.id !== openId) onOpen(answer.id);
+                    else if (!open && answer.id === openId) onOpen(undefined);
+                  }}
+                >
                   <summary>
                     <span className="past-question">{answer.question}</span>{" "}
                     <span className="hint">

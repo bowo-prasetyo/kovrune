@@ -12,12 +12,16 @@ export function ResearchScreen({
   settings,
   library,
   history,
+  openAnswerId,
+  onOpenAnswer,
   onRetest,
   onChangeSetup,
 }: {
   settings: Settings;
   library: SavedDocuments;
   history: SavedRecords<SavedAnswer>;
+  openAnswerId?: string;
+  onOpenAnswer: (id: string | undefined) => void;
   onRetest: () => void;
   onChangeSetup: () => void;
 }) {
@@ -37,7 +41,11 @@ export function ResearchScreen({
       </div>
       <LoadProgressView state={load.state} onRetry={load.retry} />
       <DocumentLibrary library={library} />
-      <ResearchPanel settings={settings} documents={library.documents} modelReady={load.state.phase === "ready"} history={history} />
+      <ResearchPanel settings={settings} documents={library.documents} modelReady={load.state.phase === "ready"}
+        history={history}
+        openAnswerId={openAnswerId}
+        onOpenAnswer={onOpenAnswer}
+      />
       <StorageSection settings={settings} library={library} history={history} />
     </>
   );

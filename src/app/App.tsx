@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DeviceCapabilities } from "./device.ts";
 import { BUILD, REPO_URL } from "./build-info.ts";
 import { HELP_URL } from "./help.ts";
@@ -6,13 +6,12 @@ import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
 import { useSavedAnswers, useSavedDocuments } from "./research/useSavedDocuments.ts";
 import { restrictConnections } from "./csp.ts";
+import { pathForView, resolveRoute, routeFromPath, titleForView, type Step, type View } from "./routes.ts";
 import { clearSettings, loadDraft, loadSettings, saveDraft, saveSettings, type Settings } from "./settings.ts";
 import { BrowserModelStep } from "./steps/BrowserModelStep.tsx";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
 import { ServerStep } from "./steps/ServerStep.tsx";
 import { TestStep } from "./steps/TestStep.tsx";
-
-type Step = "device" | "server" | "browser" | "test" | "research";
 
 /** Limits the page's connections to the known hosts and this setup's model server (csp.ts). Built pages only: the dev server's hot reloading connects elsewhere. */
 export function restrictConnectionsTo(settings: Settings): void {
@@ -28,11 +27,57 @@ const STEP_LABELS: Array<[Step[], string]> = [
 export function App() {
   const [saved, setSaved] = useState<Settings | undefined>(loadSettings);
   const [draft, setDraft] = useState<Settings | undefined>(() => saved ?? loadDraft());
-  const [step, setStep] = useState<Step>(saved ? "research" : "device");
   const [caps, setCaps] = useState<DeviceCapabilities>();
+  // The screen comes from the address (routes.ts), and the address follows the screen.
+  const base = import.meta.env.BASE_URL;
+  const [view, setView] = useState<View>(() =>
+    resolveRoute(routeFromPath(location.pathname, base), { saved: !!saved, draft: !!draft, caps: false }),
+  );
+  const step = view.step;
   // Kept here, not in the research screen, so documents survive re-testing the model; saved in the browser.
   const library = useSavedDocuments();
-  const history = useSavedAnswers();
+  const answers = useSavedAnswers();
+
+  /** Shows a view and gives it its address: a new history entry, or in place of the current one. */
+  const navigate = (next: View, mode: "push" | "replace" = "push") => {
+    setView(next);
+    const path = pathForView(next, base);
+    if (path !== location.pathname) window.history[mode === "push" ? "pushState" : "replaceState"](null, "", path);
+  };
+  const setStep = (next: Step) => navigate({ step: next });
+
+  // Back and Forward: show what the address asks for, if it can be shown now.
+  const context = useRef({ saved, draft, caps });
+  context.current = { saved, draft, caps };
+  useEffect(() => {
+    const show = () => {
+      const now = context.current;
+      const next = resolveRoute(routeFromPath(location.pathname, base), { saved: !!now.saved, draft: !!now.draft, caps: !!now.caps });
+      setView(next);
+      const path = pathForView(next, base);
+      if (path !== location.pathname) window.history.replaceState(null, "", path);
+    };
+    show();
+    addEventListener("popstate", show);
+    return () => removeEventListener("popstate", show);
+  }, [base]);
+
+  // The setup being made survives a reload, so a reload on its test stays there (per tab, in sessionStorage).
+  useEffect(() => {
+    if (draft && !saved) saveDraft(draft);
+  }, [draft, saved]);
+
+  // A bookmarked answer that isn't saved in this browser (removed, or saved elsewhere) opens nothing.
+  useEffect(() => {
+    if (view.answerId && answers.store && !answers.records.some((a) => a.id === view.answerId)) {
+      navigate({ step: "research" }, "replace");
+    }
+  });
+
+  const openAnswer = view.answerId ? answers.records.find((a) => a.id === view.answerId) : undefined;
+  useEffect(() => {
+    document.title = titleForView(view, openAnswer?.question);
+  }, [view, openAnswer?.question]);
 
   return (
     <main>
@@ -106,7 +151,8 @@ export function App() {
             saveSettings(draft);
             restrictConnectionsTo(draft);
             setSaved(draft);
-            setStep("research");
+            // In place of the test's address, so Back doesn't run the test again.
+            navigate({ step: "research" }, "replace");
           }}
         />
       )}
@@ -114,7 +160,9 @@ export function App() {
         <ResearchScreen
           settings={saved}
           library={library}
-          history={history}
+          history={answers}
+          openAnswerId={view.answerId}
+          onOpenAnswer={(id) => (id ? navigate({ step: "research", answerId: id }) : navigate({ step: "research" }, "replace"))}
           onRetest={() => {
             setDraft(saved);
             setStep("test");
@@ -123,7 +171,7 @@ export function App() {
             // The page's connections are limited to this setup's server; a reload lifts that for the new setup.
             saveDraft(saved);
             clearSettings();
-            location.reload();
+            location.assign(base);
           }}
         />
       )}
