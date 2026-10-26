@@ -3,9 +3,10 @@ import { describe, it } from "node:test";
 import { runAgent } from "../src/agent/agent.ts";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { describeCall } from "../src/app/research/trace.ts";
+import { latinLanguage } from "../src/documents/languages.ts";
 import { mainScript } from "../src/documents/scripts.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { createResearchTools, RESEARCH_SYSTEM } from "../src/tools/research.ts";
+import { createResearchTools, languageMismatch, RESEARCH_SYSTEM } from "../src/tools/research.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 
 class ScriptedModel implements LanguageModel {
@@ -131,7 +132,7 @@ describe("reply in the question's language", () => {
     }
   });
 
-  it("leaves English questions, and French ones, alone", async () => {
+  it("leaves an English answer to an English question alone", async () => {
     const english = await runResearch({
       question: "Who maintains LumenDB?",
       library,
@@ -142,7 +143,51 @@ describe("reply in the question's language", () => {
       ]),
     });
     assert.deepEqual(steps(english.agent.calls), ["search", "read", "final_answer"]);
-    // A limit: French and English share the Latin script, so an English answer to a French question passes.
-    assert.equal(mainScript("Quelle est la hauteur de la tour Eiffel ?")!.script, mainScript("The tower is 330 m tall.")!.script);
+  });
+});
+
+describe("reply in the question's language, in Latin script", () => {
+  it("tells the languages apart by their function words", () => {
+    assert.equal(latinLanguage("Quelle est la hauteur de la tour Eiffel avec ses antennes ?"), "French");
+    assert.equal(latinLanguage("Combien de visiteurs la tour Eiffel a-t-elle accueillis en 2016 ?"), "French", "a-t-elle counts as its parts");
+    assert.equal(latinLanguage("The provided documents do not contain the price of a ticket."), "English");
+    assert.equal(latinLanguage("Wann wurde die Straße für den Verkehr geöffnet?"), "German");
+    assert.equal(latinLanguage("¿Cuándo se abrió la torre para los visitantes?"), "Spanish");
+    assert.equal(latinLanguage("Quando è stata costruita la torre e per quale motivo?"), "Italian");
+    assert.equal(latinLanguage("Quando foi construída a torre e qual é a altura dos andares?"), "Portuguese");
+    assert.equal(latinLanguage("Wanneer is de toren gebouwd en wat is de hoogte van het dak?"), "Dutch");
+  });
+
+  it("names no language for short or mixed text", () => {
+    assert.equal(latinLanguage("330 mètres"), undefined);
+    assert.equal(latinLanguage("Which organization maintains LumenDB?"), undefined, "one function word is not enough");
+    assert.equal(latinLanguage("It is called « la tour de 300 mètres »."), undefined, "an English sentence quoting French");
+  });
+
+  it("finds an English answer to a French question, and nothing in answers in the question's language", () => {
+    const question = "Pour quel événement la tour Eiffel a-t-elle été construite ?";
+    assert.deepEqual(languageMismatch(question, "The tower was built for the 1889 Exposition universelle in Paris."), { asked: "French", wrote: "English" });
+    assert.equal(languageMismatch(question, "La tour Eiffel a été construite pour l'Exposition universelle de 1889."), undefined);
+    assert.equal(languageMismatch(question, "Exposition universelle de 1889"), undefined, "too few function words to tell");
+    assert.equal(languageMismatch("Who maintains LumenDB?", "The Tessel Foundation maintains LumenDB."), undefined, "the question is too short to tell");
+  });
+
+  it("sends an English answer to a French question back once", async () => {
+    const eiffel = new ResearchLibrary([{ id: "eiffel", title: "Tour Eiffel", text: "Construite pour l'Exposition universelle de Paris de 1889, elle est devenue le symbole de la capitale." }]);
+    const quote = "Construite pour l'Exposition universelle de Paris de 1889";
+    const final = (text: string) => JSON.stringify({ tool: "final_answer", args: { found: true, answer: text, evidence: [{ docId: "eiffel", quote }] } });
+    const result = await runResearch({
+      question: "Pour quel événement la tour Eiffel a-t-elle été construite ?",
+      library: eiffel,
+      model: new ScriptedModel([
+        search("tour Eiffel construite"),
+        read("eiffel"),
+        final("The tower was built for the 1889 Exposition universelle in Paris."),
+        final("La tour Eiffel a été construite pour l'Exposition universelle de Paris de 1889."),
+      ]),
+    });
+    assert.deepEqual(steps(result.agent.calls), ["search", "read", "final_answer (rejected)", "final_answer"]);
+    assert.match(result.agent.transcript.at(-2)!.content, /^The question is written in French, but your answer is in English\./);
+    assert.equal(result.status, "verified");
   });
 });
