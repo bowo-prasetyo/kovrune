@@ -150,7 +150,7 @@ If your laptop is slow but you have a faster computer on the same network, such 
    - Then every source you ticked is searched before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
    - Each ticked source adds a step or two, so an answer takes a little longer. Leave them unticked for answers from your documents only.
    - Combining sources works best with Qwen3.5-4B. Qwen3.5-2B often answers from one source only.
-3. **Type a question and press Ask.** You see each step: what the model searched for, how much each search found ("5 results", "nothing found"), and what it read. A source that found results but isn't quoted in the answer was searched, and the model chose not to use it. **Stop** ends the run at any time.
+3. **Type a question and press Ask.** You see each step: what the model searched for, how much each search found ("5 results", "nothing found"), and what it read. A source that found results but isn't quoted in the answer was searched, and the model chose not to use it. If the model is about to say the answer isn't there without having read anything its search found, it is asked once to read first, and the step says so. **Stop** ends the run at any time.
 
 Tips:
 
