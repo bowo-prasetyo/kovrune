@@ -221,7 +221,10 @@ describe("research with Wikipedia", () => {
       `{"tool":"search","args":{"query":"activity diagram"}}`,
       `{"tool":"read","args":{"docId":"papyrus"}}`,
       `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
-      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+      JSON.stringify({
+        tool: "final_answer",
+        args: { found: true, answer: "Create a Papyrus project with an Activity Diagram.", evidence: [{ docId: "papyrus", quote: "Create a Papyrus project with an Activity Diagram." }] },
+      }),
     ]);
     const result = await runResearch({ question: "How to create an activity diagram?", library, model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
     const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
@@ -245,6 +248,9 @@ describe("research with Wikipedia", () => {
       `{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`,
       `{"tool":"search_openalex","args":{"query":"Ada Lovelace"}}`,
       JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+      // Wikipedia's result was not read, so "not found" is sent back once (read before not-found).
+      `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
     ]);
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes)), openalex] });
     const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
@@ -252,6 +258,10 @@ describe("research with Wikipedia", () => {
     assert.deepEqual(tools(1), ["read", "search_openalex"], "OpenAlex is still to be searched");
     assert.deepEqual(tools(2), ["read", "search_openalex", "final_answer"], "Wikipedia found results, so it waits for a read");
     assert.equal(result.agent.stopReason, "final");
+    assert.deepEqual(
+      result.agent.calls.map((c) => [c.tool, c.rejected ?? false]),
+      [["search_wikipedia", false], ["search_openalex", false], ["final_answer", true], ["read", false], ["final_answer", false]],
+    );
     assert.match(model.requests[0]!.messages[0]!.content, /Search each of Wikipedia and OpenAlex/);
     assert.match(researchSystem({ documents: true, sources: ["Wikipedia"] }), /Then search Wikipedia too, and combine what you find: prefer the user's documents/);
   });

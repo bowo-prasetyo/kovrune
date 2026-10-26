@@ -12,7 +12,7 @@ import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.19.0";
+export const HARNESS_VERSION = "0.20.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -176,7 +176,7 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
 
 function actionTrace(run: TaskRun): string[] {
   return run.agent.calls.map((call) =>
-    (call.valid ? `${call.tool} ${JSON.stringify(call.args)}` : `invalid: ${call.error ?? "unknown"}`).slice(0, 160),
+    (call.valid ? `${call.tool}${call.rejected ? " (rejected)" : ""} ${JSON.stringify(call.args)}` : `invalid: ${call.error ?? "unknown"}`).slice(0, 160),
   );
 }
 

@@ -31,6 +31,7 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       return `Reading ${titleFor(id) ?? id}`;
     }
     case "final_answer":
+      if (call.rejected) return "About to conclude that the sources don't answer this; reading what the search found first";
       return args.found === false ? "Concluding that the sources don't answer this" : "Writing the answer";
     default:
       return String(call.tool);
