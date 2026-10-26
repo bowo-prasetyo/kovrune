@@ -20,12 +20,19 @@ export const fieldDocuments: FieldDocument[] = [
   { id: "kovrune-design-r3", title: "kovrune-design-r3.pdf", file: "kovrune-design-r3.pdf" },
   { id: "mpl-2.0", title: "mpl-2.0.txt", file: "mpl-2.0.txt" },
   { id: "ada-lovelace-lead", title: "Ada Lovelace (Wikipedia, lead section).txt", file: "ada-lovelace-lead.txt" },
+  // Documents in other languages (harness 0.19.0): a script without spaces, Han only, and accented Latin.
+  { id: "mount-fuji-ja-lead", title: "富士山 (Wikipedia, lead section).txt", file: "mount-fuji-ja-lead.txt" },
+  { id: "great-wall-zh-lead", title: "长城 (Wikipedia, lead section).txt", file: "great-wall-zh-lead.txt" },
+  { id: "eiffel-tower-fr-lead", title: "Tour Eiffel (Wikipedia, lead section).txt", file: "eiffel-tower-fr-lead.txt" },
 ];
 
 const GUIDE = ["kovrune-user-guide"];
 const DESIGN = ["kovrune-design-r3"];
 const MPL = ["mpl-2.0"];
 const ADA = ["ada-lovelace-lead"];
+const FUJI = ["mount-fuji-ja-lead"];
+const WALL = ["great-wall-zh-lead"];
+const EIFFEL = ["eiffel-tower-fr-lead"];
 
 export const fieldTasks: ResearchTask[] = [
   // A how-to manual: the user guide (Markdown, 15 KB).
@@ -231,5 +238,106 @@ export const fieldTasks: ResearchTask[] = [
     answerable: true,
     facts: [["llama.cpp"], ["experimental"]],
     citations: [[...GUIDE, ...DESIGN]],
+  },
+
+  // Documents in other languages, asked in their own language. Each has a nearby wrong number
+  // (Fuji's 標高 3775.56 m, the wall's traditional 4,500-6,000 km, the tower's original 312 m) and
+  // one question the lead does not answer.
+  {
+    id: "f25-fuji-summit",
+    kind: "lookup",
+    question: "富士山の山体の最高地点は何メートルですか？",
+    answerable: true,
+    facts: [["3776.12", "3,776.12"]],
+    citations: [FUJI],
+  },
+  {
+    id: "f26-fuji-prefectures",
+    kind: "lookup",
+    question: "富士山はどの県に跨っていますか？",
+    answerable: true,
+    facts: [["山梨"], ["静岡"]],
+    citations: [FUJI],
+  },
+  {
+    id: "f27-fuji-heritage",
+    kind: "lookup",
+    question: "富士山が世界文化遺産に登録されたのは何年ですか？",
+    answerable: true,
+    facts: [["2013"]],
+    citations: [FUJI],
+  },
+  {
+    // The lead does not mention the last eruption (1707); models may know it.
+    id: "f28-fuji-last-eruption",
+    kind: "unanswerable",
+    question: "富士山が最後に噴火したのは何年ですか？",
+    answerable: false,
+    facts: [],
+    citations: [],
+  },
+  {
+    id: "f29-wall-heritage",
+    kind: "lookup",
+    question: "长城是哪一年被联合国教科文组织列为世界文化遗产的？",
+    answerable: true,
+    facts: [["1987"]],
+    citations: [WALL],
+  },
+  {
+    id: "f30-wall-length",
+    kind: "lookup",
+    question: "根据国家文物局的认定，长城墙壕遗存总长度是多少千米？",
+    answerable: true,
+    facts: [["21,196", "21196"]],
+    citations: [WALL],
+  },
+  {
+    id: "f31-wall-dynasty",
+    kind: "lookup",
+    question: "现存的长城遗迹主要是哪个朝代修筑的？",
+    answerable: true,
+    facts: [["明长城", "明朝", "明代"]],
+    citations: [WALL],
+  },
+  {
+    id: "f32-wall-visitors",
+    kind: "unanswerable",
+    question: "长城每年接待多少游客？",
+    answerable: false,
+    facts: [],
+    citations: [],
+  },
+  {
+    id: "f33-eiffel-height",
+    kind: "lookup",
+    question: "Quelle est la hauteur de la tour Eiffel avec ses antennes ?",
+    answerable: true,
+    facts: [["330"]],
+    citations: [EIFFEL],
+  },
+  {
+    id: "f34-eiffel-occasion",
+    kind: "lookup",
+    question: "Pour quel événement la tour Eiffel a-t-elle été construite ?",
+    answerable: true,
+    facts: [["Exposition universelle"]],
+    citations: [EIFFEL],
+  },
+  {
+    id: "f35-eiffel-visitors-2016",
+    kind: "lookup",
+    question: "Combien de visiteurs la tour Eiffel a-t-elle accueillis en 2016 ?",
+    answerable: true,
+    facts: [["5,9 millions", "5.9 millions", "5,9 million", "5.9 million"]],
+    citations: [EIFFEL],
+  },
+  {
+    id: "f36-eiffel-ticket",
+    kind: "unanswerable",
+    question: "Combien coûte un billet pour monter au sommet de la tour Eiffel ?",
+    answerable: false,
+    facts: [],
+    citations: [],
   },
 ];
