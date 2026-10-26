@@ -1,0 +1,35 @@
+name: Release signature
+
+# Checks a published release's signature (docs/releases.md): SHA256SUMS.sig must be a
+# valid signature over SHA256SUMS by a key in release-signers, as of the release's tag.
+# If it isn't, the release goes back to being a draft, so no unsigned release stays public.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Download the checksums and their signature
+        run: gh release download "$TAG" --pattern SHA256SUMS --pattern SHA256SUMS.sig --dir release
+      - name: Check the signature
+        run: npm run release:verify -- release/SHA256SUMS
+      - name: Unpublish a release without a valid signature
+        if: failure()
+        run: |
+          gh release edit "$TAG" --draft=true
+          echo "::error::$TAG was published without a valid SHA256SUMS.sig, so it is a draft again. Sign it (npm run release:sign), attach the signature and publish again."

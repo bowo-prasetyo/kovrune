@@ -4,15 +4,19 @@ Kovrune is a web app, so what you run is whatever the server sends. This page ex
 
 | | |
 | --- | --- |
-| Status | Builds are reproducible (M2 slice 4), and the app is hosted on Cloudflare Pages, which sends the policy as a header (slice 5). Releases are **not signed yet** ([design §7.4](design.md#74-hosting-requirements)) |
+| Status | Builds are reproducible (M2 slice 4). The app is hosted on Cloudflare Pages, which sends the policy as a header, and releases are signed by the owner (slice 5) |
 
 ## How a release is made
 
 1. The owner pushes a version tag, such as `v0.1.0`.
 2. The [release workflow](../.github/workflows/release.yml) runs the tests and builds the app with `KOVRUNE_BUILD=release`. It then writes `SHA256SUMS`, the SHA-256 of every file in the build.
-3. It creates a **draft** GitHub release with `SHA256SUMS` and the build as a `.tar.gz`. The owner reviews the draft and publishes it.
+3. It creates a **draft** GitHub release with `SHA256SUMS` and the build as a `.tar.gz`.
+4. The owner rebuilds the tag on their own computer and signs `SHA256SUMS` with a key CI never sees ([below](#sign-a-release-owner)). Signing first checks that the owner's own build matches CI's checksums.
+5. The owner attaches `SHA256SUMS.sig` to the draft and publishes it. The [release signature workflow](../.github/workflows/release-signature.yml) then checks the signature against [`release-signers`](../release-signers), as of the tag, and turns the release back into a draft if it's missing or wrong.
 
-The preview site is separate: it is built from `main` on every push ([`pages.yml`](../.github/workflows/pages.yml)), with `KOVRUNE_BASE=/kovrune/` and `KOVRUNE_BUILD=preview`.
+So a published release carries two independent checks: GitHub Actions built it, and the owner's own rebuild matched it before they signed.
+
+The app at <https://kovrune.pages.dev/> is the preview, built from `main` on every push ([`cloudflare.yml`](../.github/workflows/cloudflare.yml)); releases are for anyone who wants to host or check a fixed version.
 
 ## Check a release yourself
 
@@ -28,6 +32,14 @@ npm run checksums -- --check path/to/SHA256SUMS   # the file from the release
 
 `All N files in dist/app match` means your build is byte for byte the release. On Linux or macOS you can also run `cd dist/app && sha256sum -c path/to/SHA256SUMS`.
 
+**Check the signature** too, with `SHA256SUMS.sig` from the release next to `SHA256SUMS`:
+
+```bash
+npm run release:verify -- path/to/SHA256SUMS
+```
+
+`Good signature … by bowo-prasetyo` means the owner signed exactly these checksums. Without Node, OpenSSH does the same: `ssh-keygen -Y verify -f release-signers -I bowo-prasetyo -n kovrune-release -s SHA256SUMS.sig < SHA256SUMS`.
+
 Compare files, not the `.tar.gz`: archive tools add their own metadata, so the archive is for convenience only.
 
 **What makes the build reproducible:**
@@ -38,7 +50,35 @@ Compare files, not the `.tar.gz`: archive tools add their own metadata, so the a
 
 CI checks this on every pull request. The `reproducible` job builds the commit twice, in different directories and time zones, and fails if any file differs.
 
-**What this doesn't prove yet:** a match shows the release came from that tag. It doesn't show that the site you open serves the release. That needs the signed releases and hosting of slice 5.
+**What this doesn't prove:** a match shows the release came from that tag, and the signature shows the owner vouches for it. It doesn't show that a site you open serves that release; the preview at kovrune.pages.dev serves `main`. To run a release you have checked, serve its files yourself.
+
+## Sign a release (owner)
+
+**Once: create the signing key** on your own computer, not in CI or a cloud session. In WSL, macOS or Linux, or in Windows PowerShell (OpenSSH comes with Windows 10 and later):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/kovrune-release -C "Kovrune releases"
+```
+
+Give it a passphrase when asked. Back up `~/.ssh/kovrune-release` somewhere offline: without it you can't sign, and a new key means a new line in `release-signers`. Then add the **public** half to [`release-signers`](../release-signers), in a pull request:
+
+```bash
+echo "bowo-prasetyo namespaces=\"kovrune-release\" $(cut -d' ' -f1,2 ~/.ssh/kovrune-release.pub) Kovrune releases"
+```
+
+The `.pub` file is public and safe to share; never share or commit the file without `.pub`.
+
+**For each release,** after the release workflow has made the draft:
+
+```bash
+git fetch --tags && git checkout v0.1.0
+npm ci
+KOVRUNE_BUILD=release GITHUB_SHA=$(git rev-parse HEAD) GITHUB_REF_NAME=v0.1.0 npm run build
+# Download SHA256SUMS from the draft release, then:
+npm run release:sign -- path/to/SHA256SUMS --key ~/.ssh/kovrune-release
+```
+
+`release:sign` refuses to sign if your build doesn't match the draft's `SHA256SUMS`. Otherwise it asks for the key's passphrase, writes `SHA256SUMS.sig` and checks it against `release-signers`. Attach `SHA256SUMS.sig` to the draft and publish.
 
 ## Content Security Policy
 

@@ -141,7 +141,10 @@ export function App() {
           <a href={`${REPO_URL}/releases/tag/${BUILD.version}`} target="_blank" rel="noreferrer">
             Kovrune {BUILD.version}
           </a>
-          , built from commit {BUILD.commit} ({BUILD.date}). Not yet signed.
+          , built from commit {BUILD.commit} ({BUILD.date}).{" "}
+          <a href={`${REPO_URL}/blob/main/docs/releases.md#check-a-release-yourself`} target="_blank" rel="noreferrer">
+            Check this release
+          </a>
         </footer>
       )}
     </main>

@@ -56,6 +56,7 @@ npm test                  # unit tests, evaluation set checks
 npm run typecheck
 npm run build             # production build of the app into dist/app
 npm run checksums         # SHA-256 of every built file, to compare with a release
+npm run release:verify -- SHA256SUMS   # check a release's signature
 npm run bench:browser     # M0 benchmark page (WebLLM)
 npm run bench:endpoint    # M0 benchmark against a local model server
 ```
