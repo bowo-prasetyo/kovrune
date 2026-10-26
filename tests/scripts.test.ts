@@ -6,6 +6,9 @@ import { sentenceSupport, splitSentences } from "../src/agent/support.ts";
 import { chunkDocument, CHUNK_CHARS } from "../src/documents/chunk.ts";
 import { dropUnspacedGaps, foldText, textWeight, words } from "../src/documents/scripts.ts";
 import { DocumentIndex } from "../src/tools/search.ts";
+import { documentLanguage, documentLanguages } from "../src/documents/languages.ts";
+import { RESEARCH_SYSTEM, researchSystem } from "../src/tools/research.ts";
+import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 
 const DOCS = [
   { id: "ja", title: "東京", text: "東京は日本の首都です。人口は約1400万人です。コーヒーの消費量も多い。" },
@@ -126,5 +129,46 @@ describe("chunking text without spaces", () => {
       assert.match(chunk.text, /。$/);
     }
     assert.equal(chunks.map((c) => c.text).join(""), text, "nothing is lost or added");
+  });
+});
+
+describe("documents in several languages", () => {
+  it("names each document's language", () => {
+    assert.equal(documentLanguage(DOCS[0]!.text), "Japanese", "Han with kana");
+    assert.equal(documentLanguage(DOCS[1]!.text), "Chinese", "Han without kana");
+    assert.equal(documentLanguage(DOCS[2]!.text), "Korean");
+    assert.equal(documentLanguage(DOCS[5]!.text), "Cyrillic script");
+    assert.equal(documentLanguage("La tour Eiffel est une tour de fer puddlé de 330 m de hauteur, située à Paris, dans le parc."), "French");
+    assert.equal(documentLanguage("1987"), undefined);
+    assert.deepEqual(documentLanguages(["The tower is tall and it is in the city.", "It was built in 1889 and it is made of iron.", DOCS[0]!.text]), ["English", "Japanese"]);
+  });
+
+  it("tells the model which languages to search in, only when there are several", () => {
+    assert.equal(researchSystem({ documents: true, sources: [], languages: ["English"] }), RESEARCH_SYSTEM, "one language: the prompt is unchanged");
+    assert.equal(researchSystem({ documents: true, sources: [] }), RESEARCH_SYSTEM);
+    assert.match(
+      researchSystem({ documents: true, sources: [], languages: ["English", "Japanese", "French"] }),
+      /\nThe documents are in English, Japanese and French\. Search matches words, so to find a document in another language than the question, search with words in that language\.$/,
+    );
+    assert.match(researchSystem({ documents: true, sources: ["Wikipedia"], languages: ["English", "Japanese"] }), /English and Japanese[\s\S]*You can also search Wikipedia/);
+  });
+
+  it("is told in the research run, from the library's documents", async () => {
+    const replies = [JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } })];
+    const model = {
+      info: { id: "scripted", runtime: "scripted" as const, contextLength: 4096 },
+      requests: [] as Array<{ messages: Array<{ content: string }> }>,
+      supportsConstrainedDecoding: () => true,
+      async *generate(request: { messages: Array<{ content: string }> }) {
+        model.requests.push({ messages: request.messages.map((m) => ({ ...m })) });
+        yield { text: replies.shift() ?? "{}", done: false };
+        yield { text: "", done: true, usage: { promptTokens: 1, completionTokens: 1 } };
+      },
+      dispose: async () => {},
+    };
+    const library = new ResearchLibrary([{ id: "en", title: "Note", text: "The tower is tall and it is in the city of Paris." }, DOCS[0]!]);
+    assert.deepEqual(library.languages, ["English", "Japanese"]);
+    await runResearch({ question: "How high is Mount Fuji?", library, model });
+    assert.match(model.requests[0]!.messages[0]!.content, /The documents are in English and Japanese\./);
   });
 });

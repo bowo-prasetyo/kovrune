@@ -2,7 +2,7 @@
 // answer in English to a question in French, not a general language detector. Texts too
 // short or too mixed to tell get no language.
 
-import { words } from "./scripts.ts";
+import { mainScript, words } from "./scripts.ts";
 
 /**
  * Common function words, accent-folded as words() returns them ("été" is "ete"). One-letter words
@@ -37,4 +37,35 @@ export function latinLanguage(text: string): string | undefined {
   );
   if (!first || first.hits < MIN_HITS || first.hits < MIN_LEAD * (second?.hits ?? 0)) return undefined;
   return first.language;
+}
+
+/**
+ * The language a document is written in, named for the model: "Japanese" (Han with kana),
+ * "Chinese" (Han without), "Korean", the Latin-script languages latinLanguage() tells apart, or
+ * a script such as "Cyrillic script". Undefined when it cannot tell.
+ */
+export function documentLanguage(text: string): string | undefined {
+  const main = mainScript(text);
+  if (!main) return undefined;
+  switch (main.script) {
+    case "Latin":
+      return latinLanguage(text);
+    case "Chinese or Japanese":
+      // Japanese writes particles and endings in kana; Chinese has none.
+      return /[\p{sc=Hiragana}\p{sc=Katakana}]/u.test(text) ? "Japanese" : "Chinese";
+    case "Korean":
+      return "Korean";
+    default:
+      return `${main.script} script`;
+  }
+}
+
+/** The languages of a set of documents, the most common first, for telling the model what to search in. */
+export function documentLanguages(texts: string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const text of texts) {
+    const language = documentLanguage(text);
+    if (language) counts.set(language, (counts.get(language) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([language]) => language);
 }

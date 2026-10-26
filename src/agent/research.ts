@@ -3,6 +3,7 @@
 // benchmark measures exactly what users get.
 
 import { chunkDocument, parentId } from "../documents/chunk.ts";
+import { documentLanguages } from "../documents/languages.ts";
 import type { LanguageModel } from "../models/types.ts";
 import { SourceSession, type Citation } from "../sources/session.ts";
 import type { OpenSource } from "../sources/types.ts";
@@ -44,6 +45,13 @@ export class ResearchLibrary {
   }
 
   /** Full document text for a document or chunk ID; quotes are checked against the whole document. */
+  /** The documents' languages, the most common first (languages.ts), worked out once. */
+  get languages(): string[] {
+    return (this.cachedLanguages ??= documentLanguages(this.documents.map((doc) => doc.text)));
+  }
+
+  private cachedLanguages?: string[];
+
   textFor(id: string): string | undefined {
     return this.byId.get(parentId(id))?.text;
   }
@@ -76,7 +84,7 @@ export async function runResearch(options: {
   const session = sources.length ? new SourceSession(sources, options.question, signal) : undefined;
   const agent = await runAgent({
     model: options.model,
-    system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label) }),
+    system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label), languages: library.languages }),
     task: options.question,
     tools: createResearchTools(library.index, session, options.question),
     finalTool: "final_answer",

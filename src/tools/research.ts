@@ -16,16 +16,27 @@ Finish with final_answer. For each document that supports the answer, give its I
 If the documents do not contain the answer, set "found" to false, say what is missing, and give no evidence. Never guess.`;
 
 /**
- * The system prompt. With only the user's documents it is RESEARCH_SYSTEM exactly, so
- * benchmark results stay comparable; open sources add one line about where to look.
+ * The system prompt. With only the user's documents in one language it is RESEARCH_SYSTEM
+ * exactly, so benchmark results stay comparable. Documents in several languages add a line
+ * about searching in each one's language; open sources add lines about where to look.
  */
-export function researchSystem(options: { documents: boolean; sources: string[] }): string {
-  if (!options.sources.length) return RESEARCH_SYSTEM;
+export function researchSystem(options: { documents: boolean; sources: string[]; languages?: string[] }): string {
+  const system = options.languages && options.languages.length > 1 ? `${RESEARCH_SYSTEM}\n${languagesLine(options.languages)}` : RESEARCH_SYSTEM;
+  if (!options.sources.length) return system;
   const sources = options.sources.join(" and ");
   const where = options.documents
     ? `You can also search ${sources}. Look in the user's documents first: search them and read what you find. Then search ${sources} too, and combine what you find: prefer the user's documents for anything specific to them, use the other sources for background and for what the documents do not cover, and say so when sources disagree.`
     : `Search ${options.sources.length > 1 ? `each of ${sources}` : sources} to find documents.`;
-  return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
+  return `${system}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
+}
+
+/**
+ * Search matches words, so an English query finds nothing in a Japanese document (field suite
+ * f37-f42); the model can translate its search terms once it knows which languages to search in.
+ */
+function languagesLine(languages: string[]): string {
+  const list = languages.length > 1 ? `${languages.slice(0, -1).join(", ")} and ${languages.at(-1)}` : languages[0];
+  return `The documents are in ${list}. Search matches words, so to find a document in another language than the question, search with words in that language.`;
 }
 
 /** Documents longer than this are truncated when read, to fit small context windows. */
