@@ -78,3 +78,25 @@ export function clearSettings(): void {
     // Nothing to clear.
   }
 }
+
+const DRAFT_KEY = "kovrune.settings.draft";
+
+/**
+ * Keeps the last setup for the reload that "Change setup" does (csp.ts), so the
+ * setup form starts from it. Per tab, in sessionStorage.
+ */
+export function saveDraft(settings: Settings): void {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(settings));
+  } catch {
+    // The form then starts from the defaults.
+  }
+}
+
+export function loadDraft(): Settings | undefined {
+  try {
+    return parseSettings(sessionStorage.getItem(DRAFT_KEY));
+  } catch {
+    return undefined;
+  }
+}

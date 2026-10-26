@@ -15,10 +15,34 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - run: npm run bench:browser:build
+
+  # A release must rebuild byte for byte from its tag (docs/releases.md). Build the
+  # commit twice, in different directories and time zones, and compare every file.
+  reproducible:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: first
+      - uses: actions/checkout@v4
+        with:
+          path: second
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: first/.nvmrc
+          cache: npm
+          cache-dependency-path: first/package-lock.json
+      - name: Build twice and compare
+        env:
+          KOVRUNE_BUILD: release
+        run: |
+          (cd first && npm ci && npm run build && npm run checksums)
+          (cd second && npm ci && TZ=Pacific/Kiritimati npm run build)
+          cd second && npm run checksums -- --check ../first/dist/SHA256SUMS

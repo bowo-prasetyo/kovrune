@@ -542,6 +542,12 @@ The deployed app can read every user's identity keys and private data, so its in
 - A strict Content Security Policy: no inline scripts, no third-party script origins, `connect-src` limited to Hugging Face, configured endpoints, and configured relays.
 - Versioned PWA releases: users see which version they run and are notified before updating, rather than being silently updated.
 
+**Since M2 slice 4** ([`releases.md`](releases.md)):
+- **Reproducible builds:** a release built from a tag can be rebuilt byte for byte, and CI checks this on every pull request.
+- **Release checksums:** a tag produces a draft release with `SHA256SUMS`.
+- **Content Security Policy:** in place as above. Because the configured endpoint is only known once setup is saved, `connect-src` is open during setup and narrowed to Hugging Face, GitHub's raw files, Wikipedia, OpenAlex and the saved model server afterwards.
+- **Not done yet:** signing waits for slice 5. The policy is a `<meta>` tag until then, so it can't set `frame-ancestors` and doesn't cover workers.
+
 ### 7.4 Hosting requirements
 
 The host must allow custom response headers:
@@ -551,7 +557,7 @@ The host must allow custom response headers:
 
 GitHub Pages cannot set these headers, so the reference deployment uses a static host that can (for example Cloudflare Pages or Netlify). Anyone can self-host the same build; the documentation lists the required headers.
 
-**Until M2**, a preview is published to GitHub Pages from `main` as a stopgap, so testers need only a browser. It is unsigned, has no CSP or COOP/COEP headers, and says so in its footer. M1 does not need `SharedArrayBuffer`, and the app holds no identity keys yet, so the missing headers block nothing M1 ships. The move to a host that can set them is M2 work.
+**Until M2**, a preview is published to GitHub Pages from `main` as a stopgap, so testers need only a browser. It is unsigned, has no COOP/COEP headers, and says so in its footer. Since M2 slice 4 it carries the Content Security Policy as a `<meta>` tag (§7.3). M1 does not need `SharedArrayBuffer`, and the app holds no identity keys yet, so the missing headers block nothing M1 ships. The move to a host that can set them is M2 work.
 
 ### 7.5 Privacy modes
 
@@ -671,7 +677,7 @@ So each estimate below has two parts. **Build** is Claude's work: implementation
 | Milestone | Build | Waits on | Elapsed |
 | --- | --- | --- | --- |
 | M1 (rest) | Fixes from the usability findings | Recruiting and running 3–5 usability sessions; a class 2 run | 2–4 weeks |
-| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Pinned, verified downloads are done (slice 1). Left: resuming interrupted tasks, storage management and backup, signed reproducible builds, CSP | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
+| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); reproducible builds and CSP (slice 4). Left: resuming interrupted tasks, storage management and backup, signed releases with the new hosting | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
 | M2.5 | 3–5 weeks: Pyodide and QuickJS sandboxes, coding tasks in the evaluation set | A decision to build it (below) | Not scheduled |
 | M3 | 3–4 weeks: identities, invitations, WebRTC transport, signaling | The go/no-go below; then a real circle of 2–5 people to test with, and a signaling server someone runs | 6–10 weeks after a go |
 | M4 | 4–6 weeks | M3 findings; relays operated by the owner or the circles | Re-plan after M3 |

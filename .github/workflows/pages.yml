@@ -1,7 +1,8 @@
 name: Preview site
 
 # Publishes the app to GitHub Pages (https://bowo-prasetyo.github.io/kovrune/) from main.
-# This is a preview: unsigned, built by GitHub Actions. Signed, reproducible releases are M2.
+# This is a preview: unsigned, built by GitHub Actions. Releases are built from version tags
+# by release.yml (docs/releases.md).
 
 on:
   push:
@@ -24,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm test
