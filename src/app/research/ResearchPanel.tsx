@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { CallRecord } from "../../agent/agent.ts";
 import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
+import { ReplayingModel, type RecordedCall } from "../../agent/replay.ts";
 import { ResearchLibrary, runResearch } from "../../agent/research.ts";
 import { describeModelError, describeSetup, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
@@ -17,13 +18,15 @@ import {
 } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
+import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus } from "./trace.ts";
+import { usePendingTask } from "./usePendingTask.ts";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
 type RunState =
   | { phase: "idle" }
-  | { phase: "running"; steps: string[] }
-  | { phase: "done"; steps: string[]; answer: SavedAnswer }
+  | { phase: "running"; steps: string[]; restored?: number }
+  | { phase: "done"; steps: string[]; answer: SavedAnswer; restored?: number }
   | { phase: "stopped"; steps: string[] }
   | { phase: "error"; steps: string[]; message: string };
 
@@ -47,6 +50,10 @@ export function ResearchPanel({
   const running = state.phase === "running";
   const anyOpenSource = prefs.wikipedia || prefs.openalex;
   const canAsk = modelReady && !running && (usable.length > 0 || anyOpenSource) && question.trim().length > 0;
+  // The question in progress, saved after every step so that it can continue after a reload or an error.
+  const pending = usePendingTask();
+  const setup = describeSetup(settings);
+  const resume = pending.task && resumability(pending.task, { documentIds: usable.map((d) => d.id), setup });
 
   function updatePrefs(change: Partial<SourcePrefs>) {
     const next = { ...prefs, ...change };
@@ -54,48 +61,114 @@ export function ResearchPanel({
     saveSourcePrefs(next);
   }
 
-  async function ask() {
+  /** Asks the question in the box, or continues a saved task where it stopped. */
+  async function ask(resumed?: SavedTask) {
     const abort = new AbortController();
     controller.current = abort;
-    const library = new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts })));
+    const now = new Date().toISOString();
+    // A resumed task searches the same documents, in the same order, and the same sources.
+    const documents = resumed ? resumed.documentIds.map((id) => usable.find((d) => d.id === id)!) : usable;
+    const taskPrefs = resumed?.prefs ?? prefs;
+    if (resumed) {
+      setQuestion(resumed.question);
+      setPrefs(resumed.prefs);
+    }
+    let task: SavedTask = resumed
+      ? { ...resumed, error: undefined, updatedAt: now }
+      : {
+          id: TASK_ID,
+          question: question.trim(),
+          prefs: taskPrefs,
+          documentIds: documents.map((d) => d.id),
+          setup,
+          calls: [],
+          steps: [],
+          startedAt: now,
+          updatedAt: now,
+        };
+    pending.save(task);
+    const library = new ResearchLibrary(documents.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts })));
     const titleFor = (id: string) => library.documentFor(id)?.title;
     const steps: string[] = [];
+    let calls: RecordedCall[] = [];
+    let model: ReplayingModel | undefined;
+    const progress = () => {
+      task = { ...task, calls, steps: [...steps], updatedAt: new Date().toISOString() };
+      pending.save(task);
+      setState({ phase: "running", steps: [...steps], restored: model?.replayed });
+    };
     setState({ phase: "running", steps });
     try {
-      const model = await openModel(settings);
+      model = new ReplayingModel(await openModel(settings), { replay: resumed?.calls, onRecord: (recorded) => (calls = recorded) });
       const result = await runResearch({
-        question: question.trim(),
+        question: task.question,
         library,
         model,
-        sources: openSourcesFor(prefs),
+        sources: openSourcesFor(taskPrefs),
         signal: abort.signal,
         onCall: (call: CallRecord) => {
           steps.push(describeCall(call, titleFor));
-          setState({ phase: "running", steps: [...steps] });
+          progress();
         },
         // A search's step is shown as it starts, and gets its result count once it has run.
         onResult: (call: CallRecord, index: number) => {
           steps[index - 1] = describeCall(call, titleFor);
-          setState({ phase: "running", steps: [...steps] });
+          progress();
         },
       });
-      if (abort.signal.aborted) setState({ phase: "stopped", steps });
-      else if (result.agent.stopReason === "error")
-        setState({ phase: "error", steps, message: describeModelError(new Error(result.agent.error), settings) });
-      else {
-        const answer = toSavedAnswer({ question: question.trim(), result, steps, library, model: describeSetup(settings) });
+      if (abort.signal.aborted) {
+        pending.clear();
+        setState({ phase: "stopped", steps });
+      } else if (result.agent.stopReason === "error") {
+        const message = describeModelError(new Error(result.agent.error), settings);
+        pending.save({ ...task, error: message });
+        setState({ phase: "error", steps, message });
+      } else {
+        const answer = toSavedAnswer({ question: task.question, result, steps, library, model: setup, now: new Date(task.startedAt) });
         history.setRecords((answers) => [...answers, answer]);
-        setState({ phase: "done", steps, answer });
+        pending.clear();
+        setState({ phase: "done", steps, answer, restored: model.replayed });
       }
     } catch (error) {
-      if (abort.signal.aborted) setState({ phase: "stopped", steps });
-      else setState({ phase: "error", steps, message: describeModelError(error, settings) });
+      if (abort.signal.aborted) {
+        pending.clear();
+        setState({ phase: "stopped", steps });
+      } else {
+        const message = describeModelError(error, settings);
+        pending.save({ ...task, error: message });
+        setState({ phase: "error", steps, message });
+      }
     }
   }
 
   return (
     <section>
       <h2>Ask a question</h2>
+      {state.phase === "idle" && pending.task && resume && (
+        <div className="callout interrupted" role="status">
+          <p>
+            <strong>Interrupted question:</strong> "{pending.task.question}" stopped {describeProgress(pending.task)}
+            {pending.task.error ? `: ${pending.task.error}` : ", when the page was closed or reloaded."}
+          </p>
+          {!resume.resumable && <p>It can't continue where it stopped, because {resume.reason}. You can ask it again.</p>}
+          <div className="actions">
+            {resume.resumable && (
+              <button className="primary" disabled={!modelReady} onClick={() => void ask(pending.task)}>
+                Continue
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setQuestion(pending.task!.question);
+                pending.clear();
+              }}
+            >
+              Ask again from the start
+            </button>
+            <button onClick={pending.clear}>Discard</button>
+          </div>
+        </div>
+      )}
       {state.phase === "idle" && usable.length === 0 && (
         <div className="callout getting-started">
           <p>
@@ -188,11 +261,27 @@ export function ResearchPanel({
         </ol>
       )}
 
+      {(state.phase === "running" || state.phase === "done") && !!state.restored && (
+        <p className="hint">
+          The first {state.restored === 1 ? "step was" : `${state.restored} steps were`} restored from where the question
+          stopped.
+        </p>
+      )}
+      {pending.saveError && running && <p className="hint">{pending.saveError}</p>}
       {state.phase === "stopped" && <p className="warning">Stopped.</p>}
       {state.phase === "error" && (
-        <p className="error" role="alert">
-          {state.message}
-        </p>
+        <>
+          <p className="error" role="alert">
+            {state.message}
+          </p>
+          {pending.task && resume?.resumable && pending.task.calls.length > 0 && (
+            <div className="actions">
+              <button className="primary" disabled={!modelReady} onClick={() => void ask(pending.task)}>
+                Continue from step {pending.task.calls.length + 1}
+              </button>
+            </div>
+          )}
+        </>
       )}
       {state.phase === "done" && (
         <>

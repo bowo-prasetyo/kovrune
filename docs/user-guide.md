@@ -151,6 +151,13 @@ Tips:
 - Documents stay in the list after a reload: their text is saved in this browser. **Remove** deletes a document's saved copy. In a private window, or when the browser blocks site data, they are kept only until you reload, and the page says so.
 - Scanned PDFs (images without a text layer) can't be read.
 
+**If a question is interrupted.** Kovrune saves each step of a question as it goes. If the page is closed or reloaded, or the browser crashes, the page shows the question as **Interrupted** the next time:
+- **Continue** picks up where it stopped. The steps already done are restored without asking the model again, so the answer comes sooner. The trace notes how many steps were restored.
+- **Ask again from the start** puts the question back in the box; **Discard** forgets it.
+- If a document the question searched has been removed, or you changed the model setup, it can only be asked again.
+
+If the model server stops answering in the middle of a question, start it again and press **Continue from step N** under the error. **Stop** discards the question's progress.
+
 ## 5. Reading the answer
 
 Each answer has a label:

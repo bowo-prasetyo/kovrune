@@ -1,10 +1,11 @@
 // Saves the user's documents and past answers in the browser, so they are still there
-// after a reload (issue #34). For documents, only the extracted text and its metadata are
+// after a reload (issue #34), and the question in progress, so that it can resume (tasks.ts). For documents, only the extracted text and its metadata are
 // stored, never the original file. The database is Kovrune's own: model downloads live in
 // WebLLM's storage, so removing documents or answers never removes a model.
 
 import type { SavedAnswer } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
+import type { SavedTask } from "./tasks.ts";
 
 /** Saved records of one kind, oldest first. */
 export interface RecordStore<T extends { id: string }> {
@@ -17,10 +18,12 @@ export interface RecordStore<T extends { id: string }> {
 
 export type DocumentStore = RecordStore<LibraryDocument>;
 export type AnswerStore = RecordStore<SavedAnswer>;
+export type TaskStore = RecordStore<SavedTask>;
 
 export interface Stores {
   documents: DocumentStore;
   answers: AnswerStore;
+  tasks: TaskStore;
 }
 
 /** Keeps records for this page only; used when the browser has no usable IndexedDB. */
@@ -41,10 +44,12 @@ export class MemoryStore<T extends { id: string }> implements RecordStore<T> {
 }
 
 const DB_NAME = "kovrune";
-// Version 1 had documents only; version 2 adds answers and keeps the saved documents.
-const DB_VERSION = 2;
+// Version 1 had documents only; version 2 added answers, and version 3 the question in progress.
+// Each upgrade keeps what was saved.
+const DB_VERSION = 3;
 const DOCUMENTS = "documents";
 const ANSWERS = "answers";
+const TASKS = "tasks";
 
 const done = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
@@ -84,7 +89,7 @@ class IndexedDbStore<T extends { id: string }> implements RecordStore<T> {
   }
 }
 
-const memoryStores = (): Stores => ({ documents: new MemoryStore(), answers: new MemoryStore() });
+const memoryStores = (): Stores => ({ documents: new MemoryStore(), answers: new MemoryStore(), tasks: new MemoryStore() });
 
 /**
  * Opens the database. Falls back to memory stores when IndexedDB is missing or refused
@@ -95,14 +100,18 @@ export async function openStores(factory: IDBFactory | undefined = globalThis.in
   try {
     const request = factory.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
-      for (const name of [DOCUMENTS, ANSWERS]) {
+      for (const name of [DOCUMENTS, ANSWERS, TASKS]) {
         if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, { keyPath: "id" });
       }
     };
     const db = await done(request);
     // Let a newer version of the app, opened in another tab, upgrade the database.
     db.onversionchange = () => db.close();
-    return { documents: new IndexedDbStore(db, DOCUMENTS), answers: new IndexedDbStore(db, ANSWERS) };
+    return {
+      documents: new IndexedDbStore(db, DOCUMENTS),
+      answers: new IndexedDbStore(db, ANSWERS),
+      tasks: new IndexedDbStore(db, TASKS),
+    };
   } catch {
     return memoryStores();
   }
