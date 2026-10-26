@@ -33,6 +33,8 @@ Each session takes about 45 minutes, in person or over a screen share. One moder
 
 **Help rule:** if the participant asks for help or is stuck for 3 minutes, give the smallest hint that unblocks them and record it. A task completed after a hint counts as *with help*.
 
+**Optional add-on:** if the participant works in a research group and agrees, follow the session with the 15-minute [Circles interview](circles-interviews.md). It is a separate conversation with its own results sheet; ask it after the questions below, so it doesn't colour the usability results.
+
 ### Tasks
 
 Start the timer at task 1 and stop it when the first answer appears in task 4.

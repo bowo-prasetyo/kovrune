@@ -416,5 +416,5 @@ M1 is done when:
 
 ## Roles
 
-- **Owner:** decisions, PR review and merge, testing on the class 1 laptop, recruiting a class 2 tester and usability testers, promoting issue #9.
+- **Owner:** decisions, PR review and merge, testing on the class 1 laptop, recruiting a class 2 tester and usability testers, promoting issue #9, and the optional [Circles interviews](circles-interviews.md) after usability sessions.
 - **Claude:** implementation, tests, native benchmark runs in the cloud, documentation, PRs, and monitoring issue #9.

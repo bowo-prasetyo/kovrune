@@ -125,6 +125,18 @@ describe("preview site", () => {
     assert.match(describeConnectionError(error, "http://127.0.0.1:8080/v1", true), /"Apps on device" to Allow/);
     assert.doesNotMatch(describeConnectionError(error, "http://127.0.0.1:8080/v1", false), /Apps on device/);
   });
+
+  it("explains how to reach a model server on another computer", () => {
+    const error = new TypeError("Failed to fetch");
+    const lan = describeConnectionError(error, "http://192.168.1.20:8080/v1", true);
+    assert.match(lan, /"Local network access" to Allow/);
+    assert.match(lan, /--host 0\.0\.0\.0/);
+    assert.doesNotMatch(lan, /Apps on device/);
+    assert.match(describeConnectionError(error, "http://desktop.local:8080/v1", true), /"Local network access"/);
+    assert.match(describeConnectionError(error, "http://desktop.lan:8080/v1", true), /only by its IP address .* or a name ending in \.local/);
+    assert.doesNotMatch(describeConnectionError(error, "http://desktop.lan:8080/v1", false), /IP address/);
+    assert.doesNotMatch(describeConnectionError(error, "https://models.example.org/v1", true), /IP address/);
+  });
 });
 
 describe("local network permission", () => {
