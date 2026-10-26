@@ -173,7 +173,7 @@ Each answer has a label:
 
 | Label | Meaning |
 | --- | --- |
-| **Quotes found** | Every quote is word for word in its source, and every sentence of the answer shares most of its words with a quote. This proves the quotes are real, **not** that the answer is right: check that they support the whole answer. |
+| **Quotes found** | Every quote is word for word in its source, and every sentence of the answer shares most of its words with a quote. A short answer, such as "4 KiB" or "1987年", gets this label when it is word for word in a quote that also shares most of the words of your question. This proves the quotes are real, **not** that the answer is right: check that they support the whole answer. |
 | **Quotes found, answer too short to check** | Every quote is word for word in its source, but the answer, such as a name, a number or a version, is too short to compare with them. Short answers are often wrong even with real quotes, for example a version that fixed a problem when the question asked which versions it affected: check that the quotes answer your question. |
 | **3 of 5 sentences backed by a quote** | Every quote is in its source, but the sentences marked ⚠ share few words with any quote. Small models often add details from memory next to real quotes; check the marked sentences against the sources. |
 | **Some quotes not found (2 of 3 found)** | Only some quotes are in their sources. Check the answer against the sources, starting with the quotes marked ✗. |

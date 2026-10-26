@@ -145,6 +145,12 @@ function containsWords(text: string, quote: string): boolean {
   return findWords(text, quote) >= 0;
 }
 
+/** Whether `part` (such as a short answer, "3776.12 m") is word for word in `quote`, matched as quotes are matched. */
+export function quoteHas(quote: string, part: string): boolean {
+  const wanted = stripEdgePunctuation(normalizeForMatch(part));
+  return wanted.length > 0 && containsWords(normalizeForMatch(quote), wanted);
+}
+
 /**
  * Whether a normalized quote that leaves words out ("lumendb ... has been maintained by the tessel
  * foundation") is in `text`: its pieces in order, each on word boundaries and at most

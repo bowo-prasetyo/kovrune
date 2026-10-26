@@ -5,7 +5,7 @@
 
 import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
-import type { AnswerStatus, CheckedEvidence } from "./evidence.ts";
+import { quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
 
 export interface AnswerSentence {
   /** The sentence as written, with the whitespace after it, so the sentences join back into the answer. */
@@ -19,12 +19,27 @@ export interface SentenceSupport {
   /** Sentences long enough to judge. */
   judged: number;
   backed: number;
+  /**
+   * True for an answer too short to judge that is backed another way: it is word for word in a
+   * verified quote, and that quote, with its document's title, shares most of the question's words.
+   */
+  answerInQuote?: boolean;
 }
 
 /** Sentences with fewer content words than this are not judged. */
 const MIN_JUDGED_WORDS = 3;
 /** The share of a sentence's content words that must appear in the verified quotes for it to count as backed. */
 export const MIN_BACKED_SHARE = 0.5;
+/**
+ * For an answer too short to judge, found in a quote: the share of the question's content words
+ * that quote and its title must exceed. A bare answer ("2013年") makes no claim of its own, so
+ * the question supplies the claim and the quote must cover it nearly all. In the 12 recorded
+ * reports from harness 0.6.0 to 0.21.0, this labels 59 of the 162 right short answers and none
+ * of the 74 wrong ones; at one half, 19 of the 143 answers it labelled were wrong. The nearest
+ * miss: "Cobble", from a quote naming Harrow Labs, for "Who is the CEO of Harrow Labs?", covers
+ * exactly two thirds.
+ */
+export const SHORT_ANSWER_QUESTION_SHARE = 2 / 3;
 
 // Wider than the search's stop words: pronouns and auxiliaries say nothing about whether a quote backs a claim.
 const STOP_WORDS = new Set(
@@ -81,6 +96,8 @@ export function sentenceSupport(
   answer: string,
   evidence: CheckedEvidence[],
   titleFor: (docId: string) => string | undefined = () => undefined,
+  /** The question, so an answer too short to judge can be backed by a quote that contains it (SHORT_ANSWER_QUESTION_SHARE). */
+  question?: string,
 ): SentenceSupport {
   const verified = evidence.filter((e) => e.verified);
   const quoteWords = contentWords(verified.map((e) => e.quote).join(" "));
@@ -97,7 +114,26 @@ export function sentenceSupport(
     if (isBacked) backed++;
     return { text, backed: isBacked };
   });
+  if (!judged && question && answerInQuote(answer, question, verified, titleFor)) {
+    return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true };
+  }
   return { sentences, judged, backed };
+}
+
+/** Whether a short answer is word for word in a verified quote that, with its title, covers most of the question. */
+function answerInQuote(
+  answer: string,
+  question: string,
+  verified: CheckedEvidence[],
+  titleFor: (docId: string) => string | undefined,
+): boolean {
+  const asked = contentWords(question);
+  if (!asked.length) return false;
+  return verified.some((e) => {
+    if (!quoteHas(e.quote, answer)) return false;
+    const covered = contentWords(`${e.quote} ${titleFor(e.docId) ?? ""}`);
+    return asked.filter((w) => covered.some((c) => sameWord(w, c))).length > asked.length * SHORT_ANSWER_QUESTION_SHARE;
+  });
 }
 
 /**

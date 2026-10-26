@@ -60,7 +60,7 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number },
+  support?: { judged: number; backed: number; answerInQuote?: boolean },
 ): { label: string; detail: string; tone: AnswerStatus } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
@@ -70,7 +70,9 @@ export function describeStatus(
       if (labelledQuotesFound(status, evidence, support)) {
         return {
           label: "Quotes found",
-          detail: support?.judged
+          detail: support?.answerInQuote
+            ? "Every quote below is word for word in the source it cites, and the answer is in one of them, in a passage that shares most of the words of your question. Check that the quote answers what you asked."
+            : support?.judged
             ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
             : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
           tone: "verified",
