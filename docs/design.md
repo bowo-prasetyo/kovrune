@@ -677,7 +677,7 @@ So each estimate below has two parts. **Build** is Claude's work: implementation
 | Milestone | Build | Waits on | Elapsed |
 | --- | --- | --- | --- |
 | M1 (rest) | Fixes from the usability findings | Recruiting and running 3–5 usability sessions; a class 2 run | 2–4 weeks |
-| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); reproducible builds and CSP (slice 4). Left: resuming interrupted tasks, storage management and backup, signed releases with the new hosting | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
+| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); resuming interrupted questions (slice 2); reproducible builds and CSP (slice 4). Left: storage management and backup, signed releases with the new hosting | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
 | M2.5 | 3–5 weeks: Pyodide and QuickJS sandboxes, coding tasks in the evaluation set | A decision to build it (below) | Not scheduled |
 | M3 | 3–4 weeks: identities, invitations, WebRTC transport, signaling | The go/no-go below; then a real circle of 2–5 people to test with, and a signaling server someone runs | 6–10 weeks after a go |
 | M4 | 4–6 weeks | M3 findings; relays operated by the owner or the circles | Re-plan after M3 |
@@ -718,6 +718,8 @@ Adjusted after M0 (full plan in [`m1-plan.md`](m1-plan.md)):
 IndexedDB persistence, checkpoints, cancellation, storage management and backup, pinned and verified model downloads (§3.4), reproducible signed builds, CSP, and the hosting setup from §7.4, which replaces the GitHub Pages preview.
 
 **Acceptance:** interrupted tasks resume where possible; storage failures and eviction are handled gracefully; a release can be rebuilt bit-for-bit from its tag.
+
+**Checkpoints (slice 2):** a research question saves the model's replies after every step, with a fingerprint of the conversation each one answered (`src/agent/replay.ts`). To resume, the question runs again from the start with the saved replies standing in for the model: the tools rebuild their state, and the real model takes over at the first step without a saved reply, or where the conversation differs. A question resumes only with the same documents and model setup; otherwise it can be asked again.
 
 ### M2.5 — Sandboxed execution
 
