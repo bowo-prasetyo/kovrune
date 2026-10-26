@@ -10,8 +10,9 @@
 // the known hosts and that setup's model server. Policies add up, so this can only
 // narrow the first; changing the setup reloads the page to start from the base policy.
 //
-// A meta policy can't set frame-ancestors and doesn't apply inside workers; the
-// hosting in M2 slice 5 will send the policy as a header, which covers both.
+// A meta policy can't set frame-ancestors and doesn't apply inside workers. Hosts that
+// read a _headers file (Cloudflare Pages, M2 slice 5) also send it as a header, which
+// covers both (headersFile below).
 
 /** Hosts the app fetches over HTTPS: model downloads, and the open sources the user can tick. */
 export const CONNECT_HOSTS = [
@@ -77,4 +78,22 @@ export function restrictConnections(serverUrl: string | undefined, doc: Document
   meta.content = policy;
   doc.head.append(meta);
   restricted = true;
+}
+
+/**
+ * The _headers file for hosts that read one, such as Cloudflare Pages: the same policy as
+ * a header, which also stops other sites from framing the app and covers workers, plus
+ * the usual hardening headers.
+ */
+export function headersFile(): string {
+  const headers: Array<[string, string]> = [
+    ["Content-Security-Policy", `${contentSecurityPolicy()}; frame-ancestors 'none'`],
+    ["X-Frame-Options", "DENY"],
+    ["X-Content-Type-Options", "nosniff"],
+    // Requests to Hugging Face, Wikipedia and OpenAlex don't say which page they came from.
+    ["Referrer-Policy", "no-referrer"],
+    ["Cross-Origin-Opener-Policy", "same-origin"],
+    ["Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()"],
+  ];
+  return `/*\n${headers.map(([name, value]) => `  ${name}: ${value}`).join("\n")}\n`;
 }

@@ -1,11 +1,12 @@
 import { execFileSync } from "node:child_process";
 import { defineConfig, type Plugin } from "vite";
-import { contentSecurityPolicy } from "./src/app/csp.ts";
+import { contentSecurityPolicy, headersFile } from "./src/app/csp.ts";
 
 // The app. The M0 benchmark page has its own config in eval/browser/.
 //
-// The GitHub Pages workflow sets KOVRUNE_BASE=/kovrune/ and KOVRUNE_BUILD=preview, and
-// the release workflow KOVRUNE_BUILD=release; local development keeps the defaults.
+// The Cloudflare Pages workflow sets KOVRUNE_BUILD=preview, the GitHub Pages workflow also
+// KOVRUNE_BASE=/kovrune/, and the release workflow KOVRUNE_BUILD=release; local
+// development keeps the defaults.
 // A build depends only on the commit and these variables, so anyone can rebuild a
 // release and compare it byte for byte (docs/releases.md).
 
@@ -36,6 +37,10 @@ const csp: Plugin = {
     const charset = '<meta charset="utf-8" />';
     if (!html.includes(charset)) throw new Error(`index.html needs ${charset}, after which the Content Security Policy goes`);
     return html.replace(charset, `${charset}\n    <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy()}" />`);
+  },
+  // Cloudflare Pages sends these as headers; other hosts serve the file as is, which is harmless.
+  generateBundle() {
+    this.emitFile({ type: "asset", fileName: "_headers", source: headersFile() });
   },
 };
 
