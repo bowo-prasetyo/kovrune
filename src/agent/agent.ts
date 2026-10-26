@@ -6,6 +6,7 @@
 // validated, and invalid output is sent back to the model with the error.
 
 import { z } from "zod";
+import { textWeight } from "../documents/scripts.ts";
 import { stripThinking, type ChatMessage, type LanguageModel } from "../models/types.ts";
 
 export interface AgentTool {
@@ -108,9 +109,12 @@ export function actionJsonSchema(tools: AgentTool[]): object {
   return schema;
 }
 
-/** Rough token estimate used only for context budgeting and missing usage reports. */
+/**
+ * Rough token estimate used only for context budgeting and missing usage reports: 3.5 characters
+ * a token, and about one token for each Chinese or Japanese character (textWeight).
+ */
 export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 3.5);
+  return Math.ceil(textWeight(text) / 3.5);
 }
 
 /** Extracts the first JSON object from model text that may include fences or prose. */

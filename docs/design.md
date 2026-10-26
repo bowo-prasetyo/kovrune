@@ -159,7 +159,7 @@ The central architectural rule: **the agent engine does not depend directly on a
 | Language | TypeScript | Shared application and protocol types | Used |
 | UI | React with Vite | Static browser application, installable as a PWA | Used; not yet installable as a PWA |
 | LLM inference (primary) | WebLLM | Fast in-browser text generation with JSON-schema and grammar-constrained decoding | Used for the browser path |
-| Embeddings, rerankers, small task models | Transformers.js | ONNX models via WebGPU or WASM | Not shipped. Search uses keywords with stemming; revisit after M1 if keyword search proves the bottleneck |
+| Embeddings, rerankers, small task models | Transformers.js | ONNX models via WebGPU or WASM | Not shipped. Search uses keywords in any script, with English stemming: Chinese, Japanese, Korean and Thai are indexed as single characters and pairs of characters. A question must use the documents' language. Revisit after M1 if keyword search proves the bottleneck |
 | GGUF models (advanced mode) | wllama (llama.cpp compiled to WebAssembly) | Access to the most common quantized format on Hugging Face | Not shipped in the app; used only by the M0 benchmark. Revisit if its WebGPU and CPU performance improve |
 | Local model servers | OpenAI-compatible HTTP adapter | Ollama, LM Studio, llama.cpp server on the user's machine or LAN | Used. llama.cpp server is supported, Ollama is experimental, LM Studio is untested |
 | Model downloads | Hugging Face Hub file API | Discovery, pinned revisions, per-file SHA-256 | M1 downloaded the `main` revision without hash checks. Since M2 slice 1, catalog models are pinned and every file is checked (§3.4); discovery is not built |

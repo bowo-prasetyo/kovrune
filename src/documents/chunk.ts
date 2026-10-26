@@ -2,8 +2,12 @@
 // searches and reads chunks; evidence is verified against the whole document.
 
 import type { SourceDocument } from "../tools/search.ts";
+import { textWeight } from "./scripts.ts";
 
-/** Chunk size in characters: about 450 tokens, so several fit in a 4,096-token context. */
+/**
+ * Chunk size in English characters: about 450 tokens, so several fit in a 4,096-token context.
+ * Sizes are compared by textWeight, so a chunk of Chinese or Japanese holds about 500 characters.
+ */
 export const CHUNK_CHARS = 1800;
 
 const CHUNK_SEPARATOR = "#";
@@ -15,16 +19,20 @@ const CHUNK_SEPARATOR = "#";
  */
 export function chunkDocument(doc: SourceDocument, maxChars = CHUNK_CHARS): SourceDocument[] {
   const text = doc.text.trim();
-  if (text.length <= maxChars) return [{ ...doc, text }];
+  if (textWeight(text) <= maxChars) return [{ ...doc, text }];
 
   const pieces: string[] = [];
   let current = "";
+  let weight = 0;
   const flush = () => {
     if (current.trim()) pieces.push(current.trim());
     current = "";
+    weight = 0;
   };
   for (const unit of splitUnits(text, maxChars)) {
-    if (current && current.length + unit.length + 2 > maxChars) flush();
+    const unitWeight = textWeight(unit);
+    if (current && weight + unitWeight + 2 > maxChars) flush();
+    weight = current ? weight + unitWeight + 2 : unitWeight;
     current = current ? `${current}\n\n${unit}` : unit;
   }
   flush();
@@ -42,14 +50,14 @@ function splitUnits(text: string, maxChars: number): string[] {
   for (const paragraph of text.split(/\n\s*\n/)) {
     const p = paragraph.trim();
     if (!p) continue;
-    if (p.length <= maxChars) {
+    if (textWeight(p) <= maxChars) {
       units.push(p);
       continue;
     }
     let buffer = "";
     for (const sentence of p.split(/(?<=[.!?])\s+/)) {
-      for (const piece of sentence.length > maxChars ? splitWords(sentence, maxChars) : [sentence]) {
-        if (buffer && buffer.length + piece.length + 1 > maxChars) {
+      for (const piece of textWeight(sentence) > maxChars ? splitWords(sentence, maxChars) : [sentence]) {
+        if (buffer && textWeight(buffer) + textWeight(piece) + 1 > maxChars) {
           units.push(buffer);
           buffer = "";
         }
@@ -64,14 +72,39 @@ function splitUnits(text: string, maxChars: number): string[] {
 function splitWords(text: string, maxChars: number): string[] {
   const out: string[] = [];
   let line = "";
-  for (const word of text.split(/\s+/)) {
-    if (line && line.length + word.length + 1 > maxChars) {
+  for (const word of text.split(/\s+/).flatMap((w) => (textWeight(w) > maxChars ? splitRun(w, maxChars) : [w]))) {
+    if (line && textWeight(line) + textWeight(word) + 1 > maxChars) {
       out.push(line);
       line = "";
     }
     line = line ? `${line} ${word}` : word;
   }
   if (line) out.push(line);
+  return out;
+}
+
+/**
+ * Text without spaces that is longer than a chunk, as in Chinese, Japanese or Thai: cut after the
+ * last "。", "！", "？" or "、" that fits, or where the chunk is full.
+ */
+function splitRun(text: string, maxChars: number): string[] {
+  const out: string[] = [];
+  let rest = text;
+  while (textWeight(rest) > maxChars) {
+    let fit = 0;
+    let weight = 0;
+    for (const ch of rest) {
+      weight += textWeight(ch);
+      if (weight > maxChars) break;
+      fit += ch.length;
+    }
+    const head = rest.slice(0, Math.max(fit, 1));
+    const end = Math.max(...["。", "！", "？", "、"].map((mark) => head.lastIndexOf(mark)));
+    const cut = end > 0 ? end + 1 : head.length;
+    out.push(rest.slice(0, cut));
+    rest = rest.slice(cut);
+  }
+  if (rest) out.push(rest);
   return out;
 }
 
