@@ -44,6 +44,8 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
   // laptop the model searched the Papyrus PDF five times with small rewordings before reading
   // it, spending 5 of its 8 steps; a search that found something now has to be followed by a read.
   const unread = new Set<string>();
+  // Whether final_answer has already sent the model back to read before concluding "not found".
+  let askedToRead = false;
   // Every source the user ticked is searched before the answer, so it can draw on all of them.
   const searchedSources = new Set<string>();
   const sourceSearches: AgentTool[] = (session?.sources ?? []).map((source) => ({
@@ -145,6 +147,14 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
           .strict(),
       // Without open sources this is always true, so the benchmark's tasks are unaffected.
       available: () => (session?.sources ?? []).every((source) => searchedSources.has(source.name)),
+      // Read before "not found": a search's snippets are one sentence of each document, and both
+      // models concluded from them that a document lacked an answer it had (field suite f19, f30).
+      // Asked once, so after reading the model can still conclude that the answer is not there.
+      objection: ({ found }: ResearchFinal) => {
+        if (found || !unread.size || askedToRead) return undefined;
+        askedToRead = true;
+        return "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.";
+      },
     },
   ];
   // Without documents of the user's own, only the open sources can be searched.

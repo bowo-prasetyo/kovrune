@@ -14,7 +14,7 @@ Before a change to the research prompt or the guards (repeat, last-step, read-be
 
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0 and 0.19.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0 and 0.20.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,11 +23,13 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.16.0 | 16/24 (67%) | 16/22 | 5/8 | 3/4 | 2 of 8 | [json](../results/field-0.16-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.17.0, not adopted | 18/24 (75%) | 16/22 | 5/8 | 3/4 | 0 of 8 | [json](../results/full-sentences-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.19.0 | 25/36 (69%): 16/24 and 9/12 in other languages | 16/22 | 5/8 | 3/4 | 2 of 11 | [json](../results/field-0.19-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.20.0 | 25/36 (69%) | 16/22 | 5/8 | 3/4 | 2 of 11 | [json](../results/field-0.20-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.17.0, not adopted | 17/24 (71%) | 20/22 | 8/8 | 4/4 | 3 of 15 | [json](../results/full-sentences-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.19.0 | 31/36 (86%): 20/24 and 11/12 in other languages | 19/22 | 8/8 | 3/4 | 2 of 17 | [json](../results/field-0.19-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.20.0 | **32/36 (89%)** | 19/22 | 8/8 | **4/4** | 2 of 18 | [json](../results/field-0.20-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -57,6 +59,13 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **4B sometimes answers in English** when it finds nothing ("The provided documents do not contain information about…" for a Japanese question).
 - **The 24 earlier tasks:** the new documents change the search statistics of the field library. Their results are the same on both models (20/24 and 16/24), but 3 tasks for 4B and 2 for 2B took other actions. One of them changed label: 4B's `f13` now says "not found" instead of a wrong answer labelled **Quotes found**. That is why 4B's false reassurance over all suites falls from 3 of 26 to 2 of 29; the label rule did not change.
 - **The other suites** use their own documents, and both models repeated the 0.16.0 baseline exactly.
+
+**A guard judged on the suite: read before "not found" (0.20.0).** Both models sometimes concluded that the documents did not answer a question from a search's snippets alone, without reading the document that had the answer (`f30` in 0.19.0, `f19` and `f06` in the 0.17.0 experiment). Now `final_answer` with `"found": false` is sent back once, while the last search's results are unread, asking the model to read what the search found. It may still conclude "not found" after reading, and the last step is never sent back.
+- **4B improves**, from 61 to 63 of 70 tasks. `f30` (the wall's length) and `p04` (the PDF's audit cost and reporter) now pass, after reading the part that answers.
+- **2B is unchanged:** the guard fired on 6 tasks, and each kept its result.
+- **No regressions on either model.** The guard fired on 13 of 4B's tasks, including 6 unanswerable questions. After reading, 4B still said "not found" on all of them, which is the risk a guard like this carries. Tasks where the guard did not fire took the same actions as in 0.19.0 (57 of 57 for 4B, 64 of 64 for 2B).
+- **Cost:** about one more model call on the tasks where it fires, 0.3 more calls per task on average for 4B and 0.2 for 2B.
+- **Against the rule:** the field suite improves on 4B and is unchanged on 2B, and nothing regresses. Adopted.
 
 ### Runs repeat on one machine, not across machines
 
