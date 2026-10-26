@@ -162,7 +162,7 @@ The central architectural rule: **the agent engine does not depend directly on a
 | Embeddings, rerankers, small task models | Transformers.js | ONNX models via WebGPU or WASM | Not shipped. Search uses keywords with stemming; revisit after M1 if keyword search proves the bottleneck |
 | GGUF models (advanced mode) | wllama (llama.cpp compiled to WebAssembly) | Access to the most common quantized format on Hugging Face | Not shipped in the app; used only by the M0 benchmark. Revisit if its WebGPU and CPU performance improve |
 | Local model servers | OpenAI-compatible HTTP adapter | Ollama, LM Studio, llama.cpp server on the user's machine or LAN | Used. llama.cpp server is supported, Ollama is experimental, LM Studio is untested |
-| Model downloads | Hugging Face Hub file API | Discovery, pinned revisions, per-file SHA-256 | WebLLM downloads the `main` revision, without hash checks; pinning and verification are M2 (§3.4) |
+| Model downloads | Hugging Face Hub file API | Discovery, pinned revisions, per-file SHA-256 | M1 downloaded the `main` revision without hash checks. Since M2 slice 1, catalog models are pinned and every file is checked (§3.4); discovery is not built |
 | Local persistence | IndexedDB for structured data; OPFS / Cache Storage for large files | Tasks, settings, model files | Settings in `localStorage`; model files in WebLLM's browser cache; documents' extracted text and past answers in IndexedDB. Tasks are not checkpointed (M2) |
 | Background processing | Web Workers | Keep the UI responsive during inference and execution | WebLLM runs in a worker |
 | Code execution | Pyodide (Python), QuickJS-wasm (JavaScript), in sandboxed workers | Running generated tests locally | M2.5. The benchmark runs coding tasks in a plain worker, which is not a security boundary |
@@ -294,7 +294,14 @@ Each catalog entry records:
 - Declared license with a link to its terms; missing or ambiguous licenses are flagged.
 - Model card URL and known limitations.
 
-**In M1** this is not yet implemented. WebLLM fetches model weights from the `main` revision on Hugging Face and its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, without checking hashes. Pinning both to fixed revisions and verifying downloads are part of M2 (§12).
+**In M1** this was not implemented: WebLLM fetched model weights from the `main` revision on Hugging Face and its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, without checking hashes.
+
+**Since M2 slice 1**, the browser catalog models are pinned and verified:
+- **Pinned:** `src/models/browser-manifest.ts` records, for each model, a Hugging Face commit, a `binary-mlc-llm-libs` commit, and the SHA-256 and size of every file WebLLM downloads. `npm run pin:browser-models` generates it; re-running it is a deliberate model update, reviewed like code.
+- **Code and config checked before use:** WebLLM's own `integrity` option checks the chat config, the tokenizer and the model library (WebAssembly) before using them.
+- **Weights checked before use:** WebLLM stores the tensor index and weight shards through the Cache API as they arrive, without a hook to check them. Kovrune hashes them after the load, before the model is handed to the app. A file that fails is deleted with the rest of the model, and the load fails. So the weights reach GPU memory before the check, but are never used unchecked. Passed files are recorded, so later visits don't hash gigabytes again.
+- **Existing downloads:** files downloaded under the `main` URLs in M1 are moved to the pinned URLs when their hashes match, and deleted otherwise, so testers don't download the same model twice.
+- Models outside the catalog, which only the M0 benchmark page offers, still load from WebLLM's prebuilt list.
 
 Download workflow:
 
@@ -664,7 +671,7 @@ So each estimate below has two parts. **Build** is Claude's work: implementation
 | Milestone | Build | Waits on | Elapsed |
 | --- | --- | --- | --- |
 | M1 (rest) | Fixes from the usability findings | Recruiting and running 3–5 usability sessions; a class 2 run | 2–4 weeks |
-| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Left: resuming interrupted tasks, storage management and backup, pinned downloads, signed reproducible builds, CSP | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
+| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Pinned, verified downloads are done (slice 1). Left: resuming interrupted tasks, storage management and backup, signed reproducible builds, CSP | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
 | M2.5 | 3–5 weeks: Pyodide and QuickJS sandboxes, coding tasks in the evaluation set | A decision to build it (below) | Not scheduled |
 | M3 | 3–4 weeks: identities, invitations, WebRTC transport, signaling | The go/no-go below; then a real circle of 2–5 people to test with, and a signaling server someone runs | 6–10 weeks after a go |
 | M4 | 4–6 weeks | M3 findings; relays operated by the owner or the circles | Re-plan after M3 |
@@ -694,7 +701,7 @@ Adjusted after M0 (full plan in [`m1-plan.md`](m1-plan.md)):
 - A **device advisor** chooses the browser path on capable GPUs and a local server otherwise.
 - **llama.cpp server** is the supported local server; Ollama is experimental.
 - **PDF** documents are supported; wllama is not shipped.
-- **Pinned, verified model downloads** move to M2. M1's WebLLM downloads use the `main` revisions (§3.4).
+- **Pinned, verified model downloads** move to M2. M1's WebLLM downloads use the `main` revisions (§3.4). Done in M2 slice 1.
 - An unsigned **preview** is published to GitHub Pages from `main`, as a stopgap until the M2 hosting (§7.4).
 - An **evidence check** (verified quotes) and a **repeat guard** address the M0 findings on invented answers and repeated actions.
 

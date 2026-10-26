@@ -193,7 +193,7 @@ Still open for the slice:
 - **Class 2 check.** The same research task works in the browser on a class 2 machine (issue #9 or a tester).
 - ~~**Class 1 check.** On the class 1 laptop, the advisor recommends the local server.~~ Done: the device step recommended a local server because of the integrated Intel graphics.
 
-Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work.
+Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work. Done in M2 slice 1: both are pinned and every file is checked against its SHA-256 ([design §3.4](design.md#34-catalog-entries-and-downloads)).
 
 ### Slice 4: open sources and polish (built; usability test pending)
 

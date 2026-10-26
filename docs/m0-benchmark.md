@@ -101,7 +101,7 @@ Runtime constraints found while building the harness:
 
 - **WebLLM prebuilt models use a 4,096-token context window.** The agent drops old tool results to stay within it.
 - **wllama loads files of at most 2 GB.** Larger GGUF models must be split with `llama-gguf-split`, so 4B Q4_K_M files (about 2.4–2.6 GB) are not on the wllama list.
-- **wllama downloads are pinned to a commit SHA.** WebLLM's prebuilt list (pinned by package version, 0.2.85) resolves weights from each repository's `main` branch, so WebLLM weight revisions are not yet pinned.
+- **wllama downloads are pinned to a commit SHA.** WebLLM's prebuilt list (pinned by package version, 0.2.85) resolves weights from each repository's `main` branch, so WebLLM weight revisions are not yet pinned. Since M2 slice 1, the app's catalog models (Qwen3.5-4B and 2B) are pinned and checked, on the benchmark page too; the other WebLLM candidates are not ([design §3.4](design.md#34-catalog-entries-and-downloads)).
 
 ## Hardware classes
 

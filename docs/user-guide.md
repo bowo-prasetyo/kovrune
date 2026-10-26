@@ -48,7 +48,7 @@ The first screen checks your device and recommends one of two options:
 
 You can choose the other option anyway. Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.
 
-**In the browser**, pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. The download happens once and is stored in the browser; **Delete the download** frees the space again. If the GPU lacks 16-bit shader support, Kovrune uses a 32-bit version of the model, which needs more memory and runs slower.
+**In the browser**, pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. The download happens once and is stored in the browser; **Delete the download** frees the space again. Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used. If the GPU lacks 16-bit shader support, Kovrune uses a 32-bit version of the model, which needs more memory and runs slower.
 
 ## 3. Set up a local model server
 
@@ -182,7 +182,7 @@ Exports are made in the browser; nothing is uploaded.
 - **Your documents** are read in the browser and never uploaded.
 - **Wikipedia and OpenAlex** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services. Your documents and your question as you typed it are not sent.
 - **Other network requests:**
-  - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub;
+  - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub, both at fixed versions that are checked against published checksums;
   - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([section 3](#use-a-model-server-on-another-computer)).
 - **Saved in the browser:** your setup, your source choices, and the text extracted from your documents (not the original files). Finished answers are saved too, with their quotes and steps. They stay on this computer, in this browser only. Removing documents or answers never removes a downloaded model; clearing the site's data in the browser settings removes everything, models included.
 

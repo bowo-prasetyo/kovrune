@@ -1,8 +1,21 @@
 // WebLLM adapter: the primary in-browser LLM runtime (docs/design.md §3.2).
 // Inference runs in a dedicated worker so the UI stays responsive.
 
-import { CreateWebWorkerMLCEngine, type InitProgressReport, type WebWorkerMLCEngine } from "@mlc-ai/web-llm";
+import { CreateWebWorkerMLCEngine, IntegrityError, prebuiltAppConfig, type InitProgressReport, type WebWorkerMLCEngine } from "@mlc-ai/web-llm";
+import {
+  deleteDownloads,
+  filesToVerify,
+  moveUnpinnedDownloads,
+  pinnedAppConfig,
+  pinnedModel,
+  storedVerifiedFiles,
+  verifyDownloads,
+  type CachedFile,
+} from "./pinned.ts";
 import type { GenerationChunk, GenerationRequest, LanguageModel, ModelInfo } from "./types.ts";
+
+/** Progress text while the downloaded files are checked; the app's progress line recognises it. */
+export const CHECKING_DOWNLOAD = "Checking the downloaded files";
 
 export interface WebLLMOptions {
   /** A WebLLM prebuilt model ID, e.g. "Qwen3-4B-q4f16_1-MLC". */
@@ -13,13 +26,48 @@ export interface WebLLMOptions {
 
 export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageModel> {
   const contextLength = options.contextLength ?? 4096;
+  // Catalog models are pinned and checked (pinned.ts); the benchmark's other candidates load as WebLLM ships them.
+  const pinned = pinnedModel(options.modelId);
+  const verified = storedVerifiedFiles();
+  let toVerify: CachedFile[] = [];
+  if (pinned) {
+    await moveUnpinnedDownloads(pinned, caches, verified);
+    toVerify = await filesToVerify(pinned, caches, verified);
+  }
+
   const worker = new Worker(new URL("./webllm.worker.ts", import.meta.url), { type: "module" });
-  const engine = await CreateWebWorkerMLCEngine(
-    worker,
-    options.modelId,
-    { initProgressCallback: options.onProgress },
-    { context_window_size: contextLength },
-  );
+  let engine: WebWorkerMLCEngine;
+  try {
+    engine = await CreateWebWorkerMLCEngine(
+      worker,
+      options.modelId,
+      { appConfig: pinnedAppConfig(prebuiltAppConfig), initProgressCallback: options.onProgress },
+      { context_window_size: contextLength },
+    );
+  } catch (error) {
+    worker.terminate();
+    // A file that failed WebLLM's own check stays in the cache; delete it so the next attempt downloads it again.
+    if (pinned && (error instanceof IntegrityError || /Integrity verification failed/.test(String(error)))) {
+      await deleteDownloads(pinned, caches, verified);
+    }
+    throw error;
+  }
+
+  if (pinned && toVerify.length > 0) {
+    const report = (progress: number) => options.onProgress?.({ progress, timeElapsed: 0, text: CHECKING_DOWNLOAD });
+    report(0);
+    const failed = await verifyDownloads(toVerify, caches, report);
+    if (failed.length > 0) {
+      await engine.unload().catch(() => {});
+      worker.terminate();
+      await deleteDownloads(pinned, caches, verified);
+      const names = failed.slice(0, 3).map((f) => f.path).join(", ") + (failed.length > 3 ? ", …" : "");
+      throw new Error(
+        `Integrity verification failed: ${failed.length} downloaded file(s) did not match their published SHA-256 (${names}). The download was deleted; try again.`,
+      );
+    }
+    verified.add(toVerify.map((f) => f.url));
+  }
   return new WebLLMModel(engine, worker, { id: options.modelId, runtime: "webllm", contextLength });
 }
 
