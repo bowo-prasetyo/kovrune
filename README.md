@@ -55,9 +55,12 @@ Nothing you type or add is sent to an online AI service. The app's network reque
 npm test                  # unit tests, evaluation set checks
 npm run typecheck
 npm run build             # production build of the app into dist/app
+npm run checksums         # SHA-256 of every built file, to compare with a release
 npm run bench:browser     # M0 benchmark page (WebLLM)
 npm run bench:endpoint    # M0 benchmark against a local model server
 ```
+
+Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
 
 Product code lives in `src/` (`agent/`, `tools/`, `models/`, `app/`); the benchmark in `eval/` imports it, so benchmark results measure the code the app runs.
 

@@ -5,13 +5,19 @@ import { HELP_URL } from "./help.ts";
 import { releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
 import { useSavedAnswers, useSavedDocuments } from "./research/useSavedDocuments.ts";
-import { clearSettings, loadSettings, saveSettings, type Settings } from "./settings.ts";
+import { restrictConnections } from "./csp.ts";
+import { clearSettings, loadDraft, loadSettings, saveDraft, saveSettings, type Settings } from "./settings.ts";
 import { BrowserModelStep } from "./steps/BrowserModelStep.tsx";
 import { DeviceStep } from "./steps/DeviceStep.tsx";
 import { ServerStep } from "./steps/ServerStep.tsx";
 import { TestStep } from "./steps/TestStep.tsx";
 
 type Step = "device" | "server" | "browser" | "test" | "research";
+
+/** Limits the page's connections to the known hosts and this setup's model server (csp.ts). Built pages only: the dev server's hot reloading connects elsewhere. */
+export function restrictConnectionsTo(settings: Settings): void {
+  if (import.meta.env.PROD) restrictConnections(settings.path === "local-server" ? settings.baseUrl : undefined);
+}
 
 const STEP_LABELS: Array<[Step[], string]> = [
   [["device"], "Your device"],
@@ -21,7 +27,7 @@ const STEP_LABELS: Array<[Step[], string]> = [
 
 export function App() {
   const [saved, setSaved] = useState<Settings | undefined>(loadSettings);
-  const [draft, setDraft] = useState<Settings | undefined>(saved);
+  const [draft, setDraft] = useState<Settings | undefined>(() => saved ?? loadDraft());
   const [step, setStep] = useState<Step>(saved ? "research" : "device");
   const [caps, setCaps] = useState<DeviceCapabilities>();
   // Kept here, not in the research screen, so documents survive re-testing the model; saved in the browser.
@@ -94,9 +100,11 @@ export function App() {
       {step === "test" && draft && (
         <TestStep
           settings={draft}
-          onBack={() => setStep(draft.path === "browser" && caps ? "browser" : draft.path === "browser" ? "device" : "server")}
+          // Re-testing a saved setup goes back to research: editing it needs "Change setup", which reloads (csp.ts).
+          onBack={() => setStep(saved ? "research" : draft.path === "browser" && caps ? "browser" : draft.path === "browser" ? "device" : "server")}
           onPassed={() => {
             saveSettings(draft);
+            restrictConnectionsTo(draft);
             setSaved(draft);
             setStep("research");
           }}
@@ -112,10 +120,10 @@ export function App() {
             setStep("test");
           }}
           onChangeSetup={() => {
+            // The page's connections are limited to this setup's server; a reload lifts that for the new setup.
+            saveDraft(saved);
             clearSettings();
-            releaseBrowserModel();
-            setSaved(undefined);
-            setStep("device");
+            location.reload();
           }}
         />
       )}
@@ -126,6 +134,14 @@ export function App() {
             {BUILD.commit}
           </a>{" "}
           ({BUILD.date}), published from <code>main</code> by GitHub Actions. Not yet a signed release.
+        </footer>
+      )}
+      {BUILD.kind === "release" && (
+        <footer className="build">
+          <a href={`${REPO_URL}/releases/tag/${BUILD.version}`} target="_blank" rel="noreferrer">
+            Kovrune {BUILD.version}
+          </a>
+          , built from commit {BUILD.commit} ({BUILD.date}). Not yet signed.
         </footer>
       )}
     </main>

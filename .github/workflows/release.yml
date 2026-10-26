@@ -1,0 +1,41 @@
+name: Release
+
+# Builds a release from a version tag (v*) as a draft GitHub release, with the SHA-256
+# of every file, so anyone can rebuild the tag and compare (docs/releases.md).
+# Releases are not signed yet; signing comes with the hosting in M2 slice 5.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          KOVRUNE_BUILD: release
+      - run: npm run checksums
+      - name: Package
+        # The checksums of the files are what a rebuild is compared with; the archive is for convenience.
+        run: |
+          epoch=$(git log -1 --format=%ct)
+          tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -C dist/app -cf - . | gzip -n > "dist/kovrune-$GITHUB_REF_NAME.tar.gz"
+      - name: Create a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "Kovrune $GITHUB_REF_NAME" \
+            --notes "Built by GitHub Actions from $GITHUB_REF_NAME ($GITHUB_SHA) with Node $(node --version). Not yet signed. To check it, rebuild the tag and compare with SHA256SUMS: see docs/releases.md." \
+            "dist/kovrune-$GITHUB_REF_NAME.tar.gz" dist/SHA256SUMS

@@ -1,16 +1,19 @@
 // Which build of the app this is, set by vite.config.ts at build time.
 
 export interface BuildInfo {
-  kind: "preview" | "development";
-  /** Short commit hash for preview builds, empty otherwise. */
+  kind: "preview" | "release" | "development";
+  /** Short commit hash for preview and release builds, empty otherwise. */
   commit: string;
+  /** The commit's date, so a rebuild gives the same files. */
   date: string;
+  /** The release tag, such as "v0.1.0", for release builds; empty otherwise. */
+  version: string;
 }
 
 declare const __KOVRUNE_BUILD__: BuildInfo | undefined;
 
 export const BUILD: BuildInfo =
-  typeof __KOVRUNE_BUILD__ === "undefined" ? { kind: "development", commit: "", date: "" } : __KOVRUNE_BUILD__;
+  typeof __KOVRUNE_BUILD__ === "undefined" ? { kind: "development", commit: "", date: "", version: "" } : __KOVRUNE_BUILD__;
 
 /** The repository the preview is built from, for the footer link. */
 export const REPO_URL = "https://github.com/bowo-prasetyo/kovrune";
