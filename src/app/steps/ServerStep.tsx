@@ -17,6 +17,7 @@ export function ServerStep({
   const [kind, setKind] = useState<ServerKind>(initial?.serverKind ?? "llama.cpp");
   const [baseUrl, setBaseUrl] = useState(initial?.baseUrl ?? SERVER_PRESETS["llama.cpp"].defaultBaseUrl);
   const [contextLength, setContextLength] = useState(initial?.contextLength ?? 4096);
+  const [apiKey, setApiKey] = useState(initial?.apiKey ?? "");
   const [models, setModels] = useState<string[]>();
   const [model, setModel] = useState(initial?.model ?? "");
   const [status, setStatus] = useState<{ busy: boolean; error?: string }>({ busy: false });
@@ -34,7 +35,7 @@ export function ServerStep({
     setStatus({ busy: true });
     setModels(undefined);
     try {
-      const found = await listModels(baseUrl);
+      const found = await listModels(baseUrl, { apiKey: apiKey.trim() || undefined });
       if (!found.length) throw new Error("The server is running but reports no models. Load a model and try again.");
       setModels(found);
       setModel((current) => (found.includes(current) ? current : found[0]!));
@@ -101,6 +102,20 @@ export function ServerStep({
         <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} spellCheck={false} />
       </label>
       <label>
+        API key (optional)
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </label>
+      <p className="hint">
+        Only if the server was started with one, such as llama.cpp's <code>--api-key</code>: recommended for a server on
+        another computer, so that others on the network can't use it. The key is saved in this browser.
+      </p>
+      <label>
         Context length (tokens)
         <input
           type="number"
@@ -140,7 +155,16 @@ export function ServerStep({
             <button
               className="primary"
               disabled={!model || contextLength < 2048}
-              onClick={() => onContinue({ path: "local-server", serverKind: kind, baseUrl, model, contextLength })}
+              onClick={() =>
+                onContinue({
+                  path: "local-server",
+                  serverKind: kind,
+                  baseUrl,
+                  model,
+                  contextLength,
+                  ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
+                })
+              }
             >
               Test this model
             </button>

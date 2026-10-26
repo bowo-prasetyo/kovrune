@@ -70,6 +70,10 @@ export function describeConnectionError(
     }
     return text;
   }
+  // llama.cpp answers 401 "Invalid API Key" when started with --api-key and the key is missing or wrong.
+  if (/returned 40[13]\b/.test(message)) {
+    return `${baseUrl} refused the request (${message.match(/returned (40[13])/)![1]}): it needs an API key, or the one entered is wrong. Enter the key the server was started with (llama.cpp: --api-key) under API key.`;
+  }
   return message;
 }
 
