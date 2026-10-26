@@ -134,14 +134,28 @@ async function matches(data: ArrayBuffer, file: CachedFile): Promise<boolean> {
  * match, and removes the old copies either way, so they don't take up storage
  * that "Delete the download" can no longer free.
  */
-export async function moveUnpinnedDownloads(model: PinnedBrowserModel, caches: CacheStorageLike, verified: VerifiedFiles): Promise<void> {
+export async function moveUnpinnedDownloads(
+  model: PinnedBrowserModel,
+  caches: CacheStorageLike,
+  verified: VerifiedFiles,
+  onProgress?: (fraction: number) => void,
+): Promise<void> {
   const unpinned = cachedFiles(model, { unpinned: true });
-  const moved: string[] = [];
+  const found: { file: CachedFile; old: CachedFile; cache: CacheLike; response: Response }[] = [];
   for (const [i, file] of cachedFiles(model).entries()) {
     const old = unpinned[i]!;
     const cache = await caches.open(file.cache);
     const response = await cache.match(old.url);
-    if (!response) continue;
+    if (response) found.push({ file, old, cache, response });
+  }
+  if (found.length === 0) return;
+
+  // Hashing an M1 download takes a few seconds per GB; report it like the check after a load.
+  const total = found.reduce((sum, f) => sum + f.file.size, 0);
+  let done = 0;
+  onProgress?.(0);
+  const moved: string[] = [];
+  for (const { file, old, cache, response } of found) {
     if (!(await cache.match(file.url))) {
       // One file at a time: the largest shard is a few hundred MB.
       const data = await response.arrayBuffer();
@@ -151,6 +165,8 @@ export async function moveUnpinnedDownloads(model: PinnedBrowserModel, caches: C
       }
     }
     await cache.delete(old.url);
+    done += file.size;
+    onProgress?.(done / total);
   }
   verified.add(moved);
 }

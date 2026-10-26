@@ -30,8 +30,9 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
   const pinned = pinnedModel(options.modelId);
   const verified = storedVerifiedFiles();
   let toVerify: CachedFile[] = [];
+  const reportCheck = (progress: number) => options.onProgress?.({ progress, timeElapsed: 0, text: CHECKING_DOWNLOAD });
   if (pinned) {
-    await moveUnpinnedDownloads(pinned, caches, verified);
+    await moveUnpinnedDownloads(pinned, caches, verified, reportCheck);
     toVerify = await filesToVerify(pinned, caches, verified);
   }
 
@@ -54,9 +55,8 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
   }
 
   if (pinned && toVerify.length > 0) {
-    const report = (progress: number) => options.onProgress?.({ progress, timeElapsed: 0, text: CHECKING_DOWNLOAD });
-    report(0);
-    const failed = await verifyDownloads(toVerify, caches, report);
+    reportCheck(0);
+    const failed = await verifyDownloads(toVerify, caches, reportCheck);
     if (failed.length > 0) {
       await engine.unload().catch(() => {});
       worker.terminate();

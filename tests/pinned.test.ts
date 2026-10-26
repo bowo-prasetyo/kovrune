@@ -171,7 +171,9 @@ describe("checking downloaded files", () => {
     caches.put("webllm/model", oldShard.url, "a different version");
     assert.equal(await isDownloaded(toy, caches), true);
 
-    await moveUnpinnedDownloads(toy, caches, verified);
+    const progress: number[] = [];
+    await moveUnpinnedDownloads(toy, caches, verified, (p) => progress.push(p));
+    assert.deepEqual([progress[0], progress.at(-1), progress.length], [0, 1, 6]);
     for (const f of cachedFiles(toy, { unpinned: true })) assert.equal(caches.get(f.cache, f.url), undefined, f.url);
     for (const f of cachedFiles(toy)) {
       const moved = f.path !== "params_shard_0.bin";
@@ -180,6 +182,10 @@ describe("checking downloaded files", () => {
     }
     assert.equal(await isDownloaded(toy, caches), false);
     assert.deepEqual((await filesToVerify(toy, caches, verified)).map((f) => f.path), ["params_shard_0.bin"]);
+
+    const nothing: number[] = [];
+    await moveUnpinnedDownloads(toy, caches, verified, (p) => nothing.push(p));
+    assert.deepEqual(nothing, [], "no progress when there is nothing to move");
   });
 
   it("deletes every copy and forgets the check", async () => {
