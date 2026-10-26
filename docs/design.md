@@ -120,11 +120,11 @@ Later milestones are compared with different alternatives:
 | Time from first visit to first useful result | Under 15 minutes on reference hardware, including model download |
 | Model download completion rate | Above 90% of started downloads |
 | Valid tool-call rate | Above 95% with constrained decoding on catalog models |
-| **False reassurance rate:** the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0 |
+| **False reassurance rate:** the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0; 6 of 40 (15%) over all suites in harness 0.15.0, and 3 of 25 (12%) with those answers re-checked under harness 0.16.0's rules |
 | 7-day and 30-day retention | Tracked with opt-in, privacy-preserving telemetry only |
 | Trusted-circle usage (after M4) | Number of circles with at least one delegated task per week |
 
-**Quotes found** is the label a reader is most likely to take as "the answer is right", so the false reassurance rate is the measure of Kovrune's core promise. The label means every quote is in its source and every judged sentence of the answer is backed by one (`labelledQuotesFound` in `src/agent/support.ts`); the benchmark and the app use the same rule.
+**Quotes found** is the label a reader is most likely to take as "the answer is right", so the false reassurance rate is the measure of Kovrune's core promise. The label means every quote is in its source, at least one sentence of the answer is long enough to judge, and every judged sentence is backed by one (`labelledQuotesFound` in `src/agent/support.ts`); the benchmark and the app use the same rule.
 
 Telemetry is **off by default** and opt-in only. Without it, these metrics come from voluntary reports and the evaluation set.
 

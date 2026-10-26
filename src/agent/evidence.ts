@@ -39,13 +39,29 @@ export type AnswerStatus = "verified" | "unverified" | "not-found";
 /** Quotes shorter than this many words are too weak to count as evidence. */
 export const MIN_QUOTE_WORDS = 3;
 
+/**
+ * "...", "…" or "[…]" inside a quote: words the model left out. A quote with them verifies when
+ * its pieces are in the source in order, each within MAX_ELIDED_CHARS of the one before.
+ */
+const ELISION = /\s*\[?\s*(?:…|\.{3,})\s*\]?\s*/g;
+
+/** Characters of source text one elision may stand for: enough for the rest of a sentence, not a page. */
+export const MAX_ELIDED_CHARS = 200;
+
 /** Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote. */
 export function normalizeForMatch(text: string): string {
   return text
+    // Compatibility forms are the same text: ligatures ("ﬁ" is "fi"), full-width letters, "…" as "...".
+    .normalize("NFKC")
     .toLowerCase()
+    // Soft hyphens and zero-width characters are invisible, so a model quoting the text leaves them out.
+    .replace(/[\u00ad\u200b-\u200d\u2060\ufeff]/g, "")
     .replace(/[‘’‚‛]/g, "'")
     .replace(/[“”„‟]/g, '"')
     .replace(/[‐-―−]/g, "-")
+    // A hyphen between letters is ignored, with any line break after it, so "financial" matches a
+    // PDF's "finan-\ncial" or "finan-cial", and "JSON- schema" (a quote of a line break) matches "JSON-schema".
+    .replace(/(\p{L})-\s*(?=\p{L})/gu, "$1")
     .replace(/ /g, " ")
     // Markdown emphasis and code marks are formatting, not words: models quoting "**Apps on
     // device**" or "`llama-server`" drop them (field suite, issue #35).
@@ -79,7 +95,8 @@ export function checkEvidence(
     if (quote.split(" ").filter(Boolean).length < MIN_QUOTE_WORDS) {
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
     }
-    if (containsWords(normalizeForMatch(text), quote)) {
+    const normalized = normalizeForMatch(text);
+    if (containsWords(normalized, quote) || containsElided(normalized, quote)) {
       const context = quoteContext(item.quote, text, resolvePageStarts(item.docId));
       return { ...item, verified: true, ...(context ? { context } : {}) };
     }
@@ -91,14 +108,42 @@ export function checkEvidence(
 const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{N}]/u.test(ch);
 
 /**
- * Whether `quote` occurs in `text` starting and ending on word boundaries, so a quote
- * cut mid-word (e.g. "can sometimes match hum…") does not match "human".
+ * Where `quote` first occurs in `text` at or after `from`, starting and ending on word boundaries,
+ * so a quote cut mid-word (e.g. "can sometimes match hum…") does not match "human"; -1 if nowhere.
  */
-function containsWords(text: string, quote: string): boolean {
-  for (let at = text.indexOf(quote); at >= 0; at = text.indexOf(quote, at + 1)) {
+function findWords(text: string, quote: string, from = 0): number {
+  for (let at = text.indexOf(quote, from); at >= 0; at = text.indexOf(quote, at + 1)) {
     const before = isWordChar(text[at - 1]) && isWordChar(quote[0]);
     const after = isWordChar(text[at + quote.length]) && isWordChar(quote.at(-1));
-    if (!before && !after) return true;
+    if (!before && !after) return at;
+  }
+  return -1;
+}
+
+function containsWords(text: string, quote: string): boolean {
+  return findWords(text, quote) >= 0;
+}
+
+/**
+ * Whether a normalized quote that leaves words out ("lumendb ... has been maintained by the tessel
+ * foundation") is in `text`: its pieces in order, each on word boundaries and at most
+ * MAX_ELIDED_CHARS after the one before. One piece must be MIN_QUOTE_WORDS long on its own, so
+ * "the ... of the" does not count as a quote.
+ */
+function containsElided(text: string, quote: string): boolean {
+  const pieces = quote.split(ELISION).map(stripEdgePunctuation).filter(hasWordChar);
+  const words = (piece: string) => piece.split(" ").filter(hasWordChar).length;
+  if (pieces.length < 2 || Math.max(...pieces.map(words)) < MIN_QUOTE_WORDS) return false;
+  const [first, ...rest] = pieces as [string, ...string[]];
+  for (let at = findWords(text, first); at >= 0; at = findWords(text, first, at + 1)) {
+    let end = at + first.length;
+    const chained = rest.every((piece) => {
+      const next = findWords(text, piece, end);
+      if (next < 0 || next - end > MAX_ELIDED_CHARS) return false;
+      end = next + piece.length;
+      return true;
+    });
+    if (chained) return true;
   }
   return false;
 }
@@ -112,15 +157,33 @@ const hasWordChar = (key: string) => /[\p{L}\p{N}]/u.test(key);
  * Where a quote is in the source text, as character offsets of its first and last word. Words
  * are compared as in the closest-passage diff, so case, quote marks and edge punctuation do not
  * matter, and tokens without letters or digits (list markers, "«", "[…]") are skipped on both sides.
+ * For a quote that leaves words out, the span runs from its first piece to its last, so the
+ * passage shown includes what the quote left out.
  */
 export function locateQuote(quote: string, text: string): { start: number; end: number } | undefined {
-  const q = quote.split(/\s+/).map(wordKey).filter(hasWordChar);
-  if (!q.length) return undefined;
+  const pieces = quote
+    .split(ELISION)
+    .map((piece) => piece.split(/\s+/).map(wordKey).filter(hasWordChar))
+    .filter((keys) => keys.length);
+  if (!pieces.length) return undefined;
   const words = [...text.matchAll(/\S+/g)]
     .map((m) => ({ key: wordKey(m[0]), start: m.index, end: m.index + m[0].length }))
     .filter((w) => hasWordChar(w.key));
-  for (let i = 0; i + q.length <= words.length; i++) {
-    if (q.every((key, j) => words[i + j]!.key === key)) return { start: words[i]!.start, end: words[i + q.length - 1]!.end };
+  const matchesAt = (keys: string[], i: number) => i + keys.length <= words.length && keys.every((key, j) => words[i + j]!.key === key);
+  const [first, ...rest] = pieces as [string[], ...string[][]];
+  for (let i = 0; i < words.length; i++) {
+    if (!matchesAt(first, i)) continue;
+    let last = i + first.length - 1;
+    const chained = rest.every((keys) => {
+      for (let j = last + 1; j < words.length && words[j]!.start - words[last]!.end <= MAX_ELIDED_CHARS; j++) {
+        if (matchesAt(keys, j)) {
+          last = j + keys.length - 1;
+          return true;
+        }
+      }
+      return false;
+    });
+    if (chained) return { start: words[i]!.start, end: words[last]!.end };
   }
   return undefined;
 }

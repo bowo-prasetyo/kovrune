@@ -23,7 +23,7 @@ export function detectKind(fileName: string, mimeType = ""): DocumentKind | unde
   return undefined;
 }
 
-const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", shy: "\u00ad", nbsp: " " };
 
 /** Readable text from HTML: drops scripts and styles, keeps block structure as line breaks. */
 export function htmlToText(html: string): string {
@@ -44,6 +44,20 @@ export function htmlToText(html: string): string {
     .replace(/ *\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+/**
+ * Joins a word broken across lines at a hyphen: "JSON-\nschema" becomes "JSON-schema", and a word
+ * hyphenated by typesetting ("finan-\ncial") becomes "finan-cial". The hyphen stays because the
+ * two cannot be told apart (PDFs made from Markdown break lines at compounds' own hyphens), and
+ * quote matching ignores a hyphen between letters, so a quote of "financial" still verifies.
+ * A soft hyphen marks typesetting only, so it is dropped, with its line break.
+ */
+export function joinHyphenatedLines(text: string): string {
+  return text
+    .replace(/(\p{L})-[ \t]*\n[ \t]*(?=\p{L})/gu, "$1-")
+    .replace(/(\p{L})\u00ad[ \t]*\n[ \t]*(?=\p{L})/gu, "$1")
+    .replace(/\u00ad/g, "");
 }
 
 /** The subset of pdf.js this module uses, so browser and Node builds can both be passed in. */
@@ -79,7 +93,7 @@ export async function extractPdfText(
         page += item.str;
         page += item.hasEOL ? "\n" : item.str && !item.str.endsWith(" ") ? " " : "";
       }
-      pages.push(page.replace(/[ \t]+/g, " ").trim());
+      pages.push(joinHyphenatedLines(page.replace(/[ \t]+/g, " ").trim()));
     }
     let text = "";
     const pageStarts: number[] = [];
@@ -112,6 +126,6 @@ export async function extractText(
     };
   }
   const raw = new TextDecoder().decode(bytes);
-  const text = kind === "html" ? htmlToText(raw) : raw.replace(/\r\n/g, "\n").trim();
+  const text = (kind === "html" ? htmlToText(raw) : raw.replace(/\r\n/g, "\n").trim()).replace(/\u00ad/g, "");
   return { kind, text, warning: text ? undefined : "This file has no text." };
 }

@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import { answerStatus, checkEvidence, closestPassage, normalizeForMatch } from "../src/agent/evidence.ts";
 import { ResearchLibrary } from "../src/agent/research.ts";
 import { chunkDocument, parentId } from "../src/documents/chunk.ts";
-import { detectKind, extractText, htmlToText, type PdfJsLike } from "../src/documents/extract.ts";
+import { detectKind, extractText, htmlToText, joinHyphenatedLines, type PdfJsLike } from "../src/documents/extract.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 
 describe("evidence check", () => {
@@ -30,7 +30,7 @@ describe("evidence check", () => {
     assert.equal(check("Select the UML Activity Diagram. A new project is initialized with a model", slides), true);
     assert.equal(check("Create a Papyrus project by : Using the creation wizard", slide), true);
     assert.equal(check("Create a Papyrus model by : Using the creation wizard", slide), false, "words must still match");
-    assert.equal(normalizeForMatch("well-known - x • y"), "well-known x y", "hyphens inside words stay");
+    assert.equal(normalizeForMatch("well-known - x • y"), "wellknown x y", "list markers go, hyphens inside words are ignored");
   });
 
   it("ignores Markdown emphasis and code marks, which models drop when quoting", () => {
@@ -79,6 +79,43 @@ describe("evidence check", () => {
     assert.equal(answerStatus(true, unverified), "unverified");
     assert.equal(answerStatus(true, []), "unverified");
     assert.equal(answerStatus(false, []), "not-found");
+  });
+
+  const check = (quote: string, text: string) => checkEvidence([{ docId: "d", quote }], () => text)[0]!;
+
+  it("verifies a quote that leaves words out with an ellipsis (benchmark task r01)", () => {
+    // Qwen3.5-4B quoted "LumenDB ... has been maintained by the Tessel Foundation since 2022." and the
+    // right answer failed its quote check.
+    const overview = corpus.find((doc) => doc.id === "lumen-overview")!.text;
+    for (const quote of [
+      "LumenDB ... has been maintained by the Tessel Foundation since 2022.",
+      "LumenDB … has been maintained by the Tessel Foundation since 2022.",
+      "LumenDB [...] has been maintained by the Tessel Foundation since 2022.",
+      "LumenDB is an embedded key-value store ... maintained by the Tessel Foundation",
+    ]) {
+      const checked = check(quote, overview);
+      assert.equal(checked.verified, true, quote);
+      // The passage shown is the source's own text, including the words the quote left out.
+      assert.match(checked.context!.passage, /^LumenDB is an embedded .* by Mira Okafor .* the Tessel Foundation/s, quote);
+    }
+  });
+
+  it("rejects an ellipsis that joins pieces out of order, far apart, or too short to be a quote", () => {
+    const text = `The fix is included in 3.2. ${"Unrelated text. ".repeat(20)}The fix is not included in 3.1.`;
+    assert.equal(check("The fix is ... in 3.2.", text).verified, true);
+    assert.equal(check("in 3.2 ... The fix is included", text).verified, false, "pieces must be in order");
+    assert.equal(check("The fix is included ... not included in 3.1", text).verified, false, "an elision stands for at most 200 characters");
+    assert.equal(check("The fix ... in ... 3.2", text).verified, false, "one piece must be three words long");
+    assert.equal(check("The fix is ... in 3.4.", text).verified, false, "every piece must be in the source");
+  });
+
+  it("matches ligatures, soft hyphens and words hyphenated at a line end", () => {
+    const quote = "the financial statements were audited";
+    assert.equal(check(quote, "We confirm the ﬁnancial statements were audited.").verified, true, "ligature");
+    assert.equal(check(quote, "We confirm the finan\u00adcial statements were audited.").verified, true, "soft hyphen");
+    assert.equal(check(quote, "We confirm the finan-\ncial statements were audited.").verified, true, "line-end hyphen");
+    assert.equal(check("a well-known result", "This is a well-\nknown result.").verified, true, "hyphenated word broken at its hyphen");
+    assert.equal(check("the finance statements were audited", "We confirm the finan-\ncial statements were audited.").verified, false);
   });
 
   it("normalizes dashes and non-breaking spaces", () => {
@@ -162,6 +199,40 @@ describe("text extraction", () => {
     const result = await extractText({ name: "scan.pdf", arrayBuffer: async () => new ArrayBuffer(4) }, async () => emptyPdf);
     assert.equal(result.text, "");
     assert.match(result.warning ?? "", /scanned/);
+  });
+
+  it("joins words broken across lines at a hyphen, keeping the hyphen", async () => {
+    // The field suite's design PDF breaks lines at compounds' own hyphens ("JSON-\nschema"), and
+    // typeset papers hyphenate words ("finan-\ncial"): the two cannot be told apart.
+    assert.equal(joinHyphenatedLines("text with JSON-\nschema and\nfinan- \ncial state-\nments"), "text with JSON-schema and\nfinan-cial state-ments");
+    assert.equal(joinHyphenatedLines("finan­\ncial and soft­hyphens"), "financial and softhyphens");
+    assert.equal(joinHyphenatedLines("A list:\n- one\n- two"), "A list:\n- one\n- two", "list markers stay on their lines");
+    const lines = ["The finan-", "cial statements", "were audited."];
+    const pdf: PdfJsLike = {
+      getDocument: () => ({
+        promise: Promise.resolve({
+          numPages: 2,
+          getPage: async (n: number) => ({
+            getTextContent: async () => ({ items: n === 1 ? lines.map((str) => ({ str, hasEOL: true })) : [{ str: "Page two." }] }),
+          }),
+        }),
+        destroy: async () => {},
+      }),
+    };
+    const result = await extractText({ name: "paper.pdf", arrayBuffer: async () => new ArrayBuffer(4) }, async () => pdf);
+    assert.equal(result.text, "The finan-cial statements\nwere audited.\n\nPage two.");
+    assert.equal(result.text.slice(result.pageStarts![1]), "Page two.", "page offsets follow the joined text");
+    const [checked] = checkEvidence([{ docId: "paper", quote: "the financial statements were audited" }], () => result.text, () => result.pageStarts);
+    assert.equal(checked!.verified, true);
+  });
+
+  it("drops soft hyphens from text and HTML files", async () => {
+    const file = (name: string, content: string) => ({ name, arrayBuffer: async () => new TextEncoder().encode(content).buffer as ArrayBuffer });
+    const noPdf = async (): Promise<PdfJsLike> => {
+      throw new Error("not needed");
+    };
+    assert.equal((await extractText(file("a.txt", "finan­cial"), noPdf)).text, "financial");
+    assert.equal((await extractText(file("a.html", "<p>finan&shy;cial and data&#173;base</p>"), noPdf)).text, "financial and database");
   });
 });
 

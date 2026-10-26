@@ -75,6 +75,14 @@ export function describeStatus(
           tone: "verified",
         };
       }
+      if (found === evidence.length && support?.judged === 0) {
+        return {
+          label: "Quotes found, answer too short to check",
+          detail:
+            "Every quote below is word for word in the source it cites, but the answer is too short to compare with them. Short answers like this are often wrong even with real quotes: check that the quotes answer your question.",
+          tone: "unverified",
+        };
+      }
       return found === evidence.length
         ? {
             label: coverage!,

@@ -41,6 +41,7 @@ Either way, the wizard then tests the model (about a minute on capable hardware)
 
 Then add documents (PDF, text, Markdown or HTML), or tick Wikipedia or OpenAlex to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document:
 - **Quotes found**: every quote is word for word in your documents, and every sentence of the answer shares most of its words with a quote. This proves the quotes are real, not that the answer is right; check that they support the whole answer.
+- **Quotes found, answer too short to check**: the quotes are real, but the answer (such as a name or a number) is too short to compare with them. Short answers are often wrong even with real quotes, so check that the quotes answer your question.
 - **3 of 5 sentences backed by a quote**: the quotes are real, but the sentences marked ⚠ share few words with any of them, so they may come from the model's memory.
 - **Some quotes not found**, **Quotes not found** or **No quotes**: the answer isn't fully backed by its sources, so check it yourself. For a quote that is nearly right, the closest passage in the source is shown with the differences marked.
 - **Not found in your sources**: the model found no answer in your documents.

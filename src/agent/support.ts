@@ -100,14 +100,19 @@ export function sentenceSupport(
 
 /**
  * Whether the app labels an answer "Quotes found": a quote checked out, every quote is in its
- * source, and every judged sentence is backed. This is the label a reader is most likely to take
- * as "the answer is right", so the share of such answers that are wrong is tracked as the
- * false reassurance rate (docs/design.md §1.6).
+ * source, and at least one sentence was judged and every judged sentence is backed. This is the
+ * label a reader is most likely to take as "the answer is right", so the share of such answers
+ * that are wrong is tracked as the false reassurance rate (docs/design.md §1.6).
+ *
+ * An answer too short to judge, such as "LumenDB 3.2" or "40", does not get the label: nothing
+ * compared it with the quotes. In the harness 0.15.0 reports (Qwen3.5-2B and 4B), such answers
+ * were 13 of the 16 wrong answers labelled "Quotes found", and 13 of the 38 so labelled were wrong.
+ * Answers saved before sentence support have no `support` and keep the rule they had.
  */
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
   support?: { judged: number; backed: number },
 ): boolean {
-  return status === "verified" && evidence.every((e) => e.verified) && (!support || support.backed === support.judged);
+  return status === "verified" && evidence.every((e) => e.verified) && (!support || (support.judged > 0 && support.backed === support.judged));
 }
