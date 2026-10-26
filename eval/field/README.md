@@ -14,7 +14,7 @@ Before a change to the research prompt or the guards (repeat, last-step, read-be
 
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0 and 0.20.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0, 0.20.0 and 0.21.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -30,6 +30,7 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.17.0, not adopted | 17/24 (71%) | 20/22 | 8/8 | 4/4 | 3 of 15 | [json](../results/full-sentences-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.19.0 | 31/36 (86%): 20/24 and 11/12 in other languages | 19/22 | 8/8 | 3/4 | 2 of 17 | [json](../results/field-0.19-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.20.0 | **32/36 (89%)** | 19/22 | 8/8 | **4/4** | 2 of 18 | [json](../results/field-0.20-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.21.0 | 32/36 (89%) | 19/22 | 8/8 | 4/4 | 2 of 18 | [json](../results/field-0.21-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -66,6 +67,11 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **No regressions on either model.** The guard fired on 13 of 4B's tasks, including 6 unanswerable questions. After reading, 4B still said "not found" on all of them, which is the risk a guard like this carries. Tasks where the guard did not fire took the same actions as in 0.19.0 (57 of 57 for 4B, 64 of 64 for 2B).
 - **Cost:** about one more model call on the tasks where it fires, 0.3 more calls per task on average for 4B and 0.2 for 2B.
 - **Against the rule:** the field suite improves on 4B and is unchanged on 2B, and nothing regresses. Adopted.
+
+**A guard for the reply's language (0.21.0).** 4B answered the Japanese question `f28` in English: "The provided documents do not contain information about…". Now `final_answer` is sent back once when the answer is in another writing system than the question (Latin, Chinese or Japanese, Korean, Cyrillic, Greek, Arabic, Hebrew, Devanagari, Thai). The model is asked to answer in the question's language and keep the quotes as they are. Answers too short to judge, such as "3776.12 m", are not checked.
+- **`f28` is now answered in Japanese**, still correctly "not found". The model was sent back twice: first to read (0.20.0), then for the language.
+- **Nothing else changed:** on 4B, the other 69 tasks took the same actions as in 0.20.0. 2B was not re-run. Checked against its 0.20.0 report, none of its 76 final answers would be sent back, so its run would repeat 0.20.0.
+- **Limit:** writing systems, not languages, are compared, so an English answer to a French question passes. Telling them apart needs a language detector.
 
 ### Runs repeat on one machine, not across machines
 
