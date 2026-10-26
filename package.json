@@ -12,6 +12,8 @@
     "dev": "vite",
     "build": "vite build",
     "checksums": "node --experimental-strip-types scripts/checksums.ts",
+    "release:sign": "node --experimental-strip-types scripts/release.ts sign",
+    "release:verify": "node --experimental-strip-types scripts/release.ts verify",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\"",

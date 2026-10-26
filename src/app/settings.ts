@@ -10,6 +10,8 @@ export interface ServerSettings {
   baseUrl: string;
   model: string;
   contextLength: number;
+  /** For a server started with an API key (llama.cpp's --api-key); sent with every request. */
+  apiKey?: string;
 }
 
 export interface BrowserSettings {
@@ -46,8 +48,15 @@ export function parseSettings(raw: string | null): Settings | undefined {
       typeof value.contextLength === "number" &&
       value.contextLength >= 2048
     ) {
-      const { serverKind, baseUrl, model, contextLength } = value as Omit<ServerSettings, "path">;
-      return { path: "local-server", serverKind, baseUrl, model, contextLength };
+      const { serverKind, baseUrl, model, contextLength, apiKey } = value as Omit<ServerSettings, "path">;
+      return {
+        path: "local-server",
+        serverKind,
+        baseUrl,
+        model,
+        contextLength,
+        ...(typeof apiKey === "string" && apiKey ? { apiKey } : {}),
+      };
     }
   } catch {
     // Fall through: treat as no settings.

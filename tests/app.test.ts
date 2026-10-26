@@ -8,7 +8,7 @@ import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/l
 import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
 import { slowModelAdvice } from "../src/app/models.ts";
 import { parseSettings } from "../src/app/settings.ts";
-import { listModels } from "../src/models/local-endpoint.ts";
+import { listModels, LocalEndpointModel } from "../src/models/local-endpoint.ts";
 
 describe("device advisor", () => {
   it("recommends a local server without WebGPU or 16-bit shaders", () => {
@@ -190,5 +190,34 @@ describe("slow model advice", () => {
     const browser = slowModelAdvice({ path: "browser", modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 }, 15)!;
     assert.match(browser, /choose Qwen3\.5-2B/);
     assert.doesNotMatch(browser, /WSL/);
+  });
+});
+
+describe("API key for a model server", () => {
+  const saved = { path: "local-server", serverKind: "llama.cpp", baseUrl: "http://192.168.1.20:8080/v1", model: "qwen", contextLength: 4096 };
+
+  it("is saved with the setup, and an empty one is left out", () => {
+    assert.deepEqual(parseSettings(JSON.stringify({ ...saved, apiKey: "s3cret" })), { ...saved, apiKey: "s3cret" });
+    assert.equal("apiKey" in parseSettings(JSON.stringify({ ...saved, apiKey: "" }))!, false);
+    assert.equal("apiKey" in parseSettings(JSON.stringify({ ...saved, apiKey: 42 }))!, false);
+  });
+
+  it("is sent with every request the app makes", async () => {
+    const seen: Array<string | null> = [];
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      seen.push(new Headers(init?.headers).get("authorization"));
+      return new Response(JSON.stringify({ data: [{ id: "qwen" }] }), { status: 200 });
+    }) as typeof fetch;
+    await listModels(saved.baseUrl, { apiKey: "s3cret", fetchImpl });
+    const model = new LocalEndpointModel({ baseUrl: saved.baseUrl, model: "qwen", contextLength: 4096, apiKey: "s3cret", fetchImpl });
+    for await (const _chunk of model.generate({ messages: [{ role: "user", content: "hi" }], maxTokens: 4 })) {
+      // The fake answers with JSON, not a stream; only the request matters here.
+    }
+    assert.deepEqual(seen, ["Bearer s3cret", "Bearer s3cret"]);
+  });
+
+  it("explains a refused request", () => {
+    const message = describeConnectionError(new Error('Server returned 401: {"error":{"message":"Invalid API Key"}}'), saved.baseUrl);
+    assert.match(message, /refused the request \(401\).*needs an API key.*--api-key/);
   });
 });

@@ -1,0 +1,7 @@
+# Keys allowed to sign Kovrune releases, in the "allowed signers" format of ssh-keygen
+# (docs/releases.md). One line per key:
+#
+#   <name> namespaces="kovrune-release" ssh-ed25519 AAAA... <comment>
+#
+# `npm run release:verify` and the "Release signature" workflow check signatures against
+# the keys listed here, in the commit the release was tagged from.

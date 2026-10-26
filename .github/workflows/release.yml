@@ -1,8 +1,9 @@
 name: Release
 
 # Builds a release from a version tag (v*) as a draft GitHub release, with the SHA-256
-# of every file, so anyone can rebuild the tag and compare (docs/releases.md).
-# Releases are not signed yet; signing comes with the hosting in M2 slice 5.
+# of every file, so anyone can rebuild the tag and compare (docs/releases.md). The owner
+# rebuilds the tag, signs SHA256SUMS with a key CI never sees, attaches SHA256SUMS.sig and
+# publishes; release-signature.yml unpublishes a release whose signature doesn't check out.
 
 on:
   push:
@@ -37,5 +38,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
             --title "Kovrune $GITHUB_REF_NAME" \
-            --notes "Built by GitHub Actions from $GITHUB_REF_NAME ($GITHUB_SHA) with Node $(node --version). Not yet signed. To check it, rebuild the tag and compare with SHA256SUMS: see docs/releases.md." \
+            --notes "Built by GitHub Actions from $GITHUB_REF_NAME ($GITHUB_SHA) with Node $(node --version). To publish: rebuild the tag, run npm run release:sign, attach SHA256SUMS.sig, then publish (docs/releases.md). To check it: npm run release:verify, or rebuild the tag and compare with SHA256SUMS." \
             "dist/kovrune-$GITHUB_REF_NAME.tar.gz" dist/SHA256SUMS

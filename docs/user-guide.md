@@ -125,16 +125,20 @@ If the server fails to start or the computer becomes very slow with the bigger m
 If your laptop is slow but you have a faster computer on the same network, such as a desktop with a GPU or more memory, run the server there and use Kovrune on the laptop. Answers come at the desktop's speed, and the desktop can run the bigger Qwen3.5-4B even when the laptop can't.
 
 **On the desktop:**
-1. Set up llama.cpp and start the server as above, with `--host 0.0.0.0` so other computers can reach it.
+1. Set up llama.cpp and start the server as above, with `--host 0.0.0.0` so other computers can reach it, and with an API key so that only you can use it. Make a key and note it, then pass it to the server:
+   ```bash
+   KEY=$(openssl rand -hex 16); echo "$KEY"
+   ./llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080 --api-key "$KEY"
+   ```
 2. Find its IP address on your network, for example `192.168.1.20`: `ipconfig` on Windows (IPv4 Address), `ipconfig getifaddr en0` on macOS, `hostname -I` on Linux.
 3. Allow incoming connections on port 8080 in its firewall. Windows asks the first time `llama-server` starts; choose **Private networks**.
 4. If the server runs in WSL, other computers can't reach it by default. WSL's mirrored networking mode (`networkingMode=mirrored` under `[wsl2]` in `%UserProfile%\.wslconfig`) makes it reachable; Microsoft's [WSL networking guide](https://learn.microsoft.com/windows/wsl/networking) has the steps, including the firewall rule it may need.
 
-**On the laptop,** in the app: **Use a local model server** → change the address to `http://192.168.1.20:8080/v1` (your desktop's address) → **Connect** → **Test this model**.
+**On the laptop,** in the app: **Use a local model server** → change the address to `http://192.168.1.20:8080/v1` (your desktop's address) → enter the key under **API key** → **Connect** → **Test this model**. The key is saved in this browser with the rest of the setup; without it, or with a wrong one, **Connect** says the server refused the request.
 
 - **On the preview site,** Chrome and Edge ask for the **Local network access** permission; choose **Allow**. This is the other permission from the one above: **Apps on device** covers servers on your own computer, **Local network access** covers other devices.
 - **Use the IP address, or a name ending in `.local`** (Macs have one, such as `my-desktop.local`). From the preview site, the browser blocks other names, such as `my-desktop` or `my-desktop.lan`, even with the permission allowed.
-- **Only on a network you trust,** such as your home network. The connection isn't encrypted: your questions and the passages of your documents the model reads travel to the desktop, and anyone on the same network could read them or use the server. Don't do this on public, office or campus Wi-Fi.
+- **Only on a network you trust,** such as your home network. The API key stops others on the network from using your server, but the connection isn't encrypted: your questions, the passages of your documents the model reads, and the key itself travel to the desktop in the clear, and anyone on the same network could read them. Don't do this on public, office or campus Wi-Fi.
 
 ## 4. Ask questions
 

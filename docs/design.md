@@ -547,7 +547,7 @@ The deployed app can read every user's identity keys and private data, so its in
 - **Reproducible builds:** a release built from a tag can be rebuilt byte for byte, and CI checks this on every pull request.
 - **Release checksums:** a tag produces a draft release with `SHA256SUMS`.
 - **Content Security Policy:** in place as above. Because the configured endpoint is only known once setup is saved, `connect-src` is open during setup and narrowed to Hugging Face, GitHub's raw files, Wikipedia, OpenAlex and the saved model server afterwards.
-- **Not done yet:** signing waits for slice 5. The policy is a `<meta>` tag until then, so it can't set `frame-ancestors` and doesn't cover workers.
+- **Since slice 5:** releases are signed with an SSH key the owner holds, never CI: the owner rebuilds the tag, `npm run release:sign` checks the rebuild against CI's `SHA256SUMS` and signs it, and a workflow unpublishes any release whose signature doesn't verify against `release-signers`. The app is hosted on Cloudflare Pages, which sends the policy as a header (§7.4).
 
 ### 7.4 Hosting requirements
 
@@ -682,7 +682,7 @@ So each estimate below has two parts. **Build** is Claude's work: implementation
 | Milestone | Build | Waits on | Elapsed |
 | --- | --- | --- | --- |
 | M1 (rest) | Fixes from the usability findings | Recruiting and running 3–5 usability sessions; a class 2 run | 2–4 weeks |
-| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); resuming interrupted questions (slice 2); storage management and backup (slice 3); reproducible builds and CSP (slice 4). Left: signed releases with the new hosting | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
+| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Done: pinned, verified downloads (slice 1); resuming interrupted questions (slice 2); storage management and backup (slice 3); reproducible builds and CSP (slice 4); Cloudflare Pages hosting and signed releases (slice 5). Left: the owner's signing key, then a first signed release | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
 | M2.5 | 3–5 weeks: Pyodide and QuickJS sandboxes, coding tasks in the evaluation set | A decision to build it (below) | Not scheduled |
 | M3 | 3–4 weeks: identities, invitations, WebRTC transport, signaling | The go/no-go below; then a real circle of 2–5 people to test with, and a signaling server someone runs | 6–10 weeks after a go |
 | M4 | 4–6 weeks | M3 findings; relays operated by the owner or the circles | Re-plan after M3 |

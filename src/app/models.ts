@@ -88,6 +88,7 @@ export function openModel(settings: Settings): Promise<LanguageModel> {
       baseUrl: settings.baseUrl,
       model: settings.model,
       contextLength: settings.contextLength,
+      apiKey: settings.apiKey,
       extraBody: SERVER_PRESETS[settings.serverKind].extraBody,
     }),
   );
