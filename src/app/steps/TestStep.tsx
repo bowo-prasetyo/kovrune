@@ -24,7 +24,7 @@ export function TestStep({
 }: {
   settings: Settings;
   onBack: () => void;
-  onPassed: () => void;
+  onPassed: (result: SelfCheckResult) => void;
 }) {
   const load = useModelLoad(settings);
   const [state, setState] = useState<TestState>({ phase: "waiting" });
@@ -113,7 +113,7 @@ export function TestStep({
           <button onClick={() => setAttempt((n) => n + 1)}>Test again</button>
         )}
         {state.phase === "done" && state.result.passed && (
-          <button className="primary" onClick={onPassed}>
+          <button className="primary" onClick={() => onPassed(state.result)}>
             Save and continue
           </button>
         )}

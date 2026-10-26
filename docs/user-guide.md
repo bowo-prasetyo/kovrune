@@ -116,6 +116,8 @@ Then, in the app: **Use a local model server** → keep the address `http://127.
 2. Start it again with the other model file after `-m`, for example `./llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080`, and wait for `listening on`.
 3. In the app: **Change setup** → **Use a local model server** → **Connect** (it lists the new model) → **Test this model**. The header then names the new model.
 
+**Change setup** doesn't throw your setup away. The setup steps show it as **Current setup**, with its last model test (date and speed), and it stays in use until a new setup passes its test. **Keep current setup** goes back to your questions without changing anything. The research screen also shows the last test next to the setup's name.
+
 If the server fails to start or the computer becomes very slow with the bigger model, close other programs, especially browser tabs, and try again.
 
 **On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://kovrune.pages.dev`).
