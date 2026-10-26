@@ -259,7 +259,7 @@ describe("research with Wikipedia", () => {
     assert.deepEqual(tools(2), ["read", "search_openalex", "final_answer"], "Wikipedia found results, so it waits for a read");
     assert.equal(result.agent.stopReason, "final");
     assert.deepEqual(
-      result.agent.calls.map((c) => [c.tool, c.rejected ?? false]),
+      result.agent.calls.map((c) => [c.tool, Boolean(c.rejected)]),
       [["search_wikipedia", false], ["search_openalex", false], ["final_answer", true], ["read", false], ["final_answer", false]],
     );
     assert.match(model.requests[0]!.messages[0]!.content, /Search each of Wikipedia and OpenAlex/);

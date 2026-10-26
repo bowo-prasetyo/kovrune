@@ -64,6 +64,33 @@ export function words(text: string): string[] {
   return out;
 }
 
+/** Writing systems told apart when checking that an answer is in the question's language. */
+const SCRIPTS: Array<[string, RegExp]> = [
+  ["Latin", /\p{sc=Latin}/u],
+  ["Chinese or Japanese", /[\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}\u3005\u30fc]/u],
+  ["Korean", /\p{sc=Hangul}/u],
+  ["Cyrillic", /\p{sc=Cyrillic}/u],
+  ["Greek", /\p{sc=Greek}/u],
+  ["Arabic", /\p{sc=Arabic}/u],
+  ["Hebrew", /\p{sc=Hebrew}/u],
+  ["Devanagari", /\p{sc=Devanagari}/u],
+  ["Thai", /\p{sc=Thai}/u],
+];
+
+/**
+ * The writing system most of a text's letters are in, with their weight (textWeight, so a Chinese
+ * character counts like a short English word). Undefined for a text without letters, such as "1987".
+ */
+export function mainScript(text: string): { script: string; weight: number } | undefined {
+  const weights = new Map<string, number>();
+  for (const ch of text) {
+    const script = SCRIPTS.find(([, pattern]) => pattern.test(ch))?.[0];
+    if (script) weights.set(script, (weights.get(script) ?? 0) + textWeight(ch));
+  }
+  const [script, weight] = [...weights].sort((a, b) => b[1] - a[1])[0] ?? [];
+  return script ? { script, weight: weight! } : undefined;
+}
+
 /** How many characters of a text belong to unspaced scripts. */
 export function unspacedCount(text: string): number {
   return text.match(UNSPACED_ALL)?.length ?? 0;
