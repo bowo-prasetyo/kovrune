@@ -9,7 +9,7 @@ import { labelledQuotesFound } from "../src/agent/support.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
-import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
+import { RESEARCH_LIMITS, ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
 import { DocumentIndex } from "../src/tools/search.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
@@ -347,9 +347,9 @@ describe("benchmark", () => {
 
   it("counts wrong answers labelled Quotes found as false reassurance", async () => {
     const model = new ScriptedModel([
-      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
+      final(true, "LumenDB is maintained by the Tessel Foundation.", [MAINTAINER_QUOTE]),
       // A real quote, but the wrong license: the label would read "Quotes found".
-      final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
+      final(true, "LumenDB is released under the Apache-2.0 license.", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
     ]);
     const report = await runBenchmark({
       model,
@@ -477,7 +477,8 @@ describe("self-check", () => {
   const search = `{"tool":"search","args":{"query":"LumenDB license"}}`;
 
   it("passes when the model acts on the tool result, measuring speed on the warm call", async () => {
-    // 20 tokens in about 200 ms is about 100 tokens/s, so 8 calls of 256 tokens take about 20 s.
+    // 20 tokens in about 200 ms is about 100 tokens/s, so 8 calls of 512 tokens take about 41 s,
+    // and each open source's 2 calls about 10 s more.
     // Bounds are loose because timers can fire slightly early or late on busy CI machines.
     const model = new ScriptedModel([search, `{"tool":"read","args":{"docId":"lumen-overview"}}`], 200);
     const steps: number[] = [];
@@ -489,7 +490,18 @@ describe("self-check", () => {
     // The second call sees the search result for the fixed query.
     assert.match(model.requests[1]!.messages.at(-1)!.content, /untrusted data[\s\S]*lumen-overview/);
     assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond < 120, String(result.decodeTokensPerSecond));
-    assert.ok(result.maxResearchTaskMinutes >= 0.25 && result.maxResearchTaskMinutes <= 0.7, String(result.maxResearchTaskMinutes));
+    assert.ok(result.maxResearchTaskMinutes >= 0.5 && result.maxResearchTaskMinutes <= 1.4, String(result.maxResearchTaskMinutes));
+    assert.ok(result.minutesPerSource >= 0.1 && result.minutesPerSource <= 0.4, String(result.minutesPerSource));
+    assert.match(describeSelfCheck(result).join("\n"), /up to [\d.]+ min at this speed, and up to [\d.]+ min more for each of Wikipedia and OpenAlex/);
+  });
+
+  it("estimates the worst case from the limits research runs with", async () => {
+    // The estimate once assumed 256 tokens a call after research moved to 512 (harness 0.6.0).
+    const model = new ScriptedModel([search, `{"tool":"read","args":{"docId":"lumen-overview"}}`], 200);
+    const result = await runSelfCheck(model);
+    const secondsPerCall = (result.maxResearchTaskMinutes * 60) / RESEARCH_LIMITS.maxCalls;
+    assert.ok(secondsPerCall >= RESEARCH_LIMITS.maxTokensPerCall / result.decodeTokensPerSecond * 0.9, String(secondsPerCall));
+    assert.ok(Math.abs(result.minutesPerSource - (RESEARCH_LIMITS.callsPerSource * secondsPerCall) / 60) <= 0.1);
   });
 
   it("fails on broken output and reports what the model produced", async () => {

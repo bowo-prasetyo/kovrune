@@ -14,6 +14,7 @@ import type { ChatMessage, LanguageModel } from "../models/types.ts";
 import { createResearchTools, RESEARCH_SYSTEM } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, systemPrompt } from "./agent.ts";
+import { RESEARCH_LIMITS } from "./research.ts";
 
 export interface SelfCheckResult {
   passed: boolean;
@@ -29,12 +30,16 @@ export interface SelfCheckResult {
   seconds: number;
   /** Measured on the warm second call; 0 when step 1 failed. */
   decodeTokensPerSecond: number;
-  /** Worst case for one research task: every call uses its full token budget. */
+  /**
+   * Worst case for one research task over the user's documents: every call uses its full token
+   * budget (RESEARCH_LIMITS). A reply cut off at the limit is retried with more room, which can
+   * take longer still.
+   */
   maxResearchTaskMinutes: number;
+  /** What each ticked open source (Wikipedia, OpenAlex) can add to that, for its extra calls. */
+  minutesPerSource: number;
 }
 
-const RESEARCH_MAX_CALLS = 8;
-const RESEARCH_MAX_TOKENS = 256;
 const SELF_CHECK_QUERY = "LumenDB license";
 
 /**
@@ -87,6 +92,7 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
       seconds: round1(first.record.totalMs / 1000),
       decodeTokensPerSecond: 0,
       maxResearchTaskMinutes: 0,
+      minutesPerSource: 0,
     };
   }
 
@@ -104,7 +110,7 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
 
   const decodeMs = Math.max(record.totalMs - record.ttftMs, 1);
   const decodeTokensPerSecond = (record.completionTokens / decodeMs) * 1000;
-  const secondsPerCall = record.ttftMs / 1000 + RESEARCH_MAX_TOKENS / Math.max(decodeTokensPerSecond, 0.01);
+  const secondsPerCall = record.ttftMs / 1000 + RESEARCH_LIMITS.maxTokensPerCall / Math.max(decodeTokensPerSecond, 0.01);
   return {
     passed: usesResult,
     constrained,
@@ -115,7 +121,8 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
       : (record.error ?? `searched again (${record.tool} ${JSON.stringify(record.args)}) instead of using the search result`),
     seconds: round1((first.record.totalMs + record.totalMs) / 1000),
     decodeTokensPerSecond: round1(decodeTokensPerSecond),
-    maxResearchTaskMinutes: round1((RESEARCH_MAX_CALLS * secondsPerCall) / 60),
+    maxResearchTaskMinutes: round1((RESEARCH_LIMITS.maxCalls * secondsPerCall) / 60),
+    minutesPerSource: round1((RESEARCH_LIMITS.callsPerSource * secondsPerCall) / 60),
   };
 }
 
@@ -125,7 +132,9 @@ export function describeSelfCheck(result: SelfCheckResult): string[] {
     `Self-check ${result.passed ? "passed" : "FAILED"} in ${result.seconds} s (${result.constrained ? "constrained" : "unconstrained"} decoding).`,
   ];
   if (result.failedStep !== "first-action") {
-    lines.push(`Speed: ${result.decodeTokensPerSecond} tokens/s. A research task can take up to ${result.maxResearchTaskMinutes} min at this speed.`);
+    lines.push(
+      `Speed: ${result.decodeTokensPerSecond} tokens/s. A research task can take up to ${result.maxResearchTaskMinutes} min at this speed, and up to ${result.minutesPerSource} min more for each of Wikipedia and OpenAlex it searches.`,
+    );
   }
   if (!result.passed) {
     lines.push(`Error: ${result.error}`);

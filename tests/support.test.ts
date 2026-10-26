@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
-import { sentenceSupport, splitSentences } from "../src/agent/support.ts";
+import { labelledQuotesFound, sentenceSupport, splitSentences } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 
 const ADA = readFileSync(new URL("./fixtures/ada-lovelace-lead.txt", import.meta.url), "utf8");
@@ -117,8 +117,26 @@ describe("answer status with sentence support", () => {
     assert.match(status.detail, /2 of 4 sentences backed by a quote; the others are marked ⚠/);
   });
 
-  it("says nothing about sentences when none could be judged", () => {
-    assert.equal(describeStatus("verified", [ok], { judged: 0, backed: 0 }).label, "Quotes found");
-    assert.match(describeStatus("verified", [ok], { judged: 0, backed: 0 }).detail, /Check that the quotes support the whole answer/);
+  it("does not say Quotes found when the answer is too short to judge (benchmark tasks r04, u01)", () => {
+    // "LumenDB 3.2" gave one of the two fixed versions, and "40" was another company's head count:
+    // real quotes, and no sentence long enough to compare with them.
+    for (const answer of ["LumenDB 3.2", "40"]) {
+      const support = sentenceSupport(answer, [{ docId: "d", quote: "This release includes the fix for advisory LSA-2024-07.", verified: true }]);
+      assert.equal(support.judged, 0);
+      assert.equal(labelledQuotesFound("verified", [ok], support), false);
+      const status = describeStatus("verified", [ok], support);
+      assert.equal(status.label, "Quotes found, answer too short to check");
+      assert.equal(status.tone, "unverified");
+      assert.match(status.detail, /check that the quotes answer your question/);
+    }
+  });
+
+  it("keeps Quotes found for answers saved before sentence support", () => {
+    assert.equal(describeStatus("verified", [ok]).label, "Quotes found");
+    assert.match(describeStatus("verified", [ok]).detail, /Check that the quotes support the whole answer/);
+  });
+
+  it("keeps the missing quotes first for a short answer", () => {
+    assert.equal(describeStatus("verified", [bad, ok], { judged: 0, backed: 0 }).label, "Some quotes not found (1 of 2 found)");
   });
 });
