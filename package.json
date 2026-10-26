@@ -18,6 +18,7 @@
     "bench:endpoint": "node --experimental-strip-types eval/cli.ts",
     "bench:browser": "vite --config eval/browser/vite.config.ts",
     "bench:browser:build": "vite build --config eval/browser/vite.config.ts",
+    "build:redirect": "vite build --config redirect/vite.config.ts",
     "pin:browser-models": "node --experimental-strip-types scripts/pin-browser-models.ts"
   },
   "dependencies": {

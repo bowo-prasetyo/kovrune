@@ -22,6 +22,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run bench:browser:build
+      - run: npm run build:redirect
 
   # A release must rebuild byte for byte from its tag (docs/releases.md). Build the
   # commit twice, in different directories and time zones, and compare every file.

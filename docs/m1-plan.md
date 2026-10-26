@@ -377,7 +377,7 @@ Checked in the container, with Wikipedia and OpenAlex mocked (five results each)
   - **Result:** the field suite rises to 17/24 (2B) and 20/24 (4B). Research, unanswerable and pdf results are unchanged, and every task took the same actions as before.
   - **Side effect:** one wrong 2B answer now has a found quote and counts as false reassurance.
 
-**Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
+**Preview site.** (Since M2 slice 5 the preview is at <https://kovrune.pages.dev/>, and the address below forwards there.) To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
 - The browser path and the open sources work from the preview unchanged: WebLLM needs HTTPS, which Pages provides, and Wikipedia and OpenAlex accept requests from any site.
 - The local-server path goes from a public HTTPS page to `http://127.0.0.1`. llama.cpp's CORS default allows it; Ollama needs the site in `OLLAMA_ORIGINS`.
 - **Checked on the class 1 laptop (Chrome).**

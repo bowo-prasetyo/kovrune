@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../../agent/self-check.ts";
 import { LoadProgressView } from "../LoadProgressView.tsx";
-import { describeModelError, describeSetup, openModel } from "../models.ts";
+import { describeModelError, describeSetup, openModel, slowModelAdvice } from "../models.ts";
 import { SERVER_PRESETS } from "../servers.ts";
 import type { Settings } from "../settings.ts";
 import { useModelLoad } from "../useModelLoad.ts";
@@ -87,6 +87,10 @@ export function TestStep({
             ))}
           </ul>
         </div>
+      )}
+
+      {state.phase === "done" && state.result.passed && slowModelAdvice(settings, state.result.maxResearchTaskMinutes) && (
+        <p className="warning">{slowModelAdvice(settings, state.result.maxResearchTaskMinutes)}</p>
       )}
 
       {state.phase === "done" && !state.result.passed && settings.path === "browser" && (

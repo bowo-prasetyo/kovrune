@@ -15,6 +15,9 @@ declare const __KOVRUNE_BUILD__: BuildInfo | undefined;
 export const BUILD: BuildInfo =
   typeof __KOVRUNE_BUILD__ === "undefined" ? { kind: "development", commit: "", date: "", version: "" } : __KOVRUNE_BUILD__;
 
+/** Where the app is published (Cloudflare Pages, design §7.4); the old GitHub Pages preview forwards here. */
+export const APP_URL = "https://kovrune.pages.dev/";
+
 /** The repository the preview is built from, for the footer link. */
 export const REPO_URL = "https://github.com/bowo-prasetyo/kovrune";
 

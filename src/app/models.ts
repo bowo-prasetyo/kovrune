@@ -93,6 +93,34 @@ export function openModel(settings: Settings): Promise<LanguageModel> {
   );
 }
 
+/** Above this, the model test suggests ways to speed the model up. */
+export const SLOW_TASK_MINUTES = 10;
+
+/**
+ * Advice for a model test that passed but shows research tasks taking long, or undefined.
+ * The usual cause on laptops is other programs using the memory and processor the model
+ * needs (seen with large spreadsheets open: a third of the measured speed).
+ */
+export function slowModelAdvice(settings: Settings, maxTaskMinutes: number): string | undefined {
+  if (maxTaskMinutes <= SLOW_TASK_MINUTES) return undefined;
+  const advice = [
+    `At this speed a research question can take up to ${Math.round(maxTaskMinutes)} minutes.`,
+    "Programs that use a lot of memory or processor, such as large spreadsheets or many browser tabs, slow the model down: close them and press Test again.",
+  ];
+  const name = settings.path === "browser" ? (browserModelFor(settings.modelId)?.model.key ?? "") : settings.model;
+  if (/4b/i.test(name)) {
+    advice.push(
+      settings.path === "browser"
+        ? "Or choose Qwen3.5-2B, which is about twice as fast."
+        : "Or switch the server to Qwen3.5-2B, which is about twice as fast (Switch models in the user guide).",
+    );
+  }
+  if (settings.path === "local-server") {
+    advice.push("If the server runs in WSL, it may have too little memory: see Troubleshooting in the user guide.");
+  }
+  return advice.join(" ");
+}
+
 /** "Qwen3.5-4B in this browser" or "Qwen3.5-4B-Q4_K_M.gguf on llama.cpp server". */
 export function describeSetup(settings: Settings): string {
   if (settings.path === "browser") {
