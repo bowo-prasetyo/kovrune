@@ -2,9 +2,10 @@
 // browser model is loaded once per page visit (from the browser's cache after the
 // first download) and shared by the model test and the research screen.
 
-import { browserModelFor } from "../models/catalog.ts";
+import { BROWSER_MODELS, browserModelFor } from "../models/catalog.ts";
 import { LocalEndpointModel } from "../models/local-endpoint.ts";
 import type { LanguageModel } from "../models/types.ts";
+import { isQuotaError } from "./research/store.ts";
 import { describeConnectionError, modelLabel, SERVER_PRESETS } from "./servers.ts";
 import type { Settings } from "./settings.ts";
 
@@ -126,12 +127,60 @@ export async function requestPersistentStorage(): Promise<void> {
   await navigator.storage?.persist?.().catch(() => false);
 }
 
+export interface DownloadedModel {
+  modelId: string;
+  /** "Qwen3.5-4B" or "Qwen3.5-4B (32-bit)". */
+  label: string;
+  bytes: number;
+}
+
+/** The catalog models stored in this browser, with the size of their files. */
+export async function downloadedBrowserModels(): Promise<DownloadedModel[]> {
+  if (typeof caches === "undefined") return [];
+  const { isDownloaded, pinnedModel } = await import("../models/pinned.ts");
+  const found: DownloadedModel[] = [];
+  for (const model of BROWSER_MODELS) {
+    for (const variant of [model.f16, model.f32]) {
+      const pinned = pinnedModel(variant.modelId);
+      if (!pinned || !(await isDownloaded(pinned, caches).catch(() => false))) continue;
+      const bytes = [...pinned.files, pinned.modelLib].reduce((sum, f) => sum + f.size, 0);
+      found.push({ modelId: variant.modelId, label: `${model.label}${variant === model.f32 ? " (32-bit)" : ""}`, bytes });
+    }
+  }
+  return found;
+}
+
+export interface StorageStatus {
+  /** Bytes this site uses and may use, as the browser estimates them; undefined when it doesn't say. */
+  usage?: number;
+  quota?: number;
+  /** Whether the browser has agreed not to clear the site's data when the disk runs low; undefined when it can't say. */
+  persisted?: boolean;
+}
+
+export async function storageStatus(): Promise<StorageStatus> {
+  const storage = globalThis.navigator?.storage;
+  const [estimate, persisted] = await Promise.all([
+    storage?.estimate?.().catch(() => undefined),
+    storage?.persisted?.().catch(() => undefined),
+  ]);
+  return { usage: estimate?.usage, quota: estimate?.quota, persisted };
+}
+
+/** Asks the browser to keep the site's data. Returns whether it agreed. */
+export async function askToKeepData(): Promise<boolean> {
+  return (await globalThis.navigator?.storage?.persist?.().catch(() => false)) ?? false;
+}
+
 /** A user-facing explanation for a failed model call or load. */
 export function describeModelError(error: unknown, settings: Settings): string {
   if (settings.path === "local-server") return describeConnectionError(error, settings.baseUrl);
   const message = error instanceof Error ? error.message : String(error);
   if (/device.*lost|out of memory|OOM|allocation/i.test(message)) {
     return `The GPU ran out of memory or stopped responding (${message}). Try the lighter model, close other tabs, or use a local model server.`;
+  }
+  if (isQuotaError(error)) {
+    return "The browser has no more storage for this site, so the model could not be stored. Free disk space, or delete a model or documents you don't need (under Storage and backup on the research screen), and try again.";
   }
   if (/Integrity verification failed/i.test(message)) {
     return "The downloaded model did not match its published checksums, so it was deleted and not used. This usually means the download was damaged; it can also mean a file on the server was changed. Try again, and if it fails again, please report it at https://github.com/bowo-prasetyo/kovrune/issues.";

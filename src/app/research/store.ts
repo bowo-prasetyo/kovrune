@@ -145,3 +145,17 @@ export function savedTextBytes(documents: ReadonlyArray<{ text: string }>): numb
   const encoder = new TextEncoder();
   return documents.reduce((sum, d) => sum + encoder.encode(d.text).length, 0);
 }
+
+/** Whether an error means the browser's storage for the site is full. */
+export function isQuotaError(error: unknown): boolean {
+  const name = error instanceof Error || error instanceof DOMException ? error.name : "";
+  return name === "QuotaExceededError" || /quota/i.test(error instanceof Error ? error.message : String(error));
+}
+
+/** Why something could not be saved, in words that say what to do about it. */
+export function describeSaveError(error: unknown, what: string, consequence: string): string {
+  if (isQuotaError(error)) {
+    return `The browser has no more storage for this site, so ${what} could not be saved; ${consequence} Free space under Storage and backup, for example by deleting a model you don't use.`;
+  }
+  return `${what[0]!.toUpperCase()}${what.slice(1)} could not be saved in this browser (${error instanceof Error ? error.message : String(error)}); ${consequence}`;
+}
