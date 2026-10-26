@@ -10,7 +10,8 @@ import type { DocumentIndex } from "./search.ts";
 
 export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
 Search first, then read the documents you need. Some documents are outdated or corrected by later ones; prefer the most recent correction.
-Finish with final_answer. For each document that supports the answer, give its ID and a short quote copied word for word from that document.
+Finish with final_answer. Write the answer as a full sentence that names what the question asks about, for example "The museum opened in 1998." rather than "1998", so it can be checked against the quotes.
+For each document that supports the answer, give its ID and a short quote copied word for word from that document.
 If the documents do not contain the answer, set "found" to false, say what is missing, and give no evidence. Never guess.`;
 
 /**
