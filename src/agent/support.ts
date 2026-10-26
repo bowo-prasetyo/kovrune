@@ -3,6 +3,7 @@
 // each answer sentence is compared with the verified quotes, and sentences that share
 // few words with them are marked. This is a word-overlap heuristic, not a proof.
 
+import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
 import type { AnswerStatus, CheckedEvidence } from "./evidence.ts";
 
@@ -35,9 +36,9 @@ const STOP_WORDS = new Set(
   ).split(" "),
 );
 
+/** Words, without stop words, stemmed. In Chinese or Japanese, the pairs of neighbouring characters (scripts.ts). */
 function contentWords(text: string): string[] {
-  const tokens = text.toLowerCase().match(/[\p{L}\p{N}]+(?:[.-][\p{L}\p{N}]+)*/gu) ?? [];
-  return [...new Set(tokens.filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
+  return [...new Set(words(text).filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
 }
 
 /** Same word, allowing for the stemmer's single suffix: "hallucinat" (hallucinate) matches "hallucination". */
@@ -54,7 +55,8 @@ function sameWord(a: string, b: string): boolean {
  */
 export function splitSentences(answer: string): string[] {
   const sentences: string[] = [];
-  const boundary = /(?<!(?:^|\n)\s*\p{N}+)[.!?]+["”’)\]]*\s+(?=[\p{Lu}"“‘(\[])|\n\s*/gu;
+  // "。", "！", "？" and the Devanagari danda "।" end a sentence with or without a space after them.
+  const boundary = /(?<!(?:^|\n)\s*\p{N}+)[.!?]+["”’)\]]*\s+(?=[\p{Lu}"“‘(\[])|[。！？।]+[」』）"”’)\]]*\s*|\n\s*/gu;
   let start = 0;
   for (const match of answer.matchAll(boundary)) {
     const end = match.index + match[0].length;

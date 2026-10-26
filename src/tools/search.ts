@@ -2,6 +2,8 @@
 // uses it so results depend on the model and not on a retrieval model; the
 // app uses the same search over the user's documents.
 
+import { words } from "../documents/scripts.ts";
+
 export interface SourceDocument {
   id: string;
   title: string;
@@ -27,8 +29,9 @@ export function stem(token: string): string {
   return match ? match[1]! : token;
 }
 
+/** Search terms: words in any script (scripts.ts), without English stop words, stemmed. */
 function tokenize(text: string): string[] {
-  return (text.toLowerCase().match(/[a-z0-9]+(?:[.-][a-z0-9]+)*/g) ?? []).filter((t) => !STOP_WORDS.has(t)).map(stem);
+  return words(text).filter((t) => !STOP_WORDS.has(t)).map(stem);
 }
 
 export class DocumentIndex {
@@ -103,7 +106,8 @@ export class DocumentIndex {
 }
 
 function bestSnippet(text: string, terms: string[], weight: (term: string) => number, maxLength = 220): string {
-  const sentences = text.split(/(?<=[.!?:])\s+|\n+/).filter((s) => s.trim());
+  // "。", "！", "？" and the Devanagari danda "।" end sentences without a space after them.
+  const sentences = text.split(/(?<=[.!?:])\s+|(?<=[。！？।])\s*|\n+/).filter((s) => s.trim());
   let best = sentences[0] ?? "";
   let bestScore = -1;
   for (const sentence of sentences) {

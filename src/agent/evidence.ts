@@ -2,6 +2,8 @@
 // quote is verified against the cited document. Small models invent answers, so
 // the app shows whether an answer is backed by text that is really there.
 
+import { dropUnspacedGaps, isUnspaced, unspacedCount } from "../documents/scripts.ts";
+
 export interface EvidenceItem {
   docId: string;
   quote: string;
@@ -50,7 +52,7 @@ export const MAX_ELIDED_CHARS = 200;
 
 /** Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote. */
 export function normalizeForMatch(text: string): string {
-  return text
+  const unified = text
     // Compatibility forms are the same text: ligatures ("ﬁ" is "fi"), full-width letters, "…" as "...".
     .normalize("NFKC")
     .toLowerCase()
@@ -68,9 +70,9 @@ export function normalizeForMatch(text: string): string {
     .replace(/[*`]+|__/g, "")
     // List markers standing alone are layout, not words: slides use "•" and "–" bullets, and
     // models quoting them swap one for the other or drop them.
-    .replace(/(^|\s)[-•·▪◦‣●*](?=\s|$)/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/(^|\s)[-•·▪◦‣●*](?=\s|$)/g, "$1");
+  // Whitespace between Chinese or Japanese characters is layout, such as a PDF's line breaks.
+  return dropUnspacedGaps(unified).replace(/\s+/g, " ").trim();
 }
 
 function stripEdgePunctuation(text: string): string {
@@ -92,7 +94,7 @@ export function checkEvidence(
     const text = resolveText(item.docId);
     if (text === undefined) return { ...item, verified: false, reason: "the model cited a document ID it never found" };
     const quote = stripEdgePunctuation(normalizeForMatch(item.quote));
-    if (quote.split(" ").filter(Boolean).length < MIN_QUOTE_WORDS) {
+    if (wordCount(quote) < MIN_QUOTE_WORDS) {
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
     }
     const normalized = normalizeForMatch(text);
@@ -105,7 +107,26 @@ export function checkEvidence(
   });
 }
 
-const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{N}]/u.test(ch);
+const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{M}\p{N}]/u.test(ch);
+
+/**
+ * Whether two neighbouring characters are inside one word, so a quote may not start or end
+ * between them. Between characters of a script without spaces (scripts.ts), any place is a boundary.
+ */
+const inWord = (a: string | undefined, b: string | undefined) => isWordChar(a) && isWordChar(b) && !isUnspaced(a) && !isUnspaced(b);
+
+/**
+ * Words in a normalized quote, separated by spaces. In scripts without spaces, every two
+ * characters count as one word, about the length of a Chinese or Japanese word.
+ */
+function wordCount(text: string, isWord: (token: string) => boolean = Boolean): number {
+  let count = 0;
+  for (const [token] of text.matchAll(/\S+/g)) {
+    const unspaced = unspacedCount(token);
+    count += unspaced ? Math.ceil(unspaced / 2) : isWord(token) ? 1 : 0;
+  }
+  return count;
+}
 
 /**
  * Where `quote` first occurs in `text` at or after `from`, starting and ending on word boundaries,
@@ -113,8 +134,8 @@ const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{N}]
  */
 function findWords(text: string, quote: string, from = 0): number {
   for (let at = text.indexOf(quote, from); at >= 0; at = text.indexOf(quote, at + 1)) {
-    const before = isWordChar(text[at - 1]) && isWordChar(quote[0]);
-    const after = isWordChar(text[at + quote.length]) && isWordChar(quote.at(-1));
+    const before = inWord(text[at - 1], quote[0]);
+    const after = inWord(text[at + quote.length], quote.at(-1));
     if (!before && !after) return at;
   }
   return -1;
@@ -132,8 +153,7 @@ function containsWords(text: string, quote: string): boolean {
  */
 function containsElided(text: string, quote: string): boolean {
   const pieces = quote.split(ELISION).map(stripEdgePunctuation).filter(hasWordChar);
-  const words = (piece: string) => piece.split(" ").filter(hasWordChar).length;
-  if (pieces.length < 2 || Math.max(...pieces.map(words)) < MIN_QUOTE_WORDS) return false;
+  if (pieces.length < 2 || Math.max(...pieces.map((piece) => wordCount(piece, hasWordChar))) < MIN_QUOTE_WORDS) return false;
   const [first, ...rest] = pieces as [string, ...string[]];
   for (let at = findWords(text, first); at >= 0; at = findWords(text, first, at + 1)) {
     let end = at + first.length;
@@ -185,7 +205,11 @@ export function locateQuote(quote: string, text: string): { start: number; end: 
     });
     if (chained) return { start: words[i]!.start, end: words[last]!.end };
   }
-  return undefined;
+  // Chinese and Japanese have no spaces to split words at, so a quote from the middle of a
+  // sentence is found as it is written.
+  const exact = stripEdgePunctuation(quote.trim());
+  const at = exact ? text.indexOf(exact) : -1;
+  return at >= 0 ? { start: at, end: at + exact.length } : undefined;
 }
 
 /** The page an offset is on: the last page starting at or before it. */
