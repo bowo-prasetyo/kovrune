@@ -67,10 +67,13 @@ jobs:
           echo "Deployed $GITHUB_SHA to $url" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check the served page and headers
+        # A new project or preview address can take minutes to get its TLS certificate;
+        # until then the handshake fails. Afterwards a deployment is served within seconds.
         run: |
-          for attempt in 1 2 3 4 5 6; do
+          for attempt in $(seq 1 30); do
             curl -sS -D headers.txt -o index.html "$URL/" && grep -qi '^content-security-policy:.*frame-ancestors' headers.txt && break
-            sleep 10
+            echo "Not served yet (attempt $attempt of 30); waiting for the address and its certificate."
+            sleep 20
           done
           cat headers.txt
           grep -qi '^content-security-policy:.*frame-ancestors' headers.txt || { echo "The Content-Security-Policy header is missing." >&2; exit 1; }
