@@ -14,20 +14,37 @@ Before a change to the research prompt or the guards (repeat, last-step, read-be
 
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All four runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. Quality results carry over to other machines, but the speeds do not.
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 and 0.17.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Qwen3.5-2B | 0.14.0 | 15/24 (63%) | 15/22 | 5/8 | 3/4 | 2 of 13 | [json](../results/field-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.15.0 | **17/24 (71%)** | 15/22 | 5/8 | 3/4 | 3 of 16 | [json](../results/field-fix-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.16.0 | 16/24 (67%) | 16/22 | 5/8 | 3/4 | 2 of 8 | [json](../results/field-0.16-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.17.0, not adopted | 18/24 (75%) | 16/22 | 5/8 | 3/4 | 0 of 8 | [json](../results/full-sentences-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.17.0, not adopted | 17/24 (71%) | 20/22 | 8/8 | 4/4 | 3 of 15 | [json](../results/full-sentences-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
 - **No regressions:** research, unanswerable and pdf are unchanged.
 - **The runs are repeatable:** in the re-runs, every one of the 58 tasks took the same actions as before, for both models. Only the quote verdicts changed.
 - **One side effect:** 2B's wrong answer to `f02` ("Apps on device", the permission that *is* needed) now has a found quote, so it counts as false reassurance. The label is accurate, because the quote is real, but it is not reassuring.
+
+**A change judged on the suite and not adopted: full-sentence answers (0.17.0).** Since 0.16.0, an answer too short to compare with its quotes ("LumenDB 3.2", "40") is not labelled **Quotes found**. The research prompt was changed to ask for "a full sentence that names what the question asks about, for example "The museum opened in 1998." rather than "1998"", so that the sentence check could judge every answer.
+- **It worked as meant:** no 4B answer was too short to judge (15 before), and 10 more right 4B answers were labelled **Quotes found**.
+- **4B false reassurance rose**, from 3 of 26 (12%) to 5 of 36 (14%), over all suites. The two new ones are the kinds the sentence check cannot catch. `r04` gives one of the two fixed versions, as a full sentence its quote backs. `r12` cites a related document.
+- **4B's field suite fell from 20 to 17.** In `f19` and `f06` the model now concluded "not found" without reading the document that answers. In `f07` it restated the question's premise as fact: "The keyboard shortcut to stop a running question in Kovrune is Ctrl+C."
+- **2B improved:** field from 16 to 18, false reassurance from 3 of 19 to 0 of 20.
+- **Not adopted:** the field suite regressed on 4B, which fails the [rule](#rule-for-prompt-and-guard-changes). The prompt is unchanged from 0.16.0.
+
+### Runs repeat on one machine, not across machines
+
+- **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results.
+- **Across machines, they differ.** The 0.16.0 baseline used the same llama.cpp commit and model files as the 0.15.0 runs, and the same prompt. Its actions differed on 20 of 58 tasks for 4B and 34 of 58 for 2B. A few results changed: `p04` (4B) now fails, and `r17` (2B) now passes. The likely cause is floating-point differences between CPUs and builds, which change which token wins at temperature 0.
+- **So a change is judged against a baseline run on the same machine, never against a report from another one.** One run of each is enough there, but a difference of one or two tasks is still specific to that machine.
 
 **What the suite shows that the synthetic suites don't** (0.15.0 failures):
 
