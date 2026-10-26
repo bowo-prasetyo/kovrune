@@ -6,7 +6,7 @@ An open-source, local-first research app: answers about the user's own documents
 
 | | |
 | --- | --- |
-| Status | Draft, revision 3 (positioning narrowed to the shipped research product; see §0) |
+| Status | Draft, revision 4 (roadmap re-planned for a team of two, with a go/no-go for M3; see §0) |
 | License | MPL-2.0 (see [`LICENSE`](../LICENSE)) |
 | Scope of this document | Product definition, architecture, security model, and roadmap |
 
@@ -18,7 +18,9 @@ Today, a user opens Kovrune in a browser, picks a compatible model from Hugging 
 
 ## 0. Revision notes
 
-**Revision 3** narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). §1.4 names the first audience: technical researchers who are comfortable with a terminal. Sections that describe the full design now also say what M1 actually ships: §2.1 has an M1 column, and §3.2, §3.4, §7.4, §10 and §12 note where M1 differs, for example the GitHub Pages preview and model downloads that are not yet pinned or verified. The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
+**Revision 4** re-plans the roadmap for the actual team of two ([issue #36](https://github.com/bowo-prasetyo/kovrune/issues/36)). §12 has new estimates, which separate what Claude builds from what waits on people. It proposes an order after M1 (M2 next, M2.5 on hold) and adds a go/no-go gate for M3, decided by interviews whose rule is fixed in advance ([`circles-interviews.md`](circles-interviews.md)). Using a model server on another computer of the user's own is documented in the user guide, as the path that needs no P2P work.
+
+Revision 3 narrows the positioning to what M1 ships. The product is described as a local-first research app with checked quotes; the coding agent and trusted circles are presented as roadmap, not as current features (§1.4–1.5). §1.4 names the first audience: technical researchers who are comfortable with a terminal. Sections that describe the full design now also say what M1 actually ships: §2.1 has an M1 column, and §3.2, §3.4, §7.4, §10 and §12 note where M1 differs, for example the GitHub Pages preview and model downloads that are not yet pinned or verified. The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes the long-term vision in §1.1 and is unchanged.
 
 Revision 2 followed a product and feasibility audit of the first draft. The main changes:
 
@@ -651,7 +653,29 @@ A release does not claim that a model, browser, network feature, or security pro
 
 ## 12. Roadmap
 
-Each milestone delivers a usable result and has explicit acceptance criteria. The team is two people: the project owner (decisions, reviews, testing on reference hardware) and Claude (implementation, tests, benchmark runs, documentation), as in [`m1-plan.md`](m1-plan.md). The original estimate assumed two to three engineers: three to four months for M0–M2, and a further three to four months for M3–M4 including relay operations. For M2 onward, treat these estimates as a hypothesis until they are re-planned for the actual team ([issue #36](https://github.com/bowo-prasetyo/kovrune/issues/36)).
+Each milestone delivers a usable result and has explicit acceptance criteria. The team is two people: the project owner (decisions, reviews, testing on reference hardware) and Claude (implementation, tests, benchmark runs, documentation), as in [`m1-plan.md`](m1-plan.md).
+
+### Estimates for a team of two
+
+The first plan assumed two to three engineers: three to four months for M0–M2, and a further three to four months for M3–M4. M0 and M1 showed that for this team, **building is not the bottleneck**. The M0 benchmark and all four M1 slices were built between 24 and 26 October 2026, against an M1 estimate of 6–8 weeks. What M1 still waits on is people: a class 2 tester ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)) and usability participants ([issue #29](https://github.com/bowo-prasetyo/kovrune/issues/29)).
+
+So each estimate below has two parts. **Build** is Claude's work: implementation, tests, benchmark runs and documentation, in pull requests the owner reviews. **Waits on** is what only people can provide, and it sets the elapsed time. Estimates are elapsed time and assume the owner reviews a pull request within a day or two.
+
+| Milestone | Build | Waits on | Elapsed |
+| --- | --- | --- | --- |
+| M1 (rest) | Fixes from the usability findings | Recruiting and running 3–5 usability sessions; a class 2 run | 2–4 weeks |
+| M2 | 1–2 weeks. Saved documents and answers, and Stop, came in M1. Left: resuming interrupted tasks, storage management and backup, pinned downloads, signed reproducible builds, CSP | Owner: choosing the hosting (§7.4), holding the signing keys, testing a release on the laptop | 3–5 weeks |
+| M2.5 | 3–5 weeks: Pyodide and QuickJS sandboxes, coding tasks in the evaluation set | A decision to build it (below) | Not scheduled |
+| M3 | 3–4 weeks: identities, invitations, WebRTC transport, signaling | The go/no-go below; then a real circle of 2–5 people to test with, and a signaling server someone runs | 6–10 weeks after a go |
+| M4 | 4–6 weeks | M3 findings; relays operated by the owner or the circles | Re-plan after M3 |
+| M5 | Not estimated | M4 findings | Re-plan after M4 |
+
+The main risk to these numbers is the wait for people, not the build. Two things reduce it: run several human checks in one session (the usability test also covers the class 2 run and the [Circles interviews](circles-interviews.md)), and give testers the preview site so they need no development setup.
+
+**Order after M1 (proposed; the owner decides):**
+1. **M2 next.** Every later milestone needs hosting, signed builds and storage that survives.
+2. **M3 only after a go** from the [Circles interviews](circles-interviews.md#m3-go-or-no-go) (below).
+3. **M2.5 on hold.** The product is positioned around research ([issue #28](https://github.com/bowo-prasetyo/kovrune/issues/28), §1.4). Decide on the coding agent after M2, from what usability participants ask for, rather than building it ahead of demand.
 
 ### M0 — Benchmark gate (2–3 weeks)
 
@@ -691,6 +715,8 @@ Pyodide and QuickJS sandboxes, the coding agent's test generation and execution,
 ### M3 — Trusted-circle prototype
 
 Peer identities, circle invitations, lightweight WebRTC transport, and versioned protocol messages.
+
+**Gate (go/no-go):** M3 starts only after 5–8 interviews with the first audience show demand for delegating tasks to a teammate's agent, by the rule decided beforehand in [`circles-interviews.md`](circles-interviews.md#m3-go-or-no-go). Much of the "more capable peer" value in §6.1 is already available without P2P: a laptop can use a model server on the user's own desktop ([user guide](user-guide.md#use-a-model-server-on-another-computer)). Circles must add value beyond that. **Status:** no interviews yet.
 
 **Acceptance:** two to five browsers in a circle connect through documented signaling, exchange signed messages, and handle disconnects. A small group of real users is recruited to test the workflow.
 

@@ -118,6 +118,22 @@ If the server fails to start or the computer becomes very slow with the bigger m
 
 **On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).
 
+### Use a model server on another computer
+
+If your laptop is slow but you have a faster computer on the same network, such as a desktop with a GPU or more memory, run the server there and use Kovrune on the laptop. Answers come at the desktop's speed, and the desktop can run the bigger Qwen3.5-4B even when the laptop can't.
+
+**On the desktop:**
+1. Set up llama.cpp and start the server as above, with `--host 0.0.0.0` so other computers can reach it.
+2. Find its IP address on your network, for example `192.168.1.20`: `ipconfig` on Windows (IPv4 Address), `ipconfig getifaddr en0` on macOS, `hostname -I` on Linux.
+3. Allow incoming connections on port 8080 in its firewall. Windows asks the first time `llama-server` starts; choose **Private networks**.
+4. If the server runs in WSL, other computers can't reach it by default. WSL's mirrored networking mode (`networkingMode=mirrored` under `[wsl2]` in `%UserProfile%\.wslconfig`) makes it reachable; Microsoft's [WSL networking guide](https://learn.microsoft.com/windows/wsl/networking) has the steps, including the firewall rule it may need.
+
+**On the laptop,** in the app: **Use a local model server** → change the address to `http://192.168.1.20:8080/v1` (your desktop's address) → **Connect** → **Test this model**.
+
+- **On the preview site,** Chrome and Edge ask for the **Local network access** permission; choose **Allow**. This is the other permission from the one above: **Apps on device** covers servers on your own computer, **Local network access** covers other devices.
+- **Use the IP address, or a name ending in `.local`** (Macs have one, such as `my-desktop.local`). From the preview site, the browser blocks other names, such as `my-desktop` or `my-desktop.lan`, even with the permission allowed.
+- **Only on a network you trust,** such as your home network. The connection isn't encrypted: your questions and the passages of your documents the model reads travel to the desktop, and anyone on the same network could read them or use the server. Don't do this on public, office or campus Wi-Fi.
+
 ## 4. Ask questions
 
 1. **Add documents:** PDF, text, Markdown or HTML, with **Choose files** or by dropping them on the page. **Show text** shows what Kovrune read from a file.
@@ -167,7 +183,7 @@ Exports are made in the browser; nothing is uploaded.
 - **Wikipedia and OpenAlex** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services. Your documents and your question as you typed it are not sent.
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub;
-  - the local-server path talks only to the server address you entered.
+  - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([section 3](#use-a-model-server-on-another-computer)).
 - **Saved in the browser:** your setup, your source choices, and the text extracted from your documents (not the original files). Finished answers are saved too, with their quotes and steps. They stay on this computer, in this browser only. Removing documents or answers never removes a downloaded model; clearing the site's data in the browser settings removes everything, models included.
 
 ## 7. Troubleshooting
@@ -179,6 +195,7 @@ Exports are made in the browser; nothing is uploaded.
 | `HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev` |
 | **Connect** says it couldn't reach the server | The server isn't running, listens only inside WSL, or uses another port | Start it with `--host 0.0.0.0`; if Windows still can't reach WSL, use the address from `hostname -I` in WSL |
 | **Connect** fails on the preview site but works with `npm run dev`. The browser console (F12) shows "Permission was denied for this request to access the `loopback` address space" | The browser blocked the web page from reaching servers on your computer | Icon left of the address bar → **Site settings** → **Apps on device**: **Allow**, then reload. **Local network access** is not the one. Safari may block it entirely; use Chrome or Edge |
+| **Connect** to a server on another computer fails | The server listens only on its own computer, its firewall blocks the port, or the browser blocked the request | Start it with `--host 0.0.0.0` and allow port 8080 in its firewall. On the preview site, use its IP address or `.local` name and set **Local network access** to **Allow** ([section 3](#use-a-model-server-on-another-computer)) |
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |
