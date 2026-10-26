@@ -369,7 +369,13 @@ Checked in the container, with Wikipedia and OpenAlex mocked (five results each)
 **Field suite ([issue #35](https://github.com/bowo-prasetyo/kovrune/issues/35)).** Since harness 0.10.0, prompt and guard changes have been driven by three live questions, and the synthetic research set no longer shows the behaviour being tuned: every change from 0.7.0 on left it unchanged task for task.
 - **The suite:** harness 0.14.0 adds a `field` suite: 24 questions over four real documents that may be committed (the user guide, the design document as an 18-page PDF, the MPL-2.0 text and Wikipedia's Ada Lovelace lead). Usability testers' documents can be added locally in `eval/field/local/` ([`eval/field/README.md`](../eval/field/README.md)).
 - **The rule:** from now on, a prompt or guard change must improve the field suite without regressing the research, unanswerable and pdf suites, on Qwen3.5-2B and Qwen3.5-4B.
-- **Not yet run with a model:** the first Qwen3.5-2B and Qwen3.5-4B results are to come from the class 1 laptop.
+- **First results** ([`eval/field/README.md`](../eval/field/README.md#results)), run on CPU in a cloud container with the class 1 model files, constrained mode:
+  - **Field suite:** Qwen3.5-2B 15/24 and Qwen3.5-4B 19/24 on harness 0.14.0.
+  - **Main failure:** a nearby wrong fact with a real quote, such as the licence's 60-day reinstatement period given as its 30-day cure period. The app labels most of these **Quotes found**.
+  - **Weakest kind:** questions that need two documents. Both models fail both of them.
+- **First change judged on it** (harness 0.15.0): quote matching ignores Markdown emphasis and code marks. Two right answers had failed only because the source said "**Apps on device**" and "**Quotes found**", and the models quoted them without the asterisks.
+  - **Result:** the field suite rises to 17/24 (2B) and 20/24 (4B). Research, unanswerable and pdf results are unchanged, and every task took the same actions as before.
+  - **Side effect:** one wrong 2B answer now has a found quote and counts as false reassurance.
 
 **Preview site.** To make the remaining checks easier, the app is now published to <https://bowo-prasetyo.github.io/kovrune/> by a GitHub Actions workflow (`.github/workflows/pages.yml`) on every push to `main`, after the tests pass. Testers need only Chrome or Edge; a footer shows the commit the page was built from and says it is not yet a signed release. Signed, reproducible releases and a content security policy remain M2 work.
 - The browser path and the open sources work from the preview unchanged: WebLLM needs HTTPS, which Pages provides, and Wikipedia and OpenAlex accept requests from any site.
