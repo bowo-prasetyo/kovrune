@@ -6,6 +6,7 @@ import type { EvidenceItem } from "../agent/evidence.ts";
 import { parentId } from "../documents/chunk.ts";
 import type { SourceSession } from "../sources/session.ts";
 import { SourceError } from "../sources/types.ts";
+import { mainScript } from "../documents/scripts.ts";
 import type { DocumentIndex } from "./search.ts";
 
 export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
@@ -35,7 +36,11 @@ export interface ResearchFinal {
   evidence: EvidenceItem[];
 }
 
-export function createResearchTools(index: DocumentIndex, session?: SourceSession): AgentTool[] {
+/** Answers shorter than this (textWeight) are not checked for their language: "3776.12 m" says too little. */
+const MIN_JUDGED_REPLY = 12;
+
+/** `question`, when given, lets final_answer check that the answer is in the question's language. */
+export function createResearchTools(index: DocumentIndex, session?: SourceSession, question?: string): AgentTool[] {
   const hasDocuments = index.size > 0;
   let searchedDocuments = false;
   let foundDocuments = false;
@@ -44,8 +49,10 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
   // laptop the model searched the Papyrus PDF five times with small rewordings before reading
   // it, spending 5 of its 8 steps; a search that found something now has to be followed by a read.
   const unread = new Set<string>();
-  // Whether final_answer has already sent the model back to read before concluding "not found".
+  // Whether final_answer has already sent the model back to read before concluding "not found",
+  // or to answer in the question's language. Each is asked once.
   let askedToRead = false;
+  let askedForLanguage = false;
   // Every source the user ticked is searched before the answer, so it can draw on all of them.
   const searchedSources = new Set<string>();
   const sourceSearches: AgentTool[] = (session?.sources ?? []).map((source) => ({
@@ -150,10 +157,25 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       // Read before "not found": a search's snippets are one sentence of each document, and both
       // models concluded from them that a document lacked an answer it had (field suite f19, f30).
       // Asked once, so after reading the model can still conclude that the answer is not there.
-      objection: ({ found }: ResearchFinal) => {
-        if (found || !unread.size || askedToRead) return undefined;
-        askedToRead = true;
-        return "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.";
+      objection: ({ found, answer }: ResearchFinal) => {
+        if (!found && unread.size && !askedToRead) {
+          askedToRead = true;
+          return {
+            message:
+              "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.",
+            step: "About to conclude that the sources don't answer this; reading what the search found first",
+          };
+        }
+        // Reply in the question's language: Qwen3.5-4B answered a Japanese question in English
+        // (field suite f28). Compared by writing system, so French and English look alike.
+        const asked = question ? mainScript(question) : undefined;
+        const wrote = mainScript(answer);
+        if (!asked || !wrote || wrote.script === asked.script || wrote.weight < MIN_JUDGED_REPLY || askedForLanguage) return undefined;
+        askedForLanguage = true;
+        return {
+          message: `The question is written in ${asked.script} script, but your answer is in ${wrote.script} script. Write the answer in the language of the question, and keep each quote exactly as it is in its document.`,
+          step: "Answered in another language than the question; asking for the answer in the question's language",
+        };
       },
     },
   ];

@@ -30,10 +30,11 @@ export interface AgentTool {
    */
   onRepeat?: (args: any) => { hint: string; keepAfterRepeat?: boolean };
   /**
-   * For the final tool: an objection to finishing with these arguments, shown to the model, which
-   * then continues; undefined to finish. Not asked on the last step, when the model must finish.
+   * For the final tool: an objection to finishing with these arguments, undefined to finish. Its
+   * message is shown to the model, which then continues, and its step describes it in the user's
+   * trace. Not asked on the last step, when the model must finish.
    */
-  objection?: (args: any) => string | undefined;
+  objection?: (args: any) => { message: string; step: string } | undefined;
   /**
    * Checked before every model call; a tool that is not available is left out of the schema.
    * The final tool is allowed regardless on the last step, after repeats, or when nothing else is.
@@ -76,8 +77,8 @@ export interface CallRecord {
   estimatedTokens: boolean;
   /** True when the reply stopped at the token limit, so its JSON is unfinished. */
   cutOff?: boolean;
-  /** True when the final tool objected to the action, so the task went on (AgentTool.objection). */
-  rejected?: boolean;
+  /** When the final tool objected to the action, so the task went on: the objection's step (AgentTool.objection). */
+  rejected?: string;
   /** How many results the tool's observation held, for tools that report it (searches). */
   resultCount?: number;
   /** True when the tool reported that it failed. */
@@ -295,9 +296,9 @@ export async function runAgent(options: {
     if (action.tool === finalTool) {
       const objection = forceFinal ? undefined : tools.find((t) => t.name === finalTool)!.objection?.(action.args);
       if (!objection) return { stopReason: "final", final: action.args, calls, transcript };
-      record.rejected = true;
+      record.rejected = objection.step;
       options.onResult?.(record, calls.length);
-      transcript.push({ role: "user", content: objection });
+      transcript.push({ role: "user", content: objection.message });
       continue;
     }
     // Tools are deterministic, so repeating an action cannot help. Small models tend to
