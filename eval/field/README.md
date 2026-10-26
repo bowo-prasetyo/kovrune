@@ -73,6 +73,19 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **Nothing else changed:** on 4B, the other 69 tasks took the same actions as in 0.20.0. 2B was not re-run. Checked against its 0.20.0 report, none of its 76 final answers would be sent back, so its run would repeat 0.20.0.
 - **Limit:** writing systems, not languages, are compared, so an English answer to a French question passes. Telling them apart needs a language detector.
 
+**Short answers in a quote that covers the question (0.22.0).** Most right lookup answers are short ("4 KiB", "1987年"), so since 0.16.0 they read **Quotes found, answer too short to check**. Now a short answer counts as backed when it is word for word in a verified quote, and that quote with its title shares more than two thirds of the question's content words. The question supplies the claim a bare answer does not make. Only the label changes, so re-checking the recorded reports gives the exact effect:
+
+| Rule for a short answer (236 in the 12 reports: 162 right, 74 wrong) | Labelled | Right | Wrong |
+| --- | --- | --- | --- |
+| In a verified quote | 215 | 157 | 58 |
+| In a quote sharing at least half of the question's words | 143 | 124 | 19 |
+| **In a quote sharing more than two thirds** (adopted) | 59 | 59 | 0 |
+
+- **Current runs:** false reassurance goes from 2 of 31 to 2 of 36 for 4B (0.21.0), and from 3 of 22 to 3 of 28 for 2B (0.20.0).
+- **The answers that gain the label:** "4 KiB", "112 KiB", "about a minute", "defineStore()", "13", "1987年" and "Apps on device", all right.
+- **Wrong answers it still refuses:** "40" (another company's head count), "1936年" (a park, not an eruption), "Ctrl+C". The nearest miss is "Cobble" for "Who is the CEO of Harrow Labs?", from a quote naming Harrow Labs, which covers exactly two thirds.
+- **Most right short answers still read "too short to check":** the rule labels about a third of them.
+
 ### Runs repeat on one machine, not across machines
 
 - **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results.

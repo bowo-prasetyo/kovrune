@@ -131,6 +131,43 @@ describe("answer status with sentence support", () => {
     }
   });
 
+  describe("a short answer found in a quote that covers the question", () => {
+    const quote = (text: string, docId = "d") => ({ docId, quote: text, verified: true });
+    const check = (answer: string, question: string, quotes: ReturnType<typeof quote>[], title?: string) =>
+      sentenceSupport(answer, quotes, title ? () => title : undefined, question);
+
+    it("is backed when the quote has the answer and most of the question's words (r05, p03, f29)", () => {
+      const support = check("4 KiB", "What is the maximum key size in LumenDB 3.2?", [quote("In LumenDB 3.2 the maximum key size is 4 KiB.")]);
+      assert.deepEqual(support, { sentences: [{ text: "4 KiB", backed: true }], judged: 1, backed: 1, answerInQuote: true });
+      assert.equal(labelledQuotesFound("verified", [ok], support), true);
+      const status = describeStatus("verified", [ok], support);
+      assert.equal(status.label, "Quotes found");
+      assert.match(status.detail, /the answer is in one of them, in a passage that shares most of the words of your question/);
+      // Chinese, with the title naming the subject.
+      const wall = check("1987年", "长城是哪一年被联合国教科文组织列为世界文化遗产的？", [quote("1987年，长城被联合国教科文组织列为世界文化遗产。")], "长城");
+      assert.equal(wall.answerInQuote, true);
+    });
+
+    it("is not backed when the quote answers another question (u01, r22, f28)", () => {
+      // The quote has "40", but it is another company's head count.
+      const u01 = check("40", "How many employees does the Tessel Foundation have?", [quote("Harrow Labs is headquartered in Rotterdam and has 40 employees.")], "Harrow Labs press release");
+      assert.equal(u01.judged, 0);
+      // "Cobble" from a quote naming Harrow Labs covers exactly two thirds of "CEO, Harrow, Labs": not more.
+      const r22 = check("Cobble", "Who is the CEO of Harrow Labs?", [quote("Harrow Labs today announced that Cobble, its embedded key-value store, has passed one million downloads.")]);
+      assert.equal(r22.judged, 0);
+      const f28 = check("1936年", "富士山が最後に噴火したのは何年ですか？", [quote("1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。")], "富士山");
+      assert.equal(f28.judged, 0);
+    });
+
+    it("is not backed when the answer is not word for word in a verified quote", () => {
+      assert.equal(check("4 KB", "What is the maximum key size in LumenDB 3.2?", [quote("In LumenDB 3.2 the maximum key size is 4 KiB.")]).judged, 0);
+      assert.equal(check("13", "How many levels does Brisk 2.0 support?", [quote("Brisk 2.0 supports levels 1 to 2013.")]).judged, 0, "whole words only");
+      const unverified = { ...quote("In LumenDB 3.2 the maximum key size is 4 KiB."), verified: false };
+      assert.equal(check("4 KiB", "What is the maximum key size in LumenDB 3.2?", [unverified]).judged, 0);
+      assert.equal(check("4 KiB", "", [quote("In LumenDB 3.2 the maximum key size is 4 KiB.")]).judged, 0, "without the question, as before");
+    });
+  });
+
   it("keeps Quotes found for answers saved before sentence support", () => {
     assert.equal(describeStatus("verified", [ok]).label, "Quotes found");
     assert.match(describeStatus("verified", [ok]).detail, /Check that the quotes support the whole answer/);

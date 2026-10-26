@@ -105,7 +105,7 @@ export async function runResearch(options: {
     const citation = session?.citation(docId);
     if (citation) citations[docId] = citation;
   }
-  const support = sentenceSupport(final.answer, evidence, (id) => library.documentFor(id)?.title ?? citations[id]?.title);
+  const support = sentenceSupport(final.answer, evidence, (id) => library.documentFor(id)?.title ?? citations[id]?.title, options.question);
   return { status: answerStatus(final.found, evidence), final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
 }
 
