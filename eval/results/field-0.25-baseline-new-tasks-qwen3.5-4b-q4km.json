@@ -1,0 +1,293 @@
+{
+  "harnessVersion": "0.25.0",
+  "createdAt": "2026-10-27T05:37:23.240Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "Same-alphabet tasks, before the change: native llama.cpp d854d98 on CPU (4-core cloud container, no GPU), 4 threads, file Qwen3.5-4B-Q4_K_M.gguf. Speeds are not representative of any hardware class."
+  },
+  "config": {
+    "suites": [
+      "field"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "f43-eiffel-tallest-years-en",
+      "f44-eiffel-higher-deck-en",
+      "f45-mpl-cure-fr",
+      "f46-preview-permission-fr",
+      "f47-tower-metal-en"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 21.4,
+    "decodeTokensPerSecond": 7.2,
+    "maxResearchTaskMinutes": 10,
+    "minutesPerSource": 2.5
+  },
+  "field": {
+    "committedTasks": 47,
+    "localTasks": 0,
+    "localDocuments": 0
+  },
+  "summary": [
+    {
+      "suite": "field",
+      "mode": "constrained",
+      "tasks": 5,
+      "passed": 4,
+      "successRate": 0.8,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 6.8,
+      "prefillTokensPerSecond": 89.7,
+      "medianTaskSeconds": 56.8,
+      "falseReassurance": {
+        "labelled": 2,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "field",
+      "taskId": "f43-eiffel-tallest-years-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2011,
+      "completionTokens": 111,
+      "estimatedTokens": false,
+      "modelMs": 38450,
+      "ttftMs": 22568,
+      "wallMs": 46220,
+      "actions": [
+        "search {\"query\":\"Eiffel Tower tallest monument world years\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"40 years\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D’une hauteur de 312 mètres à l’origine, la tour Eiffel est "
+      ],
+      "final": "{\"found\":true,\"answer\":\"40 years\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D’une hauteur de 312 mètres à l’origine, la tour Eiffel est restée le monument le plus élevé du monde pendant quarante ans.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f44-eiffel-higher-deck-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2067,
+      "completionTokens": 168,
+      "estimatedTokens": false,
+      "modelMs": 49584,
+      "ttftMs": 25124,
+      "wallMs": 56822,
+      "actions": [
+        "search {\"query\":\"Moscow tower observation deck higher than Eiffel Tower highest public platform\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Ostankino Tower in Moscow has a higher observation deck than the highest public platform of the Eiffel Tower.\",\"evidenc"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The Ostankino Tower in Moscow has a higher observation deck than the highest public platform of the Eiffel Tower.\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Le second niveau du troisième étage, appelé parfois quatrième étage, situé à 279,11 mètres, est la plus haute plateforme d'observation accessible au public de l'Union européenne et la deuxième plus haute d'Europe, derrière la tour Ostankino à Moscou culminant à 337 mètres.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f45-mpl-cure-fr",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2414,
+      "completionTokens": 191,
+      "estimatedTokens": false,
+      "modelMs": 54439,
+      "ttftMs": 26207,
+      "wallMs": 60077,
+      "actions": [
+        "search {\"query\":\"licences notification jours se remettre en conformité première notification\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"Les documents trouvés ne contiennent aucune information sur les licences, les notifications de non-conformité o",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":false,\"answer\":\"Les documents lus ne contiennent aucune information sur les licences, les notifications de non-conformité ou les délais po"
+      ],
+      "final": "{\"found\":false,\"answer\":\"Les documents lus ne contiennent aucune information sur les licences, les notifications de non-conformité ou les délais pour se remettre en conformité. Le document lu concerne la Tour Eiffel et son histoire physique, sans lien avec le sujet de la question.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f46-preview-permission-fr",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3252,
+      "completionTokens": 262,
+      "estimatedTokens": false,
+      "modelMs": 68853,
+      "ttftMs": 30174,
+      "wallMs": 73779,
+      "actions": [
+        "search {\"query\":\"prévisualisation autorisation navigateur serveur modèle ordinateur\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"L'autorisation requise est 'Apps on device' (ou 'Access other apps and services on this device').\",\"evidence\":[{",
+        "final_answer {\"found\":true,\"answer\":\"L'autorisation requise est 'Apps on device' (ou 'Access other apps and services on this device').\",\"evidence\":[{\"docId\":\"ko"
+      ],
+      "final": "{\"found\":true,\"answer\":\"L'autorisation requise est 'Apps on device' (ou 'Access other apps and services on this device').\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"On the preview site, the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called Apps on device (\\\"Access other apps and services on this device\\\").\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f47-tower-metal-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1943,
+      "completionTokens": 158,
+      "estimatedTokens": false,
+      "modelMs": 49424,
+      "ttftMs": 26231,
+      "wallMs": 55624,
+      "actions": [
+        "search {\"query\":\"330-metre tower Paris metal material\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"puddled iron (fer puddlé)\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl] est une tour autop"
+      ],
+      "final": "{\"found\":true,\"answer\":\"puddled iron (fer puddlé)\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl] est une tour autoportante de fer puddlé de 330 m de hauteur (avec antennes) située à Paris, à l'extrémité nord-ouest du parc du Champ-de-Mars en bordure de la Seine dans le 7e arrondissement.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    }
+  ]
+}

@@ -26,6 +26,9 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.20.0 | 25/36 (69%) | 16/22 | 5/8 | 3/4 | 2 of 11 | [json](../results/field-0.20-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.24.0 tasks, before the change | 27/42 (64%): 25/36 and 2/6 across languages | not run | not run | not run | 2 of 14 | [json](../results/field-0.24-baseline-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.24.0 | **30/42 (71%)**: 25/36 and 5/6 across languages | not run | not run | not run | 4 of 16 | [json](../results/field-0.24-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.25.0 tasks, before the change | 33/47 (70%): 30/42 and 3/5 in the same alphabet | not run | not run | not run | 4 of 16 | [json](../results/field-0.25-baseline-new-tasks-qwen3.5-2b-q4km.json) (`f43`–`f47`; the others are the 0.24.0 run) |
+| Qwen3.5-2B | 0.25.0, same-alphabet translation, not adopted | 32/47 (68%): 30/42 and 2/5 | not run | not run | not run | 4 of 15 | [json](../results/field-0.25-same-script-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.25.0, same-alphabet translation of matches with half the terms, not adopted | 31/47 (66%): 29/42 and 2/5 | not run | not run | not run | 2 of 14 | [json](../results/field-0.25-same-script-coverage-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
@@ -35,6 +38,9 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.21.0 | 32/36 (89%) | 19/22 | 8/8 | 4/4 | 2 of 18 | [json](../results/field-0.21-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.24.0 tasks, before the change | 34/42 (81%): 32/36 and 2/6 across languages | not run | not run | not run | 2 of 20 | [json](../results/field-0.24-baseline-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.24.0 | **37/42 (88%)**: 32/36 and 5/6 across languages | not run | not run | not run | 2 of 20 | [json](../results/field-0.24-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.25.0 tasks, before the change | 41/47 (87%): 37/42 and 4/5 in the same alphabet | not run | not run | not run | 2 of 22 | [json](../results/field-0.25-baseline-new-tasks-qwen3.5-4b-q4km.json) (`f43`–`f47`; the others are the 0.24.0 run) |
+| Qwen3.5-4B | 0.25.0, same-alphabet translation, not adopted | 41/47 (87%): 36/42 and 5/5 | not run | not run | not run | 2 of 21 | [json](../results/field-0.25-same-script-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.25.0, same-alphabet translation of matches with half the terms, not adopted | 41/47 (87%): 37/42 and 4/5 | not run | not run | not run | 2 of 21 | [json](../results/field-0.25-same-script-coverage-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -105,6 +111,22 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **`f37`–`f39` now pass on both models**, and 2B's `f41` too. 4B's `f41` still fails: its query misspelled エイダ (Ada) as エイドア, and the translation, "Aida Loveless", found nothing. 2B's `f42` now fails, answered with "1952" from the Japanese document.
 - **The other 36 tasks:** 4B keeps all 32 and no other result changes. 2B also keeps 25, but 4 tasks pass that failed and 4 fail that passed: the translated results change what it reads. Its wrong answers labelled **Quotes found** rise from 2 to 4 (`f10`, `f13`, `f24` are new). They are English questions about English documents that 2B has answered wrongly before, now with real quotes.
 - **Cost:** about one more model call for each search the translation applies to, two in the field library for an English search. The median field task took 42.8 s instead of 36.7 s on 4B, and 24.4 s instead of 20.6 s on 2B.
+
+**Across languages in the same alphabet (0.25.0, not adopted).** Search translates only into languages written in another script, so an English question about the French Eiffel Tower lead, or a French question about an English document, is searched in its own words. Five tasks test this (`f43`–`f47`): English questions about the French lead, and French questions about the MPL licence and the user guide, worded with few words in common with their answers. Before any change, 4B passed 4 of the 5 and 2B passed 3: English and French share enough words ("Eiffel", "licence", "Apps on device") that a search in the question's words often finds the document. Only `f45`, a French question about the licence's 30-day cure period, failed on both. Two changes were measured on the field suite, against the 0.24.0 run of `f01`–`f42` and a baseline run of the new tasks on the same machine:
+
+| Change | 4B: `f43`–`f47` | 4B: other 42 | 2B: `f43`–`f47` | 2B: other 42 |
+| --- | --- | --- | --- | --- |
+| None (baseline) | 4/5 | 37/42 | 3/5 | 30/42 |
+| Also translating into languages in the query's alphabet, when the question's language is known and differs ([4B](../results/field-0.25-same-script-qwen3.5-4b-q4km.json), [2B](../results/field-0.25-same-script-qwen3.5-2b-q4km.json)) | **5/5** | 36/42 | 2/5 | 30/42 |
+| The same, adding a translated match only when it has at least half of the translated terms ([4B](../results/field-0.25-same-script-coverage-qwen3.5-4b-q4km.json), [2B](../results/field-0.25-same-script-coverage-qwen3.5-2b-q4km.json)) | 4/5 | 37/42 | 2/5 | 29/42 |
+
+- **Neither change improves the suite.** 4B's total stays at 41 of 47 with both, and 2B's goes from 33 to 32, then 31. Under the rule above, neither is adopted, and search still translates only across scripts.
+- **The translation fixes `f45` on 4B:** with the terms in English, search found §5.2 of the licence, and 4B answered "30 jours". 2B still fails it.
+- **But the added match changes what the model reads.** In the field library, French has one document, so for any English question with a known language, the best French match was added, whatever it was about. 4B's `f06` then read the design document instead of the user guide, and answered "not found". 2B's `f46` read the same part of the user guide twice and answered without "Apps on device".
+- **Keeping only matches that have most of the translated terms** restores 4B's `f06` and keeps `f45`, but 4B's `f47` now fails its quote check: a right answer, with a misquoted French sentence. The filter also applies across scripts, and 2B's results change on 12 of 47 tasks, 5 gained and 7 lost (`f28` and `f41` among the lost). Like the 0.24.0 change on 2B, this is sensitivity to what it reads, not a pattern a filter could target.
+- **False reassurance** stays at 2 for 4B with both changes; for 2B it is 4 of 15 with the first and 2 of 14 with the second, against 4 of 16.
+- **Cost:** one more model call per search when the question's language is known. The median field task took 48.2 s and 46.3 s instead of about 43 s on 4B.
+- **The tasks stay** (harness 0.25.0, 47 field tasks), as the baseline for a later try.
 
 ### Runs repeat on one machine, not across machines
 

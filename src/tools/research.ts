@@ -6,7 +6,7 @@ import type { EvidenceItem } from "../agent/evidence.ts";
 import { parentId } from "../documents/chunk.ts";
 import type { SourceSession } from "../sources/session.ts";
 import { SourceError } from "../sources/types.ts";
-import { documentLanguage, latinLanguage } from "../documents/languages.ts";
+import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
 import type { DocumentIndex, SearchHit } from "./search.ts";
 
@@ -36,9 +36,6 @@ export interface ResearchFinal {
   answer: string;
   evidence: EvidenceItem[];
 }
-
-/** A match found through a translated search must contain at least this share of the translated terms. */
-const MIN_TRANSLATED_COVERAGE = 0.5;
 
 /** Answers shorter than this (textWeight) are not checked for their language: "3776.12 m" says too little. */
 const MIN_JUDGED_REPLY = 12;
@@ -131,33 +128,18 @@ export function createResearchTools(
   // document, and told to search in the documents' languages, in the prompt or when concluding
   // "not found", Qwen3.5-2B and 4B still searched in English (field suite f37-f39). So search
   // translates the terms into each document language written in another script than the query,
-  // and adds the best match in that language. In the query's own script, a short query cannot
-  // tell French from English, so the question's language decides: a French question about the
-  // English licence found only the French document (f45). When the question's language is not
-  // known, as for short questions, same-script languages are not translated.
-  const asked = question && mainScript(question)?.script === "Latin" ? latinLanguage(question) : undefined;
-  const languageOf = new Map<string, string | undefined>();
-  const docLanguage = (docId: string) => {
-    if (!languageOf.has(docId)) languageOf.set(docId, documentLanguage(index.get(docId)!.text));
-    return languageOf.get(docId);
-  };
+  // and adds the best match in that language. Languages sharing the query's script (French for an
+  // English query) are not translated: short queries cannot be told apart, and often share names.
   const translatedHits = async (query: string, hits: SearchHit[]) => {
     const script = mainScript(query)?.script;
     if (!translate || !script) return [];
     const found: Array<{ language: string; terms: string; hit: SearchHit }> = [];
-    const other = (language: string) => scriptOfLanguage(language) !== script || (script === "Latin" && asked !== undefined && language !== asked);
-    for (const language of languages.filter(other)) {
+    for (const language of languages.filter((l) => scriptOfLanguage(l) !== script)) {
       const terms = await translate(query, language);
       if (!terms) continue;
-      // The match must be in that language, not only in its script: the English documents are not French ones.
-      const inLanguage = (docId: string) =>
-        scriptOfLanguage(language) === "Latin" ? docLanguage(docId) === language : mainScript(index.get(docId)!.text)?.script === scriptOfLanguage(language);
-      // Only a match that has most of the translated terms: the best match in a language is often
-      // unrelated (the field library's one French document, for any English question), and an
-      // added result changes what the model reads next (f06, f46 regressed without this).
       const hit = index
         .search(terms)
-        .find((h) => inLanguage(h.docId) && !hits.some((x) => x.docId === h.docId) && index.coverage(terms, h.docId) >= MIN_TRANSLATED_COVERAGE);
+        .find((h) => mainScript(index.get(h.docId)!.text)?.script === scriptOfLanguage(language) && !hits.some((x) => x.docId === h.docId));
       if (hit) found.push({ language, terms, hit });
     }
     return found;
