@@ -368,7 +368,7 @@ describe("benchmark", () => {
     assert.deepEqual(report.summary.find((s) => s.suite === "research")!.falseReassurance, { labelled: 2, wrong: 1 });
     assert.equal(report.summary.find((s) => s.suite === "coding")!.falseReassurance, undefined);
     assert.deepEqual(falseReassurance(report.summary), { labelled: 2, wrong: 1, rate: 0.5 });
-    assert.match(formatReport(report), /1 of 2 answers labelled "Quotes found" failed their task, 50% \(target under 10%/);
+    assert.match(formatReport(report), /1 of 2 answers labelled "Quotes found" failed their task, 50% \(9–91%\) \(target under 10%/);
   });
 
   it("does not count answers with missing quotes or unbacked sentences as reassuring", () => {

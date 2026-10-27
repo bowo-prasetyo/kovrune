@@ -14,6 +14,10 @@ Before a change to the research prompt or the guards (repeat, last-step, read-be
 
 A change to search or chunking is measured first with `npm run bench:retrieval`, which takes seconds and needs no model (see [Retrieval](#retrieval)), and then by the same rule.
 
+Since harness 0.27.0, the baseline and the change are also run on the [held-out suite](#held-out-suite) (`--suites field,research,unanswerable,pdf,holdout`), and compared with `npm run bench:compare -- <baseline>.json <change>.json`:
+- **The held-out suite must not fall in total.** Its tasks are not looked at one by one while a change is developed, so it says whether a change carries over to questions it was not written for.
+- **Every decision states its paired counts and p-value** (tasks gained, tasks lost, and the chance of a split that uneven if the change did nothing). [None of the recorded decisions](#how-sure-the-decisions-were) is below 0.25, so the rule still decides by direction, not by significance; the counts say how little a decision of one or two tasks rests on.
+
 ## Retrieval
 
 Task success measures search, reading and answering together. `npm run bench:retrieval` measures search alone: for each answerable task, it searches with the question as the query, as the app's search tool does, and counts:
@@ -33,9 +37,38 @@ The model writes its own queries, so this is a fixed yardstick for search, not a
 - **Five results find the answer passages for `f06` and `f23` and one of `f13`'s two facts.** On the benchmark, 4B's field suite improved by one task and 2B's fell by two, so it was [not adopted](#five-search-results): what search finds is not what a small model reads.
 - **One passage per document finds one more cited document (`f23`'s design document) and no more answer passages:** in the field library the answer is often the second-best passage of the best document, which this hides.
 
+## How sure the decisions were
+
+`npm run bench:compare` pairs two runs task by task. Tasks with the same result in both say nothing about a change; the ones that pass in only one run decide it, and the exact McNemar test gives the chance of a split at least as uneven as theirs if the change did nothing. Over the recorded decisions, on the field suite:
+
+| Decision | Model | Field before → after | Gained | Lost | p |
+| --- | --- | --- | --- | --- | --- |
+| 0.15.0 Markdown marks in quotes, adopted | 2B | 15 → 17 of 24 | 2 | 0 | 0.50 |
+| | 4B | 19 → 20 of 24 | 1 | 0 | 1 |
+| 0.17.0 full-sentence answers, not adopted | 2B | 16 → 18 of 24 | 2 | 0 | 0.50 |
+| | 4B | 20 → 17 of 24 | 0 | 3 | 0.25 |
+| 0.20.0 read before "not found", adopted (baseline on another CPU) | 2B | 25 → 25 of 36 | 0 | 0 | 1 |
+| | 4B | 31 → 32 of 36 | 1 | 0 | 1 |
+| 0.24.0 search translates, adopted | 2B | 27 → 30 of 42 | 8 | 5 | 0.58 |
+| | 4B | 34 → 37 of 42 | 3 | 0 | 0.25 |
+| 0.25.0 same-alphabet translation, not adopted (`f01`–`f42`) | 2B | 30 → 30 of 42 | 1 | 1 | 1 |
+| | 4B | 37 → 36 of 42 | 0 | 1 | 1 |
+| 0.26.0 five search results, not adopted | 2B | 35 → 33 of 47 | 1 | 3 | 0.63 |
+| | 4B | 40 → 41 of 47 | 2 | 1 | 1 |
+
+- **No decision is below 0.25.** With one to three tasks changing, none could be: it takes six tasks gained and none lost to go below 0.05. So each decision is a reasonable bet on its direction, not a measured improvement.
+- **0.24.0 has the most behind it:** on the six questions across languages it was written for, 4B gained 3 and lost none, and 2B gained 4 and lost 1. Over all field tasks the 2B split is 8 to 5, because the other 36 tasks gained 4 and lost 4.
+- **What this changes:** decisions keep the rule's direction test, now with their paired counts, and are confirmed on the held-out suite, so that a change is also judged on questions it was not written for.
+
+## Held-out suite
+
+Each guard and prompt change since 0.15.0 was written for a field task that failed, then judged on the same suite, so the field suite now flatters the changes made on it. `eval/field/holdout.ts` adds 16 questions over the same seven documents, in the field suite's mix: lookups in each document, a two-document question, questions in Japanese, Chinese and French, and two the documents do not answer. Their facts are checked against the documents by `tests/field.test.ts`, as the field suite's are.
+
+To stay held out, they are used one way only: a change developed on the field suite is confirmed on them, by their totals. The benchmark prints no result for them as they run, and `bench:compare` gives them only as counts; their reports name each task, for the record, but are not read task by task while developing.
+
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0, 0.20.0 and 0.21.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). The 0.26.0 runs used a third container (Intel Xeon @ 2.30GHz) and llama.cpp `fae9ac5`, built with `-DGGML_NATIVE=ON`. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
