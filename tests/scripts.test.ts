@@ -203,6 +203,23 @@ describe("documents in several languages", () => {
     assert.doesNotMatch(result.agent.transcript[3]!.content, /Found by searching the English documents[^\n]*\n\[fr\]/, "the match is an English document");
   });
 
+  it("adds a translated match only when it has most of the translated terms (f06, f46)", async () => {
+    const latin = new ResearchLibrary([
+      { id: "mpl", title: "License", text: "If You become compliant prior to 30 days after Your receipt of the notice, Your rights are reinstated, and the license is not terminated." },
+      { id: "fr", title: "Tour", text: "La tour est une tour de fer de 330 m de hauteur, dans le parc, et elle est la plus haute." },
+    ]);
+    assert.equal(latin.index.coverage("license days compliant notice", "mpl"), 1);
+    assert.equal(latin.index.coverage("license days tower notice", "fr"), 0);
+    const notFound = JSON.stringify({ tool: "final_answer", args: { found: false, answer: "Pas dans les documents.", evidence: [] } });
+    // "license" alone of four terms matches the English document: not enough to add it.
+    const result = await runResearch({
+      question: "Combien de jours la licence laisse-t-elle pour se remettre en conformité après une première notification ?",
+      library: latin,
+      model: scripted([JSON.stringify({ tool: "search", args: { query: "licence jours conformité" } }), "license week rule agreement", notFound]),
+    });
+    assert.doesNotMatch(result.agent.transcript[3]!.content, /Found by searching/);
+  });
+
   it("goes on with the terms as they are when translating fails", async () => {
     const library = new ResearchLibrary([
       { id: "note", title: "Note", text: "The tower is tall and it is in the city of Paris, and it was built of iron." },
