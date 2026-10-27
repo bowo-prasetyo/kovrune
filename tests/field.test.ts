@@ -8,6 +8,7 @@ import { FIELD_DIR, loadFieldSuite } from "../eval/harness/field.ts";
 import { formatReport } from "../eval/harness/format.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { fieldDocuments, fieldTasks } from "../eval/field/tasks.ts";
+import { holdoutTasks } from "../eval/field/holdout.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
 const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
@@ -42,9 +43,9 @@ describe("field suite", () => {
     assert.ok(fieldTasks.filter((t) => !t.answerable).length >= 4);
   });
 
-  it("asks only for facts its cited documents contain", async () => {
+  it("asks only for facts its cited documents contain, in the held-out suite too", async () => {
     const suite = await loadFieldSuite();
-    for (const task of fieldTasks.filter((t) => t.answerable)) {
+    for (const task of [...fieldTasks, ...holdoutTasks].filter((t) => t.answerable)) {
       const cited = task.citations.flat();
       for (const id of cited) assert.ok(suite.library.documentFor(id), `${task.id}: unknown document ${id}`);
       const text = normalize(cited.map((id) => suite.library.documentFor(id)!.text).join(" "));
@@ -55,6 +56,17 @@ describe("field suite", () => {
         );
       }
     }
+  });
+
+  it("holds out new questions over the same documents, in the field suite's mix", () => {
+    const ids = [...fieldTasks, ...holdoutTasks].map((t) => t.id);
+    assert.equal(new Set(ids).size, ids.length, "held-out IDs differ from the field suite's");
+    const questions = new Set(fieldTasks.map((t) => t.question));
+    assert.ok(holdoutTasks.every((t) => !questions.has(t.question)), "no field question is held out again");
+    const cited = new Set(holdoutTasks.flatMap((t) => t.citations.flat()));
+    assert.deepEqual([...cited].sort(), fieldDocuments.map((d) => d.id).sort(), "every field document is asked about");
+    assert.ok(holdoutTasks.some((t) => t.kind === "multi-hop"));
+    assert.ok(holdoutTasks.filter((t) => !t.answerable).length >= 2);
   });
 
   it("adds local documents and tasks, and refuses IDs that are taken", async () => {
@@ -126,7 +138,7 @@ describe("field suite", () => {
         environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
         config: { suites: ["field"], modes: ["constrained"] },
       }),
-      /needs field/,
+      /need field/,
     );
   });
 });

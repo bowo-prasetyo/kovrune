@@ -5,14 +5,16 @@ import { codingTasks } from "../tasks/coding.ts";
 import { pdfTasks } from "../tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../tasks/research.ts";
 import { unanswerableTasks } from "../tasks/unanswerable.ts";
+import { holdoutTasks } from "../field/holdout.ts";
 import type { ResearchLibrary } from "../../src/agent/research.ts";
 import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { labelledQuotesFound } from "../../src/agent/support.ts";
+import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.26.0";
+export const HARNESS_VERSION = "0.27.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -90,6 +92,8 @@ export interface Summary {
   tasks: number;
   passed: number;
   successRate: number;
+  /** 95% Wilson interval of the success rate: with tens of tasks, one task moves it by several points (stats.ts). */
+  successInterval: [number, number];
   validActionRate: number;
   /** Completion tokens per second of generation time after the first token. */
   decodeTokensPerSecond: number;
@@ -207,6 +211,7 @@ export function summarize(results: TaskResult[]): Summary[] {
       tasks: group.length,
       passed,
       successRate: round(passed / group.length, 3),
+      successInterval: wilson(passed, group.length).map((x) => round(x, 3)) as [number, number],
       validActionRate: round(calls ? group.reduce((s, r) => s + r.validCalls, 0) / calls : 0, 3),
       decodeTokensPerSecond: round(decodeMs ? (group.reduce((s, r) => s + r.completionTokens, 0) / decodeMs) * 1000 : 0, 1),
       prefillTokensPerSecond: round(ttftMs ? (group.reduce((s, r) => s + r.promptTokens, 0) / ttftMs) * 1000 : 0, 1),
@@ -298,7 +303,7 @@ export async function runBenchmark(options: {
   onCall?: (call: CallRecord, index: number) => void;
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
-  /** Required for the field suite (see eval/harness/field.ts). */
+  /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
   field?: { library: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
@@ -309,13 +314,16 @@ export async function runBenchmark(options: {
   const pick = (suite: SuiteName, tasks: ResearchTask[]) => (config.suites.includes(suite) ? tasks.filter((t) => wanted(t.id)) : []);
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
-  if (config.suites.includes("field") && !options.field) throw new Error("The field suite needs field (loadFieldSuite).");
+  if ((config.suites.includes("field") || config.suites.includes("holdout")) && !options.field) {
+    throw new Error("The field and holdout suites need field (loadFieldSuite).");
+  }
   const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
     { suite: "research" as const, tasks: pick("research", researchTasks), library: baseLibrary },
     { suite: "unanswerable" as const, tasks: pick("unanswerable", unanswerableTasks), library: baseLibrary },
     { suite: "pdf" as const, tasks: pdf, library: options.pdfLibrary ?? baseLibrary },
     { suite: "field" as const, tasks: field, library: options.field?.library ?? baseLibrary },
+    { suite: "holdout" as const, tasks: pick("holdout", holdoutTasks), library: options.field?.library ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;

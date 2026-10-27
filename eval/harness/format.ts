@@ -1,5 +1,6 @@
 import type { CallRecord } from "../../src/agent/agent.ts";
 import { FALSE_REASSURANCE_TARGET, falseReassurance, type Report } from "./benchmark.ts";
+import { formatRate } from "./stats.ts";
 
 /** Markdown summary of one report, used by the CLI, the browser page and results tables. */
 export function formatReport(report: Report): string {
@@ -21,11 +22,11 @@ export function formatReport(report: Report): string {
         ]
       : []),
     "",
-    "| Suite | Mode | Passed | Success | Valid actions | Decode tok/s | Prefill tok/s | Median task s | Quotes found, wrong |",
+    "| Suite | Mode | Passed | Success (95% interval) | Valid actions | Decode tok/s | Prefill tok/s | Median task s | Quotes found, wrong |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...report.summary.map(
       (s) =>
-        `| ${s.suite} | ${s.mode} | ${s.passed}/${s.tasks} | ${(s.successRate * 100).toFixed(0)}% | ${(s.validActionRate * 100).toFixed(0)}% | ${s.decodeTokensPerSecond} | ${s.prefillTokensPerSecond} | ${s.medianTaskSeconds} | ${s.falseReassurance ? `${s.falseReassurance.wrong} of ${s.falseReassurance.labelled}` : "–"} |`,
+        `| ${s.suite} | ${s.mode} | ${s.passed}/${s.tasks} | ${formatRate(s.passed, s.tasks)} | ${(s.validActionRate * 100).toFixed(0)}% | ${s.decodeTokensPerSecond} | ${s.prefillTokensPerSecond} | ${s.medianTaskSeconds} | ${s.falseReassurance ? `${s.falseReassurance.wrong} of ${s.falseReassurance.labelled}` : "–"} |`,
     ),
     "",
     ...reassuranceLine(report),
@@ -44,7 +45,7 @@ function reassuranceLine(report: Report): string[] {
   return [
     rate === undefined
       ? `False reassurance (constrained research suites): no answer was labelled "Quotes found" (${target}).`
-      : `False reassurance (constrained research suites): ${wrong} of ${labelled} answers labelled "Quotes found" failed their task, ${(rate * 100).toFixed(0)}% (${target}).`,
+      : `False reassurance (constrained research suites): ${wrong} of ${labelled} answers labelled "Quotes found" failed their task, ${formatRate(wrong, labelled)} (${target}).`,
     "",
   ];
 }

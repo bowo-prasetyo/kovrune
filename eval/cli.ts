@@ -3,7 +3,9 @@
 //   npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model qwen3:4b \
 //     --context 8192 --hardware-class 2 --out eval/results/qwen3-4b-ollama.json
 //
-// The field suite (real documents, eval/field/) runs only when named: --suites field.
+// The field suite (real documents, eval/field/) runs only when named: --suites field. So does the
+// held-out suite over the same documents (--suites field,holdout); its tasks print no result as they
+// run, so a change is not developed against them (eval/field/holdout.ts).
 //
 // Press Ctrl+C to stop early; the completed tasks are still reported and written.
 // Browser runtimes (WebLLM, wllama) are benchmarked with the page in eval/browser/.
@@ -13,6 +15,7 @@ import { writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import { runBenchmark, type Mode, type Preset } from "./harness/benchmark.ts";
+import { HELD_OUT_SUITES } from "./harness/compare.ts";
 import { formatCall, formatReport } from "./harness/format.ts";
 import { NodeCodeRunner } from "./harness/sandbox.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
@@ -82,7 +85,7 @@ const report = await runBenchmark({
   model,
   runner: new NodeCodeRunner(),
   pdfLibrary: suites.includes("pdf") ? await loadNodePdfLibrary() : undefined,
-  field: suites.includes("field") ? await loadFieldSuite() : undefined,
+  field: suites.includes("field") || suites.includes("holdout") ? await loadFieldSuite() : undefined,
   selfCheck,
   signal: controller.signal,
   environment: {
@@ -108,7 +111,8 @@ const report = await runBenchmark({
   },
   onCall: (call, index) => console.log(formatCall(call, index)),
   onResult: (result, done, total) => {
-    console.log(`[${done}/${total}] ${result.mode} ${result.taskId}: ${result.passed ? "PASS" : "FAIL"} (${(result.wallMs / 1000).toFixed(1)} s)`);
+    const outcome = HELD_OUT_SUITES.has(result.suite) ? "held out" : result.passed ? "PASS" : "FAIL";
+    console.log(`[${done}/${total}] ${result.mode} ${result.taskId}: ${outcome} (${(result.wallMs / 1000).toFixed(1)} s)`);
   },
 });
 
