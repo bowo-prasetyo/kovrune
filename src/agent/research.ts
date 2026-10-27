@@ -84,9 +84,9 @@ export async function runResearch(options: {
   const session = sources.length ? new SourceSession(sources, options.question, signal) : undefined;
   const agent = await runAgent({
     model: options.model,
-    system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label), languages: library.languages }),
+    system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label) }),
     task: options.question,
-    tools: createResearchTools(library.index, session, options.question),
+    tools: createResearchTools(library.index, session, options.question, library.languages),
     finalTool: "final_answer",
     config: {
       constrained: options.constrained ?? true,

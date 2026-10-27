@@ -16,27 +16,16 @@ Finish with final_answer. For each document that supports the answer, give its I
 If the documents do not contain the answer, set "found" to false, say what is missing, and give no evidence. Never guess.`;
 
 /**
- * The system prompt. With only the user's documents in one language it is RESEARCH_SYSTEM
- * exactly, so benchmark results stay comparable. Documents in several languages add a line
- * about searching in each one's language; open sources add lines about where to look.
+ * The system prompt. With only the user's documents it is RESEARCH_SYSTEM exactly, so
+ * benchmark results stay comparable; open sources add one line about where to look.
  */
-export function researchSystem(options: { documents: boolean; sources: string[]; languages?: string[] }): string {
-  const system = options.languages && options.languages.length > 1 ? `${RESEARCH_SYSTEM}\n${languagesLine(options.languages)}` : RESEARCH_SYSTEM;
-  if (!options.sources.length) return system;
+export function researchSystem(options: { documents: boolean; sources: string[] }): string {
+  if (!options.sources.length) return RESEARCH_SYSTEM;
   const sources = options.sources.join(" and ");
   const where = options.documents
     ? `You can also search ${sources}. Look in the user's documents first: search them and read what you find. Then search ${sources} too, and combine what you find: prefer the user's documents for anything specific to them, use the other sources for background and for what the documents do not cover, and say so when sources disagree.`
     : `Search ${options.sources.length > 1 ? `each of ${sources}` : sources} to find documents.`;
-  return `${system}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
-}
-
-/**
- * Search matches words, so an English query finds nothing in a Japanese document (field suite
- * f37-f42); the model can translate its search terms once it knows which languages to search in.
- */
-function languagesLine(languages: string[]): string {
-  const list = languages.length > 1 ? `${languages.slice(0, -1).join(", ")} and ${languages.at(-1)}` : languages[0];
-  return `The documents are in ${list}. Search matches words, so to find a document in another language than the question, search with words in that language.`;
+  return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
 }
 
 /** Documents longer than this are truncated when read, to fit small context windows. */
@@ -66,8 +55,19 @@ export function languageMismatch(question: string, answer: string): { asked: str
   return askedIn && wroteIn && askedIn !== wroteIn ? { asked: askedIn, wrote: wroteIn } : undefined;
 }
 
-/** `question`, when given, lets final_answer check that the answer is in the question's language. */
-export function createResearchTools(index: DocumentIndex, session?: SourceSession, question?: string): AgentTool[] {
+/** The writing system a document language from documentLanguage() is written in, as mainScript() names it. */
+function scriptOfLanguage(language: string): string {
+  if (language === "Japanese" || language === "Chinese") return "Chinese or Japanese";
+  if (language === "Korean") return "Korean";
+  return language.endsWith(" script") ? language.slice(0, -" script".length) : "Latin";
+}
+
+/**
+ * `question`, when given, lets final_answer check that the answer is in the question's language.
+ * `languages`, the documents' languages (documentLanguages()), lets it check that the model
+ * searched in each of their writing systems before concluding that the answer is not there.
+ */
+export function createResearchTools(index: DocumentIndex, session?: SourceSession, question?: string, languages: string[] = []): AgentTool[] {
   const hasDocuments = index.size > 0;
   let searchedDocuments = false;
   let foundDocuments = false;
@@ -80,6 +80,9 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
   // or to answer in the question's language. Each is asked once.
   let askedToRead = false;
   let askedForLanguage = false;
+  let askedForOtherLanguages = false;
+  // The writing systems the model's searches of the user's documents were written in.
+  const searchedScripts = new Set<string>();
   // Every source the user ticked is searched before the answer, so it can draw on all of them.
   const searchedSources = new Set<string>();
   const sourceSearches: AgentTool[] = (session?.sources ?? []).map((source) => ({
@@ -129,6 +132,8 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       args: z.object({ query: z.string() }).strict(),
       execute: async ({ query }: { query: string }) => {
         searchedDocuments = true;
+        const script = mainScript(query)?.script;
+        if (script) searchedScripts.add(script);
         const hits = index.search(query);
         foundDocuments ||= hits.length > 0;
         // Counted in documents, not passages: a PDF found in three passages is one document to the user.
@@ -191,6 +196,19 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
             message:
               "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.",
             step: "About to conclude that the sources don't answer this; reading what the search found first",
+          };
+        }
+        // Search each language before "not found": search matches words, so an English query
+        // finds nothing in a Japanese document, and Qwen3.5-4B, told the documents' languages in
+        // the prompt, still searched only in English (field suite f37-f39). Writing systems are
+        // compared, as short queries have too few function words to tell French from English.
+        const unsearched = languages.filter((language) => !searchedScripts.has(scriptOfLanguage(language)));
+        if (!found && unsearched.length && searchedScripts.size && !askedForOtherLanguages) {
+          askedForOtherLanguages = true;
+          const list = unsearched.length > 1 ? `${unsearched.slice(0, -1).join(", ")} and ${unsearched.at(-1)}` : unsearched[0];
+          return {
+            message: `Some documents are in ${list}, which search finds only with words in ${unsearched.length > 1 ? "those languages" : "that language"}. Before concluding that the documents do not answer the question, search them too, translating your search terms into ${list}.`,
+            step: "About to conclude that the sources don't answer this; searching the documents in other languages first",
           };
         }
         // Reply in the question's language: Qwen3.5-4B answered a Japanese question in English
