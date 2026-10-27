@@ -392,4 +392,47 @@ export const fieldTasks: ResearchTask[] = [
     facts: [],
     citations: [],
   },
+
+  // Across languages in the same alphabet (harness 0.25.0): English questions about the French
+  // document and French questions about English ones, with few words in common with the answer.
+  {
+    id: "f43-eiffel-tallest-years-en",
+    kind: "lookup",
+    question: "For how many years was the Eiffel Tower the tallest monument in the world?",
+    answerable: true,
+    facts: [["forty", "40", "quarante"]],
+    citations: [EIFFEL],
+  },
+  {
+    id: "f44-eiffel-higher-deck-en",
+    kind: "lookup",
+    question: "Which tower in Moscow has a higher observation deck than the highest public platform of the Eiffel Tower?",
+    answerable: true,
+    facts: [["Ostankino"]],
+    citations: [EIFFEL],
+  },
+  {
+    id: "f45-mpl-cure-fr",
+    kind: "lookup",
+    question: "Combien de jours la licence laisse-t-elle pour se remettre en conformité après une première notification ?",
+    answerable: true,
+    facts: [["30 jours", "30 days", "trente"]],
+    citations: [MPL],
+  },
+  {
+    id: "f46-preview-permission-fr",
+    kind: "lookup",
+    question: "Sur le site de prévisualisation, quelle autorisation du navigateur permet d'atteindre un serveur de modèle sur mon propre ordinateur ?",
+    answerable: true,
+    facts: [["Apps on device"]],
+    citations: [GUIDE],
+  },
+  {
+    id: "f47-tower-metal-en",
+    kind: "lookup",
+    question: "What kind of metal is the 330-metre tower in Paris made of?",
+    answerable: true,
+    facts: [["puddled iron", "fer puddlé", "wrought iron"]],
+    citations: [EIFFEL],
+  },
 ];
