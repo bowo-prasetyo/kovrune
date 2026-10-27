@@ -93,6 +93,9 @@ describe("field suite", () => {
     const suite = await loadFieldSuite();
     const model = new ScriptedModel([
       `{"tool":"search","args":{"query":"Ada Lovelace born"}}`,
+      // The field documents include Chinese and Japanese, so search also translates the terms.
+      "埃达·洛夫莱斯 出生",
+      "エイダ・ラブレス 誕生",
       `{"tool":"read","args":{"docId":"ada-lovelace-lead"}}`,
       JSON.stringify({
         tool: "final_answer",

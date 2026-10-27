@@ -8,7 +8,7 @@ import type { SourceSession } from "../sources/session.ts";
 import { SourceError } from "../sources/types.ts";
 import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
-import type { DocumentIndex } from "./search.ts";
+import type { DocumentIndex, SearchHit } from "./search.ts";
 
 export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
 Search first, then read the documents you need. Some documents are outdated or corrected by later ones; prefer the most recent correction.
@@ -62,12 +62,21 @@ function scriptOfLanguage(language: string): string {
   return language.endsWith(" script") ? language.slice(0, -" script".length) : "Latin";
 }
 
+/** Translates search terms into a language, or gives undefined (research.ts asks the model). */
+export type Translate = (query: string, language: string) => Promise<string | undefined>;
+
 /**
  * `question`, when given, lets final_answer check that the answer is in the question's language.
- * `languages`, the documents' languages (documentLanguages()), lets it check that the model
- * searched in each of their writing systems before concluding that the answer is not there.
+ * `languages`, the documents' languages (documentLanguages()), with `translate`, lets search find
+ * documents in another writing system than the query: the terms are translated and searched too.
  */
-export function createResearchTools(index: DocumentIndex, session?: SourceSession, question?: string, languages: string[] = []): AgentTool[] {
+export function createResearchTools(
+  index: DocumentIndex,
+  session?: SourceSession,
+  question?: string,
+  languages: string[] = [],
+  translate?: Translate,
+): AgentTool[] {
   const hasDocuments = index.size > 0;
   let searchedDocuments = false;
   let foundDocuments = false;
@@ -80,9 +89,6 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
   // or to answer in the question's language. Each is asked once.
   let askedToRead = false;
   let askedForLanguage = false;
-  let askedForOtherLanguages = false;
-  // The writing systems the model's searches of the user's documents were written in.
-  const searchedScripts = new Set<string>();
   // Every source the user ticked is searched before the answer, so it can draw on all of them.
   const searchedSources = new Set<string>();
   const sourceSearches: AgentTool[] = (session?.sources ?? []).map((source) => ({
@@ -118,6 +124,26 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       ? `${observation}\n\nBefore you answer, also search ${unsearched.map((source) => source.label).join(" and ")} (${unsearched.map((source) => `search_${source.name}`).join(", ")}).`
       : observation;
   };
+  // Search across languages: search matches words, so an English query finds nothing in a Japanese
+  // document, and told to search in the documents' languages, in the prompt or when concluding
+  // "not found", Qwen3.5-2B and 4B still searched in English (field suite f37-f39). So search
+  // translates the terms into each document language written in another script than the query,
+  // and adds the best match in that language. Languages sharing the query's script (French for an
+  // English query) are not translated: short queries cannot be told apart, and often share names.
+  const translatedHits = async (query: string, hits: SearchHit[]) => {
+    const script = mainScript(query)?.script;
+    if (!translate || !script) return [];
+    const found: Array<{ language: string; terms: string; hit: SearchHit }> = [];
+    for (const language of languages.filter((l) => scriptOfLanguage(l) !== script)) {
+      const terms = await translate(query, language);
+      if (!terms) continue;
+      const hit = index
+        .search(terms)
+        .find((h) => mainScript(index.get(h.docId)!.text)?.script === scriptOfLanguage(language) && !hits.some((x) => x.docId === h.docId));
+      if (hit) found.push({ language, terms, hit });
+    }
+    return found;
+  };
   // Document IDs are limited to ones the task has seen, so under constrained decoding the
   // model cannot read or cite a mistyped ID (seen: "wikiped:Ada_Lovelace", a bare "W7150387116").
   const localIds = index.ids();
@@ -132,15 +158,17 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
       args: z.object({ query: z.string() }).strict(),
       execute: async ({ query }: { query: string }) => {
         searchedDocuments = true;
-        const script = mainScript(query)?.script;
-        if (script) searchedScripts.add(script);
         const hits = index.search(query);
-        foundDocuments ||= hits.length > 0;
+        const translated = await translatedHits(query, hits);
+        foundDocuments ||= hits.length + translated.length > 0;
         // Counted in documents, not passages: a PDF found in three passages is one document to the user.
-        if (!hits.length) return { text: nextSources("No matching documents."), resultCount: 0 };
+        if (!hits.length && !translated.length) return { text: nextSources("No matching documents."), resultCount: 0 };
         unread.add("search");
-        const text = hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`).join("\n\n");
-        return { text, resultCount: new Set(hits.map((h) => parentId(h.docId))).size };
+        const text = [
+          ...hits.map((h) => `[${h.docId}] ${h.title}\n${h.snippet}`),
+          ...translated.map(({ language, terms, hit }) => `Found by searching the ${language} documents for "${terms}":\n[${hit.docId}] ${hit.title}\n${hit.snippet}`),
+        ].join("\n\n");
+        return { text, resultCount: new Set([...hits, ...translated.map((t) => t.hit)].map((h) => parentId(h.docId))).size };
       },
       onRepeat: () => ({ hint: "Searching is no longer available: read one of the documents it found with read." }),
       available: () => !unread.has("search"),
@@ -196,19 +224,6 @@ export function createResearchTools(index: DocumentIndex, session?: SourceSessio
             message:
               "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.",
             step: "About to conclude that the sources don't answer this; reading what the search found first",
-          };
-        }
-        // Search each language before "not found": search matches words, so an English query
-        // finds nothing in a Japanese document, and Qwen3.5-4B, told the documents' languages in
-        // the prompt, still searched only in English (field suite f37-f39). Writing systems are
-        // compared, as short queries have too few function words to tell French from English.
-        const unsearched = languages.filter((language) => !searchedScripts.has(scriptOfLanguage(language)));
-        if (!found && unsearched.length && searchedScripts.size && !askedForOtherLanguages) {
-          askedForOtherLanguages = true;
-          const list = unsearched.length > 1 ? `${unsearched.slice(0, -1).join(", ")} and ${unsearched.at(-1)}` : unsearched[0];
-          return {
-            message: `Some documents are in ${list}, which search finds only with words in ${unsearched.length > 1 ? "those languages" : "that language"}. Before concluding that the documents do not answer the question, search them too, translating your search terms into ${list}.`,
-            step: "About to conclude that the sources don't answer this; searching the documents in other languages first",
           };
         }
         // Reply in the question's language: Qwen3.5-4B answered a Japanese question in English
