@@ -2,13 +2,17 @@
 
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
-import { labelledQuotesFound } from "../../agent/support.ts";
+import type { ReviewVerdict } from "../../agent/review.ts";
+import { labelledQuotesFound, wordChecksPass } from "../../agent/support.ts";
 
 /** ": 5 results", ": 1 document", ": nothing found", or nothing while the search runs. */
 const found = (count: number | undefined, noun: string) =>
   count === undefined ? "" : count === 0 ? ": nothing found" : `: ${count} ${noun}${count === 1 ? "" : "s"}`;
 
 const shorten = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
+
+/** The trace step for the model's own check of its answer (agent/review.ts). */
+export const REVIEW_STEP = "Checking that the quoted passages back the answer";
 
 export function describeCall(call: CallRecord, titleFor: (docId: string) => string | undefined): string {
   if (!call.valid) {
@@ -60,7 +64,7 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; answerInQuote?: boolean },
+  support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict },
 ): { label: string; detail: string; tone: AnswerStatus } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
@@ -76,6 +80,17 @@ export function describeStatus(
             ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
             : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
           tone: "verified",
+        };
+      }
+      // The word checks pass, but the model's own check does not confirm the answer (review.ts).
+      if (support?.review && support.review !== "yes" && wordChecksPass(status, evidence, support)) {
+        return {
+          label: "Quotes found, answer not confirmed",
+          detail:
+            support.review === "no"
+              ? "Every quote below is word for word in the source it cites, but asked whether the quoted passages answer your question, the model said they do not. The answer may come from the wrong passage: check it against the sources."
+              : "Every quote below is word for word in the source it cites, but asked whether the quoted passages state everything the answer says, the model said only partly. Part of the answer, such as a number or a condition, may differ from the sources or be missing: check it against them.",
+          tone: "unverified",
         };
       }
       if (found === evidence.length && support?.judged === 0) {

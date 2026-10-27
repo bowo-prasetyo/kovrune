@@ -348,8 +348,11 @@ describe("benchmark", () => {
   it("counts wrong answers labelled Quotes found as false reassurance", async () => {
     const model = new ScriptedModel([
       final(true, "LumenDB is maintained by the Tessel Foundation.", [MAINTAINER_QUOTE]),
-      // A real quote, but the wrong license: the label would read "Quotes found".
+      // The model's own check of the answer (agent/review.ts).
+      `{"verdict":"yes"}`,
+      // A real quote, but the wrong license: the label would read "Quotes found", and the check confirms it too.
       final(true, "LumenDB is released under the Apache-2.0 license.", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
+      `{"verdict":"yes"}`,
     ]);
     const report = await runBenchmark({
       model,

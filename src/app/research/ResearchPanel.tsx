@@ -20,7 +20,7 @@ import type { LibraryDocument } from "./library.ts";
 import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
 import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
-import { describePages, describeCall, describeStatus } from "./trace.ts";
+import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
@@ -120,6 +120,10 @@ export function ResearchPanel({
         // A search's step is shown as it starts, and gets its result count once it has run.
         onResult: (call: CallRecord, index: number) => {
           steps[index - 1] = describeCall(call, titleFor);
+          progress();
+        },
+        onReview: () => {
+          steps.push(REVIEW_STEP);
           progress();
         },
       });

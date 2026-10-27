@@ -11,7 +11,8 @@ import { createResearchTools, researchSystem, type ResearchFinal, type Translate
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
-import { sentenceSupport, type SentenceSupport } from "./support.ts";
+import { reviewAnswer } from "./review.ts";
+import { sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -78,6 +79,8 @@ export async function runResearch(options: {
   onCall?: (call: CallRecord, index: number) => void;
   /** Called when a search has run, with its result count. */
   onResult?: (call: CallRecord, index: number) => void;
+  /** Called as the model starts checking that the quotes back its answer (review.ts). */
+  onReview?: () => void;
 }): Promise<ResearchResult> {
   const { library, signal } = options;
   const sources = options.sources ?? [];
@@ -113,7 +116,14 @@ export async function runResearch(options: {
     const citation = session?.citation(docId);
     if (citation) citations[docId] = citation;
   }
-  const support = sentenceSupport(final.answer, evidence, (id) => library.documentFor(id)?.title ?? citations[id]?.title, options.question);
+  const titleFor = (id: string) => library.documentFor(id)?.title ?? citations[id]?.title;
+  const support = sentenceSupport(final.answer, evidence, titleFor, options.question);
+  // The word checks pass incomplete and misattributed answers, so the model checks those it would label (review.ts).
+  if (wordChecksPass(answerStatus(final.found, evidence), evidence, support)) {
+    options.onReview?.();
+    const review = await reviewAnswer({ model: options.model, question: options.question, answer: final.answer, evidence, titleFor, signal });
+    if (review) support.review = review;
+  }
   return { status: answerStatus(final.found, evidence), final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
 }
 

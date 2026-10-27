@@ -6,6 +6,7 @@
 import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import type { ReviewVerdict } from "./review.ts";
 
 export interface AnswerSentence {
   /** The sentence as written, with the whitespace after it, so the sentences join back into the answer. */
@@ -24,6 +25,12 @@ export interface SentenceSupport {
    * verified quote, and that quote, with its document's title, shares most of the question's words.
    */
   answerInQuote?: boolean;
+  /**
+   * The model's own check (review.ts), asked only of answers the word checks would label "Quotes
+   * found": whether the quoted passages state what the answer says. Absent when not asked, or when
+   * the check gave no readable reply.
+   */
+  review?: ReviewVerdict;
 }
 
 /** Sentences with fewer content words than this are not judged. */
@@ -186,8 +193,21 @@ function answerInQuote(
  * compared it with the quotes. In the harness 0.15.0 reports (Qwen3.5-2B and 4B), such answers
  * were 13 of the 16 wrong answers labelled "Quotes found", and 13 of the 38 so labelled were wrong.
  * Answers saved before sentence support have no `support` and keep the rule they had.
+ *
+ * Since harness 0.28.0 the model is also asked whether the quotes back the answer (review.ts), and
+ * an answer it does not confirm with "yes" is not labelled. Answers saved before the check have no
+ * `review` and keep the rule they had.
  */
 export function labelledQuotesFound(
+  status: AnswerStatus | "no-answer",
+  evidence: Array<{ verified: boolean }>,
+  support?: { judged: number; backed: number; review?: ReviewVerdict },
+): boolean {
+  return wordChecksPass(status, evidence, support) && (!support?.review || support.review === "yes");
+}
+
+/** Whether the quote and sentence checks alone would label the answer "Quotes found": the cases the model's review is asked about. */
+export function wordChecksPass(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
   support?: { judged: number; backed: number },
