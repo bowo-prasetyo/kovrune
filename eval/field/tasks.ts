@@ -340,4 +340,56 @@ export const fieldTasks: ResearchTask[] = [
     facts: [],
     citations: [],
   },
+
+  // Questions in another language than the document that answers them (harness 0.24.0): search
+  // matches words, so an English query finds nothing in Japanese or Chinese text.
+  {
+    id: "f37-fuji-summit-en",
+    kind: "lookup",
+    question: "How high is the highest point of Mount Fuji, in metres?",
+    answerable: true,
+    facts: [["3776.12", "3,776.12"]],
+    citations: [FUJI],
+  },
+  {
+    id: "f38-wall-heritage-en",
+    kind: "lookup",
+    question: "In which year did UNESCO list the Great Wall of China as a World Heritage Site?",
+    answerable: true,
+    facts: [["1987"]],
+    citations: [WALL],
+  },
+  {
+    id: "f39-wall-length-en",
+    kind: "lookup",
+    question: "According to the survey by China's National Cultural Heritage Administration, how long are the Great Wall's walls and trenches in total, in kilometres?",
+    answerable: true,
+    facts: [["21,196", "21196"]],
+    citations: [WALL],
+  },
+  {
+    id: "f40-eiffel-address-en",
+    kind: "lookup",
+    question: "What is the official address of the Eiffel Tower?",
+    answerable: true,
+    facts: [["Anatole-France", "Anatole France"]],
+    citations: [EIFFEL],
+  },
+  {
+    id: "f41-ada-born-ja",
+    kind: "lookup",
+    question: "エイダ・ラブレスは何年に生まれましたか？",
+    answerable: true,
+    facts: [["1815"]],
+    citations: [ADA],
+  },
+  {
+    // The Japanese lead does not mention the last eruption (1707), as in f28.
+    id: "f42-fuji-last-eruption-en",
+    kind: "unanswerable",
+    question: "In which year did Mount Fuji last erupt?",
+    answerable: false,
+    facts: [],
+    citations: [],
+  },
 ];

@@ -24,6 +24,8 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.17.0, not adopted | 18/24 (75%) | 16/22 | 5/8 | 3/4 | 0 of 8 | [json](../results/full-sentences-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.19.0 | 25/36 (69%): 16/24 and 9/12 in other languages | 16/22 | 5/8 | 3/4 | 2 of 11 | [json](../results/field-0.19-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.20.0 | 25/36 (69%) | 16/22 | 5/8 | 3/4 | 2 of 11 | [json](../results/field-0.20-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.24.0 tasks, before the change | 27/42 (64%): 25/36 and 2/6 across languages | not run | not run | not run | 2 of 14 | [json](../results/field-0.24-baseline-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.24.0 | **30/42 (71%)**: 25/36 and 5/6 across languages | not run | not run | not run | 4 of 16 | [json](../results/field-0.24-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
@@ -31,6 +33,8 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.19.0 | 31/36 (86%): 20/24 and 11/12 in other languages | 19/22 | 8/8 | 3/4 | 2 of 17 | [json](../results/field-0.19-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.20.0 | **32/36 (89%)** | 19/22 | 8/8 | **4/4** | 2 of 18 | [json](../results/field-0.20-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.21.0 | 32/36 (89%) | 19/22 | 8/8 | 4/4 | 2 of 18 | [json](../results/field-0.21-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.24.0 tasks, before the change | 34/42 (81%): 32/36 and 2/6 across languages | not run | not run | not run | 2 of 20 | [json](../results/field-0.24-baseline-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.24.0 | **37/42 (88%)**: 32/36 and 5/6 across languages | not run | not run | not run | 2 of 20 | [json](../results/field-0.24-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -86,6 +90,21 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **The answers that gain the label:** "4 KiB", "112 KiB", "about a minute", "defineStore()", "13", "1987年" and "Apps on device", all right.
 - **Wrong answers it still refuses:** "40" (another company's head count), "1936年" (a park, not an eruption), "Ctrl+C". The nearest miss is "Cobble" for "Who is the CEO of Harrow Labs?", from a quote naming Harrow Labs, which covers exactly two thirds.
 - **Most right short answers still read "too short to check":** the rule labels about a third of them.
+
+**Questions across languages (0.24.0).** Six tasks ask in another language than the document that answers them (`f37`–`f42`): English questions about the Japanese, Chinese and French documents, a Japanese question about the English Ada Lovelace lead, and an English question none answers. Search matches words, so before this change an English query found only English documents, and both models passed 2 of the 6. Those two were `f40`, whose French document shares the word "Eiffel", and the unanswerable `f42`. Three ways were measured on the field suite, against a baseline run of the same tasks; the other suites were not run, because their documents are all in English and none of the three changes anything for them:
+
+| Change | 4B: across languages | 4B: other 36 | 2B: across languages | 2B: other 36 |
+| --- | --- | --- | --- | --- |
+| None (baseline) | 2/6 | 32/36 | 2/6 | 25/36 |
+| A prompt line naming the documents' languages, asking to search in each ([json](../results/field-0.24-prompt-line-qwen3.5-4b-q4km.json)) | 2/6 | 31/36 | not run | not run |
+| Sending "not found" back once until each writing system was searched ([4B](../results/field-0.24-guard-qwen3.5-4b-q4km.json), [2B](../results/field-0.24-guard-qwen3.5-2b-q4km.json)) | 3/6 | 32/36 | 2/6 | 25/36 |
+| **Search translates the query** (adopted) | **5/6** | 32/36 | **5/6** | 25/36 |
+
+- **Told to search in Japanese or Chinese, neither model does.** With the prompt line or the guard, they searched in English again; only 4B's `f41` (a Japanese question about an English document) gained from the guard.
+- **So search translates.** For each document language written in another script than the query, the research model translates the search terms in a short call of its own. Search runs again with the translation, and the best match in that language is added to the results: "Found by searching the Japanese documents for "富士山 最高地点"". Languages sharing the query's script are not translated. With documents in one script, nothing changes.
+- **`f37`–`f39` now pass on both models**, and 2B's `f41` too. 4B's `f41` still fails: its query misspelled エイダ (Ada) as エイドア, and the translation, "Aida Loveless", found nothing. 2B's `f42` now fails, answered with "1952" from the Japanese document.
+- **The other 36 tasks:** 4B keeps all 32 and no other result changes. 2B also keeps 25, but 4 tasks pass that failed and 4 fail that passed: the translated results change what it reads. Its wrong answers labelled **Quotes found** rise from 2 to 4 (`f10`, `f13`, `f24` are new). They are English questions about English documents that 2B has answered wrongly before, now with real quotes.
+- **Cost:** about one more model call for each search the translation applies to, two in the field library for an English search. The median field task took 42.8 s instead of 36.7 s on 4B, and 24.4 s instead of 20.6 s on 2B.
 
 ### Runs repeat on one machine, not across machines
 

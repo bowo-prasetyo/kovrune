@@ -3,10 +3,11 @@
 // benchmark measures exactly what users get.
 
 import { chunkDocument, parentId } from "../documents/chunk.ts";
-import type { LanguageModel } from "../models/types.ts";
+import { documentLanguages } from "../documents/languages.ts";
+import { stripThinking, type LanguageModel } from "../models/types.ts";
 import { SourceSession, type Citation } from "../sources/session.ts";
 import type { OpenSource } from "../sources/types.ts";
-import { createResearchTools, researchSystem, type ResearchFinal } from "../tools/research.ts";
+import { createResearchTools, researchSystem, type ResearchFinal, type Translate } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
@@ -44,6 +45,13 @@ export class ResearchLibrary {
   }
 
   /** Full document text for a document or chunk ID; quotes are checked against the whole document. */
+  /** The documents' languages, the most common first (languages.ts), worked out once. */
+  get languages(): string[] {
+    return (this.cachedLanguages ??= documentLanguages(this.documents.map((doc) => doc.text)));
+  }
+
+  private cachedLanguages?: string[];
+
   textFor(id: string): string | undefined {
     return this.byId.get(parentId(id))?.text;
   }
@@ -78,7 +86,7 @@ export async function runResearch(options: {
     model: options.model,
     system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label) }),
     task: options.question,
-    tools: createResearchTools(library.index, session, options.question),
+    tools: createResearchTools(library.index, session, options.question, library.languages, translator(options.model, signal)),
     finalTool: "final_answer",
     config: {
       constrained: options.constrained ?? true,
@@ -107,6 +115,42 @@ export async function runResearch(options: {
   }
   const support = sentenceSupport(final.answer, evidence, (id) => library.documentFor(id)?.title ?? citations[id]?.title, options.question);
   return { status: answerStatus(final.found, evidence), final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
+}
+
+/**
+ * Translates search terms with the research model itself, in a short call of its own, for search
+ * across languages (tools/research.ts). Each query and language is translated once per question.
+ * A failed translation gives no translation, so the search goes on with the terms as they are.
+ */
+function translator(model: LanguageModel, signal?: AbortSignal): Translate {
+  const cache = new Map<string, Promise<string | undefined>>();
+  return (query, language) => {
+    const key = `${language}\n${query}`;
+    if (!cache.has(key)) cache.set(key, translateTerms(model, query, language, signal));
+    return cache.get(key)!;
+  };
+}
+
+async function translateTerms(model: LanguageModel, query: string, language: string, signal?: AbortSignal): Promise<string | undefined> {
+  let text = "";
+  try {
+    for await (const chunk of model.generate({
+      messages: [
+        { role: "system", content: `Translate the search terms the user gives into ${language}. Reply with the translated search terms only, on one line.` },
+        { role: "user", content: query },
+      ],
+      maxTokens: 48,
+      temperature: 0,
+      signal,
+    })) {
+      text += chunk.text;
+    }
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return undefined;
+  }
+  const line = stripThinking(text).split("\n").map((l) => l.trim()).find(Boolean);
+  return line?.replace(/^["'“「]+|["'”」]+$/g, "") || undefined;
 }
 
 /** Chunk titles such as "Report (part 2 of 5)" are internal; models sometimes copy them into answers. */

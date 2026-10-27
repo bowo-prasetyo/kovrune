@@ -155,7 +155,7 @@ If your laptop is slow but you have a faster computer on the same network, such 
 Tips:
 
 - Ask about one document at a time, with words that appear in it.
-- Documents can be in any language, including Chinese, Japanese, Korean and Thai, which are written without spaces. Ask in the document's language: the search matches words, so a question in English doesn't find a Japanese document. Accents don't matter: "energie" finds "énergie".
+- Documents can be in any language, including Chinese, Japanese, Korean and Thai, which are written without spaces. You can ask in another language than a document's: when your documents are in another writing system than your search, such as Japanese documents and an English question, each search is also translated, and the best match in that language is added (the step says "Found by searching the Japanese documents for …"). Between languages that share an alphabet, such as English and French, searches are not translated, so ask about a French document in French, or use words both languages share, such as names. Accents don't matter: "energie" finds "énergie".
 - With a small model, an answer takes a minute or two.
 - Documents stay in the list after a reload: their text is saved in this browser. **Remove** deletes a document's saved copy. In a private window, or when the browser blocks site data, they are kept only until you reload, and the page says so.
 - Scanned PDFs (images without a text layer) can't be read.

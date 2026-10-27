@@ -1,0 +1,1806 @@
+{
+  "harnessVersion": "0.24.0",
+  "createdAt": "2026-10-27T01:51:09.248Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "Documents languages line (harness 0.24.0): native llama.cpp d854d98 on CPU (4-core cloud container, no GPU), 4 threads, file Qwen3.5-4B-Q4_K_M.gguf. Speeds are not representative of any hardware class."
+  },
+  "config": {
+    "suites": [
+      "field"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 20.1,
+    "decodeTokensPerSecond": 7.3,
+    "maxResearchTaskMinutes": 9.7,
+    "minutesPerSource": 2.4
+  },
+  "field": {
+    "committedTasks": 42,
+    "localTasks": 0,
+    "localDocuments": 0
+  },
+  "summary": [
+    {
+      "suite": "field",
+      "mode": "constrained",
+      "tasks": 42,
+      "passed": 33,
+      "successRate": 0.786,
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.4,
+      "prefillTokensPerSecond": 143.8,
+      "medianTaskSeconds": 38.7,
+      "falseReassurance": {
+        "labelled": 20,
+        "wrong": 2
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1875,
+      "completionTokens": 110,
+      "estimatedTokens": false,
+      "modelMs": 41053,
+      "ttftMs": 26159,
+      "wallMs": 41196,
+      "actions": [
+        "search {\"query\":\"Kovrune Chrome permission model server preview site\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "final_answer {\"found\":true,\"answer\":\"Apps on device (\\\"Access other apps and services on this device\\\")\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Th"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Apps on device (\\\"Access other apps and services on this device\\\")\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"That permission is called **Apps on device** (\\\"Access other apps and services on this device\\\").\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 750,
+      "completionTokens": 86,
+      "estimatedTokens": false,
+      "modelMs": 19535,
+      "ttftMs": 8043,
+      "wallMs": 19557,
+      "actions": [
+        "search {\"query\":\"browser permission model server own computer not needed\"}",
+        "final_answer {\"found\":true,\"answer\":\"Local network access\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"**Local network access** is a different permissi"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Local network access\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"**Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f03-https-not-supported",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 787,
+      "completionTokens": 199,
+      "estimatedTokens": false,
+      "modelMs": 34744,
+      "ttftMs": 7374,
+      "wallMs": 34768,
+      "actions": [
+        "search {\"query\":\"llama-server HTTPS not supported -hf\"}",
+        "final_answer {\"found\":true,\"answer\":\"llama-server says 'HTTPS is not supported' with -hf because llama.cpp was built without SSL support. You should either down"
+      ],
+      "final": "{\"found\":true,\"answer\":\"llama-server says 'HTTPS is not supported' with -hf because llama.cpp was built without SSL support. You should either download the model yourself using curl as described in the guide, or rebuild llama.cpp after installing libssl-dev with sudo apt install libssl-dev.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#9\",\"quote\":\"`HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev`\"},{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Without it, the `-hf` d",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#9",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f04-2b-download-size",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 853,
+      "completionTokens": 97,
+      "estimatedTokens": false,
+      "modelMs": 22744,
+      "ttftMs": 9714,
+      "wallMs": 22757,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-2B browser download size\"}",
+        "final_answer {\"found\":true,\"answer\":\"1.1 GB\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB f"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1.1 GB\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B)\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f05-model-test-time",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 731,
+      "completionTokens": 89,
+      "estimatedTokens": false,
+      "modelMs": 19065,
+      "ttftMs": 7121,
+      "wallMs": 19078,
+      "actions": [
+        "search {\"query\":\"model test time suitable hardware\"}",
+        "final_answer {\"found\":true,\"answer\":\"The model test takes about a minute on suitable hardware.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Either way,"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The model test takes about a minute on suitable hardware.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f06-context-flag",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3456,
+      "completionTokens": 149,
+      "estimatedTokens": false,
+      "modelMs": 56471,
+      "ttftMs": 36192,
+      "wallMs": 56486,
+      "actions": [
+        "search {\"query\":\"llama-server command context size user guide\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"4096\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 "
+      ],
+      "final": "{\"found\":true,\"answer\":\"4096\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f07-stop-shortcut",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 751,
+      "completionTokens": 76,
+      "estimatedTokens": false,
+      "modelMs": 19372,
+      "ttftMs": 9428,
+      "wallMs": 19384,
+      "actions": [
+        "search {\"query\":\"stop running question keyboard shortcut Kovrune\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ctrl+C\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"In the terminal where `llama-server` runs, press **Ctrl+C** to"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ctrl+C\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"In the terminal where `llama-server` runs, press **Ctrl+C** to stop it.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f08-download-target",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 723,
+      "completionTokens": 75,
+      "estimatedTokens": false,
+      "modelMs": 16043,
+      "ttftMs": 6160,
+      "wallMs": 16075,
+      "actions": [
+        "search {\"query\":\"model download completion rate target\"}",
+        "final_answer {\"found\":true,\"answer\":\"Above 90% of started downloads\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"| Model download completion rate | Abov"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Above 90% of started downloads\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"| Model download completion rate | Above 90% of started downloads |\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f09-hosts",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1552,
+      "completionTokens": 108,
+      "estimatedTokens": false,
+      "modelMs": 28535,
+      "ttftMs": 14376,
+      "wallMs": 28565,
+      "actions": [
+        "search {\"query\":\"static hosts GitHub Pages alternative design\"}",
+        "read {\"docId\":\"kovrune-design-r3#27\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cloudflare Pages or Netlify\",\"evidence\":[{\"docId\":\"kovrune-design-r3#27\",\"quote\":\"GitHub Pages cannot set these headers, so"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cloudflare Pages or Netlify\",\"evidence\":[{\"docId\":\"kovrune-design-r3#27\",\"quote\":\"GitHub Pages cannot set these headers, so the reference deployment uses a static host that can (for example Cloudflare Pages or Netlify).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#27",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f10-signaling",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2631,
+      "completionTokens": 148,
+      "estimatedTokens": false,
+      "modelMs": 43095,
+      "ttftMs": 23362,
+      "wallMs": 43124,
+      "actions": [
+        "search {\"query\":\"peer-to-peer prototype signaling library\"}",
+        "read {\"docId\":\"kovrune-design-r3#10\"}",
+        "read {\"docId\":\"kovrune-design-r3#23\"}",
+        "final_answer {\"found\":true,\"answer\":\"Trystero over public signaling channels, or a minimal self-hostable signaling server\",\"evidence\":[{\"docId\":\"kovrune-design-"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Trystero over public signaling channels, or a minimal self-hostable signaling server\",\"evidence\":[{\"docId\":\"kovrune-design-r3#23\",\"quote\":\"- **Prototype (M3):** WebRTC data channels with pluggable signaling (for example Trystero over public signaling channels, or a minimal self-hostable signaling server).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#23",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f11-m0-duration",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 709,
+      "completionTokens": 69,
+      "estimatedTokens": false,
+      "modelMs": 16988,
+      "ttftMs": 7892,
+      "wallMs": 17015,
+      "actions": [
+        "search {\"query\":\"M0 benchmark gate estimated time\"}",
+        "final_answer {\"found\":true,\"answer\":\"2–3 weeks\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"M0 — Benchmark gate (2–3 weeks)\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"2–3 weeks\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"M0 — Benchmark gate (2–3 weeks)\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#32",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f12-reassurance-target",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1651,
+      "completionTokens": 229,
+      "estimatedTokens": false,
+      "modelMs": 47622,
+      "ttftMs": 16669,
+      "wallMs": 47650,
+      "actions": [
+        "search {\"query\":\"false reassurance rate target baseline\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"The target for the false reassurance rate is under 10% on Qwen3.5-4B. The baseline was 3 of 22 (14%) in the last recorded Q"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The target for the false reassurance rate is under 10% on Qwen3.5-4B. The baseline was 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"False reassurance rate: the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f13-class-1",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 11445,
+      "completionTokens": 234,
+      "estimatedTokens": false,
+      "modelMs": 92286,
+      "ttftMs": 60603,
+      "wallMs": 92309,
+      "actions": [
+        "search {\"query\":\"reference hardware class 1\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#12\"}",
+        "search {\"query\":\"reference hardware class 1 definition\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "search {\"query\":\"hardware class 1 specific hardware\"}",
+        "read {\"docId\":\"kovrune-design-r3#5\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain a definition or list of specific hardware that constitutes 'reference hardware class"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain a definition or list of specific hardware that constitutes 'reference hardware class 1'. The documents mention 'class 1 hardware' in the context of Kovrune's evaluation criteria and target users (e.g., 'technical researchers... on reasonably capable laptops or desktops' and 'class 1 laptops'), but they do not specify the exact hardware specifications or models for this class.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f14-steering-approval",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5586,
+      "completionTokens": 139,
+      "estimatedTokens": false,
+      "modelMs": 55441,
+      "ttftMs": 36978,
+      "wallMs": 55456,
+      "actions": [
+        "search {\"query\":\"steering committee approve design document date\"}",
+        "read {\"docId\":\"kovrune-design-r3#1\"}",
+        "search {\"query\":\"steering committee approve design document date kovrune\"}",
+        "read {\"docId\":\"kovrune-design-r3#4\"}",
+        "search {\"query\":\"steering committee approve design document date\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about a steering committee approving a design document or the date of su"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about a steering committee approving a design document or the date of such approval.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f15-cure-period",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1678,
+      "completionTokens": 147,
+      "estimatedTokens": false,
+      "modelMs": 38406,
+      "ttftMs": 18728,
+      "wallMs": 38422,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 non-compliance notification time limit\"}",
+        "read {\"docId\":\"mpl-2.0#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"30 days\",\"evidence\":[{\"docId\":\"mpl-2.0#7\",\"quote\":\"Moreover, Your grants from a particular Contributor are reinstated on an"
+      ],
+      "final": "{\"found\":true,\"answer\":\"30 days\",\"evidence\":[{\"docId\":\"mpl-2.0#7\",\"quote\":\"Moreover, Your grants from a particular Contributor are reinstated on an ongoing basis if such Contributor notifies You of the non-compliance by some reasonable means, this is the first time You have received notice of non-compliance with this License from such Contributor, and You become compliant prior to 30 days after Your receipt of the notice.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f16-litigation",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1621,
+      "completionTokens": 170,
+      "estimatedTokens": false,
+      "modelMs": 40390,
+      "ttftMs": 17483,
+      "wallMs": 40403,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 litigation venue jurisdiction\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "final_answer {\"found\":true,\"answer\":\"Litigation relating to the MPL-2.0 may be brought only in the courts of a jurisdiction where the defendant maintains its pr"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Litigation relating to the MPL-2.0 may be brought only in the courts of a jurisdiction where the defendant maintains its principal place of business, and such litigation shall be governed by the laws of that jurisdiction.\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Any litigation relating to this License may be brought only in the\\ncourts of a jurisdiction where the defendant maintains its principal\\nplace of business and such litigation shall be governed by laws of that\\njurisdiction, without reference to its conflict-of-law provisions.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f17-secondary-licenses",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 10389,
+      "completionTokens": 221,
+      "estimatedTokens": false,
+      "modelMs": 84544,
+      "ttftMs": 54324,
+      "wallMs": 84565,
+      "actions": [
+        "search {\"query\":\"Secondary Licenses MPL-2.0\"}",
+        "read {\"docId\":\"mpl-2.0#1\"}",
+        "read {\"docId\":\"mpl-2.0#5\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "search {\"query\":\"Secondary License list MPL-2.0\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided MPL-2.0 license text does not contain a list or definition of which specific licenses count as Secondary Lice"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided MPL-2.0 license text does not contain a list or definition of which specific licenses count as Secondary Licenses. The document mentions 'Secondary Licenses' in several places (e.g., Section 3.3, Section 10.4, Exhibit B) but does not enumerate or define them.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f18-mpl-fine",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 10014,
+      "completionTokens": 214,
+      "estimatedTokens": false,
+      "modelMs": 83746,
+      "ttftMs": 55065,
+      "wallMs": 83766,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 fine euros\"}",
+        "read {\"docId\":\"kovrune-design-r3#3\"}",
+        "search {\"query\":\"MPL-2.0 license text fine euros\"}",
+        "read {\"docId\":\"kovrune-design-r3#30\"}",
+        "search {\"query\":\"MPL-2.0 license text violation fine\"}",
+        "read {\"docId\":\"kovrune-design-r3#36\"}",
+        "search {\"query\":\"MPL-2.0 license text monetary penalty fine\"}",
+        "final_answer {\"found\":false,\"answer\":\"The documents do not contain information about the fine amount in euros for violating the MPL-2.0 license. The documents o"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The documents do not contain information about the fine amount in euros for violating the MPL-2.0 license. The documents only confirm that the project uses MPL-2.0 but do not include the license text or any details about monetary penalties.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f19-ada-born",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1626,
+      "completionTokens": 157,
+      "estimatedTokens": false,
+      "modelMs": 41930,
+      "ttftMs": 20840,
+      "wallMs": 41939,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace born\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ada Lovelace was born on 10 December 1815.\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Augusta Ada King, Countess "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ada Lovelace was born on 10 December 1815.\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace, was an English mathematician and writer chiefly known for work on Charles Babbage's proposed mechanical general-purpose computer, the analytical engine.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f20-ada-parents",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1713,
+      "completionTokens": 118,
+      "estimatedTokens": false,
+      "modelMs": 33173,
+      "ttftMs": 17414,
+      "wallMs": 33179,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace parents\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ada Lovelace's parents were Lord Byron (poet) and Anne Isabella Milbanke (reformer).\",\"evidence\":[{\"docId\":\"ada-lovelace-le"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ada Lovelace's parents were Lord Byron (poet) and Anne Isabella Milbanke (reformer).\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Lovelace was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f21-ada-music",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 820,
+      "completionTokens": 90,
+      "estimatedTokens": false,
+      "modelMs": 21187,
+      "ttftMs": 9388,
+      "wallMs": 21195,
+      "actions": [
+        "search {\"query\":\"Lovelace machine encode information besides numbers\"}",
+        "final_answer {\"found\":true,\"answer\":\"Music\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#3\",\"quote\":\"Lovelace was the first to point out the possibility of encoding "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Music\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#3\",\"quote\":\"Lovelace was the first to point out the possibility of encoding information besides mere arithmetical figures, such as music, and manipulating it with such a machine.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f22-ada-patent",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2544,
+      "completionTokens": 165,
+      "estimatedTokens": false,
+      "modelMs": 41807,
+      "ttftMs": 19789,
+      "wallMs": 41814,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace patent first person awarded\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The provided documents do not contain information about whether Ada Lovelace was the first person to be awarded",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about whether Ada Lovelace was the first person to be awarded a patent. "
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about whether Ada Lovelace was the first person to be awarded a patent. They mention she was the first computer programmer and recognized applications beyond calculation, but do not mention patents.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f23-license-and-cure",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4255,
+      "completionTokens": 209,
+      "estimatedTokens": false,
+      "modelMs": 57446,
+      "ttftMs": 29397,
+      "wallMs": 57489,
+      "actions": [
+        "search {\"query\":\"Kovrune license non-compliance days\"}",
+        "read {\"docId\":\"kovrune-design-r3#36\"}",
+        "search {\"query\":\"MPL-2.0 non-compliance days\"}",
+        "read {\"docId\":\"mpl-2.0#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"Kovrune is released under the Mozilla Public License 2.0 (MPL-2.0). The license gives you 60 days after a first notice of n"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Kovrune is released under the Mozilla Public License 2.0 (MPL-2.0). The license gives you 60 days after a first notice of non-compliance to comply.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#36\",\"quote\":\"Kovrune's software is licensed under the **Mozilla Public License 2.0**.\"},{\"docId\":\"mpl-2.0#7\",\"quote\":\"non-compliance by some reasonable means prior to 60 days after You have\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#36",
+          "verified": true
+        },
+        {
+          "docId": "mpl-2.0#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f24-servers",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 799,
+      "completionTokens": 264,
+      "estimatedTokens": false,
+      "modelMs": 45886,
+      "ttftMs": 10352,
+      "wallMs": 45943,
+      "actions": [
+        "search {\"query\":\"Kovrune local model server Ollama status\"}",
+        "final_answer {\"found\":true,\"answer\":\"Kovrune supports llama.cpp server and Ollama. For Ollama, users must add the site to `OLLAMA_ORIGINS` to accept requests. I"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Kovrune supports llama.cpp server and Ollama. For Ollama, users must add the site to `OLLAMA_ORIGINS` to accept requests. If a model test indicates the model is 'not acting on tool results' with Ollama, it is recommended to use the llama.cpp server with the same model file.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).\"},{\"docId\":\"kovrune-user-guide#10\",\"quote\":\"| The model test says the model is",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#10",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-design-r3#17",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 3,
+        "backed": 3
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f25-fuji-summit",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 881,
+      "completionTokens": 123,
+      "estimatedTokens": false,
+      "modelMs": 26501,
+      "ttftMs": 9933,
+      "wallMs": 26510,
+      "actions": [
+        "search {\"query\":\"富士山 山体 最高地点 メートル\"}",
+        "final_answer {\"found\":true,\"answer\":\"3776.12 m\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"標高は3775.56 m、山体の最高地点は3776.12 mで、日本最高峰（剣ヶ峰）の独立峰で、その優美な風貌は日本国"
+      ],
+      "final": "{\"found\":true,\"answer\":\"3776.12 m\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"標高は3775.56 m、山体の最高地点は3776.12 mで、日本最高峰（剣ヶ峰）の独立峰で、その優美な風貌は日本国外でも日本の象徴として広く知られている。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f26-fuji-prefectures",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 869,
+      "completionTokens": 111,
+      "estimatedTokens": false,
+      "modelMs": 23203,
+      "ttftMs": 8093,
+      "wallMs": 23214,
+      "actions": [
+        "search {\"query\":\"富士山 県 跨\"}",
+        "final_answer {\"found\":true,\"answer\":\"富士山は山梨県と静岡県に跨っています。\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"山梨県（富士吉田市、南都留郡鳴沢村）と静岡県（富士宮市、富士市、裾野市、御殿場市、駿東郡小山町）に"
+      ],
+      "final": "{\"found\":true,\"answer\":\"富士山は山梨県と静岡県に跨っています。\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"山梨県（富士吉田市、南都留郡鳴沢村）と静岡県（富士宮市、富士市、裾野市、御殿場市、駿東郡小山町）に跨る。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f27-fuji-heritage",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 842,
+      "completionTokens": 104,
+      "estimatedTokens": false,
+      "modelMs": 22051,
+      "ttftMs": 7651,
+      "wallMs": 22056,
+      "actions": [
+        "search {\"query\":\"富士山 世界文化遺産 登録年\"}",
+        "final_answer {\"found\":true,\"answer\":\"2013年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"さらに2013年（平成25年）6月22日には関連する文化財群とともに「富士山-信仰の対象と芸術の源泉」の名で世界文化遺産に登録"
+      ],
+      "final": "{\"found\":true,\"answer\":\"2013年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"さらに2013年（平成25年）6月22日には関連する文化財群とともに「富士山-信仰の対象と芸術の源泉」の名で世界文化遺産に登録された。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f28-fuji-last-eruption",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 9836,
+      "completionTokens": 207,
+      "estimatedTokens": false,
+      "modelMs": 73859,
+      "ttftMs": 45018,
+      "wallMs": 73880,
+      "actions": [
+        "search {\"query\":\"富士山 噴火 最後\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "search {\"query\":\"富士山 噴火 年\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "search {\"query\":\"富士山 噴火 1707\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about the year of the last eruption of Mount Fuji. They only mention tha"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about the year of the last eruption of Mount Fuji. They only mention that Mount Fuji is an active volcano in Japan and list its status as a World Heritage Site in 2013.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f29-wall-heritage",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 873,
+      "completionTokens": 109,
+      "estimatedTokens": false,
+      "modelMs": 24327,
+      "ttftMs": 9360,
+      "wallMs": 24334,
+      "actions": [
+        "search {\"query\":\"长城 联合国教科文组织 世界文化遗产 年份\"}",
+        "final_answer {\"found\":true,\"answer\":\"1987年\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987年，长城被联合国教科文组织列为世界文化遗产，该遗产目前不仅包含上述15个省、市、自治区境内的长城，还额外包括了湖南和四"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1987年\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987年，长城被联合国教科文组织列为世界文化遗产，该遗产目前不仅包含上述15个省、市、自治区境内的长城，还额外包括了湖南和四川境内的苗疆长城（南长城）等。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f30-wall-length",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1805,
+      "completionTokens": 106,
+      "estimatedTokens": false,
+      "modelMs": 30460,
+      "ttftMs": 16149,
+      "wallMs": 30468,
+      "actions": [
+        "search {\"query\":\"长城墙壕遗存 总长度 国家文物局\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"21,196.18千米\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"墙壕遗存总长度21,196.18千米。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"21,196.18千米\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"墙壕遗存总长度21,196.18千米。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f31-wall-dynasty",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 844,
+      "completionTokens": 79,
+      "estimatedTokens": false,
+      "modelMs": 20729,
+      "ttftMs": 10069,
+      "wallMs": 20740,
+      "actions": [
+        "search {\"query\":\"现存长城遗迹 主要朝代 修筑\"}",
+        "final_answer {\"found\":true,\"answer\":\"现存的长城遗迹主要为始建于14世纪的明长城。\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"现存的长城遗迹主要为始建于14世纪的明长城\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"现存的长城遗迹主要为始建于14世纪的明长城。\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"现存的长城遗迹主要为始建于14世纪的明长城\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f32-wall-visitors",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3422,
+      "completionTokens": 126,
+      "estimatedTokens": false,
+      "modelMs": 41909,
+      "ttftMs": 25283,
+      "wallMs": 41921,
+      "actions": [
+        "search {\"query\":\"长城 每年 接待 游客\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"提供的文档中没有关于长城每年接待多少游客的信息。\",\"evidence\":[]}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "final_answer {\"found\":false,\"answer\":\"提供的文档中没有关于长城每年接待多少游客的信息。\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"提供的文档中没有关于长城每年接待多少游客的信息。\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f33-eiffel-height",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 691,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "modelMs": 22934,
+      "ttftMs": 5158,
+      "wallMs": 22939,
+      "actions": [
+        "search {\"query\":\"hauteur tour Eiffel antennes\"}",
+        "final_answer {\"found\":true,\"answer\":\"330 m\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl] est une tour autoportante de fer puddl"
+      ],
+      "final": "{\"found\":true,\"answer\":\"330 m\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl] est une tour autoportante de fer puddlé de 330 m de hauteur (avec antennes) située à Paris, à l’extrémité nord-ouest du parc du Champ-de-Mars en bordure de la Seine dans le 7e arrondissement.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f34-eiffel-occasion",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 677,
+      "completionTokens": 127,
+      "estimatedTokens": false,
+      "modelMs": 22394,
+      "ttftMs": 5606,
+      "wallMs": 22399,
+      "actions": [
+        "search {\"query\":\"tour Eiffel construite événement\"}",
+        "final_answer {\"found\":true,\"answer\":\"La tour Eiffel a été construite pour l'Exposition universelle de Paris de 1889, célébrant le centenaire de la Révolution fr"
+      ],
+      "final": "{\"found\":true,\"answer\":\"La tour Eiffel a été construite pour l'Exposition universelle de Paris de 1889, célébrant le centenaire de la Révolution française.\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Construite en deux ans par Gustave Eiffel et ses collaborateurs pour l'Exposition universelle de Paris de 1889, célébrant le centenaire de la Révolution française\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f35-eiffel-visitors-2016",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1599,
+      "completionTokens": 113,
+      "estimatedTokens": false,
+      "modelMs": 30417,
+      "ttftMs": 15390,
+      "wallMs": 30425,
+      "actions": [
+        "search {\"query\":\"tour Eiffel visiteurs 2016\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"5,9 millions de visiteurs\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"il s’agit du quatrième site culturel frança"
+      ],
+      "final": "{\"found\":true,\"answer\":\"5,9 millions de visiteurs\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"il s’agit du quatrième site culturel français payant le plus visité en 2016, avec 5,9 millions de visiteurs.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f36-eiffel-ticket",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 4858,
+      "completionTokens": 205,
+      "estimatedTokens": false,
+      "modelMs": 53146,
+      "ttftMs": 25294,
+      "wallMs": 53157,
+      "actions": [
+        "search {\"query\":\"ticket tour Eiffel sommet prix\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "search {\"query\":\"prix escalier tour Eiffel sommet\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"Les documents consultés ne contiennent aucune information sur le prix des billets pour monter au sommet de la t",
+        "final_answer {\"found\":false,\"answer\":\"Les documents consultés ne contiennent aucune information sur le prix des billets pour monter au sommet de la tour Eiffel."
+      ],
+      "final": "{\"found\":false,\"answer\":\"Les documents consultés ne contiennent aucune information sur le prix des billets pour monter au sommet de la tour Eiffel. Ils se limitent à décrire les dimensions, l'histoire et l'emplacement de la tour.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f37-fuji-summit-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3919,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "modelMs": 38929,
+      "ttftMs": 22873,
+      "wallMs": 38939,
+      "actions": [
+        "search {\"query\":\"Mount Fuji highest point metres\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "search {\"query\":\"Mount Fuji highest point metres\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about the height of Mount Fuji. The only document read was about the Eif"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about the height of Mount Fuji. The only document read was about the Eiffel Tower.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f38-wall-heritage-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 12094,
+      "completionTokens": 177,
+      "estimatedTokens": false,
+      "modelMs": 87501,
+      "ttftMs": 62816,
+      "wallMs": 87525,
+      "actions": [
+        "search {\"query\":\"UNESCO Great Wall China World Heritage Site year\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "search {\"query\":\"UNESCO Great Wall World Heritage Site year listed\"}",
+        "read {\"docId\":\"kovrune-user-guide#5\"}",
+        "search {\"query\":\"Great Wall China World Heritage Site UNESCO year\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "search {\"query\":\"Great Wall China World Heritage Site UNESCO year listed\"}",
+        "final_answer {\"found\":false,\"answer\":\"The documents do not contain information about when UNESCO listed the Great Wall of China as a World Heritage Site.\",\"evid"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The documents do not contain information about when UNESCO listed the Great Wall of China as a World Heritage Site.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f39-wall-length-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 7937,
+      "completionTokens": 201,
+      "estimatedTokens": false,
+      "modelMs": 74094,
+      "ttftMs": 46431,
+      "wallMs": 74110,
+      "actions": [
+        "search {\"query\":\"Great Wall walls trenches total length kilometres National Cultural Heritage Administration survey\"}",
+        "read {\"docId\":\"kovrune-design-r3#15\"}",
+        "search {\"query\":\"Great Wall National Cultural Heritage Administration total length walls trenches\"}",
+        "read {\"docId\":\"kovrune-design-r3#17\"}",
+        "search {\"query\":\"Great Wall National Cultural Heritage Administration survey length walls trenches Chinese\"}",
+        "read {\"docId\":\"kovrune-design-r3#18\"}",
+        "search {\"query\":\"Great Wall National Cultural Heritage Administration total length walls trenches survey\"}",
+        "final_answer {\"found\":false,\"answer\":\"The documents do not contain information about the total length of the Great Wall's walls and trenches according to a surv"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The documents do not contain information about the total length of the Great Wall's walls and trenches according to a survey by China's National Cultural Heritage Administration.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f40-eiffel-address-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1850,
+      "completionTokens": 93,
+      "estimatedTokens": false,
+      "modelMs": 33992,
+      "ttftMs": 20560,
+      "wallMs": 34001,
+      "actions": [
+        "search {\"query\":\"Eiffel Tower official address\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"5, avenue Anatole-France\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Son adresse officielle est 5, avenue Anatole"
+      ],
+      "final": "{\"found\":true,\"answer\":\"5, avenue Anatole-France\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Son adresse officielle est 5, avenue Anatole-France.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f41-ada-born-ja",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3149,
+      "completionTokens": 185,
+      "estimatedTokens": false,
+      "modelMs": 46252,
+      "ttftMs": 20891,
+      "wallMs": 46261,
+      "actions": [
+        "search {\"query\":\"エイダ・ラブレス 生まれました\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The documents do not contain information about Ada Lovelace's birth year. The provided documents are about Moun",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The documents do not contain information about Ada Lovelace's birth year. The provided documents are about Moun",
+        "final_answer {\"found\":false,\"answer\":\"提供された文書にはエイダ・ラブレスの出生年に関する情報はありません。文書は富士山に関する日本語のウィキペディアの要約です。\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"提供された文書にはエイダ・ラブレスの出生年に関する情報はありません。文書は富士山に関する日本語のウィキペディアの要約です。\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f42-fuji-last-eruption-en",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 10168,
+      "completionTokens": 186,
+      "estimatedTokens": false,
+      "modelMs": 88266,
+      "ttftMs": 61254,
+      "wallMs": 88280,
+      "actions": [
+        "search {\"query\":\"Mount Fuji last erupt year\"}",
+        "read {\"docId\":\"kovrune-user-guide#7\"}",
+        "search {\"query\":\"Mount Fuji last eruption year\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "search {\"query\":\"Mount Fuji last eruption\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "read {\"docId\":\"kovrune-design-r3#1\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about the last eruption year of Mount Fuji. The documents are about Kovr"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about the last eruption year of Mount Fuji. The documents are about Kovrune, a local-first research app, and do not include geological data about Mount Fuji.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    }
+  ]
+}
