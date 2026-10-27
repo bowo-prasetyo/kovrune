@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/**/*.test.ts\"",
     "bench:endpoint": "node --experimental-strip-types eval/cli.ts",
+    "bench:retrieval": "node --experimental-strip-types eval/retrieval.ts",
     "bench:browser": "vite --config eval/browser/vite.config.ts",
     "bench:browser:build": "vite build --config eval/browser/vite.config.ts",
     "build:redirect": "vite build --config redirect/vite.config.ts",

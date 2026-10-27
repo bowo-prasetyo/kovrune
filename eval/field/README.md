@@ -12,6 +12,27 @@ It is reported as its own suite and is not part of the gate's evaluation set, so
 
 Before a change to the research prompt or the guards (repeat, last-step, read-before-search, documents-first) is merged, it must **improve the field suite without regressing** the research, unanswerable and pdf suites, on Qwen3.5-2B and Qwen3.5-4B. A change that only fixes a live check is not enough.
 
+A change to search or chunking is measured first with `npm run bench:retrieval`, which takes seconds and needs no model (see [Retrieval](#retrieval)), and then by the same rule.
+
+## Retrieval
+
+Task success measures search, reading and answering together. `npm run bench:retrieval` measures search alone: for each answerable task, it searches with the question as the query, as the app's search tool does, and counts:
+- **cited documents found:** for each citation group, whether one of its documents is among the results;
+- **answer passages found:** for each fact group, whether the text of a result (the passage the model sees a snippet of and reads next) contains one of its spellings. This stands in for marking the passage that answers by hand.
+
+The model writes its own queries, so this is a fixed yardstick for search, not a prediction of what the agent finds. Questions in another writing system than their documents (`f37`–`f39`, `f41`) are counted apart: search translates them with the model, which this measure does not run. `tests/retrieval.test.ts` keeps the figures at least where they are.
+
+| Search | Research (19) | PDF (4) | Field (35): documents | Field: answer passages | Field: everything found |
+| --- | --- | --- | --- | --- | --- |
+| **3 results (the app, harness 0.26.0)** | 100% | 100% | 94.4% | 81.8% | 30 |
+| 5 results, measured, not adopted | 100% | 100% | 97.2% | 88.6% | 32 |
+| At most one passage per document, 3 results, measured, not adopted | 100% | 100% | 97.2% | 81.8% | 30 |
+
+- **The synthetic suites cannot tell search changes apart:** every variant finds everything there. Only the field suite's long, real documents do.
+- **Some misses are where the false reassurance is.** With 3 results, search misses an answer passage of `f06`, `f13`, `f17`, `f23` and `f45`. The wrong answers to `f13` and `f17` were labelled **Quotes found**: the passage that answers was not among the results, and the model answered from the ones that were, with real quotes. `f23` is different: its top result holds both the 30-day cure period and the 60-day clause the models answered with, so that error is in reading. What search misses there is the other half of the question, the design document's statement of Kovrune's licence.
+- **Five results find the answer passages for `f06` and `f23` and one of `f13`'s two facts.** It costs about two more snippets per search in the context. It changes what the model reads, so it waits on benchmark runs on both models (the rule above).
+- **One passage per document finds one more cited document (`f23`'s design document) and no more answer passages:** in the field library the answer is often the second-best passage of the best document, which this hides.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0, 0.20.0 and 0.21.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
