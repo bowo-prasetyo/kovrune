@@ -94,6 +94,46 @@ describe("sentence support", () => {
     assert.equal(checked!.verified, false);
     assert.equal(marks("Lovelace patented the analytical engine in 1840.", [checked!]), "-");
   });
+
+  it("marks a sentence whose number no quote has", () => {
+    const quote = { docId: "d", quote: "The default page size is 4 KiB for every table." };
+    assert.equal(marks("The default page size is 4 KiB for every table.", [quote]), "+");
+    assert.equal(marks("The default page size is 8 KiB for every table.", [quote]), "-");
+    const release = { docId: "d", quote: "Version 3.0 was released in March 2024 by the foundation." };
+    assert.equal(marks("Version 3.0 was released in March 2021 by the foundation.", [release]), "-");
+    // Thousands separators and a list item's own number do not count.
+    assert.equal(marks("1. The context holds 4096 tokens by default.", [{ docId: "d", quote: "The context holds 4,096 tokens by default." }]), "+");
+  });
+
+  it("accepts a number from a cited title, the question, or a sum or difference of quoted numbers (benchmark tasks r04, r06, r15)", () => {
+    const fix = { docId: "d", quote: "This release includes the fix for the advisory." };
+    assert.equal(marks("LumenDB 3.2 includes the fix for the advisory.", [fix], () => "LumenDB 3.2 release notes"), "+");
+    const rename = [{ docId: "d", quote: "createStore() has been renamed to defineStore().", verified: true }];
+    const question = "In Quillstate 2.0, what was createStore() renamed to?";
+    assert.equal(sentenceSupport("In Quillstate 2.0, createStore() was renamed to defineStore().", rename, undefined, question).backed, 1);
+    assert.equal(sentenceSupport("In Quillstate 2.0, createStore() was renamed to defineStore().", rename).backed, 0);
+    const writes = { docId: "d", quote: "Random writes: Cobble reached 180,000 operations per second; LumenDB reached 150,000 operations per second." };
+    assert.equal(marks("Cobble had higher random-write throughput than LumenDB by 30,000 operations per second.", [writes]), "+");
+    assert.equal(marks("Cobble had higher random-write throughput than LumenDB by 40,000 operations per second.", [writes]), "-");
+  });
+
+  it("marks a sentence that negates when no quote does", () => {
+    const quote = { docId: "d", quote: "The Cobble store supports transactions across shards." };
+    assert.equal(marks("The Cobble store does not support transactions across shards.", [quote]), "-");
+    assert.equal(marks("The Cobble store never supports transactions across shards.", [quote]), "-");
+    // A negation in the quote, even in another clause, lets the sentence negate or not (field task f02).
+    const permission = {
+      docId: "d",
+      quote: "Local network access is a different permission, for other devices on your network, and isn't needed for a server on your own computer.",
+    };
+    assert.equal(marks("Local network access isn't needed for a server on your own computer.", [permission]), "+");
+    assert.equal(marks("Local network access is a different permission for other devices on your network.", [permission]), "+");
+  });
+
+  it("does not judge a sentence made only of the cited documents' title words", () => {
+    const quote = { docId: "d", quote: "Cobble is written in Go and developed by Harrow Labs." };
+    assert.equal(marks("LumenDB embedded store release.", [quote], () => "LumenDB embedded store release notes"), ".");
+  });
 });
 
 describe("answer status with sentence support", () => {

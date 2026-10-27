@@ -5,7 +5,7 @@
 
 import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
-import { quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import { hasNegation, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
 
 export interface AnswerSentence {
   /** The sentence as written, with the whitespace after it, so the sentences join back into the answer. */
@@ -56,6 +56,30 @@ function contentWords(text: string): string[] {
   return [...new Set(words(text).filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
 }
 
+/**
+ * The numbers in a text, without thousands separators ("4,096" is "4096"). A list item's own
+ * number ("1. Open the perspective") is not one of them.
+ */
+function numbers(text: string): string[] {
+  const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
+  return [...body.matchAll(/\p{Nd}+(?:[.,]\p{Nd}+)*/gu)].map(([n]) => n.replace(/,/g, ""));
+}
+
+/**
+ * Whether a number in an answer sentence is backed: it is in a verified quote or a cited title,
+ * or it restates the question's own number ("In Quillstate 2.0, …"), or it is the sum or the
+ * difference of two quoted numbers, as answers to "by how much" give ("by 30,000" from 180,000
+ * and 150,000). Only numbers within a factor of ten of each other are compared quantities, so
+ * "2021" does not pass as 2024 minus version 3.0.
+ */
+function numberCheck(quoted: string[], asked: string[]): (n: string) => boolean {
+  const known = new Set([...quoted, ...asked]);
+  const values = [...new Set(quoted.map(Number).filter((v) => v > 0))];
+  const comparable = (a: number, b: number) => a !== b && Math.max(a, b) <= 10 * Math.min(a, b);
+  const derived = new Set(values.flatMap((a) => values.filter((b) => comparable(a, b)).flatMap((b) => [a + b, Math.abs(a - b)])));
+  return (n) => known.has(n) || derived.has(Number(n));
+}
+
 /** Same word, allowing for the stemmer's single suffix: "hallucinat" (hallucinate) matches "hallucination". */
 function sameWord(a: string, b: string): boolean {
   if (a === b) return true;
@@ -90,26 +114,42 @@ export function splitSentences(answer: string): string[] {
  * out of the count: "LumenDB version 3.2 contains the fix" is backed by "This release includes
  * the fix" from "LumenDB 3.2 release notes". They do not back a claim on their own, so "Ada
  * Lovelace received the Charles Babbage Medal" is not backed by a quote from "Ada Lovelace"
- * that only names Babbage.
+ * that only names Babbage. A sentence made only of title words claims nothing a quote could
+ * back, so it is not judged.
+ *
+ * Shared words alone miss the changes that matter most, so a backed sentence must also:
+ * - have each of its numbers backed (numberCheck): "The page size is 8 KiB" shares every word
+ *   with "The default page size is 4 KiB", but not the number;
+ * - say "not" only if a verified quote does: "Cobble does not support transactions" is not
+ *   backed by "Cobble supports transactions". The reverse is not checked, because a quote's
+ *   "not" is often in another clause than the one the sentence restates (field tasks f02, f09).
  */
 export function sentenceSupport(
   answer: string,
   evidence: CheckedEvidence[],
   titleFor: (docId: string) => string | undefined = () => undefined,
-  /** The question, so an answer too short to judge can be backed by a quote that contains it (SHORT_ANSWER_QUESTION_SHARE). */
+  /**
+   * The question, so an answer too short to judge can be backed by a quote that contains it
+   * (SHORT_ANSWER_QUESTION_SHARE), and a sentence can restate the question's numbers.
+   */
   question?: string,
 ): SentenceSupport {
   const verified = evidence.filter((e) => e.verified);
   const quoteWords = contentWords(verified.map((e) => e.quote).join(" "));
   const subjectWords = contentWords(verified.map((e) => titleFor(e.docId) ?? "").join(" "));
+  const quoted = [...new Set(verified.flatMap((e) => [...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]))];
+  const numberBacked = numberCheck(quoted, question ? numbers(question) : []);
+  const quoteNegates = verified.some((e) => hasNegation(e.quote));
   let judged = 0;
   let backed = 0;
   const sentences = splitSentences(answer).map((text): AnswerSentence => {
     const words = contentWords(text);
     if (words.length < MIN_JUDGED_WORDS) return { text };
     const claim = words.filter((w) => !subjectWords.some((s) => sameWord(w, s)));
+    if (!claim.length) return { text };
     const shared = claim.filter((w) => quoteWords.some((q) => sameWord(w, q))).length;
-    const isBacked = shared >= claim.length * MIN_BACKED_SHARE;
+    const isBacked =
+      shared >= claim.length * MIN_BACKED_SHARE && numbers(text).every(numberBacked) && (quoteNegates || !hasNegation(text));
     judged++;
     if (isBacked) backed++;
     return { text, backed: isBacked };
