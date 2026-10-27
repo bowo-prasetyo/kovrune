@@ -25,17 +25,17 @@ The model writes its own queries, so this is a fixed yardstick for search, not a
 | Search | Research (19) | PDF (4) | Field (35): documents | Field: answer passages | Field: everything found |
 | --- | --- | --- | --- | --- | --- |
 | **3 results (the app, harness 0.26.0)** | 100% | 100% | 94.4% | 81.8% | 30 |
-| 5 results, measured, not adopted | 100% | 100% | 97.2% | 88.6% | 32 |
+| 5 results, measured and run, [not adopted](#five-search-results) | 100% | 100% | 97.2% | 88.6% | 32 |
 | At most one passage per document, 3 results, measured, not adopted | 100% | 100% | 97.2% | 81.8% | 30 |
 
 - **The synthetic suites cannot tell search changes apart:** every variant finds everything there. Only the field suite's long, real documents do.
 - **Some misses are where the false reassurance is.** With 3 results, search misses an answer passage of `f06`, `f13`, `f17`, `f23` and `f45`. The wrong answers to `f13` and `f17` were labelled **Quotes found**: the passage that answers was not among the results, and the model answered from the ones that were, with real quotes. `f23` is different: its top result holds both the 30-day cure period and the 60-day clause the models answered with, so that error is in reading. What search misses there is the other half of the question, the design document's statement of Kovrune's licence.
-- **Five results find the answer passages for `f06` and `f23` and one of `f13`'s two facts.** It costs about two more snippets per search in the context. It changes what the model reads, so it waits on benchmark runs on both models (the rule above).
+- **Five results find the answer passages for `f06` and `f23` and one of `f13`'s two facts.** On the benchmark, 4B's field suite improved by one task and 2B's fell by two, so it was [not adopted](#five-search-results): what search finds is not what a small model reads.
 - **One passage per document finds one more cited document (`f23`'s design document) and no more answer passages:** in the field library the answer is often the second-best passage of the best document, which this hides.
 
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0, 0.20.0 and 0.21.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0, 0.17.0, 0.19.0, 0.20.0 and 0.21.0 runs used another container (Intel Xeon @ 2.80GHz, llama.cpp built with `-DGGML_NATIVE=ON`). The 0.26.0 runs used a third container (Intel Xeon @ 2.30GHz) and llama.cpp `fae9ac5`, built with `-DGGML_NATIVE=ON`. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -50,6 +50,8 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.25.0 tasks, before the change | 33/47 (70%): 30/42 and 3/5 in the same alphabet | not run | not run | not run | 4 of 16 | [json](../results/field-0.25-baseline-new-tasks-qwen3.5-2b-q4km.json) (`f43`–`f47`; the others are the 0.24.0 run) |
 | Qwen3.5-2B | 0.25.0, same-alphabet translation, not adopted | 32/47 (68%): 30/42 and 2/5 | not run | not run | not run | 4 of 15 | [json](../results/field-0.25-same-script-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.25.0, same-alphabet translation of matches with half the terms, not adopted | 31/47 (66%): 29/42 and 2/5 | not run | not run | not run | 2 of 14 | [json](../results/field-0.25-same-script-coverage-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.26.0 | 35/47 (74%) | 15/22 | 5/8 | 3/4 | 2 of 16 | [json](../results/field-0.26-baseline-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.26.0, five search results, not adopted | 33/47 (70%) | 15/22 | 5/8 | 3/4 | 2 of 13 | [json](../results/field-0.26-five-results-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
@@ -62,6 +64,8 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.25.0 tasks, before the change | 41/47 (87%): 37/42 and 4/5 in the same alphabet | not run | not run | not run | 2 of 22 | [json](../results/field-0.25-baseline-new-tasks-qwen3.5-4b-q4km.json) (`f43`–`f47`; the others are the 0.24.0 run) |
 | Qwen3.5-4B | 0.25.0, same-alphabet translation, not adopted | 41/47 (87%): 36/42 and 5/5 | not run | not run | not run | 2 of 21 | [json](../results/field-0.25-same-script-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.25.0, same-alphabet translation of matches with half the terms, not adopted | 41/47 (87%): 37/42 and 4/5 | not run | not run | not run | 2 of 21 | [json](../results/field-0.25-same-script-coverage-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.26.0 | 40/47 (85%) | 19/22 | 8/8 | 4/4 | 2 of 22 | [json](../results/field-0.26-baseline-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.26.0, five search results, not adopted | 41/47 (87%) | 19/22 | 8/8 | 4/4 | 0 of 19 | [json](../results/field-0.26-five-results-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -156,6 +160,22 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **A sentence made only of the cited titles' words is not judged**, instead of counting as backed with nothing to compare.
 
 Only the label changes, so the recorded reports were re-checked: of the 981 answers with `"found": true` whose final answer was recorded whole, 557 were labelled **Quotes found** and 39 of those were wrong. Now 555 are, still with 39 wrong. The two that lose the label are right answers to `r19` in the 0.17.0 runs, not adopted, that give Cobble's 290,000 operations per second from no quote. No quote's verdict changes. So the change catches none of the recorded false reassurance: those answers are incomplete (`f10`, `f17`, `f24`), off the question (`f13`) or take a quoted number from the wrong clause (`f23`, "60 days" where the cure period is 30), which a word check cannot see. It guards against wrong numbers and dropped negations, which small models are known for and the recorded runs have not yet shown. The current runs' false reassurance is unchanged.
+
+<a id="five-search-results"></a>**Five search results (0.26.0, not adopted).** With three results, search misses an answer passage of five field tasks that five results find most of ([Retrieval](#retrieval)). Both models were run on all four suites, with three results and then five, on the same machine:
+
+| Model | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Same actions as with three |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4B, three results | 40/47 | 19/22 | 8/8 | 4/4 | 2 of 22 | |
+| 4B, five results | **41/47** | 19/22 | 8/8 | 4/4 | **0 of 19** | 54 of 81 tasks |
+| 2B, three results | **35/47** | 15/22 | 5/8 | 3/4 | 2 of 16 | |
+| 2B, five results | 33/47 | 15/22 | 5/8 | 3/4 | 2 of 13 | 46 of 81 tasks |
+
+- **Where the new results helped, as the measure predicted:** 4B's `f17` read §1.12 of the licence, the fourth result, and listed the GPL, LGPL and AGPL, where with three results it searched twice, read four parts and concluded the licence lists none. 2B's `f06` read the user guide's `-c 4096` command, the fifth result, instead of answering "2048" from the design document.
+- **Where they hurt:** the new results are also new distractors. 4B's `f10` read the design document's part 3, the fifth result, and answered "js-libp2p" (production) instead of Trystero (prototype). 2B's `f02` read the user guide's part 1, the fourth result, and answered with the permission that is needed instead of the one that is not. 2B's `f46` read the design document's part 8, the fifth result, after its first result, and concluded "not found" instead of reading the user guide.
+- **The rest is sensitivity to a longer search result, not to what it adds:** 2B's `f09` and `r20` were lost and `r17` gained, and 4B's `f07` was gained (a right "not found" instead of "Ctrl+C"), but none of them read a fourth or fifth result. Only 54 of 81 4B tasks and 46 of 81 2B tasks took the same actions.
+- **False reassurance falls on 4B,** from 2 of 22 to 0 of 19 on the field suite: `f23` and `f24` are still wrong but no longer labelled **Quotes found**. On 2B it stays at 2 on the field suite and falls from 1 to 0 on research.
+- **Cost:** about 270 more prompt tokens per task on 2B and 20 on 4B, which took fewer steps (3.43 model calls per task instead of 3.58). Median task times change by at most 3 seconds in any suite.
+- **Against the rule:** the field suite improves on 4B and falls on 2B, so it is not adopted, and search still shows three results. The retrieval measure stays the first check for search changes, but this run shows its limit: a passage that search puts in front of a small model is read only if it looks more relevant than the others, and two more results add two more to choose from. A change that ranks the answer passage higher, rather than showing more, is what the measure would need to see next.
 
 ### Runs repeat on one machine, not across machines
 

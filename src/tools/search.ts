@@ -18,9 +18,6 @@ export interface SearchHit {
   snippet: string;
 }
 
-/** How many results a search shows the model. */
-export const SEARCH_RESULTS = 5;
-
 const STOP_WORDS = new Set(
   "a an and are as at be by did do does for from has have how in is it its of on or since that the this to was what when which who why with".split(" "),
 );
@@ -87,12 +84,7 @@ export class DocumentIndex {
     return Math.log(1 + (this.docs.length - df + 0.5) / (df + 0.5));
   }
 
-  /**
-   * The best `limit` documents or parts. Five rather than three: in long documents the passage
-   * that answers is often the fourth or fifth best, and with three the model answered from the
-   * passages around it (npm run bench:retrieval, eval/field/README.md).
-   */
-  search(query: string, limit = SEARCH_RESULTS): SearchHit[] {
+  search(query: string, limit = 3): SearchHit[] {
     const terms = [...new Set(tokenize(query))];
     const k1 = 1.2;
     const b = 0.75;
