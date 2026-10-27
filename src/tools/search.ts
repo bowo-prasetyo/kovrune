@@ -84,6 +84,14 @@ export class DocumentIndex {
     return Math.log(1 + (this.docs.length - df + 0.5) / (df + 0.5));
   }
 
+  /** The share of a query's distinct search terms that a document or part contains, from 0 to 1. */
+  coverage(query: string, docId: string): number {
+    const terms = [...new Set(tokenize(query))];
+    const i = this.docs.findIndex((doc) => doc.id === docId);
+    if (!terms.length || i < 0) return 0;
+    return terms.filter((term) => this.termFreqs[i]!.has(term)).length / terms.length;
+  }
+
   search(query: string, limit = 3): SearchHit[] {
     const terms = [...new Set(tokenize(query))];
     const k1 = 1.2;

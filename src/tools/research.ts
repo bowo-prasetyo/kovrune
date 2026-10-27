@@ -37,6 +37,9 @@ export interface ResearchFinal {
   evidence: EvidenceItem[];
 }
 
+/** A match found through a translated search must contain at least this share of the translated terms. */
+const MIN_TRANSLATED_COVERAGE = 0.5;
+
 /** Answers shorter than this (textWeight) are not checked for their language: "3776.12 m" says too little. */
 const MIN_JUDGED_REPLY = 12;
 
@@ -149,7 +152,12 @@ export function createResearchTools(
       // The match must be in that language, not only in its script: the English documents are not French ones.
       const inLanguage = (docId: string) =>
         scriptOfLanguage(language) === "Latin" ? docLanguage(docId) === language : mainScript(index.get(docId)!.text)?.script === scriptOfLanguage(language);
-      const hit = index.search(terms).find((h) => inLanguage(h.docId) && !hits.some((x) => x.docId === h.docId));
+      // Only a match that has most of the translated terms: the best match in a language is often
+      // unrelated (the field library's one French document, for any English question), and an
+      // added result changes what the model reads next (f06, f46 regressed without this).
+      const hit = index
+        .search(terms)
+        .find((h) => inLanguage(h.docId) && !hits.some((x) => x.docId === h.docId) && index.coverage(terms, h.docId) >= MIN_TRANSLATED_COVERAGE);
       if (hit) found.push({ language, terms, hit });
     }
     return found;
