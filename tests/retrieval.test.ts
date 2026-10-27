@@ -77,4 +77,4 @@ describe("retrieval on the evaluation set", () => {
   });
 });
 
-const FIELD_FLOOR = { documentRecall: 0.944, passageRecall: 0.818, complete: 30 };
+const FIELD_FLOOR = { documentRecall: 0.972, passageRecall: 0.886, complete: 32 };
