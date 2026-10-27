@@ -60,6 +60,7 @@ npm run checksums         # SHA-256 of every built file, to compare with a relea
 npm run release:verify -- SHA256SUMS   # check a release's signature
 npm run bench:browser     # M0 benchmark page (WebLLM)
 npm run bench:endpoint    # M0 benchmark against a local model server
+npm run bench:retrieval   # the search on its own, no model needed
 ```
 
 Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
