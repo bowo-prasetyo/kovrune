@@ -1,0 +1,736 @@
+{
+  "harnessVersion": "0.27.0",
+  "createdAt": "2026-10-27T13:05:53.562Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "Held-out suite baseline (harness 0.27.0). Native llama.cpp fae9ac5 on CPU (4-core cloud container, Intel Xeon @ 2.30GHz, no GPU), 4 threads, file Qwen3.5-4B-Q4_K_M.gguf. Speeds are not representative of any hardware class."
+  },
+  "config": {
+    "suites": [
+      "holdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 15.8,
+    "decodeTokensPerSecond": 7.7,
+    "maxResearchTaskMinutes": 9.1,
+    "minutesPerSource": 2.3
+  },
+  "summary": [
+    {
+      "suite": "holdout",
+      "mode": "constrained",
+      "tasks": 16,
+      "passed": 15,
+      "successRate": 0.938,
+      "successInterval": [
+        0.717,
+        0.989
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.8,
+      "prefillTokensPerSecond": 205.5,
+      "medianTaskSeconds": 26.5,
+      "falseReassurance": {
+        "labelled": 8,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "holdout",
+      "taskId": "h01-server-address",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2067,
+      "completionTokens": 138,
+      "estimatedTokens": false,
+      "modelMs": 28968,
+      "ttftMs": 11410,
+      "wallMs": 34241,
+      "actions": [
+        "search {\"query\":\"user guide local model server address keep\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "final_answer {\"found\":true,\"answer\":\"http://127.0.0.1:8080/v1\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Then, in the app: **Use a local model server"
+      ],
+      "final": "{\"found\":true,\"answer\":\"http://127.0.0.1:8080/v1\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Then, in the app: **Use a local model server** → keep the address `http://127.0.0.1:8080/v1` → **Connect** → **Test this model**.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 717,
+      "completionTokens": 151,
+      "estimatedTokens": false,
+      "modelMs": 24739,
+      "ttftMs": 5176,
+      "wallMs": 29170,
+      "actions": [
+        "search {\"query\":\"llama-server -hf download error no SSL\"}",
+        "final_answer {\"found\":true,\"answer\":\"HTTPS is not supported\",\"evidence\":[{\"docId\":\"kovrune-user-guide#9\",\"quote\":\"`HTTPS is not supported` with `-hf` | llama.cp"
+      ],
+      "final": "{\"found\":true,\"answer\":\"HTTPS is not supported\",\"evidence\":[{\"docId\":\"kovrune-user-guide#9\",\"quote\":\"`HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev`\"},{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Without it, the `-hf` download option fails with \\\"HTTPS is not supported\\\", and you'll need to download the model yourself as below.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#9",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h03-4b-test-speed",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3114,
+      "completionTokens": 234,
+      "estimatedTokens": false,
+      "modelMs": 46333,
+      "ttftMs": 16184,
+      "wallMs": 54198,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-4B model test speed 8 GB memory Intel graphics\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The provided documents do not contain information about the model test speed of Qwen3.5-4B on a laptop with 8 G",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"On a laptop with 8 GB of memory and integrated Intel graphics, the model test speed for Qwen3.5-4B is about 5.5 tokens/s.\","
+      ],
+      "final": "{\"found\":true,\"answer\":\"On a laptop with 8 GB of memory and integrated Intel graphics, the model test speed for Qwen3.5-4B is about 5.5 tokens/s.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"| Qwen3.5-4B | about 5.5 tokens/s | 3–4 minutes (estimated from the speed) | about 7 minutes, combining the sources |\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h04-class-3",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 12617,
+      "completionTokens": 217,
+      "estimatedTokens": false,
+      "modelMs": 65067,
+      "ttftMs": 36111,
+      "wallMs": 86707,
+      "actions": [
+        "search {\"query\":\"reference hardware class 3\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "search {\"query\":\"reference hardware class 3 kovrune\"}",
+        "read {\"docId\":\"kovrune-design-r3#12\"}",
+        "search {\"query\":\"reference hardware class 3 kovrune design\"}",
+        "read {\"docId\":\"kovrune-design-r3#5\"}",
+        "search {\"query\":\"class 2 hardware kovrune\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about what specific hardware constitutes 'reference hardware class 3'. T"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about what specific hardware constitutes 'reference hardware class 3'. The documents mention 'class 1 laptops' and 'class 2 hardware' in the context of Kovrune's target users and benchmarks, but they do not define or list the hardware specifications for class 3.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h05-first-result-target",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 871,
+      "completionTokens": 76,
+      "estimatedTokens": false,
+      "modelMs": 18025,
+      "ttftMs": 8229,
+      "wallMs": 21858,
+      "actions": [
+        "search {\"query\":\"design target time first visit first useful result\"}",
+        "final_answer {\"found\":true,\"answer\":\"Under 15 minutes\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"Time from first visit to first useful result | Under "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Under 15 minutes\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"Time from first visit to first useful result | Under 15 minutes on reference\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h06-after-evaluating",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1857,
+      "completionTokens": 86,
+      "estimatedTokens": false,
+      "modelMs": 22059,
+      "ttftMs": 10955,
+      "wallMs": 25023,
+      "actions": [
+        "search {\"query\":\"design task states evaluating follows\"}",
+        "read {\"docId\":\"kovrune-design-r3#18\"}",
+        "final_answer {\"found\":true,\"answer\":\"completed\",\"evidence\":[{\"docId\":\"kovrune-design-r3#18\",\"quote\":\"created → planned → ready → running → evaluating → complete"
+      ],
+      "final": "{\"found\":true,\"answer\":\"completed\",\"evidence\":[{\"docId\":\"kovrune-design-r3#18\",\"quote\":\"created → planned → ready → running → evaluating → completed\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#18",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h07-license-steward",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 823,
+      "completionTokens": 75,
+      "estimatedTokens": false,
+      "modelMs": 15405,
+      "ttftMs": 5655,
+      "wallMs": 20315,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 license steward\"}",
+        "final_answer {\"found\":true,\"answer\":\"Mozilla Foundation is the license steward of the MPL-2.0.\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Mozilla Foundation is the license steward of the MPL-2.0.\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is the license steward.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h08-exhibit-b",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1822,
+      "completionTokens": 96,
+      "estimatedTokens": false,
+      "modelMs": 21003,
+      "ttftMs": 9217,
+      "wallMs": 26199,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 exhibit Incompatible With Secondary Licenses\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "final_answer {\"found\":true,\"answer\":\"Exhibit B\",\"evidence\":[{\"docId\":\"mpl-2.0#11\",\"quote\":\"Exhibit B - \\\"Incompatible With Secondary Licenses\\\" Notice\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Exhibit B\",\"evidence\":[{\"docId\":\"mpl-2.0#11\",\"quote\":\"Exhibit B - \\\"Incompatible With Secondary Licenses\\\" Notice\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#11",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h09-met-babbage",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 1019,
+      "completionTokens": 113,
+      "estimatedTokens": false,
+      "modelMs": 22196,
+      "ttftMs": 7432,
+      "wallMs": 27966,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace first meet Charles Babbage date\"}",
+        "final_answer {\"found\":true,\"answer\":\"5 June 1833\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace first met him on 5 June 1833, when she and her mo"
+      ],
+      "final": "{\"found\":true,\"answer\":\"5 June 1833\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace first met him on 5 June 1833, when she and her mother attended one of Charles Babbage's Saturday night soirées with their mutual friend, and Lovelace's private tutor, Mary Somerville.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h10-menabrea",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 978,
+      "completionTokens": 88,
+      "estimatedTokens": false,
+      "modelMs": 18300,
+      "ttftMs": 7097,
+      "wallMs": 22749,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace translate analytical engine article\"}",
+        "final_answer {\"found\":true,\"answer\":\"Luigi Menabrea\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace translated an article by the military engineer"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Luigi Menabrea\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace translated an article by the military engineer Luigi Menabrea about the analytical engine, supplementing it with seven long explanatory notes.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h11-fuji-national-park",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 845,
+      "completionTokens": 87,
+      "estimatedTokens": false,
+      "modelMs": 17010,
+      "ttftMs": 6054,
+      "wallMs": 21749,
+      "actions": [
+        "search {\"query\":\"富士山 国立公園 指定 年\"}",
+        "final_answer {\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"また、1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"また、1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h12-wall-segments",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1772,
+      "completionTokens": 92,
+      "estimatedTokens": false,
+      "modelMs": 20480,
+      "ttftMs": 9134,
+      "wallMs": 25369,
+      "actions": [
+        "search {\"query\":\"国家文物局 长城墙体 段数\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"10,051段\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"其中墙体10,051段\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"10,051段\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"其中墙体10,051段\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h13-eiffel-original-height",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1963,
+      "completionTokens": 110,
+      "estimatedTokens": false,
+      "modelMs": 24572,
+      "ttftMs": 10650,
+      "wallMs": 28001,
+      "actions": [
+        "search {\"query\":\"hauteur tour Eiffel origine\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"312 mètres\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D’une hauteur de 312 mètres à l’origine, la tour Eiffel es"
+      ],
+      "final": "{\"found\":true,\"answer\":\"312 mètres\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D’une hauteur de 312 mètres à l’origine, la tour Eiffel est restée le monument le plus élevé du monde pendant quarante ans.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h14-license-and-steward",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 2,
+      "validCalls": 2,
+      "promptTokens": 846,
+      "completionTokens": 131,
+      "estimatedTokens": false,
+      "modelMs": 22776,
+      "ttftMs": 6192,
+      "wallMs": 26851,
+      "actions": [
+        "search {\"query\":\"Kovrune license steward\"}",
+        "final_answer {\"found\":true,\"answer\":\"Kovrune's software is released under the Mozilla Public License 2.0 (MPL-2.0), and the license's steward is the Mozilla Fou"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Kovrune's software is released under the Mozilla Public License 2.0 (MPL-2.0), and the license's steward is the Mozilla Foundation.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#36\",\"quote\":\"Kovrune's software is licensed under the **Mozilla Public License 2.0**.\"},{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is the license steward.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#36",
+          "verified": true
+        },
+        {
+          "docId": "mpl-2.0#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h15-ada-children",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1902,
+      "completionTokens": 100,
+      "estimatedTokens": false,
+      "modelMs": 22496,
+      "ttftMs": 10226,
+      "wallMs": 26140,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace children\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about how many children Ada Lovelace had. They mention she married Willi"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about how many children Ada Lovelace had. They mention she married William King in 1835, but do not list any children or the number of children she had.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h16-subscription-price",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2044,
+      "completionTokens": 106,
+      "estimatedTokens": false,
+      "modelMs": 25559,
+      "ttftMs": 11837,
+      "wallMs": 29096,
+      "actions": [
+        "search {\"query\":\"Kovrune subscription cost per month\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about the cost of a Kovrune subscription per month. The documents discus"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about the cost of a Kovrune subscription per month. The documents discuss project timelines, team composition, and benchmarking milestones for Kovrune, but do not mention pricing or subscription fees.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    }
+  ]
+}

@@ -66,6 +66,16 @@ Each guard and prompt change since 0.15.0 was written for a field task that fail
 
 To stay held out, they are used one way only: a change developed on the field suite is confirmed on them, by their totals. The benchmark prints no result for them as they run, and `bench:compare` gives them only as counts; their reports name each task, for the record, but are not read task by task while developing.
 
+First runs, harness 0.27.0, on the machine of the 0.26.0 runs (constrained, native llama.cpp `fae9ac5`, Intel Xeon @ 2.30GHz):
+
+| Model | Held out | Field, 0.26.0 baseline | Quotes found, wrong (held out) | Report |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 15/16, 94% (72–99%) | 40/47, 85% (72–93%) | 0 of 8 | [json](../results/holdout-0.27-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 10/16, 63% (39–82%) | 35/47, 74% (60–85%) | 1 of 9 | [json](../results/holdout-0.27-qwen3.5-2b-q4km.json) |
+
+- **The intervals overlap:** with 16 tasks, the held-out suite cannot tell either model's rate apart from its field rate. It is a check that a change does not fall on new questions, not a second, finer measure.
+- **They are new questions written after the field suite, not a random sample of one pool:** 13 of the 16 are lookups, so the two suites' rates are not expected to match.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
