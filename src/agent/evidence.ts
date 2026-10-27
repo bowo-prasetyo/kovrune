@@ -50,6 +50,19 @@ const ELISION = /\s*\[?\s*(?:…|\.{3,})\s*\]?\s*/g;
 /** Characters of source text one elision may stand for: enough for the rest of a sentence, not a page. */
 export const MAX_ELIDED_CHARS = 200;
 
+/**
+ * Words that negate a claim, in English and the other Latin-script languages languages.ts tells
+ * apart, matched in normalized text. "No." before a number ("No. 62") is not one. Chinese and
+ * Japanese are not covered: their negations (不, ない) are also parts of other words.
+ */
+const NEGATION =
+  /(?<![\p{L}\p{N}])(?:not|no(?!\.\s*\d)|never|none|nor|neither|cannot|nothing|nobody|ne|pas|jamais|aucune?|nicht|kein(?:e[mnrs]?)?|nie|niemals|non|nunca|nada|ning[uú]n[oa]?|não|nao|nenhuma?|niet|geen|nooit)(?![\p{L}\p{N}])|(?<!\p{L})n'(?=\p{L})|\p{L}n't(?!\p{L})/u;
+
+/** Whether a text says "not", "never", "no" or the like (NEGATION). */
+export function hasNegation(text: string): boolean {
+  return NEGATION.test(normalizeForMatch(text));
+}
+
 /** Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote. */
 export function normalizeForMatch(text: string): string {
   const unified = text
@@ -155,7 +168,9 @@ export function quoteHas(quote: string, part: string): boolean {
  * Whether a normalized quote that leaves words out ("lumendb ... has been maintained by the tessel
  * foundation") is in `text`: its pieces in order, each on word boundaries and at most
  * MAX_ELIDED_CHARS after the one before. One piece must be MIN_QUOTE_WORDS long on its own, so
- * "the ... of the" does not count as a quote.
+ * "the ... of the" does not count as a quote. Left-out text that negates does not count either:
+ * "cobble is ... released under the apache-2.0 license" from "Cobble is not released under…"
+ * says the opposite of its source.
  */
 function containsElided(text: string, quote: string): boolean {
   const pieces = quote.split(ELISION).map(stripEdgePunctuation).filter(hasWordChar);
@@ -165,7 +180,7 @@ function containsElided(text: string, quote: string): boolean {
     let end = at + first.length;
     const chained = rest.every((piece) => {
       const next = findWords(text, piece, end);
-      if (next < 0 || next - end > MAX_ELIDED_CHARS) return false;
+      if (next < 0 || next - end > MAX_ELIDED_CHARS || NEGATION.test(text.slice(end, next))) return false;
       end = next + piece.length;
       return true;
     });

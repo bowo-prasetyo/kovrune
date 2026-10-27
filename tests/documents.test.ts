@@ -109,6 +109,14 @@ describe("evidence check", () => {
     assert.equal(check("The fix is ... in 3.4.", text).verified, false, "every piece must be in the source");
   });
 
+  it("rejects an ellipsis that leaves out a negation", () => {
+    const text = "Cobble is not released under the Apache-2.0 license. Cobble doesn't run on Windows. Cobble, which is written in Go, never loses data.";
+    assert.equal(check("Cobble is ... released under the Apache-2.0 license", text).verified, false);
+    assert.equal(check("Cobble ... run on Windows", text).verified, false);
+    assert.equal(check("Cobble is not ... under the Apache-2.0 license", text).verified, true, "the negation is in the quote");
+    assert.equal(check("Cobble, which ... never loses data", text).verified, true, "the left-out words do not negate");
+  });
+
   it("matches ligatures, soft hyphens and words hyphenated at a line end", () => {
     const quote = "the financial statements were audited";
     assert.equal(check(quote, "We confirm the ﬁnancial statements were audited.").verified, true, "ligature");

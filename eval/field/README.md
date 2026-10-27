@@ -128,6 +128,14 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 - **Cost:** one more model call per search when the question's language is known. The median field task took 48.2 s and 46.3 s instead of about 43 s on 4B.
 - **The tasks stay** (harness 0.25.0, 47 field tasks), as the baseline for a later try.
 
+**Numbers and negations in the sentence check (0.26.0).** A sentence counted as backed when half of its content words were in the verified quotes. "Not" is a stop word and one-digit numbers were dropped, so "The page size is 8 KiB" was backed by "The default page size is 4 KiB", "does not support" by "supports", and "Cobble is ... released under the Apache-2.0 license" verified against "Cobble is not released under…", all labelled **Quotes found**. Now:
+- **Each number in a backed sentence must be quoted**, or be in a cited title or the question, or be the sum or difference of two quoted numbers within a factor of ten of each other ("by 30,000" from 180,000 and 150,000, but not 2021 from 2024 and version 3.0). Thousands separators and a list item's own number do not count.
+- **A sentence that says "not"** (or "never", "no", and their French, German, Spanish, Italian, Portuguese and Dutch forms) **needs a quote that does.** The reverse, a quote that says "not" behind a sentence that doesn't, is not checked: in `f02` and `f09` the right answers are backed by quotes whose "not" is in another clause, or in the question.
+- **A "…" in a quote may not leave out a negation.**
+- **A sentence made only of the cited titles' words is not judged**, instead of counting as backed with nothing to compare.
+
+Only the label changes, so the recorded reports were re-checked: of the 981 answers with `"found": true` whose final answer was recorded whole, 557 were labelled **Quotes found** and 39 of those were wrong. Now 555 are, still with 39 wrong. The two that lose the label are right answers to `r19` in the 0.17.0 runs, not adopted, that give Cobble's 290,000 operations per second from no quote. No quote's verdict changes. So the change catches none of the recorded false reassurance: those answers are incomplete (`f10`, `f17`, `f24`), off the question (`f13`) or take a quoted number from the wrong clause (`f23`, "60 days" where the cure period is 30), which a word check cannot see. It guards against wrong numbers and dropped negations, which small models are known for and the recorded runs have not yet shown. The current runs' false reassurance is unchanged.
+
 ### Runs repeat on one machine, not across machines
 
 - **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results.

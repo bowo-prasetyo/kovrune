@@ -90,7 +90,7 @@ export function describeStatus(
         ? {
             label: coverage!,
             detail:
-              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with any quote. They may come from the model's memory; check them against the sources.",
+              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with the quotes, or have a number or a \"not\" that no quote has. They may come from the model's memory; check them against the sources.",
             tone: "unverified",
           }
         : {
