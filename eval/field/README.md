@@ -95,6 +95,7 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.25.0, same-alphabet translation of matches with half the terms, not adopted | 31/47 (66%): 29/42 and 2/5 | not run | not run | not run | 2 of 14 | [json](../results/field-0.25-same-script-coverage-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.26.0 | 35/47 (74%) | 15/22 | 5/8 | 3/4 | 2 of 16 | [json](../results/field-0.26-baseline-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.26.0, five search results, not adopted | 33/47 (70%) | 15/22 | 5/8 | 3/4 | 2 of 13 | [json](../results/field-0.26-five-results-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.28.0, the model checks its answer | 35/47 (74%) | 15/22 | 5/8 | 3/4 | 2 of 16 | [json](../results/field-0.28-review-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
@@ -109,6 +110,7 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.25.0, same-alphabet translation of matches with half the terms, not adopted | 41/47 (87%): 37/42 and 4/5 | not run | not run | not run | 2 of 21 | [json](../results/field-0.25-same-script-coverage-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.26.0 | 40/47 (85%) | 19/22 | 8/8 | 4/4 | 2 of 22 | [json](../results/field-0.26-baseline-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.26.0, five search results, not adopted | 41/47 (87%) | 19/22 | 8/8 | 4/4 | 0 of 19 | [json](../results/field-0.26-five-results-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.28.0, the model checks its answer | 40/47 (85%) | 19/22 | 8/8 | 4/4 | **1 of 21** | [json](../results/field-0.28-review-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -219,6 +221,20 @@ Only the label changes, so the recorded reports were re-checked: of the 981 answ
 - **False reassurance falls on 4B,** from 2 of 22 to 0 of 19 on the field suite: `f23` and `f24` are still wrong but no longer labelled **Quotes found**. On 2B it stays at 2 on the field suite and falls from 1 to 0 on research.
 - **Cost:** about 270 more prompt tokens per task on 2B and 20 on 4B, which took fewer steps (3.43 model calls per task instead of 3.58). Median task times change by at most 3 seconds in any suite.
 - **Against the rule:** the field suite improves on 4B and falls on 2B, so it is not adopted, and search still shows three results. The retrieval measure stays the first check for search changes, but this run shows its limit: a passage that search puts in front of a small model is read only if it looks more relevant than the others, and two more results add two more to choose from. A change that ranks the answer passage higher, rather than showing more, is what the measure would need to see next.
+
+**The model checks its answer (0.28.0).** The recorded false reassurance is answers a word check cannot see through: incomplete (`f24`), off the question (`f13`), a nearby wrong fact (`f10`), or a number from the wrong clause of a real quote (`f23`). Now an answer the word checks would label **Quotes found** goes back to the model in a short call of its own (`src/agent/review.ts`): the question, the answer, and each verified quote in the text around it, asking whether the passages state what the answer says. The reply is constrained to yes, partly or no; only yes keeps the label, and partly or no read **Quotes found, answer not confirmed**.
+
+Both models were run on all five suites, on the machine of the 0.26.0 and 0.27.0 baselines. The check runs after the agent finishes, and all 97 tasks of each model took the same actions as in the baselines, so the labels with and without the check compare the same answers:
+
+| Model | Answers checked | Verdicts | Wrong answers labelled **Quotes found**, without → with the check | Right answers that lose the label | Time per checked answer |
+| --- | --- | --- | --- | --- | --- |
+| 4B | 45 | 44 yes, 1 partly | 2 → **1** (field), 0 elsewhere | 0 | about 6 s |
+| 2B | 39 | 39 yes | 5 → 5 (2 field, 1 research, 1 pdf, 1 held out) | 0 | about 2.5 s |
+
+- **It caught 4B's `f24`,** which names llama.cpp and Ollama as supported without saying Ollama is experimental: "partly".
+- **It missed 4B's `f23`:** the passage it was shown holds both the 60 days of the answer and the 30-day cure period, and the model still said yes.
+- **2B says yes to everything,** right or wrong. A small model checking its own answer mostly agrees with it, and 2B more than 4B.
+- **Against the rule for label changes:** false reassurance falls on 4B and stays on 2B, no right answer loses its label, and the held-out suite's labels are unchanged. Adopted, as a weak check: it costs one short call, only for answers the word checks would label. The prompt was not tuned on `f23`, which the held-out discipline would forbid; a stronger check would ask something more specific (each number or condition of the answer against its passage) and be judged the same way.
 
 ### Runs repeat on one machine, not across machines
 
