@@ -194,8 +194,7 @@ function answerInQuote(
  * 4B), such answers were 13 of the 16 wrong answers labelled "Quotes found", and 13 of the 38 so
  * labelled were wrong. Since harness 0.34.0 the model's own check is asked about them too
  * (reviewAsked), for models whose check is measured for it (review.ts reviewsShortAnswers; since
- * 0.35.0 only Qwen3.5-4B), and one
- * it confirms with "yes" is labelled.
+ * 0.35.0 only Qwen3.5-4B), and one it confirms with "yes" is labelled.
  *
  * Since harness 0.28.0 the model is also asked whether the quotes back the answer (review.ts), and
  * an answer it does not confirm with "yes" is not labelled. Since 0.34.0 that includes a check
