@@ -125,6 +125,11 @@ describe("research agent", () => {
     const run = await research("r01-lumen-maintainer", [], true, model);
     assert.equal(run.agent.stopReason, "final");
     assert.ok(run.agent.transcript.some((m) => m.content.includes("removed to save context")));
+    // Each call records how many results were gone by then, so reports show when a model answered without them.
+    const dropped = run.agent.calls.map((c) => c.droppedResults ?? 0);
+    assert.equal(dropped[0], 0);
+    assert.ok(dropped.at(-1)! > 0);
+    assert.deepEqual(dropped, [...dropped].sort((x, y) => x - y), "results stay removed once removed");
   });
 });
 
@@ -267,6 +272,33 @@ describe("search before read", () => {
     assert.match(run.transcript[7]!.content, /cut off at the length limit[\s\S]*Reply again, shorter/);
   });
 
+  it("knows a reply is cut off from the finish reason when the server reports no usage", async () => {
+    const replies = [`{"tool":"final_answer","args":{"answer":"long`, `{"tool":"final_answer","args":{"answer":"done"}}`];
+    const requests: GenerationRequest[] = [];
+    const model: LanguageModel = {
+      info: { id: "m", runtime: "scripted", contextLength: 4096 },
+      supportsConstrainedDecoding: () => true,
+      dispose: async () => {},
+      async *generate(request: GenerationRequest) {
+        requests.push(request);
+        const text = replies.shift()!;
+        yield { text, done: false };
+        yield { text: "", done: true, finishReason: text.endsWith("}") ? "stop" : "length" };
+      },
+    };
+    const run = await runAgent({
+      model,
+      system: "s",
+      task: "t",
+      tools: [{ name: "final_answer", usage: "", args: z.object({ answer: z.string() }).strict() }],
+      finalTool: "final_answer",
+      config: { constrained: true, maxCalls: 4, maxTokensPerCall: 64, cutOffMaxTokens: 128 },
+    });
+    assert.equal(run.stopReason, "final");
+    assert.deepEqual(run.calls.map((c) => [c.estimatedTokens, c.cutOff]), [[true, true], [true, undefined]]);
+    assert.deepEqual(requests.map((r) => r.maxTokens), [64, 128], "the retry gets more room");
+  });
+
   it("falls back to final_answer when no other tool is available", async () => {
     const model = new ScriptedModel([`{"tool":"search","args":{"query":"x"}}`, `{"tool":"final_answer","args":{}}`]);
     let searched = false;
@@ -378,6 +410,9 @@ describe("benchmark", () => {
     assert.equal(report.summary.find((s) => s.suite === "coding")!.falseReassurance, undefined);
     assert.deepEqual(falseReassurance(report.summary), { labelled: 2, wrong: 1, rate: 0.5 });
     assert.match(formatReport(report), /1 of 2 answers labelled "Quotes found" failed their task, 50% \(9–91%\) \(target under 10%/);
+    assert.match(formatReport(report), /Context: the largest prompt was 100 of 4096 tokens; 0 of 3 task runs had earlier tool results removed to fit\./);
+    assert.equal(report.results[0]!.maxPromptTokens, 100);
+    assert.equal(report.results[0]!.droppedResults, undefined);
   });
 
   it("does not count answers with missing quotes or unbacked sentences as reassuring", () => {

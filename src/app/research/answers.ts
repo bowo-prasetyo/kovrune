@@ -89,7 +89,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
         unbacked ? support!.sentences.map((s) => (s.backed === false ? `⚠ ${s.text}` : s.text)).join("") : answer.answer,
         "",
       );
-      if (unbacked) lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number or a \"not\" that no quote has.", "");
+      if (unbacked) lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or \"not\" that the quotes don't back.", "");
     }
     if (answer.evidence.length) {
       lines.push("## Evidence", "");

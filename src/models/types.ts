@@ -35,6 +35,11 @@ export interface GenerationChunk {
   done: boolean;
   /** Present on the final chunk when the runtime reports it. */
   usage?: GenerationUsage;
+  /**
+   * Why generation stopped, on the final chunk when the runtime reports it: "length" means the reply
+   * reached maxTokens and is cut off, which servers that report no usage can still say.
+   */
+  finishReason?: string;
 }
 
 export interface LanguageModel {

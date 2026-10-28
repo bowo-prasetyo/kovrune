@@ -15,6 +15,7 @@ import { createResearchTools, RESEARCH_SYSTEM } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, systemPrompt } from "./agent.ts";
 import { RESEARCH_LIMITS } from "./research.ts";
+import { REVIEW_MAX_TOKENS } from "./review.ts";
 
 export interface SelfCheckResult {
   passed: boolean;
@@ -32,8 +33,9 @@ export interface SelfCheckResult {
   decodeTokensPerSecond: number;
   /**
    * Worst case for one research task over the user's documents: every call uses its full token
-   * budget (RESEARCH_LIMITS). A reply cut off at the limit is retried with more room, which can
-   * take longer still.
+   * budget (RESEARCH_LIMITS), and the model then checks its answer (review.ts). A reply cut off at
+   * the limit is retried with more room, and documents in another script than a search add a short
+   * translation call per search (tools/research.ts), which can take longer still.
    */
   maxResearchTaskMinutes: number;
   /** What each ticked open source (Wikipedia, OpenAlex) can add to that, for its extra calls. */
@@ -111,6 +113,7 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
   const decodeMs = Math.max(record.totalMs - record.ttftMs, 1);
   const decodeTokensPerSecond = (record.completionTokens / decodeMs) * 1000;
   const secondsPerCall = record.ttftMs / 1000 + RESEARCH_LIMITS.maxTokensPerCall / Math.max(decodeTokensPerSecond, 0.01);
+  const reviewSeconds = record.ttftMs / 1000 + REVIEW_MAX_TOKENS / Math.max(decodeTokensPerSecond, 0.01);
   return {
     passed: usesResult,
     constrained,
@@ -121,7 +124,7 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
       : (record.error ?? `searched again (${record.tool} ${JSON.stringify(record.args)}) instead of using the search result`),
     seconds: round1((first.record.totalMs + record.totalMs) / 1000),
     decodeTokensPerSecond: round1(decodeTokensPerSecond),
-    maxResearchTaskMinutes: round1((RESEARCH_LIMITS.maxCalls * secondsPerCall) / 60),
+    maxResearchTaskMinutes: round1((RESEARCH_LIMITS.maxCalls * secondsPerCall + reviewSeconds) / 60),
     minutesPerSource: round1((RESEARCH_LIMITS.callsPerSource * secondsPerCall) / 60),
   };
 }

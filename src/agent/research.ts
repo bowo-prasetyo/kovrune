@@ -45,7 +45,6 @@ export class ResearchLibrary {
     this.byId = new Map(documents.map((doc) => [doc.id, doc]));
   }
 
-  /** Full document text for a document or chunk ID; quotes are checked against the whole document. */
   /** The documents' languages, the most common first (languages.ts), worked out once. */
   get languages(): string[] {
     return (this.cachedLanguages ??= documentLanguages(this.documents.map((doc) => doc.text)));
@@ -53,6 +52,7 @@ export class ResearchLibrary {
 
   private cachedLanguages?: string[];
 
+  /** Full document text for a document or chunk ID; quotes are checked against the whole document. */
   textFor(id: string): string | undefined {
     return this.byId.get(parentId(id))?.text;
   }

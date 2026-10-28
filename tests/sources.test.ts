@@ -4,7 +4,7 @@ import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import { createOpenAlex, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
 import { SourceSession } from "../src/sources/session.ts";
-import type { FetchLike } from "../src/sources/types.ts";
+import { getJson, retryWait, SourceError, type FetchLike } from "../src/sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../src/sources/wikipedia.ts";
 import { createResearchTools, RESEARCH_SYSTEM, researchSystem } from "../src/tools/research.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
@@ -348,5 +348,54 @@ describe("research with an unreachable source", () => {
     ]);
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createOpenAlex(fakeFetch([[/\/works\?/, {}, 429]]))] });
     assert.deepEqual(result.sourceErrors, ["OpenAlex is busy (too many requests). Try again in a few minutes."]);
+  });
+});
+
+describe("source requests", () => {
+  const response = (status: number, body: unknown = {}, retryAfter?: string) => ({
+    ok: status < 400,
+    status,
+    json: async () => body,
+    headers: { get: (name: string) => (name === "retry-after" ? (retryAfter ?? null) : null) },
+  });
+
+  it("tries a rate-limited request once more after the wait the server asks for", async () => {
+    const statuses = [429, 200];
+    const fetchImpl: FetchLike = async () => response(statuses.shift()!, { ok: 1 }, "0");
+    assert.deepEqual(await getJson(fetchImpl, "OpenAlex", "https://api.openalex.org/works"), { ok: 1 });
+    assert.equal(statuses.length, 0);
+  });
+
+  it("does not wait for a long Retry-After, or retry twice", async () => {
+    let calls = 0;
+    const long: FetchLike = async () => (calls++, response(429, {}, "3600"));
+    await assert.rejects(getJson(long, "OpenAlex", "u"), /OpenAlex is busy/);
+    assert.equal(calls, 1);
+    calls = 0;
+    const always: FetchLike = async () => (calls++, response(429, {}, "0"));
+    await assert.rejects(getJson(always, "OpenAlex", "u"), /OpenAlex is busy/);
+    assert.equal(calls, 2);
+  });
+
+  it("reads Retry-After in seconds or as a date", () => {
+    assert.equal(retryWait(null), 1000);
+    assert.equal(retryWait("2"), 2000);
+    assert.equal(retryWait("60"), undefined);
+    assert.equal(retryWait(new Date(5_000).toUTCString(), 0), 5000);
+    assert.equal(retryWait("soon"), 1000);
+  });
+
+  it("gives up on a request that takes too long, in plain words", async () => {
+    const hanging: FetchLike = (_url, init) => new Promise((_, reject) => init!.signal!.addEventListener("abort", () => reject(init!.signal!.reason)));
+    await assert.rejects(getJson(hanging, "Wikipedia", "u", undefined, { timeoutMs: 20 }), (error: Error) => {
+      assert.ok(error instanceof SourceError);
+      assert.match(error.message, /Wikipedia did not answer within 0 seconds/);
+      return true;
+    });
+    // A stop by the user is not turned into a source error.
+    const stop = new AbortController();
+    const pending = getJson(hanging, "Wikipedia", "u", stop.signal, { timeoutMs: 10_000 });
+    stop.abort();
+    await assert.rejects(pending, (error: Error) => !(error instanceof SourceError));
   });
 });

@@ -119,6 +119,7 @@ export class WebLLMModel implements LanguageModel {
       );
       const chunks = stream[Symbol.asyncIterator]();
       let usage: GenerationChunk["usage"];
+      let finishReason: string | undefined;
       while (true) {
         const next = await untilStopped(chunks.next());
         if (next.done) break;
@@ -126,12 +127,13 @@ export class WebLLMModel implements LanguageModel {
         if (chunk.usage) {
           usage = { promptTokens: chunk.usage.prompt_tokens, completionTokens: chunk.usage.completion_tokens };
         }
+        finishReason = chunk.choices[0]?.finish_reason ?? finishReason;
         const text = chunk.choices[0]?.delta?.content;
         if (text) yield { text, done: false };
       }
       // interruptGenerate can end the stream quietly; report the stop like a cancelled fetch.
       signal?.throwIfAborted();
-      yield { text: "", done: true, usage };
+      yield { text: "", done: true, usage, ...(finishReason ? { finishReason } : {}) };
     } finally {
       signal?.removeEventListener("abort", onAbort);
     }

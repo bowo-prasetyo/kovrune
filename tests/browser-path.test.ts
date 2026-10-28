@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { checkBrowserModel, recommendBrowserModel, type DeviceCapabilities } from "../src/app/device.ts";
-import { describeLoadProgress, describeSetup } from "../src/app/models.ts";
+import { describeLoadProgress, describeSetup, modelCaution } from "../src/app/models.ts";
 import { parseSettings } from "../src/app/settings.ts";
 import { BROWSER_MODELS, browserModelFor, DEFAULT_BROWSER_MODEL } from "../src/models/catalog.ts";
 
@@ -80,6 +80,17 @@ describe("browser settings", () => {
   it("describes the setup", () => {
     assert.equal(describeSetup({ path: "browser", modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 }), "Qwen3.5-4B in this browser");
     assert.equal(describeSetup({ path: "browser", modelId: "Qwen3.5-2B-q4f32_1-MLC", contextLength: 4096 }), "Qwen3.5-2B (32-bit) in this browser");
+    // Qwen3.5-2B's answers need more checking (docs/ai-ml-audit.md §1); 4B's get no caution.
+    assert.match(modelCaution({ path: "browser", modelId: "Qwen3.5-2B-q4f16_1-MLC", contextLength: 4096 })!, /wrong more often/);
+    assert.match(
+      modelCaution({ path: "local-server", serverKind: "llama.cpp", baseUrl: "http://127.0.0.1:8080/v1", model: "Qwen3.5-2B-Q4_K_M.gguf", contextLength: 4096 })!,
+      /Qwen3\.5-4B when accuracy matters/,
+    );
+    assert.equal(modelCaution({ path: "browser", modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 }), undefined);
+    assert.equal(
+      modelCaution({ path: "local-server", serverKind: "ollama", baseUrl: "http://127.0.0.1:11434/v1", model: "qwen3.5:4b", contextLength: 4096 }),
+      undefined,
+    );
   });
 });
 

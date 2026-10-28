@@ -29,12 +29,24 @@ export function formatReport(report: Report): string {
         `| ${s.suite} | ${s.mode} | ${s.passed}/${s.tasks} | ${formatRate(s.passed, s.tasks)} | ${(s.validActionRate * 100).toFixed(0)}% | ${s.decodeTokensPerSecond} | ${s.prefillTokensPerSecond} | ${s.medianTaskSeconds} | ${s.falseReassurance ? `${s.falseReassurance.wrong} of ${s.falseReassurance.labelled}` : "–"} |`,
     ),
     "",
+    ...contextLine(report),
     ...reassuranceLine(report),
     `**Gate: ${report.gate.passed ? "PASS" : "FAIL"}**`,
     "",
     ...report.gate.criteria.map((c) => `- ${c.passed ? "✅" : "❌"} ${c.name}: ${c.actual} (needs ${c.threshold})`),
   ];
   return lines.join("\n");
+}
+
+/** How close the tasks came to the context window, and how many lost earlier tool results to fit it. */
+function contextLine(report: Report): string[] {
+  const largest = Math.max(0, ...report.summary.map((s) => s.maxPromptTokens ?? 0));
+  if (!largest) return [];
+  const dropped = report.summary.reduce((sum, s) => sum + (s.tasksWithDroppedResults ?? 0), 0);
+  return [
+    `Context: the largest prompt was ${largest} of ${report.environment.contextLength} tokens; ${dropped} of ${report.results.length} task runs had earlier tool results removed to fit.`,
+    "",
+  ];
 }
 
 /** The false reassurance rate over the constrained research suites, with its target; nothing without research suites. */

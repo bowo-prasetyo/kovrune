@@ -87,6 +87,66 @@ function numberCheck(quoted: string[], asked: string[]): (n: string) => boolean 
   return (n) => known.has(n) || derived.has(Number(n));
 }
 
+/** Month names and their usual short forms, by month number. */
+const MONTHS: Array<[number, RegExp]> = [
+  "jan(?:uary)?", "feb(?:ruary)?", "mar(?:ch)?", "apr(?:il)?", "may", "june?", "july?", "aug(?:ust)?", "sep(?:t(?:ember)?)?", "oct(?:ober)?", "nov(?:ember)?", "dec(?:ember)?",
+].map((name, i) => [i + 1, new RegExp(`^${name}\\.?$`)]);
+
+/**
+ * The months a text names in a date: a month name next to a number, as in "March 2024", "3 May" or
+ * "May 3, 2024", or a year and month in digits, as in "2024-07" (the advisory "LSA-2024-07"). A month
+ * name alone is not counted: "may" is mostly a verb, "march" can be one.
+ */
+function datedMonths(text: string): number[] {
+  const normalized = normalizeForMatch(text);
+  const tokens = normalized.split(/[\s,]+/);
+  const found = new Set<number>();
+  for (const [, month] of normalized.matchAll(/(?<!\d)(?:19|20)\d{2}[-/.](0?[1-9]|1[0-2])(?!\d)/g)) found.add(Number(month));
+  tokens.forEach((token, i) => {
+    const month = MONTHS.find(([, pattern]) => pattern.test(token))?.[0];
+    const nearNumber = [tokens[i - 1], tokens[i + 1]].some((t) => t !== undefined && /^\d{1,4}(?:st|nd|rd|th)?\.?$/.test(t));
+    if (month && nearNumber) found.add(month);
+  });
+  return [...found];
+}
+
+/** Units, each with the spellings that mean it. Binary and decimal sizes are one unit: models write "4 KB" for "4 KiB". */
+const UNITS: Array<[string, RegExp]> = [
+  ["KB", /^(?:kb|kib|kilobytes?)$/],
+  ["MB", /^(?:mb|mib|megabytes?)$/],
+  ["GB", /^(?:gb|gib|gigabytes?)$/],
+  ["TB", /^(?:tb|tib|terabytes?)$/],
+  ["ms", /^(?:ms|milliseconds?)$/],
+  ["s", /^(?:s|secs?|seconds?)$/],
+  ["min", /^(?:mins?|minutes?)$/],
+  ["h", /^(?:h|hrs?|hours?)$/],
+  ["day", /^days?$/],
+  ["week", /^weeks?$/],
+  ["month", /^months?$/],
+  ["year", /^(?:years?|yrs?)$/],
+  ["%", /^(?:%|percent|per\s?cent)$/],
+  ["km", /^(?:km|kilometres?|kilometers?)$/],
+  ["m", /^(?:m|metres?|meters?)$/],
+  ["token", /^tokens?$/],
+];
+
+/**
+ * The units a text gives its numbers, as "number unit" pairs ("8 GB" is "8 GB"; "4,096 tokens" is
+ * "4096 token"), and the numbers it gives with no unit after them.
+ */
+function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
+  const pairs = new Set<string>();
+  const bare = new Set<string>();
+  const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
+  for (const match of body.matchAll(/(\p{Nd}+(?:[.,]\p{Nd}+)*)\s?(%|[\p{L}]+(?:\s?cent)?)?/gu)) {
+    const number = match[1]!.replace(/,/g, "");
+    const unit = match[2] && UNITS.find(([, pattern]) => pattern.test(match[2]!))?.[0];
+    if (unit) pairs.add(`${number} ${unit}`);
+    else bare.add(number);
+  }
+  return { pairs, bare };
+}
+
 /** Same word, allowing for the stemmer's single suffix: "hallucinat" (hallucinate) matches "hallucination". */
 function sameWord(a: string, b: string): boolean {
   if (a === b) return true;
@@ -127,9 +187,18 @@ export function splitSentences(answer: string): string[] {
  * Shared words alone miss the changes that matter most, so a backed sentence must also:
  * - have each of its numbers backed (numberCheck): "The page size is 8 KiB" shares every word
  *   with "The default page size is 4 KiB", but not the number;
- * - say "not" only if a verified quote does: "Cobble does not support transactions" is not
- *   backed by "Cobble supports transactions". The reverse is not checked, because a quote's
- *   "not" is often in another clause than the one the sentence restates (field tasks f02, f09).
+ * - say "not" only if a verified quote that makes the same claim does: "Cobble does not support
+ *   transactions" is not backed by "Cobble supports transactions", nor, since harness 0.36.0, by
+ *   "Version 2.x did not support encryption" next to another quote that names Cobble. The negating
+ *   quote must share at least half of the sentence's claim words on its own (MIN_BACKED_SHARE), and
+ *   name its numbers (in the quote or its title): "LumenDB 3.0 does not support encryption" is not
+ *   backed by "Version 2.x did not support encryption at rest". The reverse is not checked, because
+ *   a quote's "not" is often in another clause than the one the sentence restates (f02, f09);
+ * - since harness 0.36.0, name only the months the quotes, titles or question name in their dates:
+ *   "released in May 2024" is not backed by "released in March 2024", although no number differs;
+ * - and give a number only the unit the quotes give it: "8 GB" is not backed by "8 MB". A number
+ *   the quotes give without a unit ("-c 4096") may take one ("4096 tokens"), and a number the
+ *   quotes do not have at all is left to the number check (a sum or a difference).
  */
 export function sentenceSupport(
   answer: string,
@@ -146,7 +215,12 @@ export function sentenceSupport(
   const subjectWords = contentWords(verified.map((e) => titleFor(e.docId) ?? "").join(" "));
   const quoted = [...new Set(verified.flatMap((e) => [...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]))];
   const numberBacked = numberCheck(quoted, question ? numbers(question) : []);
-  const quoteNegates = verified.some((e) => hasNegation(e.quote));
+  const negating = verified
+    .filter((e) => hasNegation(e.quote))
+    .map((e) => ({ words: contentWords(e.quote), numbers: new Set([...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]) }));
+  const context = [...verified.flatMap((e) => [e.quote, titleFor(e.docId) ?? ""]), question ?? ""].join("\n");
+  const months = new Set(datedMonths(context));
+  const quotedMeasures = measures(context);
   let judged = 0;
   let backed = 0;
   const sentences = splitSentences(answer).map((text): AnswerSentence => {
@@ -155,8 +229,21 @@ export function sentenceSupport(
     const claim = words.filter((w) => !subjectWords.some((s) => sameWord(w, s)));
     if (!claim.length) return { text };
     const shared = claim.filter((w) => quoteWords.some((q) => sameWord(w, q))).length;
+    // The "not" must come from a quote making the same claim: one sharing half the claim words and
+    // naming the same numbers, so "3.0 does not support it" is not backed by "2.x did not support it".
+    const negationBacked =
+      !hasNegation(text) ||
+      negating.some(
+        (quote) =>
+          claim.filter((w) => quote.words.some((q) => sameWord(w, q))).length >= claim.length * MIN_BACKED_SHARE &&
+          numbers(text).every((n) => quote.numbers.has(n)),
+      );
     const isBacked =
-      shared >= claim.length * MIN_BACKED_SHARE && numbers(text).every(numberBacked) && (quoteNegates || !hasNegation(text));
+      shared >= claim.length * MIN_BACKED_SHARE &&
+      numbers(text).every(numberBacked) &&
+      negationBacked &&
+      datedMonths(text).every((month) => months.has(month)) &&
+      unitsBacked(text, quotedMeasures);
     judged++;
     if (isBacked) backed++;
     return { text, backed: isBacked };
@@ -165,6 +252,15 @@ export function sentenceSupport(
     return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true };
   }
   return { sentences, judged, backed };
+}
+
+/** Whether each number the sentence gives a unit has that unit in the quotes, or no unit there, or is not quoted at all. */
+function unitsBacked(text: string, quoted: { pairs: Set<string>; bare: Set<string> }): boolean {
+  return [...measures(text).pairs].every((pair) => {
+    const number = pair.slice(0, pair.indexOf(" "));
+    const quotedWithUnit = [...quoted.pairs].some((p) => p.startsWith(`${number} `));
+    return quoted.pairs.has(pair) || quoted.bare.has(number) || !quotedWithUnit;
+  });
 }
 
 /** Whether a short answer is word for word in a verified quote that, with its title, covers most of the question. */

@@ -59,7 +59,9 @@ class WllamaModel implements LanguageModel {
     });
 
     let usage: GenerationChunk["usage"];
+    let finishReason: string | undefined;
     for await (const chunk of stream) {
+      finishReason = chunk.choices[0]?.finish_reason ?? finishReason;
       if (chunk.usage) {
         usage = { promptTokens: chunk.usage.prompt_tokens, completionTokens: chunk.usage.completion_tokens };
       } else if (chunk.timings) {
@@ -68,7 +70,7 @@ class WllamaModel implements LanguageModel {
       const text = chunk.choices[0]?.delta?.content;
       if (text) yield { text, done: false };
     }
-    yield { text: "", done: true, usage };
+    yield { text: "", done: true, usage, ...(finishReason ? { finishReason } : {}) };
   }
 
   async dispose(): Promise<void> {

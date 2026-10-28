@@ -132,6 +132,18 @@ export function describeSetup(settings: Settings): string {
   return `${modelLabel(settings.model)} on ${SERVER_PRESETS[settings.serverKind].label}`;
 }
 
+/**
+ * A caution shown on the research screen for models whose answers need more checking, undefined for
+ * others. Qwen3.5-2B (docs/ai-ml-audit.md §1): on the recorded runs it refused only 5 of the 8
+ * questions its documents do not answer (the target is 2 in 3), its check of its own answers said
+ * yes to 3 of the 4 wrong ones it was asked about, and 13 of its 41 short answers were wrong.
+ */
+export function modelCaution(settings: Settings): string | undefined {
+  const id = settings.path === "browser" ? settings.modelId : settings.model;
+  if (!/qwen3\.5[-_:]2b(?![\p{L}\p{N}])/iu.test(id)) return undefined;
+  return "Qwen3.5-2B is faster, but its answers are wrong more often, even with real quotes, and it sometimes answers questions your documents don't answer. Read the quoted passages before relying on an answer, or use Qwen3.5-4B when accuracy matters.";
+}
+
 /** Whether a model is already in the browser's cache, and how much storage is free. */
 export async function browserStorage(modelId: string): Promise<{ freeMB: number; downloaded: boolean }> {
   const { isDownloaded, pinnedModel } = await import("../models/pinned.ts");
