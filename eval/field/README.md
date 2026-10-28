@@ -18,6 +18,8 @@ Since harness 0.27.0, the baseline and the change are also run on the [held-out 
 - **The held-out suite must not fall in total.** Its tasks are not looked at one by one while a change is developed, so it says whether a change carries over to questions it was not written for.
 - **Every decision states its paired counts and p-value** (tasks gained, tasks lost, and the chance of a split that uneven if the change did nothing). [None of the recorded decisions](#how-sure-the-decisions-were) is below 0.25, so the rule still decides by direction, not by significance; the counts say how little a decision of one or two tasks rests on.
 
+**Defect fixes (since harness 0.30.0).** The rule above is for heuristics, prompts and guards, which risk being tuned to the suite. A fix for behaviour that is plainly wrong, shown by a unit test that fails before it and passes after (a word that does not match its own plural, a document that cannot be found by its file name), is not a bet on the suite, and holding it back over one task in a suite of four or sixteen lets chance override correctness. Such a fix is adopted unless, on either model, a protected suite (research, unanswerable, pdf, held out) loses at least two more tasks than it gains, or loses with a p-value below 0.25. It is still run on both models and recorded like any other change. This clause was written after the [0.29.0 search fixes](#search-ranking) were measured, at the project owner's request, and is first applied to them.
+
 ## Retrieval
 
 Task success measures search, reading and answering together. `npm run bench:retrieval` measures search alone: for each answerable task, it searches with the question as the query, as the app's search tool does, and counts:

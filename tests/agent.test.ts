@@ -77,10 +77,12 @@ describe("research agent", () => {
   });
 
   it("counts invalid replies and lets the model recover in unconstrained mode", async () => {
-    const model = new ScriptedModel([`I will search for the license.`, `{"tool":"search","args":{}}`, "```json\n" + final(true, "MPL-2.0", [LICENSE_QUOTE]) + "\n```"]);
+    // The answer quotes a document the model did not read, so it is sent back once (read before answering) and answers again.
+    const answer = "```json\n" + final(true, "MPL-2.0", [LICENSE_QUOTE]) + "\n```";
+    const model = new ScriptedModel([`I will search for the license.`, `{"tool":"search","args":{}}`, answer, answer]);
     const run = await research("r02-lumen-license", [], false, model);
     assert.equal(run.score.passed, true);
-    assert.deepEqual(run.agent.calls.map((c) => c.valid), [false, false, true]);
+    assert.deepEqual(run.agent.calls.map((c) => c.valid), [false, false, true, true]);
     assert.ok(model.requests.every((r) => !r.responseSchema));
   });
 
@@ -99,7 +101,8 @@ describe("research agent", () => {
   });
 
   it("fails a correct answer whose quote is not in the cited document", async () => {
-    const run = await research("r02-lumen-license", [final(true, "MPL-2.0", [["lumen-overview", "LumenDB uses the MPL-2.0 license"]])]);
+    const answer = final(true, "MPL-2.0", [["lumen-overview", "LumenDB uses the MPL-2.0 license"]]);
+    const run = await research("r02-lumen-license", [answer, answer]);
     assert.equal(run.score.checks.facts, true);
     assert.equal(run.score.checks.evidence, false);
     assert.equal(run.research?.status, "unverified");
@@ -328,10 +331,10 @@ describe("coding agent", () => {
 
 describe("benchmark", () => {
   it("summarizes a run and evaluates the gate", async () => {
-    const model = new ScriptedModel([
-      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
-      final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
-    ]);
+    // Each answer quotes a document the model did not read, so it answers twice (read before answering).
+    const maintainer = final(true, "Tessel Foundation", [MAINTAINER_QUOTE]);
+    const license = final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]);
+    const model = new ScriptedModel([maintainer, maintainer, license, license]);
     const report = await runBenchmark({
       model,
       runner: new NodeCodeRunner(),
@@ -347,10 +350,13 @@ describe("benchmark", () => {
 
   it("counts wrong answers labelled Quotes found as false reassurance", async () => {
     const model = new ScriptedModel([
+      // Each answer is given twice: the first is sent back to read what it quotes (read before answering).
+      final(true, "LumenDB is maintained by the Tessel Foundation.", [MAINTAINER_QUOTE]),
       final(true, "LumenDB is maintained by the Tessel Foundation.", [MAINTAINER_QUOTE]),
       // The model's own check of the answer (agent/review.ts).
       `{"verdict":"yes"}`,
       // A real quote, but the wrong license: the label would read "Quotes found", and the check confirms it too.
+      final(true, "LumenDB is released under the Apache-2.0 license.", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
       final(true, "LumenDB is released under the Apache-2.0 license.", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
       `{"verdict":"yes"}`,
     ]);

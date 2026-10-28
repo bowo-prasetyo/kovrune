@@ -316,6 +316,11 @@ describe("research with Wikipedia", () => {
         tool: "final_answer",
         args: { found: true, answer: "x", evidence: [{ docId: "wikipedia:Ada_Lovelace", quote: "she invented the telephone in 1876" }] },
       }),
+      // Asked to read what it quotes first (read before answering), the model answers again.
+      JSON.stringify({
+        tool: "final_answer",
+        args: { found: true, answer: "x", evidence: [{ docId: "wikipedia:Ada_Lovelace", quote: "she invented the telephone in 1876" }] },
+      }),
     ]);
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
     assert.equal(result.status, "unverified");
