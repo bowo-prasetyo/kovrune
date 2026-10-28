@@ -11,8 +11,8 @@ import { createResearchTools, researchSystem, type ResearchFinal, type Translate
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
-import { reviewAnswer } from "./review.ts";
-import { reviewAsked, sentenceSupport, type SentenceSupport } from "./support.ts";
+import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
+import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -118,9 +118,11 @@ export async function runResearch(options: {
   }
   const titleFor = (id: string) => library.documentFor(id)?.title ?? citations[id]?.title;
   const support = sentenceSupport(final.answer, evidence, titleFor, options.question);
-  // The word checks pass incomplete and misattributed answers, and cannot judge short ones, so the
-  // model checks the answers it could label (review.ts, support.ts reviewAsked).
-  if (reviewAsked(answerStatus(final.found, evidence), evidence, support)) {
+  // The word checks pass incomplete and misattributed answers, so the model checks those they would
+  // label (review.ts). They cannot judge short ones either, which models whose check has been
+  // measured to tell right short answers from wrong ones check too (reviewsShortAnswers).
+  const status = answerStatus(final.found, evidence);
+  if (wordChecksPass(status, evidence, support) || (reviewsShortAnswers(options.model.info.id) && reviewAsked(status, evidence, support))) {
     options.onReview?.();
     support.review = await reviewAnswer({
       model: options.model,
@@ -132,7 +134,7 @@ export async function runResearch(options: {
       signal,
     });
   }
-  return { status: answerStatus(final.found, evidence), final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
+  return { status, final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
 }
 
 /**

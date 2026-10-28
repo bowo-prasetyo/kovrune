@@ -2,17 +2,18 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
-import { parseVerdict, reviewPrompt } from "../src/agent/review.ts";
+import { parseVerdict, reviewPrompt, reviewsShortAnswers } from "../src/agent/review.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
 class ScriptedModel implements LanguageModel {
-  readonly info = { id: "scripted", runtime: "scripted" as const, contextLength: 4096 };
+  readonly info: { id: string; runtime: "scripted"; contextLength: number };
   readonly requests: GenerationRequest[] = [];
   private readonly replies: string[];
-  constructor(replies: string[]) {
+  constructor(replies: string[], id = "scripted") {
     this.replies = [...replies];
+    this.info = { id, runtime: "scripted", contextLength: 4096 };
   }
   supportsConstrainedDecoding() {
     return true;
@@ -113,16 +114,17 @@ describe("the model's own check of an answer", () => {
     assert.equal(labelledQuotesFound(failed.status, failed.evidence, failed.support), false);
   });
 
-  it("asks about answers too short for the word checks, and labels them only on yes", async () => {
-    const short = JSON.stringify({
-      tool: "final_answer",
-      args: { found: true, answer: "30 days", evidence: [{ docId: "mpl", quote: "if You become compliant prior to 30 days after Your receipt of the notice" }] },
-    });
+  const short = JSON.stringify({
+    tool: "final_answer",
+    args: { found: true, answer: "30 days", evidence: [{ docId: "mpl", quote: "if You become compliant prior to 30 days after Your receipt of the notice" }] },
+  });
+
+  it("asks Qwen3.5-4B about answers too short for the word checks, and labels them only on yes", async () => {
     for (const [reply, verdict, label] of [
       [`{"verdict":"yes"}`, "yes", "Quotes found"],
       [`{"verdict":"partly"}`, "partly", "Quotes found, answer not confirmed"],
     ] as const) {
-      const model = new ScriptedModel([search, read, short, reply]);
+      const model = new ScriptedModel([search, read, short, reply], "qwen3.5-4b-q4km");
       const { support, status, evidence } = await runResearch({ question: QUESTION, library, model });
       assert.equal(support!.judged, 0, "too short for the sentence check");
       assert.equal(model.requests.length, 4, "the check is asked");
@@ -131,6 +133,29 @@ describe("the model's own check of an answer", () => {
       const shown = describeStatus(status as "verified", evidence, support);
       assert.equal(shown.label, label);
       if (verdict === "yes") assert.match(shown.detail, /too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes/);
+    }
+  });
+
+  it("does not ask other models about short answers, which stay too short to check (Qwen3.5-2B)", async () => {
+    for (const id of ["qwen3.5-2b-q4km", "Qwen3.5-2B-q4f16_1-MLC", "scripted"]) {
+      const model = new ScriptedModel([search, read, short, `{"verdict":"yes"}`], id);
+      const { support, status, evidence } = await runResearch({ question: QUESTION, library, model });
+      assert.equal(model.requests.length, 3, `${id}: no check`);
+      assert.equal(support!.review, undefined);
+      assert.equal(labelledQuotesFound(status, evidence, support), false);
+      assert.equal(describeStatus(status as "verified", evidence, support).label, "Quotes found, answer too short to check");
+    }
+    // Answers the word checks would label are still checked, whatever the model.
+    const model = new ScriptedModel([search, read, wrong, `{"verdict":"partly"}`], "qwen3.5-2b-q4km");
+    assert.equal((await runResearch({ question: QUESTION, library, model })).support!.review, "partly");
+  });
+
+  it("knows Qwen3.5-4B by the IDs the app and the benchmark use", () => {
+    for (const id of ["Qwen3.5-4B-q4f16_1-MLC", "Qwen3.5-4B-q4f32_1-MLC", "Qwen3.5-4B-Q4_K_M.gguf", "qwen3.5-4b-q4km", "qwen3.5:4b", "unsloth/Qwen3.5-4B-GGUF"]) {
+      assert.equal(reviewsShortAnswers(id), true, id);
+    }
+    for (const id of ["Qwen3.5-2B-q4f16_1-MLC", "qwen3.5-2b-q4km", "Qwen3.5-40B", "Qwen3-4B-q4f16_1-MLC", "llama-3.2-3b", "scripted"]) {
+      assert.equal(reviewsShortAnswers(id), false, id);
     }
   });
 

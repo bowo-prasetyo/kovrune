@@ -157,7 +157,7 @@ The field library has seven documents; a user's may have hundreds, and search sh
 - **Search loses a little, not much.** Most field questions name rare words ("Trystero", "Secondary Licenses", "cure"), and BM25 weighs rare words most. What is lost is where the questions use common words: `f13`'s "class 1" laptop, the licence questions (`f17`, `f23`, `f45`) against generated licences, and the two-document `f84`.
 - **What it does not show:** the generated documents are in English, so the Japanese and Chinese tasks are not tested; and they are not real documents, so a real library with several versions of one report, nearly the same text, would be harder. `tests/retrieval.test.ts` keeps the 300-document figures as floors, so a change to search or chunking that loses ground in a larger library shows in the tests.
 
-### Short answers checked by the model, and a check that fails closed (0.34.0)
+### Short answers checked by the model, and a check that fails closed (0.34.0, limited to 4B in 0.35.0)
 
 Two changes to the model's check of an answer (`src/agent/review.ts`), from the audit (F2, F6):
 
@@ -168,6 +168,8 @@ Two changes to the model's check of an answer (`src/agent/review.ts`), from the 
 **Not yet measured.** The second change is a label change, and the [rule](#rule-for-prompt-and-guard-changes) asks for runs of both models before it is adopted. It needs one model call per short answer, so it cannot be judged by re-scoring the recorded reports. What the recorded verdicts predict:
 - **4B:** its check said "partly" to 1 of the 3 wrong answers it was asked about, and "yes" to all 64 right ones. Its short answers are 20 right and 1 wrong on the field suite, 8 and 1 held out. So the right ones would likely gain the label, and false reassurance would stay near where it is: at worst 3 of 67 on the field suite (now 2 of 46), and 1 of 29 held out (now 0 of 20).
 - **2B:** its check said "yes" to 3 of the 4 wrong answers it was asked about. Its short answers are 21 right and 7 wrong on the field suite, 7 and 6 held out, and most of the wrong ones would likely gain the label too. So **2B's false reassurance would likely rise**: at worst 10 of 68 on the field suite (now 3 of 40), and 6 of 27 held out (now 0 of 14). If the runs confirm this, the short-answer check should apply only to models whose check has been measured to catch wrong short answers, and 2B's short answers keep the amber label.
+
+**Limited to Qwen3.5-4B (0.35.0), before the runs.** At the project owner's request, short answers are now checked only when the model is Qwen3.5-4B (`reviewsShortAnswers` in `src/agent/review.ts`, by model ID), so 2B and any other model keep **Quotes found, answer too short to check** as before 0.34.0, with no extra call. Answers the word checks would label are still checked on every model. For 2B this restores the 0.33.0 labels exactly; for 4B the prediction above still stands and still needs its run, now on 4B only: field and held out against the 0.32.0 baseline, by `bench:compare`. Another model gets the short-answer check once a run shows its check rejecting wrong short answers without rejecting right ones.
 
 ## Results
 
