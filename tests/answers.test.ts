@@ -63,6 +63,18 @@ async function savedAnswer(): Promise<SavedAnswer> {
         ],
       },
     }),
+    // Asked to read what it quotes first (read before answering), the model answers again.
+    JSON.stringify({
+      tool: "final_answer",
+      args: {
+        found: true,
+        answer: "The budget for 2025 assumes income of EUR 450,000. Sequence models are complex.",
+        evidence: [
+          { docId: "report", quote: "The budget for 2025 assumes income of EUR 450,000." },
+          { docId: "openalex:W2741809807", quote: "The dominant sequence models are complex models" },
+        ],
+      },
+    }),
   ]);
   const result = await runResearch({ question: "What is the 2025 budget?", library, model, sources: [createOpenAlex(openAlexFetch)] });
   return toSavedAnswer({

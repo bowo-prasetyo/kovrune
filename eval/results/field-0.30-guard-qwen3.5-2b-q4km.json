@@ -1,0 +1,4309 @@
+{
+  "harnessVersion": "0.30.0",
+  "createdAt": "2026-10-28T06:20:27.530Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "Search fixes restored, and read before answering (harness 0.30.0). Native llama.cpp fae9ac5 built with -DGGML_NATIVE=OFF and AVX2, on CPU (4-core cloud container, Intel(R) Xeon(R) Processor @ 2.10GHz, no GPU), 4 threads, file Qwen3.5-2B-Q4_K_M.gguf. Speeds are not representative of any hardware class."
+  },
+  "config": {
+    "suites": [
+      "field",
+      "research",
+      "unanswerable",
+      "pdf",
+      "holdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+    "seconds": 6.9,
+    "decodeTokensPerSecond": 15,
+    "maxResearchTaskMinutes": 4.7,
+    "minutesPerSource": 1.2
+  },
+  "field": {
+    "committedTasks": 47,
+    "localTasks": 0,
+    "localDocuments": 0
+  },
+  "summary": [
+    {
+      "suite": "research",
+      "mode": "constrained",
+      "tasks": 22,
+      "passed": 17,
+      "successRate": 0.773,
+      "successInterval": [
+        0.566,
+        0.899
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 14.6,
+      "prefillTokensPerSecond": 328.7,
+      "medianTaskSeconds": 16.5,
+      "falseReassurance": {
+        "labelled": 9,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "unanswerable",
+      "mode": "constrained",
+      "tasks": 8,
+      "passed": 5,
+      "successRate": 0.625,
+      "successInterval": [
+        0.306,
+        0.863
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 14.5,
+      "prefillTokensPerSecond": 313.5,
+      "medianTaskSeconds": 13.3,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "pdf",
+      "mode": "constrained",
+      "tasks": 4,
+      "passed": 3,
+      "successRate": 0.75,
+      "successInterval": [
+        0.301,
+        0.954
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 14.4,
+      "prefillTokensPerSecond": 322.5,
+      "medianTaskSeconds": 24.9,
+      "falseReassurance": {
+        "labelled": 3,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "field",
+      "mode": "constrained",
+      "tasks": 47,
+      "passed": 33,
+      "successRate": 0.702,
+      "successInterval": [
+        0.56,
+        0.813
+      ],
+      "validActionRate": 0.996,
+      "decodeTokensPerSecond": 14,
+      "prefillTokensPerSecond": 334.9,
+      "medianTaskSeconds": 27,
+      "falseReassurance": {
+        "labelled": 15,
+        "wrong": 1
+      }
+    },
+    {
+      "suite": "holdout",
+      "mode": "constrained",
+      "tasks": 16,
+      "passed": 9,
+      "successRate": 0.563,
+      "successInterval": [
+        0.332,
+        0.769
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 13.7,
+      "prefillTokensPerSecond": 308.3,
+      "medianTaskSeconds": 28.9,
+      "falseReassurance": {
+        "labelled": 6,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Research task success (constrained)",
+        "threshold": ">= 60%",
+        "actual": "77.3%",
+        "passed": true
+      },
+      {
+        "name": "Valid action rate (constrained, all suites)",
+        "threshold": ">= 95%",
+        "actual": "99.6%",
+        "passed": true
+      },
+      {
+        "name": "Decode speed",
+        "threshold": ">= 10 tokens/s",
+        "actual": "13.7 tokens/s",
+        "passed": true
+      },
+      {
+        "name": "Median research task time",
+        "threshold": "<= 60 s",
+        "actual": "16.5 s",
+        "passed": true
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1906,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "modelMs": 14063,
+      "ttftMs": 5874,
+      "wallMs": 14089,
+      "actions": [
+        "search {\"query\":\"LumenDB organization maintain\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project a"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project and has been maintained by the Tessel Foundation since 2022.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r02-lumen-license",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1254,
+      "completionTokens": 120,
+      "estimatedTokens": false,
+      "modelMs": 13573,
+      "ttftMs": 5323,
+      "wallMs": 18302,
+      "actions": [
+        "search {\"query\":\"LumenDB version 3.0 license\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Mozilla Public License 2.0 (MPL-2.0)\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"Starting with version 3.0, released in"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Mozilla Public License 2.0 (MPL-2.0)\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"Starting with version 3.0, released in March 2024, the project is licensed under the Mozilla Public License 2.0 (MPL-2.0).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1383,
+      "completionTokens": 109,
+      "estimatedTokens": false,
+      "modelMs": 12873,
+      "ttftMs": 5292,
+      "wallMs": 12881,
+      "actions": [
+        "search {\"query\":\"LSA-2024-07 LumenDB\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.2.0\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"This release includes the fix for advisory LSA-2024-07.\"}]"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.2.0\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"This release includes the fix for advisory LSA-2024-07.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-3-2-release",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r04-advisory-fixed",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1309,
+      "completionTokens": 106,
+      "estimatedTokens": false,
+      "modelMs": 12208,
+      "ttftMs": 5071,
+      "wallMs": 12215,
+      "actions": [
+        "search {\"query\":\"LSA-2024-07\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.2.0\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"This release includes the fix for advisory LSA-2024-07.\"}]"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.2.0\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"This release includes the fix for advisory LSA-2024-07.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-3-2-release",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1242,
+      "completionTokens": 99,
+      "estimatedTokens": false,
+      "modelMs": 11865,
+      "ttftMs": 5139,
+      "wallMs": 16282,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.2 maximum key size\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-3-2-release",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r06-quillstate-rename",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1744,
+      "completionTokens": 160,
+      "estimatedTokens": false,
+      "modelMs": 15857,
+      "ttftMs": 4942,
+      "wallMs": 19873,
+      "actions": [
+        "search {\"query\":\"Quillstate 2.0 createStore renamed\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"defineStore()\",\"evidence\":[{\"docId\":\"quillstate-migration\",\"quote\":\"createStore() has been renamed to defineStor",
+        "read {\"docId\":\"quillstate-migration\"}",
+        "final_answer {\"found\":true,\"answer\":\"defineStore()\",\"evidence\":[{\"docId\":\"quillstate-migration\",\"quote\":\"createStore() has been renamed to defineStore(). The ar"
+      ],
+      "final": "{\"found\":true,\"answer\":\"defineStore()\",\"evidence\":[{\"docId\":\"quillstate-migration\",\"quote\":\"createStore() has been renamed to defineStore(). The arguments are unchanged.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "quillstate-migration",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r07-cobble-2-5",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1218,
+      "completionTokens": 130,
+      "estimatedTokens": false,
+      "modelMs": 13309,
+      "ttftMs": 4336,
+      "wallMs": 17019,
+      "actions": [
+        "search {\"query\":\"Cobble 2.5 security feature\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cobble 2.5 adds encryption at rest using AES-256-GCM and a new bulk-loading API.\",\"evidence\":[{\"docId\":\"cobble-overview\",\"q"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cobble 2.5 adds encryption at rest using AES-256-GCM and a new bulk-loading API.\",\"evidence\":[{\"docId\":\"cobble-overview\",\"quote\":\"Cobble 2.5, released in August 2024, adds encryption at rest using AES-256-GCM and a new bulk-loading API.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "cobble-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r08-lumen-4-date",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1947,
+      "completionTokens": 222,
+      "estimatedTokens": false,
+      "modelMs": 20951,
+      "ttftMs": 6080,
+      "wallMs": 25649,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.0 release date\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025).\",\"evidence\":[{\"docId\":\"lumen-4-roadmap\",\"quote\"",
+        "read {\"docId\":\"lumen-4-roadmap\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025).\",\"evidence\":[{\"docId\":\"lumen-4-roadmap\",\"quote\":\"LumenDB 4"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025).\",\"evidence\":[{\"docId\":\"lumen-4-roadmap\",\"quote\":\"LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-4-roadmap",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r09-rfc-period",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1246,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "modelMs": 12050,
+      "ttftMs": 4180,
+      "wallMs": 15695,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation RFC breaking API change comment duration\"}",
+        "read {\"docId\":\"tessel-governance\"}",
+        "final_answer {\"found\":true,\"answer\":\"At least two weeks\",\"evidence\":[{\"docId\":\"tessel-governance\",\"quote\":\"Breaking changes to a project's public API require a "
+      ],
+      "final": "{\"found\":true,\"answer\":\"At least two weeks\",\"evidence\":[{\"docId\":\"tessel-governance\",\"quote\":\"Breaking changes to a project's public API require a written RFC that stays open for comment for at least two weeks before a decision.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "tessel-governance",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": false,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 3723,
+      "completionTokens": 178,
+      "estimatedTokens": false,
+      "modelMs": 20678,
+      "ttftMs": 8301,
+      "wallMs": 20687,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 compression library\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Brisk\",\"evidence\":[{\"docId\":\"brisk-overview\",\"quote\":\"Brisk is a general-purpose compression library written in ",
+        "search {\"query\":\"Brisk compression library LumenDB\"}",
+        "final_answer {\"found\":true,\"answer\":\"Brisk\",\"evidence\":[{\"docId\":\"brisk-overview\",\"quote\":\"Brisk is a general-purpose compression library written in C.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Brisk\",\"evidence\":[{\"docId\":\"brisk-overview\",\"quote\":\"Brisk is a general-purpose compression library written in C.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "brisk-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r11-lumen-chair",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1954,
+      "completionTokens": 147,
+      "estimatedTokens": false,
+      "modelMs": 17442,
+      "ttftMs": 7231,
+      "wallMs": 17453,
+      "actions": [
+        "search {\"query\":\"steering committee LumenDB 2024 chair\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Ana Lindqvist\",\"evidence\":[{\"docId\":\"tessel-governance\",\"quote\":\"In 2024 the steering committee is chaired by An",
+        "read {\"docId\":\"tessel-governance\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ana Lindqvist\",\"evidence\":[{\"docId\":\"tessel-governance\",\"quote\":\"In 2024 the steering committee is chaired by Ana Lindqvist"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ana Lindqvist\",\"evidence\":[{\"docId\":\"tessel-governance\",\"quote\":\"In 2024 the steering committee is chaired by Ana Lindqvist.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "tessel-governance",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r12-chair-library-node",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": false,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1857,
+      "completionTokens": 137,
+      "estimatedTokens": false,
+      "modelMs": 14748,
+      "ttftMs": 5224,
+      "wallMs": 14755,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation library Node.js version 2.0\"}",
+        "read {\"docId\":\"quillstate-overview\"}",
+        "read {\"docId\":\"quillstate-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Node.js 18\",\"evidence\":[{\"docId\":\"quillstate-overview\",\"quote\":\"Quillstate 2.0 was released in February 2024. It dropped su"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Node.js 18\",\"evidence\":[{\"docId\":\"quillstate-overview\",\"quote\":\"Quillstate 2.0 was released in February 2024. It dropped support for Node.js 16; the minimum supported version is now Node.js 18.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "quillstate-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r13-cobble-license-conversion",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1853,
+      "completionTokens": 137,
+      "estimatedTokens": false,
+      "modelMs": 15908,
+      "ttftMs": 6081,
+      "wallMs": 21296,
+      "actions": [
+        "search {\"query\":\"Cobble license convert years source-available\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Each Cobble release converts to the Apache-2.0 license four years after its release date.\",\"evidence\":[{\"docId\":\"cobble-ove"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Each Cobble release converts to the Apache-2.0 license four years after its release date.\",\"evidence\":[{\"docId\":\"cobble-overview\",\"quote\":\"Each release converts to the Apache-2.0 license four years after its release date.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "cobble-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r14-talk-city",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2357,
+      "completionTokens": 111,
+      "estimatedTokens": false,
+      "modelMs": 14603,
+      "ttftMs": 7130,
+      "wallMs": 14614,
+      "actions": [
+        "search {\"query\":\"May 2024 embedded store benchmark talk city 2024\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "read {\"docId\":\"priya-talk\"}",
+        "final_answer {\"found\":true,\"answer\":\"Lisbon\",\"evidence\":[{\"docId\":\"priya-talk\",\"quote\":\"Event: Embedded Data Days 2024, Lisbon\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Lisbon\",\"evidence\":[{\"docId\":\"priya-talk\",\"quote\":\"Event: Embedded Data Days 2024, Lisbon\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "priya-talk",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r15-write-throughput",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2123,
+      "completionTokens": 197,
+      "estimatedTokens": false,
+      "modelMs": 19436,
+      "ttftMs": 6229,
+      "wallMs": 19446,
+      "actions": [
+        "search {\"query\":\"Priya Raman benchmark LumenDB Cobble random-write throughput\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cobble had higher random-write throughput in Priya Raman's benchmark. Cobble reached 180,000 operations per second, while L"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cobble had higher random-write throughput in Priya Raman's benchmark. Cobble reached 180,000 operations per second, while LumenDB reached 150,000 operations per second, a difference of 30,000 operations per second.\",\"evidence\":[{\"docId\":\"bench-blog-2024\",\"quote\":\"Random writes: Cobble reached 180,000 operations per second; LumenDB reached 150,000 operations per second.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "bench-blog-2024",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 5287,
+      "completionTokens": 379,
+      "estimatedTokens": false,
+      "modelMs": 38759,
+      "ttftMs": 12678,
+      "wallMs": 45205,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.x default page block size Cobble default page block size\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"LumenDB 3.x uses a default page size of 8 KiB, while Cobble uses a default block size of 4 KiB.\",\"evidence\":[{\"d",
+        "read {\"docId\":\"lumen-overview\"}",
+        "read {\"docId\":\"cobble-overview\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "search {\"query\":\"LumenDB 3.x default page size Cobble default page size comparison\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB 3.x uses a default page size of 8 KiB, while Cobble uses a default block size of 4 KiB.\",\"evidence\":[{\"docId\":\"lume"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB 3.x uses a default page size of 8 KiB, while Cobble uses a default block size of 4 KiB.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"The default page size in the 3.x series is 8 KiB.\"},{\"docId\":\"cobble-overview\",\"quote\":\"It uses a log-structured merge tree (LSM) and a default block size of 4 KiB.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-overview",
+          "verified": true
+        },
+        {
+          "docId": "cobble-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2111,
+      "completionTokens": 144,
+      "estimatedTokens": false,
+      "modelMs": 16527,
+      "ttftMs": 6909,
+      "wallMs": 21027,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.1 random-read throughput Priya Raman benchmark\"}",
+        "read {\"docId\":\"bench-correction\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "final_answer {\"found\":true,\"answer\":\"330,000 operations per second\",\"evidence\":[{\"docId\":\"bench-correction\",\"quote\":\"Corrected random-read result for LumenDB 3."
+      ],
+      "final": "{\"found\":true,\"answer\":\"330,000 operations per second\",\"evidence\":[{\"docId\":\"bench-correction\",\"quote\":\"Corrected random-read result for LumenDB 3.1: 330,000 operations per second (previously reported as 410,000).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "bench-correction",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r18-brisk-levels",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1763,
+      "completionTokens": 108,
+      "estimatedTokens": false,
+      "modelMs": 12435,
+      "ttftMs": 4888,
+      "wallMs": 12446,
+      "actions": [
+        "search {\"query\":\"Brisk compression levels latest release\"}",
+        "read {\"docId\":\"brisk-1-4-release\"}",
+        "read {\"docId\":\"brisk-1-4-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"13\",\"evidence\":[{\"docId\":\"brisk-1-4-release\",\"quote\":\"Brisk now supports levels 1 through 13.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"13\",\"evidence\":[{\"docId\":\"brisk-1-4-release\",\"quote\":\"Brisk now supports levels 1 through 13.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "brisk-1-4-release",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r19-faster-reads-after-correction",
+      "kind": "contradiction",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2216,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "modelMs": 16791,
+      "ttftMs": 7715,
+      "wallMs": 16800,
+      "actions": [
+        "search {\"query\":\"LumenDB Cobble benchmark correction random-read throughput\"}",
+        "read {\"docId\":\"bench-correction\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "final_answer {\"found\":true,\"answer\":\"LumenDB\",\"evidence\":[{\"docId\":\"bench-correction\",\"quote\":\"Corrected random-read result for LumenDB 3.1: 330,000 operations "
+      ],
+      "final": "{\"found\":true,\"answer\":\"LumenDB\",\"evidence\":[{\"docId\":\"bench-correction\",\"quote\":\"Corrected random-read result for LumenDB 3.1: 330,000 operations per second (previously reported as 410,000).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "bench-correction",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r20-lumen-4-1-date",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 2519,
+      "completionTokens": 102,
+      "estimatedTokens": false,
+      "modelMs": 13919,
+      "ttftMs": 7085,
+      "wallMs": 13925,
+      "actions": [
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "read {\"docId\":\"lumen-4-roadmap\"}",
+        "search {\"query\":\"LumenDB 4.1 release date\"}",
+        "read {\"docId\":\"lumen-4-roadmap\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r21-brisk-downloads",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 2429,
+      "completionTokens": 86,
+      "estimatedTokens": false,
+      "modelMs": 13117,
+      "ttftMs": 7181,
+      "wallMs": 13123,
+      "actions": [
+        "search {\"query\":\"Brisk compression library downloads\"}",
+        "read {\"docId\":\"brisk-overview\"}",
+        "read {\"docId\":\"brisk-overview\"}",
+        "search {\"query\":\"Brisk compression library downloads\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r22-harrow-ceo",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1615,
+      "completionTokens": 73,
+      "estimatedTokens": false,
+      "modelMs": 9160,
+      "ttftMs": 4195,
+      "wallMs": 9168,
+      "actions": [
+        "search {\"query\":\"Harrow Labs CEO\"}",
+        "read {\"docId\":\"harrow-press\"}",
+        "read {\"docId\":\"harrow-press\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u01-tessel-employees",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1122,
+      "completionTokens": 83,
+      "estimatedTokens": false,
+      "modelMs": 10107,
+      "ttftMs": 4362,
+      "wallMs": 10111,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation employees\"}",
+        "read {\"docId\":\"harrow-press\"}",
+        "final_answer {\"found\":true,\"answer\":\"40\",\"evidence\":[{\"docId\":\"harrow-press\",\"quote\":\"Harrow Labs is headquartered in Rotterdam and has 40 employees.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"40\",\"evidence\":[{\"docId\":\"harrow-press\",\"quote\":\"Harrow Labs is headquartered in Rotterdam and has 40 employees.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "harrow-press",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u02-cobble-cloud-price",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2084,
+      "completionTokens": 81,
+      "estimatedTokens": false,
+      "modelMs": 12732,
+      "ttftMs": 7065,
+      "wallMs": 12738,
+      "actions": [
+        "search {\"query\":\"Cobble Cloud cost per month\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "read {\"docId\":\"bench-blog-2024\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u03-harrow-acquirer",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1063,
+      "completionTokens": 59,
+      "estimatedTokens": false,
+      "modelMs": 8314,
+      "ttftMs": 4273,
+      "wallMs": 8318,
+      "actions": [
+        "search {\"query\":\"Harrow Labs acquired by company\"}",
+        "read {\"docId\":\"harrow-press\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u04-brisk-1-3-date",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 3291,
+      "completionTokens": 121,
+      "estimatedTokens": false,
+      "modelMs": 17374,
+      "ttftMs": 9041,
+      "wallMs": 17383,
+      "actions": [
+        "search {\"query\":\"Brisk 1.3 release date\"}",
+        "read {\"docId\":\"brisk-1-4-release\"}",
+        "read {\"docId\":\"brisk-1-4-release\"}",
+        "search {\"query\":\"Brisk 1.3 release\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u05-okafor-role",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1808,
+      "completionTokens": 173,
+      "estimatedTokens": false,
+      "modelMs": 18601,
+      "ttftMs": 6539,
+      "wallMs": 18607,
+      "actions": [
+        "search {\"query\":\"Mira Okafor job title\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Mira Okafor is the creator of LumenDB, an embedded key-value store written in Rust. She created the project in 2019 as a si"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Mira Okafor is the creator of LumenDB, an embedded key-value store written in Rust. She created the project in 2019 as a side project and has maintained it since 2022 under the Tessel Foundation.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project and has been maintained by the Tessel Foundation since 2022.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u06-lumen-stars",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1858,
+      "completionTokens": 78,
+      "estimatedTokens": false,
+      "modelMs": 11832,
+      "ttftMs": 6570,
+      "wallMs": 11837,
+      "actions": [
+        "search {\"query\":\"LumenDB GitHub stars\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u07-advisory-cve",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1395,
+      "completionTokens": 120,
+      "estimatedTokens": false,
+      "modelMs": 13876,
+      "ttftMs": 5453,
+      "wallMs": 13883,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "final_answer {\"found\":true,\"answer\":\"LSA-2024-07\",\"evidence\":[{\"docId\":\"lumen-advisory-2024-07\",\"quote\":\"Advisory ID: LSA-2024-07\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"LSA-2024-07\",\"evidence\":[{\"docId\":\"lumen-advisory-2024-07\",\"quote\":\"Advisory ID: LSA-2024-07\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-advisory-2024-07",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u08-lumen-rust-version",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 3609,
+      "completionTokens": 111,
+      "estimatedTokens": false,
+      "modelMs": 16024,
+      "ttftMs": 8463,
+      "wallMs": 16032,
+      "actions": [
+        "search {\"query\":\"LumenDB minimum Rust compiler version\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "search {\"query\":\"LumenDB Rust version requirements\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p01-tessel-income",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3802,
+      "completionTokens": 166,
+      "estimatedTokens": false,
+      "modelMs": 25168,
+      "ttftMs": 13375,
+      "wallMs": 30654,
+      "actions": [
+        "read {\"docId\":\"tessel-annual-report-2024\"}",
+        "read {\"docId\":\"tessel-annual-report-2024#1\"}",
+        "read {\"docId\":\"tessel-annual-report-2024#1\"}",
+        "read {\"docId\":\"tessel-annual-report-2024#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"EUR 412,000\",\"evidence\":[{\"docId\":\"tessel-annual-report-2024#1\",\"quote\":\"Total income for 2024 was EUR 412,000.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"EUR 412,000\",\"evidence\":[{\"docId\":\"tessel-annual-report-2024#1\",\"quote\":\"Total income for 2024 was EUR 412,000.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "tessel-annual-report-2024#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p02-new-project",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3422,
+      "completionTokens": 198,
+      "estimatedTokens": false,
+      "modelMs": 25785,
+      "ttftMs": 12128,
+      "wallMs": 30853,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation November 2024 project\"}",
+        "read {\"docId\":\"tessel-annual-report-2024#2\"}",
+        "read {\"docId\":\"tessel-annual-report-2024#2\"}",
+        "read {\"docId\":\"tessel-annual-report-2024#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Tessel Foundation accepted the project 'Driftwood' in November 2024. It is a structured logging library for Rust applic"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The Tessel Foundation accepted the project 'Driftwood' in November 2024. It is a structured logging library for Rust applications.\",\"evidence\":[{\"docId\":\"tessel-annual-report-2024#2\",\"quote\":\"In November 2024 the steering committee accepted Driftwood, a structured logging library for Rust applications, as the foundation's third project.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "tessel-annual-report-2024#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p03-dictionary-size",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2174,
+      "completionTokens": 116,
+      "estimatedTokens": false,
+      "modelMs": 15032,
+      "ttftMs": 7034,
+      "wallMs": 19058,
+      "actions": [
+        "search {\"query\":\"Brisk tuning guide dictionary size\"}",
+        "read {\"docId\":\"brisk-tuning-guide\"}",
+        "read {\"docId\":\"brisk-tuning-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"112 KiB\",\"evidence\":[{\"docId\":\"brisk-tuning-guide\",\"quote\":\"The recommended dictionary size is 112 KiB; larger dictionaries"
+      ],
+      "final": "{\"found\":true,\"answer\":\"112 KiB\",\"evidence\":[{\"docId\":\"brisk-tuning-guide\",\"quote\":\"The recommended dictionary size is 112 KiB; larger dictionaries rarely help and slow down decompression.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "brisk-tuning-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p04-audit-cost-and-reporter",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 4019,
+      "completionTokens": 145,
+      "estimatedTokens": false,
+      "modelMs": 19039,
+      "ttftMs": 9072,
+      "wallMs": 19049,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation security audits 2024 LumenDB security advisory\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "search {\"query\":\"Tessel Foundation security audits 2024 cost EUR\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5898,
+      "completionTokens": 195,
+      "estimatedTokens": false,
+      "modelMs": 30447,
+      "ttftMs": 17119,
+      "wallMs": 38043,
+      "actions": [
+        "search {\"query\":\"Chrome permission model server\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#10\"}",
+        "read {\"docId\":\"kovrune-user-guide#10\"}",
+        "final_answer {\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"On the preview site, the page is on the web and the se"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"On the preview site, the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called Apps on device (\\\"Access other apps and services on this device\\\"). When the browser asks, choose Allow.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 7480,
+      "completionTokens": 184,
+      "estimatedTokens": false,
+      "modelMs": 30717,
+      "ttftMs": 17601,
+      "wallMs": 37802,
+      "actions": [
+        "search {\"query\":\"browser permission model server computer\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"None\",\"evidence\":[]}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#8\"}",
+        "read {\"docId\":\"kovrune-user-guide#8\"}",
+        "final_answer {\"found\":true,\"answer\":\"Local network access\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Local network access is a different permission, "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Local network access\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Local network access is a different permission, for other devices on your network, and isn't needed for a server on your own computer.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f03-https-not-supported",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6227,
+      "completionTokens": 266,
+      "estimatedTokens": false,
+      "modelMs": 34129,
+      "ttftMs": 15648,
+      "wallMs": 36239,
+      "actions": [
+        "search {\"query\":\"llama-server -hf HTTPS not supported\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"To fix the 'HTTPS is not supported' error when using -hf with llama-server, you need to install the SSL development librari"
+      ],
+      "final": "{\"found\":true,\"answer\":\"To fix the 'HTTPS is not supported' error when using -hf with llama-server, you need to install the SSL development libraries. Run the following command on Linux/WSL: sudo apt install libssl-dev. This allows llama.cpp to build with HTTPS support, enabling the -hf download option to work.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Without it, the `-hf` download option fails with \\\"HTTPS is not supported\\\", and you'll need to download the model yourself as below.\"},{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"To build on Linux or WSL:\\n\\nbash\\nsudo apt install buil",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 3,
+        "backed": 2
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f04-2b-download-size",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6796,
+      "completionTokens": 167,
+      "estimatedTokens": false,
+      "modelMs": 29549,
+      "ttftMs": 18055,
+      "wallMs": 32136,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-2B browser download size\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1.1 GB\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"1.1 GB for Qwen3.5-2B\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1.1 GB\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"1.1 GB for Qwen3.5-2B\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f05-model-test-time",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2661,
+      "completionTokens": 121,
+      "estimatedTokens": false,
+      "modelMs": 19616,
+      "ttftMs": 11056,
+      "wallMs": 25709,
+      "actions": [
+        "search {\"query\":\"model test time suitable hardware\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"about a minute\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Either way, the next step tests the model, which takes"
+      ],
+      "final": "{\"found\":true,\"answer\":\"about a minute\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f06-context-flag",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7336,
+      "completionTokens": 190,
+      "estimatedTokens": false,
+      "modelMs": 32029,
+      "ttftMs": 18770,
+      "wallMs": 34016,
+      "actions": [
+        "search {\"query\":\"llama-server context size user guide\"}",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "final_answer {\"found\":true,\"answer\":\"4096\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 "
+      ],
+      "final": "{\"found\":true,\"answer\":\"4096\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f07-stop-shortcut",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7055,
+      "completionTokens": 155,
+      "estimatedTokens": false,
+      "modelMs": 30218,
+      "ttftMs": 19573,
+      "wallMs": 31916,
+      "actions": [
+        "search {\"query\":\"Kovrune question stop shortcut\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#5\"}",
+        "read {\"docId\":\"kovrune-user-guide#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ctrl+C\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"In the terminal where `llama-server` runs, press **Ctrl+C** to"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ctrl+C\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"In the terminal where `llama-server` runs, press **Ctrl+C** to stop it.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f08-download-target",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3422,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "modelMs": 22949,
+      "ttftMs": 14868,
+      "wallMs": 28255,
+      "actions": [
+        "search {\"query\":\"model download completion rate target\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"Above 90% of started downloads\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"Model download completion rate | Above "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Above 90% of started downloads\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"Model download completion rate | Above 90% of started downloads\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f09-hosts",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4208,
+      "completionTokens": 147,
+      "estimatedTokens": false,
+      "modelMs": 22312,
+      "ttftMs": 12155,
+      "wallMs": 27863,
+      "actions": [
+        "search {\"query\":\"static hosts GitHub Pages\"}",
+        "read {\"docId\":\"kovrune-design-r3#27\"}",
+        "read {\"docId\":\"kovrune-design-r3#27\"}",
+        "search {\"query\":\"static hosts GitHub Pages\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cloudflare Pages or Netlify\",\"evidence\":[{\"docId\":\"kovrune-design-r3#27\",\"quote\":\"GitHub Pages cannot set these headers, so"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cloudflare Pages or Netlify\",\"evidence\":[{\"docId\":\"kovrune-design-r3#27\",\"quote\":\"GitHub Pages cannot set these headers, so the reference deployment uses a static host that can (for example Cloudflare Pages or Netlify).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#27",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f10-signaling",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4267,
+      "completionTokens": 136,
+      "estimatedTokens": false,
+      "modelMs": 22173,
+      "ttftMs": 12547,
+      "wallMs": 24190,
+      "actions": [
+        "search {\"query\":\"signaling library peer-to-peer prototype\"}",
+        "read {\"docId\":\"kovrune-design-r3#23\"}",
+        "read {\"docId\":\"kovrune-design-r3#23\"}",
+        "read {\"docId\":\"kovrune-design-r3#23\"}",
+        "final_answer {\"found\":true,\"answer\":\"js-libp2p\",\"evidence\":[{\"docId\":\"kovrune-design-r3#23\",\"quote\":\"js-libp2p with WebRTC for browser-to-browser connections\"}]"
+      ],
+      "final": "{\"found\":true,\"answer\":\"js-libp2p\",\"evidence\":[{\"docId\":\"kovrune-design-r3#23\",\"quote\":\"js-libp2p with WebRTC for browser-to-browser connections\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#23",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f11-m0-duration",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4990,
+      "completionTokens": 202,
+      "estimatedTokens": false,
+      "modelMs": 29165,
+      "ttftMs": 14548,
+      "wallMs": 31290,
+      "actions": [
+        "search {\"query\":\"M0 benchmark gate estimated to take\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "final_answer {\"found\":true,\"answer\":\"2–3 weeks\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"The original estimate assumed two to three engineers: three"
+      ],
+      "final": "{\"found\":true,\"answer\":\"2–3 weeks\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"The original estimate assumed two to three engineers: three to four months for M0–M2, and a further three to four months for M3–M4 including relay operations. For M2 onward, treat these estimates as a hypothesis until they are re-planned for the actual team (issue #36). ### M0 — Benchmark gate (2–3 weeks)\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#32",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f12-reassurance-target",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3461,
+      "completionTokens": 252,
+      "estimatedTokens": false,
+      "modelMs": 32031,
+      "ttftMs": 13976,
+      "wallMs": 39834,
+      "actions": [
+        "search {\"query\":\"false reassurance rate target baseline\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"The target for the false reassurance rate is under 10% on Qwen3.5-4B, and the baseline was 3 of 22 (14%) in the last record"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The target for the false reassurance rate is under 10% on Qwen3.5-4B, and the baseline was 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"False reassurance rate: the share of answers labelled Quotes found that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f13-class-1",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 7,
+      "promptTokens": 10593,
+      "completionTokens": 782,
+      "estimatedTokens": false,
+      "modelMs": 80750,
+      "ttftMs": 22835,
+      "wallMs": 82184,
+      "actions": [
+        "search {\"query\":\"reference hardware class 1\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#12\"}",
+        "read {\"docId\":\"kovrune-design-r3#12\"}",
+        "invalid: Expected ',' or ']' after array element in JSON at position 1821 (line 1 column 1822)",
+        "final_answer {\"found\":true,\"answer\":\"WebLLM, wllama, and a local endpoint on the three reference hardware classes.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\","
+      ],
+      "final": "{\"found\":true,\"answer\":\"WebLLM, wllama, and a local endpoint on the three reference hardware classes.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"Each milestone delivers a usable result and has explicit acceptance criteria. The team is two people: the project owner (decisions, reviews, testing on reference hardware) and Claude (implementation, tests, benchmark runs, documentation), as in [`m1-plan.md`](m1-plan.md). The original estimate assumed two to three engineers: three to four months for M0–M2, and a further three to four months for M3–M4 including relay operations.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#32",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f14-steering-approval",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4182,
+      "completionTokens": 98,
+      "estimatedTokens": false,
+      "modelMs": 19917,
+      "ttftMs": 12996,
+      "wallMs": 21571,
+      "actions": [
+        "search {\"query\":\"steering committee approve design document date\"}",
+        "read {\"docId\":\"kovrune-design-r3#6\"}",
+        "search {\"query\":\"steering committee approve design document date\"}",
+        "read {\"docId\":\"kovrune-design-r3#6\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f15-cure-period",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3864,
+      "completionTokens": 197,
+      "estimatedTokens": false,
+      "modelMs": 25242,
+      "ttftMs": 11275,
+      "wallMs": 33897,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 non-compliance first time notify rights keep\"}",
+        "read {\"docId\":\"mpl-2.0#7\"}",
+        "read {\"docId\":\"mpl-2.0#7\"}",
+        "search {\"query\":\"MPL-2.0 non-compliance first time notify rights keep\"}",
+        "final_answer {\"found\":true,\"answer\":\"30 days\",\"evidence\":[{\"docId\":\"mpl-2.0#7\",\"quote\":\"Moreover, Your grants from a particular Contributor are reinstated on an"
+      ],
+      "final": "{\"found\":true,\"answer\":\"30 days\",\"evidence\":[{\"docId\":\"mpl-2.0#7\",\"quote\":\"Moreover, Your grants from a particular Contributor are reinstated on an ongoing basis if such Contributor notifies You of the non-compliance by some reasonable means, this is the first time You have received notice of non-compliance with this License from such Contributor, and You become compliant prior to 30 days after Your receipt of the notice.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f16-litigation",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5491,
+      "completionTokens": 227,
+      "estimatedTokens": false,
+      "modelMs": 31416,
+      "ttftMs": 14951,
+      "wallMs": 37975,
+      "actions": [
+        "search {\"query\":\"litigation MPL-2.0 brought\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "final_answer {\"found\":true,\"answer\":\"Any litigation relating to this License may be brought only in the courts of a jurisdiction where the defendant maintains i"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Any litigation relating to this License may be brought only in the courts of a jurisdiction where the defendant maintains its principal place of business and such litigation shall be governed by laws of that jurisdiction, without reference to its conflict-of-law provisions.\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Any litigation relating to this License may be brought only in the courts of a jurisdiction where the defendant maintains its principal place of business and such litigation shall be governed by laws of that jurisdiction, without reference to its conflict-o",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f17-secondary-licenses",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 7692,
+      "completionTokens": 278,
+      "estimatedTokens": false,
+      "modelMs": 40060,
+      "ttftMs": 20314,
+      "wallMs": 47793,
+      "actions": [
+        "search {\"query\":\"Secondary Licenses MPL-2.0\"}",
+        "read {\"docId\":\"mpl-2.0#1\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "read {\"docId\":\"mpl-2.0#5\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "search {\"query\":\"Secondary Licenses MPL-2.0\"}",
+        "final_answer {\"found\":true,\"answer\":\"Software with a work governed by one or more Secondary Licenses, and the Covered Software is not Incompatible With Secondar"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Software with a work governed by one or more Secondary Licenses, and the Covered Software is not Incompatible With Secondary Licenses, this License permits You to additionally distribute such Covered Software under the terms of such Secondary License(s).\",\"evidence\":[{\"docId\":\"mpl-2.0#5\",\"quote\":\"Software with a work governed by one or more Secondary Licenses, and the Covered Software is not Incompatible With Secondary Licenses, this License permits You to additionally distribute such Covered Software under the terms of such Secondary License(s), so that the recipient o",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#5",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "no"
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f18-mpl-fine",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 10464,
+      "completionTokens": 165,
+      "estimatedTokens": false,
+      "modelMs": 37839,
+      "ttftMs": 26307,
+      "wallMs": 42389,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 fine euros\"}",
+        "read {\"docId\":\"kovrune-design-r3#3\"}",
+        "read {\"docId\":\"kovrune-design-r3#30\"}",
+        "read {\"docId\":\"kovrune-design-r3#36\"}",
+        "search {\"query\":\"MPL-2.0 fine\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"kovrune-design-r3#3\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f19-ada-born",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2028,
+      "completionTokens": 123,
+      "estimatedTokens": false,
+      "modelMs": 18661,
+      "ttftMs": 9815,
+      "wallMs": 24106,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace born\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1815\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 18"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1815\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Augusta Ada King, Countess of Lovelace (née Byron; 10 December 1815 – 27 November 1852), also known as Ada Lovelace,\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f20-ada-parents",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5785,
+      "completionTokens": 176,
+      "estimatedTokens": false,
+      "modelMs": 27481,
+      "ttftMs": 14955,
+      "wallMs": 34578,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace parents\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"ada-lovelace-lead#2\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ada Lovelace's parents were Lord Byron and Anne Isabella Milbanke.\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Lov"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ada Lovelace's parents were Lord Byron and Anne Isabella Milbanke.\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Lovelace was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f21-ada-music",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1912,
+      "completionTokens": 111,
+      "estimatedTokens": false,
+      "modelMs": 17881,
+      "ttftMs": 9844,
+      "wallMs": 21181,
+      "actions": [
+        "search {\"query\":\"Lovelace suggested machine could encode besides numbers\"}",
+        "read {\"docId\":\"ada-lovelace-lead#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"music\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#3\",\"quote\":\"Lovelace was the first to point out the possibility of encoding "
+      ],
+      "final": "{\"found\":true,\"answer\":\"music\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#3\",\"quote\":\"Lovelace was the first to point out the possibility of encoding information besides mere arithmetical figures, such as music, and manipulating it with such a machine.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f22-ada-patent",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3623,
+      "completionTokens": 98,
+      "estimatedTokens": false,
+      "modelMs": 16664,
+      "ttftMs": 9857,
+      "wallMs": 18269,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace patent\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "search {\"query\":\"Ada Lovelace patent\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f23-license-and-cure",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2896,
+      "completionTokens": 202,
+      "estimatedTokens": false,
+      "modelMs": 24960,
+      "ttftMs": 10129,
+      "wallMs": 26982,
+      "actions": [
+        "search {\"query\":\"Kovrune license days non-compliance\"}",
+        "read {\"docId\":\"mpl-2.0#7\"}",
+        "read {\"docId\":\"mpl-2.0#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"The license is MPL-2.0. It gives 60 days after a first notice of non-compliance to comply.\",\"evidence\":[{\"docId\":\"mpl-2.0#7"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The license is MPL-2.0. It gives 60 days after a first notice of non-compliance to comply.\",\"evidence\":[{\"docId\":\"mpl-2.0#7\",\"quote\":\"However, if You become compliant, then the rights granted under this License from a particular Contributor are reinstated (a) provisionally, unless and until such Contributor explicitly and finally terminates Your grants, and (b) on an ongoing basis, if such Contributor fails to notify You of the non-compliance by some reasonable means prior to 60 days after You have come back into compliance.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f24-servers",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6896,
+      "completionTokens": 249,
+      "estimatedTokens": false,
+      "modelMs": 35767,
+      "ttftMs": 17810,
+      "wallMs": 44916,
+      "actions": [
+        "search {\"query\":\"Kovrune local model server Ollama status\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#10\"}",
+        "read {\"docId\":\"kovrune-user-guide#10\"}",
+        "final_answer {\"found\":true,\"answer\":\"Kovrune supports the llama.cpp local model server, and Ollama is supported but requires configuration (e.g., adding the sit"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Kovrune supports the llama.cpp local model server, and Ollama is supported but requires configuration (e.g., adding the site to OLLAMA_ORIGINS).\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).\"},{\"docId\":\"kovrune-user-guide#10\",\"quote\":\"Use llama.cpp server with the same model file\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f25-fuji-summit",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4509,
+      "completionTokens": 158,
+      "estimatedTokens": false,
+      "modelMs": 27852,
+      "ttftMs": 16203,
+      "wallMs": 30675,
+      "actions": [
+        "search {\"query\":\"富士山 山体 最高地点 メートル\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"3776.12メートル\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"標高は3775.56 m、山体の最高地点は3776.12 mで\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"3776.12メートル\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"標高は3775.56 m、山体の最高地点は3776.12 mで\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f26-fuji-prefectures",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4269,
+      "completionTokens": 166,
+      "estimatedTokens": false,
+      "modelMs": 24011,
+      "ttftMs": 12227,
+      "wallMs": 26264,
+      "actions": [
+        "search {\"query\":\"富士山 どの県に跨っていますか\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"静岡県\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"山梨県（富士吉田市、南都留郡鳴沢村）と静岡県（富士宮市、富士市、裾野市、御殿場市、駿東郡小山町）に跨る。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"静岡県\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"山梨県（富士吉田市、南都留郡鳴沢村）と静岡県（富士宮市、富士市、裾野市、御殿場市、駿東郡小山町）に跨る。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f27-fuji-heritage",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1804,
+      "completionTokens": 126,
+      "estimatedTokens": false,
+      "modelMs": 16439,
+      "ttftMs": 7594,
+      "wallMs": 18823,
+      "actions": [
+        "search {\"query\":\"富士山 世界文化遺産 登録 年\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"2013年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"さらに2013年（平成25年）6月22日には関連する文化財群とともに「富士山-信仰の対象と芸術の源泉」の名で世界文化遺産に登録"
+      ],
+      "final": "{\"found\":true,\"answer\":\"2013年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"さらに2013年（平成25年）6月22日には関連する文化財群とともに「富士山-信仰の対象と芸術の源泉」の名で世界文化遺産に登録された。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f28-fuji-last-eruption",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 4743,
+      "completionTokens": 124,
+      "estimatedTokens": false,
+      "modelMs": 20519,
+      "ttftMs": 11855,
+      "wallMs": 21967,
+      "actions": [
+        "search {\"query\":\"富士山 噴火 最後\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer {\"found\":false,\"answer\":\":\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\":\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f29-wall-heritage",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2071,
+      "completionTokens": 129,
+      "estimatedTokens": false,
+      "modelMs": 18302,
+      "ttftMs": 9364,
+      "wallMs": 25917,
+      "actions": [
+        "search {\"query\":\"长城 联合国教科文组织 世界文化遗产 年份\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1987年\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987年，长城被联合国教科文组织列为世界文化遗产，该遗产目前不仅包含上述15个省、市、自治区境内的长城，还额外包括了湖南和四"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1987年\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987年，长城被联合国教科文组织列为世界文化遗产，该遗产目前不仅包含上述15个省、市、自治区境内的长城，还额外包括了湖南和四川境内的苗疆长城（南长城）等。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f30-wall-length",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5244,
+      "completionTokens": 165,
+      "estimatedTokens": false,
+      "modelMs": 26228,
+      "ttftMs": 14735,
+      "wallMs": 31802,
+      "actions": [
+        "search {\"query\":\"长城墙壕遗存总长度\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"21,196.18千米\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"墙壕遗存总长度21,196.18千米。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"21,196.18千米\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"墙壕遗存总长度21,196.18千米。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f31-wall-dynasty",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1972,
+      "completionTokens": 89,
+      "estimatedTokens": false,
+      "modelMs": 16649,
+      "ttftMs": 10393,
+      "wallMs": 21201,
+      "actions": [
+        "search {\"query\":\"现存的长城遗迹主要是哪个朝代修筑的\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"明\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"现存的长城遗迹主要为始建于14世纪的明长城\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"明\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"现存的长城遗迹主要为始建于14世纪的明长城\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f32-wall-visitors",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4236,
+      "completionTokens": 98,
+      "estimatedTokens": false,
+      "modelMs": 19035,
+      "ttftMs": 12359,
+      "wallMs": 21513,
+      "actions": [
+        "search {\"query\":\"长城每年接待多少游客\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f33-eiffel-height",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2787,
+      "completionTokens": 177,
+      "estimatedTokens": false,
+      "modelMs": 21664,
+      "ttftMs": 8913,
+      "wallMs": 23175,
+      "actions": [
+        "search {\"query\":\"hauteur tour eiffel antennes\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"330 mètres\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl]  est une tour autoportante de fer"
+      ],
+      "final": "{\"found\":true,\"answer\":\"330 mètres\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl]  est une tour autoportante de fer puddlé de 330 m de hauteur (avec antennes) située à Paris, à l’extrémité nord-ouest du parc du Champ-de-Mars en bordure de la Seine dans le 7e arrondissement.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f34-eiffel-occasion",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3022,
+      "completionTokens": 148,
+      "estimatedTokens": false,
+      "modelMs": 20096,
+      "ttftMs": 9598,
+      "wallMs": 26441,
+      "actions": [
+        "search {\"query\":\"tour Eiffel construite événement\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"L'Exposition universelle de Paris de 1889\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Construite en deux ans par "
+      ],
+      "final": "{\"found\":true,\"answer\":\"L'Exposition universelle de Paris de 1889\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Construite en deux ans par Gustave Eiffel et ses collaborateurs pour l'Exposition universelle de Paris de 1889, célébrant le centenaire de la Révolution française,\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f35-eiffel-visitors-2016",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2894,
+      "completionTokens": 134,
+      "estimatedTokens": false,
+      "modelMs": 20920,
+      "ttftMs": 11340,
+      "wallMs": 27769,
+      "actions": [
+        "search {\"query\":\"tour Eiffel 2016 visiteurs\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"5,9 millions de visiteurs\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"il s’agit du quatrième site culturel frança"
+      ],
+      "final": "{\"found\":true,\"answer\":\"5,9 millions de visiteurs\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"il s’agit du quatrième site culturel français payant le plus visité en 2016, avec 5,9 millions de visiteurs.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f36-eiffel-ticket",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4156,
+      "completionTokens": 101,
+      "estimatedTokens": false,
+      "modelMs": 19856,
+      "ttftMs": 12759,
+      "wallMs": 22506,
+      "actions": [
+        "search {\"query\":\"billet monter tour eiffel prix\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "search {\"query\":\"billet monter tour eiffel prix\"}",
+        "final_answer {\"found\":false,\"answer\":\":\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\":\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f37-fuji-summit-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4532,
+      "completionTokens": 142,
+      "estimatedTokens": false,
+      "modelMs": 23623,
+      "ttftMs": 13368,
+      "wallMs": 25739,
+      "actions": [
+        "search {\"query\":\"Mount Fuji highest point height metres\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"3776.12\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"山体の最高地点は3776.12 mで\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"3776.12\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"山体の最高地点は3776.12 mで\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f38-wall-heritage-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1902,
+      "completionTokens": 96,
+      "estimatedTokens": false,
+      "modelMs": 15528,
+      "ttftMs": 8700,
+      "wallMs": 17754,
+      "actions": [
+        "search {\"query\":\"UNESCO Great Wall of China World Heritage Site year\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1987年\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987年，长城被联合国教科文组织列为世界文化遗产\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1987年\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987年，长城被联合国教科文组织列为世界文化遗产\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f39-wall-length-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5497,
+      "completionTokens": 165,
+      "estimatedTokens": false,
+      "modelMs": 25600,
+      "ttftMs": 13522,
+      "wallMs": 27499,
+      "actions": [
+        "search {\"query\":\"China's National Cultural Heritage Administration Great Wall survey total length kilometres\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"21,196.18\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"墙壕遗存总长度21,196.18千米。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"21,196.18\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"墙壕遗存总长度21,196.18千米。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f40-eiffel-address-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3447,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "modelMs": 20474,
+      "ttftMs": 11999,
+      "wallMs": 22999,
+      "actions": [
+        "search {\"query\":\"Eiffel Tower official address\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"5, avenue Anatole-France\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Son adresse officielle est 5, avenue Anatole"
+      ],
+      "final": "{\"found\":true,\"answer\":\"5, avenue Anatole-France\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Son adresse officielle est 5, avenue Anatole-France.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f41-ada-born-ja",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5402,
+      "completionTokens": 124,
+      "estimatedTokens": false,
+      "modelMs": 24996,
+      "ttftMs": 16096,
+      "wallMs": 26777,
+      "actions": [
+        "search {\"query\":\"エイダ・ラブレス 生まれる 年\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"ada-lovelace-lead#2\"}",
+        "read {\"docId\":\"ada-lovelace-lead#3\"}",
+        "final_answer {\"found\":false,\"answer\":\":\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\":\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f42-fuji-last-eruption-en",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5251,
+      "completionTokens": 176,
+      "estimatedTokens": false,
+      "modelMs": 26086,
+      "ttftMs": 13298,
+      "wallMs": 27779,
+      "actions": [
+        "search {\"query\":\"Mount Fuji last erupt year\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1952\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"その後、1952年（昭和27年）に特別名勝、\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1952\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"その後、1952年（昭和27年）に特別名勝、\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f43-eiffel-tallest-years-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3302,
+      "completionTokens": 134,
+      "estimatedTokens": false,
+      "modelMs": 21165,
+      "ttftMs": 11408,
+      "wallMs": 23845,
+      "actions": [
+        "search {\"query\":\"Eiffel Tower tallest monument world years\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"40\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D'une hauteur de 312 mètres à l'origine, la tour Eiffel est restée"
+      ],
+      "final": "{\"found\":true,\"answer\":\"40\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D'une hauteur de 312 mètres à l'origine, la tour Eiffel est restée le monument le plus élevé du monde pendant quarante ans.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f44-eiffel-higher-deck-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2755,
+      "completionTokens": 90,
+      "estimatedTokens": false,
+      "modelMs": 17515,
+      "ttftMs": 10920,
+      "wallMs": 20100,
+      "actions": [
+        "search {\"query\":\"Moscow tower observation deck higher than Eiffel Tower\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"None\",\"evidence\":[]}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer {\"found\":false,\"answer\":\"None\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"None\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f45-mpl-cure-fr",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2642,
+      "completionTokens": 90,
+      "estimatedTokens": false,
+      "modelMs": 16413,
+      "ttftMs": 9636,
+      "wallMs": 19779,
+      "actions": [
+        "search {\"query\":\"licence laisse-t-elle pour se remettre en conformité après une première notification\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\":\",\"evidence\":[]}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":false,\"answer\":\":\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\":\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f46-preview-permission-fr",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7231,
+      "completionTokens": 216,
+      "estimatedTokens": false,
+      "modelMs": 35465,
+      "ttftMs": 19572,
+      "wallMs": 43102,
+      "actions": [
+        "search {\"query\":\"site de prévisualisation autorisation navigateur serveur modèle\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"The permission needed is called 'Apps on device' (or 'Access other apps and services on this device').\",\"evidence\":[{\"docId"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The permission needed is called 'Apps on device' (or 'Access other apps and services on this device').\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"On the preview site, the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called Apps on device (\\\"Access other apps and services on this device\\\"). When the browser asks, choose Allow.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f47-tower-metal-en",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2815,
+      "completionTokens": 145,
+      "estimatedTokens": false,
+      "modelMs": 21489,
+      "ttftMs": 11251,
+      "wallMs": 23293,
+      "actions": [
+        "search {\"query\":\"330-metre tower Paris metal\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"fer puddlé\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl]  est une tour autoportante de fer"
+      ],
+      "final": "{\"found\":true,\"answer\":\"fer puddlé\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl]  est une tour autoportante de fer puddlé de 330 m de hauteur (avec antennes) située à Paris,\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h01-server-address",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7208,
+      "completionTokens": 185,
+      "estimatedTokens": false,
+      "modelMs": 31254,
+      "ttftMs": 18025,
+      "wallMs": 37719,
+      "actions": [
+        "search {\"query\":\"local model server address keep\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "final_answer {\"found\":true,\"answer\":\"http://127.0.0.1:8080/v1\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Use a local model server → keep the address "
+      ],
+      "final": "{\"found\":true,\"answer\":\"http://127.0.0.1:8080/v1\",\"evidence\":[{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"Use a local model server → keep the address `http://127.0.0.1:8080/v1` → Connect → Test this model.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2971,
+      "completionTokens": 139,
+      "estimatedTokens": false,
+      "modelMs": 22350,
+      "ttftMs": 12396,
+      "wallMs": 29175,
+      "actions": [
+        "search {\"query\":\"llama-server -hf download option SSL built without\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "final_answer {\"found\":true,\"answer\":\"When llama.cpp was built without SSL, the `-hf` download option gives the error 'HTTPS is not supported'.\",\"evidence\":[{\"do"
+      ],
+      "final": "{\"found\":true,\"answer\":\"When llama.cpp was built without SSL, the `-hf` download option gives the error 'HTTPS is not supported'.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#9\",\"quote\":\"`HTTPS is not supported` with `-hf` | llama.cpp was built without SSL\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#9",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h03-4b-test-speed",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2905,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "modelMs": 25374,
+      "ttftMs": 15544,
+      "wallMs": 30659,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-4B model test speed laptop 8 GB memory integrated Intel graphics\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"About 5.5 tokens/s\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"Qwen3.5-4B | about 5.5 tokens/s\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"About 5.5 tokens/s\",\"evidence\":[{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"Qwen3.5-4B | about 5.5 tokens/s\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h04-class-3",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4963,
+      "completionTokens": 526,
+      "estimatedTokens": false,
+      "modelMs": 54851,
+      "ttftMs": 15188,
+      "wallMs": 56442,
+      "actions": [
+        "search {\"query\":\"reference hardware class 3\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "final_answer {\"found\":true,\"answer\":\"The reference hardware class 3 is the Kovrune Design R3 (Kovrune Design R3).\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\""
+      ],
+      "final": "{\"found\":true,\"answer\":\"The reference hardware class 3 is the Kovrune Design R3 (Kovrune Design R3).\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"The team is two people: the project owner (decisions, reviews, testing on reference hardware) and Claude (implementation, tests, benchmark runs, documentation), as in [`m1-plan.md`](m1-plan.md). The original estimate assumed two to three engineers: three to four months for M0–M2, and a further three to four months for M3–M4 including relay operations. For M2 onward, treat these estimates as a hypothesis until they are re-planned for the actu",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#32",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h05-first-result-target",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3503,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "modelMs": 24936,
+      "ttftMs": 15188,
+      "wallMs": 31746,
+      "actions": [
+        "search {\"query\":\"time from first visit to first useful result\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "final_answer {\"found\":true,\"answer\":\"Under 15 minutes on reference hardware, including model download\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"Time "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Under 15 minutes on reference hardware, including model download\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"Time from first visit to first useful result | Under 15 minutes on reference hardware, including model download\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h06-after-evaluating",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6749,
+      "completionTokens": 153,
+      "estimatedTokens": false,
+      "modelMs": 33998,
+      "ttftMs": 22304,
+      "wallMs": 35403,
+      "actions": [
+        "search {\"query\":\"task states evaluating\"}",
+        "read {\"docId\":\"kovrune-design-r3#18\"}",
+        "read {\"docId\":\"kovrune-design-r3#18\"}",
+        "read {\"docId\":\"kovrune-design-r3#24\"}",
+        "read {\"docId\":\"kovrune-design-r3#24\"}",
+        "final_answer {\"found\":true,\"answer\":\"running\",\"evidence\":[{\"docId\":\"kovrune-design-r3#18\",\"quote\":\"`created → planned → ready → running → evaluating → completed"
+      ],
+      "final": "{\"found\":true,\"answer\":\"running\",\"evidence\":[{\"docId\":\"kovrune-design-r3#18\",\"quote\":\"`created → planned → ready → running → evaluating → completed`\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#18",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h07-license-steward",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3524,
+      "completionTokens": 127,
+      "estimatedTokens": false,
+      "modelMs": 19825,
+      "ttftMs": 10522,
+      "wallMs": 26132,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 license steward\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "search {\"query\":\"MPL-2.0 license steward\"}",
+        "final_answer {\"found\":true,\"answer\":\"Mozilla Foundation\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is the license steward.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Mozilla Foundation\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is the license steward.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h08-exhibit-b",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3629,
+      "completionTokens": 172,
+      "estimatedTokens": false,
+      "modelMs": 24481,
+      "ttftMs": 11922,
+      "wallMs": 27091,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 Incompatible With Secondary Licenses\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "read {\"docId\":\"mpl-2.0#11\"}",
+        "final_answer {\"found\":true,\"answer\":\"Exhibit B\",\"evidence\":[{\"docId\":\"mpl-2.0#11\",\"quote\":\"Exhibit B - \\\"Incompatible With Secondary Licenses\\\" Notice\\n\\nThis S"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Exhibit B\",\"evidence\":[{\"docId\":\"mpl-2.0#11\",\"quote\":\"Exhibit B - \\\"Incompatible With Secondary Licenses\\\" Notice\\n\\nThis Source Code Form is \\\"Incompatible With Secondary Licenses\\\", as\\n  defined by the Mozilla Public License, v. 2.0.\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#11",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h09-met-babbage",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3524,
+      "completionTokens": 156,
+      "estimatedTokens": false,
+      "modelMs": 23208,
+      "ttftMs": 12471,
+      "wallMs": 31944,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace Charles Babbage meet date\"}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"ada-lovelace-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"5 June 1833\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace first met him on 5 June 1833, when she and her mo"
+      ],
+      "final": "{\"found\":true,\"answer\":\"5 June 1833\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace first met him on 5 June 1833, when she and her mother attended one of Charles Babbage's Saturday night soirées with their mutual friend, and Lovelace's private tutor, Mary Somerville.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h10-menabrea",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2408,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "modelMs": 18727,
+      "ttftMs": 9518,
+      "wallMs": 24474,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace analytical engine article translate\"}",
+        "read {\"docId\":\"ada-lovelace-lead#2\"}",
+        "read {\"docId\":\"ada-lovelace-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"Luigi Menabrea\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace translated an article by the military engineer"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Luigi Menabrea\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Lovelace translated an article by the military engineer Luigi Menabrea about the analytical engine, supplementing it with seven long explanatory notes.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes"
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h11-fuji-national-park",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5926,
+      "completionTokens": 171,
+      "estimatedTokens": false,
+      "modelMs": 26992,
+      "ttftMs": 14862,
+      "wallMs": 28631,
+      "actions": [
+        "search {\"query\":\"富士山 国立公園 指定 年\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"また、1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"また、1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h12-wall-segments",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6014,
+      "completionTokens": 216,
+      "estimatedTokens": false,
+      "modelMs": 29542,
+      "ttftMs": 14134,
+      "wallMs": 34942,
+      "actions": [
+        "search {\"query\":\"国家文物局认定的长城墙体共有多少段\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "read {\"docId\":\"great-wall-zh-lead#2\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"10,051段\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"根据认定结论，各类长城资源遗存总数43,721处（座/段），其中墙体10,051段，壕堑/界壕1,764段，单体建筑29,"
+      ],
+      "final": "{\"found\":true,\"answer\":\"10,051段\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#2\",\"quote\":\"根据认定结论，各类长城资源遗存总数43,721处（座/段），其中墙体10,051段，壕堑/界壕1,764段，单体建筑29,510座，关、堡2,211座，其他遗存185处。\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#2",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h13-eiffel-original-height",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3003,
+      "completionTokens": 138,
+      "estimatedTokens": false,
+      "modelMs": 19517,
+      "ttftMs": 9698,
+      "wallMs": 21945,
+      "actions": [
+        "search {\"query\":\"Quelle était la hauteur de la tour Eiffel à l'origine\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"330 mètres\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D'une hauteur de 312 mètres à l'origine, la tour Eiffel es"
+      ],
+      "final": "{\"found\":true,\"answer\":\"330 mètres\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"D'une hauteur de 312 mètres à l'origine, la tour Eiffel est restée le monument le plus élevé du monde pendant quarante ans.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h14-license-and-steward",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4201,
+      "completionTokens": 125,
+      "estimatedTokens": false,
+      "modelMs": 20810,
+      "ttftMs": 11485,
+      "wallMs": 22318,
+      "actions": [
+        "search {\"query\":\"Kovrune software license steward\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "read {\"docId\":\"mpl-2.0#10\"}",
+        "search {\"query\":\"Kovrune software license steward\"}",
+        "final_answer {\"found\":true,\"answer\":\"Mozilla Foundation\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is the license steward.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Mozilla Foundation\",\"evidence\":[{\"docId\":\"mpl-2.0#10\",\"quote\":\"Mozilla Foundation is the license steward.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h15-ada-children",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2479,
+      "completionTokens": 123,
+      "estimatedTokens": false,
+      "modelMs": 18383,
+      "ttftMs": 9437,
+      "wallMs": 20370,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace children\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\":\",\"evidence\":[]}",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"One\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Lovelace was the only legitimate child of poet Lord Byron and refo"
+      ],
+      "final": "{\"found\":true,\"answer\":\"One\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Lovelace was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h16-subscription-price",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2567,
+      "completionTokens": 86,
+      "estimatedTokens": false,
+      "modelMs": 16070,
+      "ttftMs": 9980,
+      "wallMs": 18354,
+      "actions": [
+        "search {\"query\":\"Kovrune subscription cost per month\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    }
+  ]
+}

@@ -117,6 +117,15 @@ describe("field suite", () => {
           evidence: [{ docId: "ada-lovelace-lead", quote: "(née Byron; 10 December 1815 – 27 November 1852)" }],
         },
       }),
+      // Asked to read what it quotes first (read before answering), the model answers again.
+      JSON.stringify({
+        tool: "final_answer",
+        args: {
+          found: true,
+          answer: "Ada Lovelace was born on 10 December 1815.",
+          evidence: [{ docId: "ada-lovelace-lead", quote: "(née Byron; 10 December 1815 – 27 November 1852)" }],
+        },
+      }),
     ]);
     const report = await runBenchmark({
       model,

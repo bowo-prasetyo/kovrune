@@ -64,13 +64,17 @@ describe("read before not found", () => {
     assert.deepEqual(steps(afterRead.agent.calls), ["search", "read", "final_answer"]);
   });
 
-  it("does not object to an answer that was found, or on the last step", async () => {
+  it("does not object to an answer from a document that was read, or on the last step", async () => {
     const found = JSON.stringify({
       tool: "final_answer",
       args: { found: true, answer: "The Tessel Foundation maintains LumenDB.", evidence: [{ docId: "lumen-overview", quote: "maintained by the Tessel Foundation since 2022" }] },
     });
-    const answered = await runResearch({ question: "Who maintains LumenDB?", library, model: new ScriptedModel([search("LumenDB maintainer"), found]) });
-    assert.deepEqual(steps(answered.agent.calls), ["search", "final_answer"]);
+    const answered = await runResearch({
+      question: "Who maintains LumenDB?",
+      library,
+      model: new ScriptedModel([search("LumenDB maintainer"), read("lumen-overview"), found]),
+    });
+    assert.deepEqual(steps(answered.agent.calls), ["search", "read", "final_answer"]);
 
     const lastStep = await runAgent({
       model: new ScriptedModel([search("LumenDB maintainer"), notFound]),
@@ -189,5 +193,51 @@ describe("reply in the question's language, in Latin script", () => {
     assert.deepEqual(steps(result.agent.calls), ["search", "read", "final_answer (rejected)", "final_answer"]);
     assert.match(result.agent.transcript.at(-2)!.content, /^The question is written in French, but your answer is in English\./);
     assert.equal(result.status, "verified");
+  });
+});
+
+describe("read before answering", () => {
+  const answer = (docId: string, quote: string) =>
+    JSON.stringify({ tool: "final_answer", args: { found: true, answer: "The Tessel Foundation maintains LumenDB.", evidence: [{ docId, quote }] } });
+  const fromSnippet = answer("lumen-overview", "maintained by the Tessel Foundation since 2022");
+
+  it("sends an answer back once when it quotes a document the model only saw as a snippet (pdf task p04)", async () => {
+    const model = new ScriptedModel([search("LumenDB maintainer"), fromSnippet, read("lumen-overview"), fromSnippet]);
+    const result = await runResearch({ question: "Who maintains LumenDB?", library, model });
+    assert.deepEqual(steps(result.agent.calls), ["search", "final_answer (rejected)", "read", "final_answer"]);
+    assert.match(result.agent.transcript[5]!.content, /quotes lumen-overview, which you have seen only as a search snippet/);
+    assert.equal(result.agent.calls[1]!.rejected, "About to answer from search snippets; reading the documents it quotes first");
+    assert.equal(result.status, "verified");
+  });
+
+  it("asks only once, and not on the last step", async () => {
+    const ignored = await runResearch({ question: "q", library, model: new ScriptedModel([search("LumenDB maintainer"), fromSnippet, fromSnippet]) });
+    assert.deepEqual(steps(ignored.agent.calls), ["search", "final_answer (rejected)", "final_answer"]);
+    const lastStep = await runAgent({
+      model: new ScriptedModel([search("LumenDB maintainer"), fromSnippet]),
+      system: RESEARCH_SYSTEM,
+      task: "Who maintains LumenDB?",
+      tools: createResearchTools(library.index),
+      finalTool: "final_answer",
+      config: { constrained: true, maxCalls: 2, maxTokensPerCall: 512 },
+    });
+    assert.deepEqual(steps(lastStep.calls), ["search", "final_answer"]);
+  });
+
+  it("counts a part as read only when that part was, and a whole document when any part was", async () => {
+    const long = { id: "manual", title: "Manual", text: Array.from({ length: 4 }, (_, i) => `Chapter ${i + 1}. ${"The manual explains the backup schedule in detail. ".repeat(12)}`).join("\n\n") };
+    const parts = new ResearchLibrary([long]);
+    const [first, second] = parts.index.partsOf("manual");
+    assert.ok(first && second);
+    const quote = "The manual explains the backup schedule in detail.";
+    const otherPart = await runResearch({ question: "q", library: parts, model: new ScriptedModel([read(first), answer(second, quote), answer(second, quote)]) });
+    assert.deepEqual(steps(otherPart.agent.calls), ["read", "final_answer (rejected)", "final_answer"], "reading part 1 does not cover a quote from part 2");
+    const whole = await runResearch({ question: "q", library: parts, model: new ScriptedModel([read(first), answer("manual", quote)]) });
+    assert.deepEqual(steps(whole.agent.calls), ["read", "final_answer"], "a quote cited to the whole document is covered by any part");
+  });
+
+  it("does not object to an answer that says the documents do not have it", async () => {
+    const result = await runResearch({ question: "q", library, model: new ScriptedModel([search("zzzqqq"), notFound]) });
+    assert.deepEqual(steps(result.agent.calls), ["search", "final_answer"]);
   });
 });

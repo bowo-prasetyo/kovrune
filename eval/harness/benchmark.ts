@@ -14,7 +14,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.28.0";
+export const HARNESS_VERSION = "0.30.0";
 
 export type Mode = "constrained" | "unconstrained";
 

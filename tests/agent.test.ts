@@ -11,7 +11,7 @@ import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { RESEARCH_LIMITS, ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
-import { DocumentIndex } from "../src/tools/search.ts";
+import { DocumentIndex, stem } from "../src/tools/search.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 import { researchTasks } from "../eval/tasks/research.ts";
@@ -77,10 +77,12 @@ describe("research agent", () => {
   });
 
   it("counts invalid replies and lets the model recover in unconstrained mode", async () => {
-    const model = new ScriptedModel([`I will search for the license.`, `{"tool":"search","args":{}}`, "```json\n" + final(true, "MPL-2.0", [LICENSE_QUOTE]) + "\n```"]);
+    // The answer quotes a document the model did not read, so it is sent back once (read before answering) and answers again.
+    const answer = "```json\n" + final(true, "MPL-2.0", [LICENSE_QUOTE]) + "\n```";
+    const model = new ScriptedModel([`I will search for the license.`, `{"tool":"search","args":{}}`, answer, answer]);
     const run = await research("r02-lumen-license", [], false, model);
     assert.equal(run.score.passed, true);
-    assert.deepEqual(run.agent.calls.map((c) => c.valid), [false, false, true]);
+    assert.deepEqual(run.agent.calls.map((c) => c.valid), [false, false, true, true]);
     assert.ok(model.requests.every((r) => !r.responseSchema));
   });
 
@@ -99,7 +101,8 @@ describe("research agent", () => {
   });
 
   it("fails a correct answer whose quote is not in the cited document", async () => {
-    const run = await research("r02-lumen-license", [final(true, "MPL-2.0", [["lumen-overview", "LumenDB uses the MPL-2.0 license"]])]);
+    const answer = final(true, "MPL-2.0", [["lumen-overview", "LumenDB uses the MPL-2.0 license"]]);
+    const run = await research("r02-lumen-license", [answer, answer]);
     assert.equal(run.score.checks.facts, true);
     assert.equal(run.score.checks.evidence, false);
     assert.equal(run.research?.status, "unverified");
@@ -328,10 +331,10 @@ describe("coding agent", () => {
 
 describe("benchmark", () => {
   it("summarizes a run and evaluates the gate", async () => {
-    const model = new ScriptedModel([
-      final(true, "Tessel Foundation", [MAINTAINER_QUOTE]),
-      final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
-    ]);
+    // Each answer quotes a document the model did not read, so it answers twice (read before answering).
+    const maintainer = final(true, "Tessel Foundation", [MAINTAINER_QUOTE]);
+    const license = final(true, "Apache-2.0", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]);
+    const model = new ScriptedModel([maintainer, maintainer, license, license]);
     const report = await runBenchmark({
       model,
       runner: new NodeCodeRunner(),
@@ -347,10 +350,13 @@ describe("benchmark", () => {
 
   it("counts wrong answers labelled Quotes found as false reassurance", async () => {
     const model = new ScriptedModel([
+      // Each answer is given twice: the first is sent back to read what it quotes (read before answering).
+      final(true, "LumenDB is maintained by the Tessel Foundation.", [MAINTAINER_QUOTE]),
       final(true, "LumenDB is maintained by the Tessel Foundation.", [MAINTAINER_QUOTE]),
       // The model's own check of the answer (agent/review.ts).
       `{"verdict":"yes"}`,
       // A real quote, but the wrong license: the label would read "Quotes found", and the check confirms it too.
+      final(true, "LumenDB is released under the Apache-2.0 license.", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
       final(true, "LumenDB is released under the Apache-2.0 license.", [["lumen-overview", "released under the Apache-2.0 license until version 2.x"]]),
       `{"verdict":"yes"}`,
     ]);
@@ -555,5 +561,29 @@ describe("helpers", () => {
   it("ranks the advisory first for an advisory query", () => {
     const hits = new DocumentIndex(corpus).search("LSA-2024-07 path traversal");
     assert.equal(hits[0]?.docId, "lumen-advisory-2024-07");
+  });
+
+  it("stems a word and its plural alike, also when it ends in s (field task f13)", () => {
+    assert.deepEqual(["class", "classes"].map(stem), ["class", "class"]);
+    assert.deepEqual(["access", "accesses", "process"].map(stem), ["access", "access", "process"]);
+    assert.deepEqual(["license", "licenses", "maintains", "maintained"].map(stem), ["licens", "licens", "maintain", "maintain"]);
+    const index = new DocumentIndex([
+      { id: "classes", title: "Benchmarks", text: "Reference hardware classes for benchmarks: a laptop with 8 GB." },
+      { id: "other", title: "Notes", text: "The reference for this note is the hardware store." },
+    ]);
+    assert.equal(index.search("Which hardware is reference class 1?")[0]?.docId, "classes");
+  });
+
+  it("finds a joined word by its parts, and a file by the name in its title (field task f06)", () => {
+    const index = new DocumentIndex([
+      { id: "guide", title: "kovrune-user-guide.md", text: "Start ./llama-server with -c 4096 for a 4,096-token context." },
+      { id: "notes", title: "notes.txt", text: "The server in the notes runs on another port." },
+      { id: "release", title: "LumenDB 3.2.0 release notes", text: "Version 3.2.0 fixes the bug." },
+    ]);
+    assert.equal(index.search("llama server context")[0]?.docId, "guide");
+    assert.equal(index.search("user guide")[0]?.docId, "guide");
+    // A dot between digits is part of the number: "3.2" does not find "3.2.0".
+    assert.equal(index.search("3.2.0")[0]?.docId, "release");
+    assert.equal(index.search("3.2").length, 0);
   });
 });

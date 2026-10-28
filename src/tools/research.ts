@@ -89,6 +89,14 @@ export function createResearchTools(
   // or to answer in the question's language. Each is asked once.
   let askedToRead = false;
   let askedForLanguage = false;
+  // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
+  const readIds = new Set<string>();
+  let askedToReadCited = false;
+  // A quote from a part counts as read when that part was, and from a whole document when any of its
+  // parts was. An open source picks the part it shows (sources/session.ts), so any read of it counts.
+  const wasRead = (id: string) =>
+    readIds.has(id) ||
+    [...readIds].some((read) => parentId(read) === id || (session?.sourceFor(id) !== undefined && parentId(read) === parentId(id)));
   // Every source the user ticked is searched before the answer, so it can draw on all of them.
   const searchedSources = new Set<string>();
   const sourceSearches: AgentTool[] = (session?.sources ?? []).map((source) => ({
@@ -180,6 +188,7 @@ export function createResearchTools(
       execute: async ({ docId }: { docId: string }) => {
         if (session?.sourceFor(docId)) {
           unread.clear();
+          readIds.add(docId);
           return nextSources(await session.read(docId));
         }
         const doc = index.get(docId);
@@ -190,6 +199,7 @@ export function createResearchTools(
             : `No document with ID "${docId}". Use an ID returned by search.`;
         }
         readDocument = true;
+        readIds.add(doc.id);
         unread.clear();
         return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`);
       },
@@ -217,13 +227,25 @@ export function createResearchTools(
       // Read before "not found": a search's snippets are one sentence of each document, and both
       // models concluded from them that a document lacked an answer it had (field suite f19, f30).
       // Asked once, so after reading the model can still conclude that the answer is not there.
-      objection: ({ found, answer }: ResearchFinal) => {
+      objection: ({ found, answer, evidence }: ResearchFinal) => {
         if (!found && unread.size && !askedToRead) {
           askedToRead = true;
           return {
             message:
               "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.",
             step: "About to conclude that the sources don't answer this; reading what the search found first",
+          };
+        }
+        // Read before answering, the same guard for an answer: a snippet is one sentence and can cut a
+        // number off. Qwen3.5-4B answered pdf task p04 from two snippets, "spent EUR on security
+        // audits", without reading the report that gives the 96,000. Asked once.
+        const unreadCited = found && !askedToReadCited ? [...new Set(evidence.map((e) => e.docId).filter((id) => !wasRead(id)))] : [];
+        if (unreadCited.length) {
+          askedToReadCited = true;
+          const what = unreadCited.length === 1 ? unreadCited[0] : unreadCited.join(", ");
+          return {
+            message: `Your answer quotes ${what}, which you have seen only as a search snippet. A snippet is one sentence of its document and can leave out a number or a condition. Read ${unreadCited.length === 1 ? "it" : "them"} with read, then answer.`,
+            step: "About to answer from search snippets; reading the documents it quotes first",
           };
         }
         // Reply in the question's language: Qwen3.5-4B answered a Japanese question in English
