@@ -142,6 +142,12 @@ export function ServerStep({
           onChange={(e) => setContextLength(Number(e.target.value))}
         />
       </label>
+      {kind === "ollama" && (
+        <p className="hint">
+          Ollama says how much context it gives a model once the model is loaded, so Kovrune checks it after the model
+          test. It cuts longer prompts without saying so.
+        </p>
+      )}
       {contextNote && (
         <p className={contextNote.tooSmall ? "warning" : "hint"} role="status">
           {contextNote.text}

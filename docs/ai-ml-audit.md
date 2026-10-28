@@ -267,4 +267,6 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 | 6 | Decimal commas (N5); replay `finishReason` (N6); Ollama warning (N9) | Small | No |
 
 **Done in harness 0.37.0:** N3, N4, N5 and N6 ([field README](../eval/field/README.md#elided-quotes-part-labels-decimal-commas-and-resumed-cut-offs-0370)). N3 differs from the fix proposed above. A quote that leaves out more than five words in one place is still found, but backs no sentence. Rejecting it outright would have failed the right answer to r01. Re-scoring all 52 reports changes no label, and search results are unchanged.
+
+**Done in harness 0.38.0:** N9 (Ollama's context is read after the model test, with a warning when Ollama doesn't say), and the "note"/"not" collision from F3 ("not" and "no" are search stop words). The rest of F3, a stemmer whose forms of a word all meet, measured worse on retrieval with 3 results and waits for model runs ([field README](../eval/field/README.md#ollamas-context-and-not-in-searches-0380)).
 | 7 | Length limits in the answer schema (N8) | Small | Yes |

@@ -19,8 +19,9 @@ export interface SearchHit {
   snippet: string;
 }
 
+// "not" and "no" match nothing useful, and "note" stems to "not": a question with "not" found every note.
 const STOP_WORDS = new Set(
-  "a an and are as at be by did do does for from has have how in is it its of on or since that the this to was what when which who why with".split(" "),
+  "a an and are as at be by did do does for from has have how in is it its no not of on or since that the this to was what when which who why with".split(" "),
 );
 
 /**

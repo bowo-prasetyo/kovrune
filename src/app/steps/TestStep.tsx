@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../../agent/self-check.ts";
+import { ollamaContextLength } from "../../models/local-endpoint.ts";
 import { LoadProgressView } from "../LoadProgressView.tsx";
 import { describeModelError, describeSetup, openModel, slowModelAdvice } from "../models.ts";
-import { SERVER_PRESETS } from "../servers.ts";
+import { contextFromServer, SERVER_PRESETS } from "../servers.ts";
 import type { Settings } from "../settings.ts";
 import { useModelLoad } from "../useModelLoad.ts";
 
 type TestState =
   | { phase: "waiting" }
   | { phase: "running"; step: 1 | 2 }
-  | { phase: "done"; result: SelfCheckResult }
+  | { phase: "done"; result: SelfCheckResult; context?: ReturnType<typeof contextFromServer> }
   | { phase: "error"; message: string };
 
 const STEP_TEXT: Record<1 | 2, string> = {
@@ -24,7 +25,8 @@ export function TestStep({
 }: {
   settings: Settings;
   onBack: () => void;
-  onPassed: (result: SelfCheckResult) => void;
+  /** With the context length to save when the server said it differs from the setting (Ollama). */
+  onPassed: (result: SelfCheckResult, contextLength?: number) => void;
 }) {
   const load = useModelLoad(settings);
   const [state, setState] = useState<TestState>({ phase: "waiting" });
@@ -43,7 +45,13 @@ export function TestStep({
           onStep: (step) => setState({ phase: "running", step }),
         }),
       )
-      .then((result) => setState({ phase: "done", result }))
+      .then(async (result) => {
+        // The test has loaded the model, so Ollama can now say the context it runs it with
+        // (ollamaContextLength); it cuts longer prompts without saying so.
+        if (settings.path !== "local-server" || settings.serverKind !== "ollama") return setState({ phase: "done", result });
+        const reported = await ollamaContextLength(settings.baseUrl, settings.model, { apiKey: settings.apiKey, signal: controller.signal });
+        setState({ phase: "done", result, context: contextFromServer(reported, settings.contextLength, "ollama") });
+      })
       .catch((error) => {
         if (!controller.signal.aborted) setState({ phase: "error", message: describeModelError(error, settings) });
       });
@@ -89,6 +97,12 @@ export function TestStep({
         </div>
       )}
 
+      {state.phase === "done" && state.context?.note && (
+        <p className={state.context.contextLength > settings.contextLength ? "hint" : "warning"} role="status">
+          {state.context.note}
+        </p>
+      )}
+
       {state.phase === "done" && state.result.passed && slowModelAdvice(settings, state.result.maxResearchTaskMinutes) && (
         <p className="warning">{slowModelAdvice(settings, state.result.maxResearchTaskMinutes)}</p>
       )}
@@ -112,8 +126,8 @@ export function TestStep({
         {(state.phase === "done" || state.phase === "error") && (
           <button onClick={() => setAttempt((n) => n + 1)}>Test again</button>
         )}
-        {state.phase === "done" && state.result.passed && (
-          <button className="primary" onClick={() => onPassed(state.result)}>
+        {state.phase === "done" && state.result.passed && !state.context?.tooSmall && (
+          <button className="primary" onClick={() => onPassed(state.result, state.context?.contextLength)}>
             Save and continue
           </button>
         )}
