@@ -96,6 +96,37 @@ Harness 0.32.0 grows the field suite from 47 to 89 tasks and the held-out suite 
 - **Results before 0.32.0 are on the smaller suites.** A comparison pairs tasks, so a 0.31.0 report against a 0.32.0 one compares only the tasks in both; new baselines are run on the grown suites.
 - **The retrieval figures change with the suite:** `bench:retrieval` now counts 74 answerable field tasks in one writing system, against 35 before. The app's search finds the cited documents for 97.4% and the answer passages for 93.3%, everything for 69 of 74; of the new tasks it misses an answer passage only for the two-document `f83` and `f84`. The floors in `tests/retrieval.test.ts` are raised to these figures.
 
+### Baselines on the grown suites
+
+Harness 0.32.0 (`3009bd2`), constrained, portable llama.cpp `fae9ac5` (`-DGGML_NATIVE=OFF`, AVX2), Intel Xeon @ 2.80GHz. Qwen3.5-4B ran in three parts on the same machine, code and build (field `f01`–`f45`, field `f46`–`f89`, held out), merged into one report.
+
+| Model | Field | New field tasks (`f48`–`f89`) | Held out | Quotes found, wrong (field) | Median task, field | Report |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 79/89, 89% (81–94%) | 37/42 | 35/37, 95% (82–99%) | 2 of 46 | 103 s | [json](../results/field-0.32-baseline-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 68/89, 76% (67–84%) | 35/42 | 24/37, 65% (49–78%) | 3 of 40 | 44 s | [json](../results/field-0.32-baseline-qwen3.5-2b-q4km.json) |
+
+- **The earlier tasks repeat across CPUs, now on both models.** On the 47 earlier field tasks and 16 earlier held-out tasks, both models took the same actions, with the same results, as in their 0.30.0 runs on the 2.10GHz CPU: 63 of 63 tasks each (4B field 42/47, 2B 33/47). This is the first check of the portable build across CPUs for 4B. So these baselines extend the earlier ones instead of replacing them, and the new tasks are the only difference.
+- **The intervals narrow, as intended.** 4B's field interval is 13 points wide, against 21 at 47 tasks; 2B's held-out interval is 29 points wide, against 43 at 16. The two models' field intervals no longer overlap.
+- **The held-out suite is read as totals:** the 21 new held-out tasks pass 20 for 4B and 15 for 2B.
+
+New field tasks that fail, and why:
+
+| Task | 2B | 4B | What went wrong |
+| --- | --- | --- | --- |
+| `f77-patent-response-days` | ❌ | ❌ | Unanswerable. Both answered with the reinstatement clause's days (60 and 30), the distractor of `f23` |
+| `f84-guide-laptop-class` | ❌ | ❌ | Two documents. Both answered with the guide's "Local model server" row, not the design's class 1; search does not find the design passage for the question either ([above](#growing-the-suites)) |
+| `f83-license-litigation` | ✅ | ❌ | Two documents. Answered right from the licence but cited only it, not the design that names the licence |
+| `f48-node-version` | ❌ | ✅ | Right answer, quote not verified: the guide's Markdown has `[Node.js](https://nodejs.org/) 22`, the model quoted "Node.js 22" |
+| `f53-port-in-use` | ❌ | ✅ | Right answer, quote not verified: the guide escapes the pipe in its `ss -ltnp` command with a backslash, as a Markdown table needs, and the model quoted the command without it |
+| `f57-openalex-busy` | ✅ | ❌ | Right answer, quote not verified: the model changed the quote's "failed" to 'failed' |
+| `f71-control-share` | ✅ | ❌ | Right answer, quote not verified: the model repeated a word ("direct direct") |
+| `f79-ada-married` | ❌ | ✅ | Right answer, quote not verified: "Lovelace married William King" for "She married William King" |
+| `f82-ada-university` | ❌ | ✅ | Unanswerable. 2B answered with her name and title |
+| `f67-m2-rebuild` | ❌ | ✅ | 2B said the documents do not say |
+
+- **Two-document questions are still the weakest kind**, as in the first 24 tasks, and unanswerable questions with a nearby number still draw an answer from it.
+- **Five of the twelve new failures are right answers whose quote fails verification.** Three are real misquotes the check should reject (`f57`, `f71`, `f79`). **Two look like a defect:** in `f48` and `f53` the model quoted the guide as it reads, and verification compares against the Markdown source, link syntax and escaped pipe included. Matching quotes against the text as rendered would be a defect fix under [the rule's clause](#rule-for-prompt-and-guard-changes), measured on these baselines; it is left for its own change.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
@@ -307,7 +338,7 @@ Keeping a final "s" after another, and indexing each joined word's parts as well
   | Prompt and completion tokens | 97 of 97 |
   | Speed | 13–16 tokens/s, slightly faster on the 2.80GHz CPU |
 
-  With the CPU-tuned builds, 20 of 58 tasks took other actions on another machine. So with this build, which CPU a run lands on does not change its results, only its speed, and a baseline from another machine with the same build is a valid baseline. Benchmark runs give the build with `--build` (harness 0.31.0), and `bench:compare` warns about different CPUs only when the two runs do not share a portable build. What this covers: one model (2B) and two of the three CPUs seen; Qwen3.5-4B ran its 0.29.0 baseline and change on one CPU and was not checked across.
+  With the CPU-tuned builds, 20 of 58 tasks took other actions on another machine. So with this build, which CPU a run lands on does not change its results, only its speed, and a baseline from another machine with the same build is a valid baseline. Benchmark runs give the build with `--build` (harness 0.31.0), and `bench:compare` warns about different CPUs only when the two runs do not share a portable build. What this covers: two of the three CPUs seen. Qwen3.5-4B was first checked across them in the [0.32.0 baselines](#baselines-on-the-grown-suites), 63 of 63 tasks alike.
 - **A portable run is not comparable with a native one:** the same code with the two builds took the same actions on 30 of 47 field tasks for 4B and 28 of 47 for 2B, and 2B's field suite went from 35 to 32 (the native runs were on a third CPU, so the build is not the only difference). So reports from 0.29.0 on name the build (in their notes, and from 0.31.0 in `environment.build`), and baselines are run with the build of the change.
 
 **What the suite shows that the synthetic suites don't** (0.15.0 failures):
