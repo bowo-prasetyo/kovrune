@@ -125,7 +125,22 @@ New field tasks that fail, and why:
 | `f67-m2-rebuild` | ❌ | ✅ | 2B said the documents do not say |
 
 - **Two-document questions are still the weakest kind**, as in the first 24 tasks, and unanswerable questions with a nearby number still draw an answer from it.
-- **Five of the twelve new failures are right answers whose quote fails verification.** Three are real misquotes the check should reject (`f57`, `f71`, `f79`). **Two look like a defect:** in `f48` and `f53` the model quoted the guide as it reads, and verification compares against the Markdown source, link syntax and escaped pipe included. Matching quotes against the text as rendered would be a defect fix under [the rule's clause](#rule-for-prompt-and-guard-changes), measured on these baselines; it is left for its own change.
+- **Five of the twelve new failures are right answers whose quote fails verification.** Three are real misquotes the check should reject (`f57`, `f71`, `f79`). **Two look like a defect:** in `f48` and `f53` the model quoted the guide as it reads, and verification compares against the Markdown source, link syntax and escaped pipe included. Matching quotes against the text as rendered would be a defect fix under [the rule's clause](#rule-for-prompt-and-guard-changes), measured on these baselines; it is [fixed in 0.33.0](#quotes-compared-as-they-read).
+
+### Quotes compared as they read
+
+Harness 0.33.0 fixes the defect the 0.32.0 baselines found: quote verification compared a quote with the Markdown source, so a model that quoted the user guide as it reads failed. A Markdown link or image now counts as its text, and a backslash escape as the character it escapes, on both the quote and the source (`normalizeForMatch` in `src/agent/evidence.ts`). A quote that keeps the Markdown still matches. The unit test in `tests/documents.test.ts` fails before the fix and passes after, so it falls under the [defect-fix clause](#rule-for-prompt-and-guard-changes).
+
+**How it was measured: by re-scoring, not re-running.** Quote verification and sentence support run after the agent loop ends (`src/agent/research.ts`), and the loop does not use them, so the fix cannot change what the model does, only how its final answer is scored and labelled. So the final answers of the latest run of each model on each suite were checked again with the fixed code: research, unanswerable and pdf from the [0.30.0 runs](../results/field-0.30-guard-qwen3.5-4b-q4km.json) (unchanged since), field and held out from the [0.32.0 baselines](#baselines-on-the-grown-suites). Of the 425 answers in those four reports (the 0.30.0 runs also hold the first 63 field and held-out tasks), 423 re-score exactly as recorded, in every quote verdict, answer status and sentence support figure, which also checks the re-scoring:
+
+| Model | Research | Unanswerable | PDF | Field | Held out |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | unchanged | unchanged | unchanged | 79 → 79/89 | unchanged |
+| Qwen3.5-2B | unchanged | unchanged | unchanged | 68 → **70**/89 (`f48`, `f53` gained, none lost, p = 0.5) | unchanged |
+
+- **A run confirms it.** Qwen3.5-2B ran `f48` and `f53` with the fix, on the build and machine of the baseline: the same actions and final answers as the baseline, and both pass. `f48` now goes to the self-review, which says yes, and is labelled **Quotes found**, rightly; `f53` backs one of its two sentences and is not labelled.
+- **Adopted** under the defect-fix clause: no protected suite loses a task on either model.
+- **What it does not cover:** other Markdown the guide does not use (reference links, autolinks, HTML tags), and quotes from documents that are not Markdown, which have no links of this form to change.
 
 ## Results
 

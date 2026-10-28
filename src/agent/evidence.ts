@@ -63,6 +63,9 @@ export function hasNegation(text: string): boolean {
   return NEGATION.test(normalizeForMatch(text));
 }
 
+/** A Markdown inline link or image, "[text](url)" or "![alt](url "title")", with its text in group 1. */
+const MARKDOWN_LINK = /!?\[([^\]\n]*)\]\((?:[^()\s]|\([^()\s]*\))*(?:\s+"[^"\n]*")?\)/g;
+
 /** Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote. */
 export function normalizeForMatch(text: string): string {
   const unified = text
@@ -71,6 +74,12 @@ export function normalizeForMatch(text: string): string {
     .toLowerCase()
     // Soft hyphens and zero-width characters are invisible, so a model quoting the text leaves them out.
     .replace(/[\u00ad\u200b-\u200d\u2060\ufeff]/g, "")
+    // Markdown is compared as it reads, not as it is written: a link or image is its text, and a
+    // backslash escape is the character it escapes. Models quote the user guide's
+    // "[Node.js](https://nodejs.org/) 22" as "Node.js 22", and its table cell "ss -ltnp \| grep"
+    // with a plain "|" (field suite, harness 0.32.0 baselines).
+    .replace(MARKDOWN_LINK, "$1")
+    .replace(/\\([!-/:-@[-`{-~])/g, "$1")
     .replace(/[‘’‚‛]/g, "'")
     .replace(/[“”„‟]/g, '"')
     .replace(/[‐-―−]/g, "-")
@@ -280,7 +289,8 @@ const MIN_IN_ORDER = 0.7;
 // A token without letters or digits keeps itself as its key, so "«" and "•" are not paired in the
 // diff (seen: "Choose • Papyrus Project »"); list markers all share one key, as in the quote check.
 const wordKey = (word: string) => {
-  const normalized = normalizeForMatch(word);
+  // A link whose text has spaces is split across words: "[Node js](url)" ends in "js](url)".
+  const normalized = normalizeForMatch(word.replace(/\]\((?:[^()\s]|\([^()\s]*\))*\)/g, ""));
   const key = normalized.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
   if (key) return key;
   if (/^[-•·▪◦‣●*]$/.test(word.replace(/[‐-―−]/g, "-"))) return "•";
