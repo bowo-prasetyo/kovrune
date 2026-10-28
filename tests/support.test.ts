@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
-import { labelledQuotesFound, sentenceSupport, splitSentences } from "../src/agent/support.ts";
+import { labelledQuotesFound, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 
 const ADA = readFileSync(new URL("./fixtures/ada-lovelace-lead.txt", import.meta.url), "utf8");
@@ -257,3 +257,29 @@ describe("negations, months and units in a backed sentence (harness 0.36.0)", ()
   });
 });
 
+describe("elided quotes and decimal commas (harness 0.37.0)", () => {
+  it("does not let a quote that leaves out many words back a sentence (audit N3)", () => {
+    // "Cobble is released under ... the Apache-2.0 license" is in the source, piece by piece, but the
+    // source says Cobble is released under another license, which converts to Apache-2.0 later.
+    const source = "Cobble is released under the Business Source License 1.1, and each release converts to the Apache-2.0 license four years after its release date.";
+    const answer = "Cobble is released under the Apache-2.0 license.";
+    const evidence = checkEvidence([{ docId: "cobble", quote: "Cobble is released under ... the Apache-2.0 license" }], () => source);
+    assert.equal(evidence[0]!.verified, true, "the quote is still found, and shown with the words it leaves out");
+    const support = sentenceSupport(answer, evidence, () => "Cobble overview", "Which license is Cobble released under?");
+    assert.deepEqual([support.backed, support.judged], [0, 1]);
+    assert.equal(labelledQuotesFound("verified", evidence, support), false);
+    assert.equal(describeStatus("verified", evidence, support).label, "0 of 1 sentences backed by a quote");
+    // Leaving out an aside keeps the claim, so the quote still backs it.
+    const aside = checkEvidence([{ docId: "cobble", quote: "Cobble, which ... never loses data" }], () => "Cobble, which is written in Go, never loses data.");
+    assert.equal(sentenceSupport("Cobble never loses data.", aside).backed, 1);
+  });
+
+  it("reads a decimal comma as a decimal point, not a thousands separator (audit N5)", () => {
+    assert.deepEqual(["1,5", "4,096", "21,196.18", "1,234,567", "3,14159", "2.5"].map(plainNumber), ["1.5", "4096", "21196.18", "1234567", "3.14159", "2.5"]);
+    const quotes = [{ docId: "fr", quote: "La taille maximale du cache est de 1,5 Go par défaut." }];
+    assert.equal(marks("La taille maximale du cache est de 15 Go.", quotes), "-");
+    assert.equal(marks("La taille maximale du cache est de 1,5 Go.", quotes), "+");
+    assert.equal(marks("La taille maximale du cache est de 1.5 Go.", quotes), "+", "1,5 and 1.5 are one number");
+    assert.equal(marks("The context holds 4096 tokens.", [{ docId: "d", quote: "The context holds 4,096 tokens." }]), "+");
+  });
+});

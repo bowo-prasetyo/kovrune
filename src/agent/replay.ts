@@ -12,12 +12,19 @@
 // replies would answer a conversation that no longer exists: replay stops there and the
 // real model continues.
 
-import type { GenerationChunk, GenerationRequest, LanguageModel, ModelInfo } from "../models/types.ts";
+import type { GenerationChunk, GenerationRequest, GenerationUsage, LanguageModel, ModelInfo } from "../models/types.ts";
 
 /** One model call of a task: a fingerprint of what the model saw, and its whole reply. */
 export interface RecordedCall {
   input: string;
   output: string;
+  /**
+   * Why the reply stopped, and its token counts, when the runtime said. Replayed with the reply, so a
+   * reply cut off at the length limit is again known as cut off (agent.ts) and the task goes on as it
+   * did. Calls saved before these were recorded have neither.
+   */
+  finishReason?: string;
+  usage?: GenerationUsage;
 }
 
 /** FNV-1a over the conversation, as 8 hex digits: enough to tell two conversations apart, small to store. */
@@ -64,19 +71,23 @@ export class ReplayingModel implements LanguageModel {
     if (saved && saved.input === input) {
       request.signal?.throwIfAborted();
       this.replayed++;
-      this.record({ input, output: saved.output });
+      this.record(saved);
       yield { text: saved.output, done: false };
-      yield { text: "", done: true };
+      yield { text: "", done: true, ...(saved.usage ? { usage: saved.usage } : {}), ...(saved.finishReason ? { finishReason: saved.finishReason } : {}) };
       return;
     }
     // Out of saved replies, or the conversation took another turn: the real model from here on.
     this.replaying = false;
     let output = "";
+    let usage: GenerationUsage | undefined;
+    let finishReason: string | undefined;
     for await (const chunk of this.inner.generate(request)) {
       output += chunk.text;
+      if (chunk.usage) usage = chunk.usage;
+      if (chunk.finishReason) finishReason = chunk.finishReason;
       yield chunk;
     }
-    this.record({ input, output });
+    this.record({ input, output, ...(finishReason ? { finishReason } : {}), ...(usage ? { usage } : {}) });
   }
 
   private record(call: RecordedCall) {

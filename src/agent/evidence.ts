@@ -17,6 +17,8 @@ export interface CheckedEvidence extends EvidenceItem {
   closest?: DiffPart[];
   /** For a verified quote: the passage as it is in the source, with the text around it. */
   context?: QuoteContext;
+  /** For a verified quote that leaves words out ("..."): the most words it leaves out in one place. */
+  elidedWords?: number;
 }
 
 /** A verified quote in its source: the source's own text before, of, and after the quote. */
@@ -120,9 +122,10 @@ export function checkEvidence(
       return { ...item, verified: false, reason: `quote shorter than ${MIN_QUOTE_WORDS} words` };
     }
     const normalized = normalizeForMatch(text);
-    if (containsWords(normalized, quote) || containsElided(normalized, quote)) {
+    const elidedWords = containsWords(normalized, quote) ? undefined : containsElided(normalized, quote);
+    if (elidedWords === undefined || elidedWords >= 0) {
       const context = quoteContext(item.quote, text, resolvePageStarts(item.docId));
-      return { ...item, verified: true, ...(context ? { context } : {}) };
+      return { ...item, verified: true, ...(context ? { context } : {}), ...(elidedWords !== undefined ? { elidedWords } : {}) };
     }
     const closest = closestPassage(item.quote, text);
     return { ...item, verified: false, reason: "quote not found in the document", ...(closest ? { closest } : {}) };
@@ -179,23 +182,26 @@ export function quoteHas(quote: string, part: string): boolean {
  * MAX_ELIDED_CHARS after the one before. One piece must be MIN_QUOTE_WORDS long on its own, so
  * "the ... of the" does not count as a quote. Left-out text that negates does not count either:
  * "cobble is ... released under the apache-2.0 license" from "Cobble is not released under…"
- * says the opposite of its source.
+ * says the opposite of its source. Returns the most words left out in one place, for the first
+ * place the quote is found, or -1 when it is not found.
  */
-function containsElided(text: string, quote: string): boolean {
+function containsElided(text: string, quote: string): number {
   const pieces = quote.split(ELISION).map(stripEdgePunctuation).filter(hasWordChar);
-  if (pieces.length < 2 || Math.max(...pieces.map((piece) => wordCount(piece, hasWordChar))) < MIN_QUOTE_WORDS) return false;
+  if (pieces.length < 2 || Math.max(...pieces.map((piece) => wordCount(piece, hasWordChar))) < MIN_QUOTE_WORDS) return -1;
   const [first, ...rest] = pieces as [string, ...string[]];
   for (let at = findWords(text, first); at >= 0; at = findWords(text, first, at + 1)) {
     let end = at + first.length;
+    let leftOut = 0;
     const chained = rest.every((piece) => {
       const next = findWords(text, piece, end);
       if (next < 0 || next - end > MAX_ELIDED_CHARS || NEGATION.test(text.slice(end, next))) return false;
+      leftOut = Math.max(leftOut, wordCount(text.slice(end, next), hasWordChar));
       end = next + piece.length;
       return true;
     });
-    if (chained) return true;
+    if (chained) return leftOut;
   }
-  return false;
+  return -1;
 }
 
 /** Characters of source text shown on each side of a quote in its context. */
