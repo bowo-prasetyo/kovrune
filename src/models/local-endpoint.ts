@@ -11,11 +11,20 @@ export interface LocalEndpointOptions {
   apiKey?: string;
   /** Extra request fields, e.g. {"chat_template_kwargs": {"enable_thinking": false}}. */
   extraBody?: Record<string, unknown>;
+  /** How long the server may send nothing before the request fails (IDLE_TIMEOUT_MS by default). */
+  idleTimeoutMs?: number;
   fetchImpl?: typeof fetch;
 }
 
+/**
+ * How long a model server may send nothing, while it reads the prompt or between tokens, before a
+ * request fails. Generous, as a slow laptop can take a minute or more to read a long prompt, but
+ * finite, so a server that hangs ends the question with an error instead of leaving it waiting.
+ */
+export const IDLE_TIMEOUT_MS = 5 * 60_000;
+
 interface StreamChunk {
-  choices?: Array<{ delta?: { content?: string | null } }>;
+  choices?: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
   usage?: { prompt_tokens: number; completion_tokens: number } | null;
 }
 
@@ -50,30 +59,50 @@ export class LocalEndpointModel implements LanguageModel {
       };
     }
 
-    const response = await fetchImpl(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: request.signal,
-    });
-    if (!response.ok || !response.body) {
-      throw new Error(`Endpoint returned ${response.status}: ${await response.text()}`);
-    }
-
-    let usage: GenerationChunk["usage"];
-    for await (const data of readServerSentEvents(response.body)) {
-      if (data === "[DONE]") break;
-      const chunk = JSON.parse(data) as StreamChunk;
-      const text = chunk.choices?.[0]?.delta?.content ?? "";
-      if (chunk.usage) {
-        usage = { promptTokens: chunk.usage.prompt_tokens, completionTokens: chunk.usage.completion_tokens };
+    const idleMs = this.options.idleTimeoutMs ?? IDLE_TIMEOUT_MS;
+    const idle = new AbortController();
+    let timer = setTimeout(() => idle.abort(), idleMs);
+    const stillSending = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => idle.abort(), idleMs);
+    };
+    const signal = request.signal ? AbortSignal.any([request.signal, idle.signal]) : idle.signal;
+    try {
+      const response = await fetchImpl(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+        },
+        body: JSON.stringify(body),
+        signal,
+      });
+      if (!response.ok || !response.body) {
+        throw new Error(`Endpoint returned ${response.status}: ${await response.text()}`);
       }
-      if (text) yield { text, done: false };
+
+      let usage: GenerationChunk["usage"];
+      let finishReason: string | undefined;
+      for await (const data of readServerSentEvents(response.body)) {
+        stillSending();
+        if (data === "[DONE]") break;
+        const chunk = JSON.parse(data) as StreamChunk;
+        const text = chunk.choices?.[0]?.delta?.content ?? "";
+        finishReason = chunk.choices?.[0]?.finish_reason ?? finishReason;
+        if (chunk.usage) {
+          usage = { promptTokens: chunk.usage.prompt_tokens, completionTokens: chunk.usage.completion_tokens };
+        }
+        if (text) yield { text, done: false };
+      }
+      yield { text: "", done: true, usage, ...(finishReason ? { finishReason } : {}) };
+    } catch (error) {
+      if (idle.signal.aborted && !request.signal?.aborted) {
+        throw new Error(`The model server sent nothing for ${Math.round(idleMs / 1000)} seconds, so the request was stopped. Check that the server is still running.`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
     }
-    yield { text: "", done: true, usage };
   }
 
   async dispose(): Promise<void> {}

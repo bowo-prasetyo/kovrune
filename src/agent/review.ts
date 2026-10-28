@@ -53,6 +53,9 @@ export function reviewPrompt(question: string, answer: string, evidence: Checked
   ].join("\n");
 }
 
+/** The check's reply is one short JSON object; the self-check counts this call in its time estimate. */
+export const REVIEW_MAX_TOKENS = 16;
+
 const RESPONSE_SCHEMA = {
   type: "object",
   properties: { verdict: { type: "string", enum: VERDICTS } },
@@ -92,7 +95,7 @@ export async function reviewAnswer(options: {
         { role: "system", content: REVIEW_SYSTEM },
         { role: "user", content: reviewPrompt(options.question, options.answer, options.evidence, options.titleFor) },
       ],
-      maxTokens: 16,
+      maxTokens: REVIEW_MAX_TOKENS,
       temperature: 0,
       responseSchema: (options.constrained ?? true) && model.supportsConstrainedDecoding() ? RESPONSE_SCHEMA : undefined,
       signal,

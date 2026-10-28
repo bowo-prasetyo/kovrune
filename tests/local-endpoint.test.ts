@@ -52,6 +52,37 @@ describe("LocalEndpointModel", () => {
     assert.deepEqual(usage, { promptTokens: 42, completionTokens: 7 });
   });
 
+  it("reports why generation stopped", async () => {
+    const fetchImpl = (async () =>
+      sseResponse([
+        JSON.stringify({ choices: [{ delta: { content: '{"tool":"fin' }, finish_reason: null }] }),
+        JSON.stringify({ choices: [{ delta: {}, finish_reason: "length" }] }),
+        "[DONE]",
+      ])) as typeof fetch;
+    const model = new LocalEndpointModel({ baseUrl: "http://localhost:8080/v1", model: "m", contextLength: 4096, fetchImpl });
+    const chunks = [];
+    for await (const chunk of model.generate({ messages: [], maxTokens: 4 })) chunks.push(chunk);
+    assert.equal(chunks.at(-1)!.finishReason, "length");
+    assert.equal(chunks.at(-1)!.usage, undefined, "this server reports no usage");
+  });
+
+  it("stops a request when the server sends nothing for too long, and says so", async () => {
+    // A server that accepts the request and then hangs.
+    const fetchImpl = ((_url: string, init: RequestInit) =>
+      new Promise((_, reject) => init.signal!.addEventListener("abort", () => reject(init.signal!.reason)))) as typeof fetch;
+    const model = new LocalEndpointModel({ baseUrl: "http://localhost:8080/v1", model: "m", contextLength: 4096, idleTimeoutMs: 20, fetchImpl });
+    await assert.rejects(async () => {
+      for await (const _ of model.generate({ messages: [], maxTokens: 4 })) {
+        // drain
+      }
+    }, /sent nothing for 0 seconds.*still running/);
+    // A stop by the user is reported as a stop, not as a hung server.
+    const stop = new AbortController();
+    const stopped = model.generate({ messages: [], maxTokens: 4, signal: stop.signal })[Symbol.asyncIterator]().next();
+    stop.abort();
+    await assert.rejects(stopped, (error: Error) => !/sent nothing/.test(error.message));
+  });
+
   it("surfaces HTTP errors", async () => {
     const model = new LocalEndpointModel({
       baseUrl: "http://localhost:1/v1",

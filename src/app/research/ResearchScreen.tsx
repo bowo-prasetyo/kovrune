@@ -1,5 +1,5 @@
 import { LoadProgressView } from "../LoadProgressView.tsx";
-import { describeSetup } from "../models.ts";
+import { describeSetup, modelCaution } from "../models.ts";
 import { useModelLoad } from "../useModelLoad.ts";
 import { describeLastTest, type Settings } from "../settings.ts";
 import { DocumentLibrary } from "./DocumentLibrary.tsx";
@@ -26,6 +26,7 @@ export function ResearchScreen({
   onChangeSetup: () => void;
 }) {
   const load = useModelLoad(settings);
+  const caution = modelCaution(settings);
   return (
     <>
       <div className="setup-summary">
@@ -42,6 +43,11 @@ export function ResearchScreen({
           </button>
         </span>
       </div>
+      {caution && (
+        <p className="hint" role="note">
+          {caution}
+        </p>
+      )}
       <LoadProgressView state={load.state} onRetry={load.retry} />
       <DocumentLibrary library={library} />
       <ResearchPanel settings={settings} documents={library.documents} modelReady={load.state.phase === "ready"}

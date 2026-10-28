@@ -158,18 +158,20 @@ These should be kept as they are:
 
 ## 4. Priorities
 
-| # | Action | Effort | Needs a model run |
-| --- | --- | --- | --- |
-| 1 | Make the self-review fail closed (F2) | Small | No |
-| 2 | Read `n_ctx` from `/props` on connect; detect cut-offs from `finish_reason` (F4) | Small | No |
-| 3 | Run the browser benchmark on a real GPU (F1) | Medium | Yes |
-| 4 | Run the self-review on short answers; make the review prompt more specific (F2, F6) | Medium | Re-review only |
-| 5 | Scale test for retrieval with distractor documents (F5) | Small | No |
-| 6 | Stemmer fix, judged under the defect-fix rule (F3) | Medium | Yes |
-| 7 | Scope the negation rule to its quote; check month names and units (F2) | Medium | Re-scoring only |
-| 8 | Record prompt tokens and dropped results per call (F4) | Small | No |
-| 9 | Timeouts, and one retry on 429 (F7) | Small | No |
-| 10 | Tell 2B users their answers need more checking (§1) | Small | No |
+| # | Action | Effort | Needs a model run | Status |
+| --- | --- | --- | --- | --- |
+| 1 | Make the self-review fail closed (F2) | Small | No | Done in #80 |
+| 2 | Read `n_ctx` from `/props` on connect; detect cut-offs from `finish_reason` (F4) | Small | No | `/props` in #80; `finish_reason` in harness 0.36.0 |
+| 3 | Run the browser benchmark on a real GPU (F1) | Medium | Yes | Open: needs a machine with a GPU |
+| 4 | Run the self-review on short answers; make the review prompt more specific (F2, F6) | Medium | Re-review only | Short answers in #80, limited to Qwen3.5-4B in #81; its run, and the prompt, are open |
+| 5 | Scale test for retrieval with distractor documents (F5) | Small | No | Done in #80 |
+| 6 | Stemmer fix, judged under the defect-fix rule (F3) | Medium | Yes | Open: needs runs of both models |
+| 7 | Scope the negation rule to its quote; check month names and units (F2) | Medium | Re-scoring only | Harness 0.36.0, with `bench:rescore` |
+| 8 | Record prompt tokens and dropped results per call (F4) | Small | No | Harness 0.36.0 |
+| 9 | Timeouts, and one retry on 429 (F7) | Small | No | Harness 0.36.0 |
+| 10 | Tell 2B users their answers need more checking (§1) | Small | No | Harness 0.36.0 |
+
+The smaller F7 items are done too: the self-check's time estimate includes the review call, the misplaced comment in `research.ts` is fixed, and the user guide says what a document written to steer the model can and cannot do.
 
 ## How this audit was done
 

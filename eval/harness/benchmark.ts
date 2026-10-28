@@ -14,7 +14,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.35.0";
+export const HARNESS_VERSION = "0.36.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -74,6 +74,13 @@ export interface TaskResult {
   promptTokens: number;
   completionTokens: number;
   estimatedTokens: boolean;
+  /**
+   * The largest prompt of any call, in tokens as the runtime counted them (estimated when it did not
+   * report usage): how close the task came to the context window (environment.contextLength).
+   */
+  maxPromptTokens?: number;
+  /** Tool results removed to fit the context window by the last call (CallRecord.droppedResults); absent when none were. */
+  droppedResults?: number;
   /** Wall time spent in model calls. */
   modelMs: number;
   /** Time to first token, summed over calls. */
@@ -110,6 +117,10 @@ export interface Summary {
   /** Prompt tokens per second of time to first token (includes prompt-cache effects). */
   prefillTokensPerSecond: number;
   medianTaskSeconds: number;
+  /** The largest prompt of any call in the suite, in tokens, against the context window. */
+  maxPromptTokens?: number;
+  /** Tasks in which tool results were removed to fit the context window, so the model answered without them. */
+  tasksWithDroppedResults?: number;
   /**
    * Research suites: answers the app would label "Quotes found", and how many of those failed
    * their task. Their ratio is the false reassurance rate (docs/design.md §1.6).
@@ -172,6 +183,8 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     promptTokens: calls.reduce((s, c) => s + c.promptTokens, 0),
     completionTokens: calls.reduce((s, c) => s + c.completionTokens, 0),
     estimatedTokens: calls.some((c) => c.estimatedTokens),
+    ...(calls.length ? { maxPromptTokens: Math.max(...calls.map((c) => c.promptTokens)) } : {}),
+    ...(calls.some((c) => c.droppedResults) ? { droppedResults: Math.max(...calls.map((c) => c.droppedResults ?? 0)) } : {}),
     modelMs: Math.round(calls.reduce((s, c) => s + c.totalMs, 0)),
     ttftMs: Math.round(calls.reduce((s, c) => s + c.ttftMs, 0)),
     wallMs: Math.round(wallMs),
@@ -230,6 +243,8 @@ export function summarize(results: TaskResult[]): Summary[] {
       decodeTokensPerSecond: round(decodeMs ? (group.reduce((s, r) => s + r.completionTokens, 0) / decodeMs) * 1000 : 0, 1),
       prefillTokensPerSecond: round(ttftMs ? (group.reduce((s, r) => s + r.promptTokens, 0) / ttftMs) * 1000 : 0, 1),
       medianTaskSeconds: round(median(group.map((r) => r.wallMs / 1000)), 1),
+      ...(group.some((r) => r.maxPromptTokens !== undefined) ? { maxPromptTokens: Math.max(...group.map((r) => r.maxPromptTokens ?? 0)) } : {}),
+      tasksWithDroppedResults: group.filter((r) => r.droppedResults).length,
       ...(group.some((r) => r.quotesFound !== undefined)
         ? { falseReassurance: { labelled: labelled.length, wrong: labelled.filter((r) => !r.passed).length } }
         : {}),

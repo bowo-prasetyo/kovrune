@@ -75,7 +75,10 @@ export interface CallRecord {
   completionTokens: number;
   /** True when the runtime did not report usage and tokens were estimated from text length. */
   estimatedTokens: boolean;
-  /** True when the reply stopped at the token limit, so its JSON is unfinished. */
+  /**
+   * True when the reply stopped at the token limit, so its JSON is unfinished: the runtime said so
+   * (finish reason "length"), or its reported usage reached the limit.
+   */
   cutOff?: boolean;
   /** When the final tool objected to the action, so the task went on: the objection's step (AgentTool.objection). */
   rejected?: string;
@@ -83,6 +86,11 @@ export interface CallRecord {
   resultCount?: number;
   /** True when the tool reported that it failed. */
   failed?: boolean;
+  /**
+   * How many earlier tool results had been removed from the conversation to fit the context window
+   * when this call was made (fitToContext). The model then quotes text it can no longer see.
+   */
+  droppedResults?: number;
   ttftMs: number;
   totalMs: number;
   /** Start of the raw model output, kept for invalid replies to help diagnose them. */
@@ -134,7 +142,11 @@ export function extractJson(text: string): unknown {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
-function fitToContext(messages: ChatMessage[], budget: number): boolean {
+/**
+ * Fits the conversation into the budget by removing the oldest tool results. Returns whether it fits,
+ * and how many tool results are removed from it in all.
+ */
+function fitToContext(messages: ChatMessage[], budget: number): { fits: boolean; removed: number } {
   const size = () => messages.reduce((sum, m) => sum + estimateTokens(m.content) + 4, 0);
   // Drop the oldest tool results first; keep the system prompt, the task and the latest result.
   for (let i = 2; size() > budget && i < messages.length - 1; i++) {
@@ -143,7 +155,7 @@ function fitToContext(messages: ChatMessage[], budget: number): boolean {
       message.content = REMOVED_OBSERVATION;
     }
   }
-  return size() <= budget;
+  return { fits: size() <= budget, removed: messages.filter((m) => m.content === REMOVED_OBSERVATION).length };
 }
 
 /** Makes one model call and validates its output as an action. Shared by the agent loop and the self-check. */
@@ -160,6 +172,7 @@ export async function callForAction(options: {
   let ttftMs = 0;
   let text = "";
   let usage: { promptTokens: number; completionTokens: number } | undefined;
+  let finishReason: string | undefined;
   for await (const chunk of model.generate({
     messages,
     maxTokens: options.maxTokens,
@@ -170,6 +183,7 @@ export async function callForAction(options: {
     if (chunk.text && !ttftMs) ttftMs = performance.now() - started;
     text += chunk.text;
     if (chunk.usage) usage = chunk.usage;
+    if (chunk.finishReason) finishReason = chunk.finishReason;
   }
   const totalMs = performance.now() - started;
   const record: CallRecord = {
@@ -189,7 +203,8 @@ export async function callForAction(options: {
   } catch (error) {
     record.error = error instanceof Error ? error.message : String(error);
     record.output = text.slice(0, 200);
-    if (!record.estimatedTokens && record.completionTokens >= options.maxTokens) record.cutOff = true;
+    // Servers that report no usage (estimatedTokens) can still say why they stopped.
+    if (finishReason === "length" || (!record.estimatedTokens && record.completionTokens >= options.maxTokens)) record.cutOff = true;
     return { record, text };
   }
 }
@@ -241,7 +256,8 @@ export async function runAgent(options: {
       transcript.at(-1)!.content += `\n\nThis is your last step. Finish now with ${finalTool}, using what you have found so far.`;
     }
     const budget = model.info.contextLength - maxTokens - (config.contextReserve ?? 128);
-    if (!fitToContext(transcript, budget)) {
+    const fitted = fitToContext(transcript, budget);
+    if (!fitted.fits) {
       return { stopReason: "context-overflow", calls, transcript };
     }
 
@@ -265,6 +281,7 @@ export async function runAgent(options: {
       return { stopReason: "error", error: error instanceof Error ? error.message : String(error), calls, transcript };
     }
     const { record, text, action } = result;
+    if (fitted.removed) record.droppedResults = fitted.removed;
     calls.push(record);
     options.onCall?.(record, calls.length);
 

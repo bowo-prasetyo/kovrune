@@ -37,7 +37,10 @@ export interface OpenSource {
   fetch(id: string, signal?: AbortSignal): Promise<FetchedDocument>;
 }
 
-export type FetchLike = (url: string, init?: { signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
+export type FetchLike = (
+  url: string,
+  init?: { signal?: AbortSignal },
+) => Promise<{ ok: boolean; status: number; json(): Promise<unknown>; headers?: { get(name: string): string | null } }>;
 
 /** Removes the HTML that search APIs put in snippets, e.g. <span class="searchmatch">. */
 export function stripTags(html: string): string {
@@ -54,17 +57,73 @@ export function stripTags(html: string): string {
 
 export class SourceError extends Error {}
 
-/** Fetches JSON, turning HTTP and network failures into a short message the model and user can read. */
-export async function getJson(fetchImpl: FetchLike, label: string, url: string, signal?: AbortSignal): Promise<any> {
-  let response;
-  try {
-    response = await fetchImpl(url, { signal });
-  } catch (error) {
-    if (signal?.aborted) throw error;
-    throw new SourceError(`${label} could not be reached. Check your internet connection.`);
+/** How long a source request may take before it counts as failed: the agent waits on it, and so does the user. */
+export const SOURCE_TIMEOUT_MS = 20_000;
+
+/** The longest Retry-After a rate-limited request waits for before its one retry; longer ones are not retried. */
+export const MAX_RETRY_WAIT_MS = 10_000;
+
+/**
+ * Fetches JSON, turning HTTP and network failures into a short message the model and user can read.
+ * A request that takes longer than `timeoutMs` fails. One rate-limited request (HTTP 429) is tried
+ * again after the wait the server asks for (Retry-After, at most MAX_RETRY_WAIT_MS; 1 s if it names
+ * none): OpenAlex limits how often anonymous users may search, and a short wait usually clears it.
+ */
+export async function getJson(
+  fetchImpl: FetchLike,
+  label: string,
+  url: string,
+  signal?: AbortSignal,
+  options: { timeoutMs?: number } = {},
+): Promise<any> {
+  const timeoutMs = options.timeoutMs ?? SOURCE_TIMEOUT_MS;
+  for (let attempt = 0; ; attempt++) {
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), timeoutMs);
+    const failed = (error: unknown) => {
+      if (signal?.aborted) return error;
+      if (timeout.signal.aborted) return new SourceError(`${label} did not answer within ${Math.round(timeoutMs / 1000)} seconds. Try again later.`);
+      return new SourceError(`${label} could not be reached. Check your internet connection.`);
+    };
+    try {
+      let response;
+      try {
+        response = await fetchImpl(url, { signal: signal ? AbortSignal.any([signal, timeout.signal]) : timeout.signal });
+      } catch (error) {
+        throw failed(error);
+      }
+      if (response.status === 429) {
+        const wait = attempt === 0 ? retryWait(response.headers?.get("retry-after") ?? null) : undefined;
+        if (wait === undefined) throw new SourceError(`${label} is busy (too many requests). Try again in a few minutes.`);
+        clearTimeout(timer);
+        await sleep(wait, signal);
+        continue;
+      }
+      if (!response.ok) throw new SourceError(`${label} returned an error (HTTP ${response.status}).`);
+      // The body is read under the same timeout: a response can stall after its headers.
+      try {
+        return await response.json();
+      } catch (error) {
+        if (signal?.aborted || timeout.signal.aborted) throw failed(error);
+        throw error;
+      }
+    } finally {
+      clearTimeout(timer);
+    }
   }
-  // OpenAlex limits how often anonymous users may search; on the class 1 laptop a day of testing hit it.
-  if (response.status === 429) throw new SourceError(`${label} is busy (too many requests). Try again in a few minutes.`);
-  if (!response.ok) throw new SourceError(`${label} returned an error (HTTP ${response.status}).`);
-  return response.json();
+}
+
+/** The wait a Retry-After header asks for, in milliseconds: seconds or an HTTP date; undefined when too long. */
+export function retryWait(header: string | null, now = Date.now()): number | undefined {
+  const seconds = header === null ? 1 : /^\d+$/.test(header.trim()) ? Number(header) : (Date.parse(header) - now) / 1000;
+  const ms = Number.isFinite(seconds) ? Math.max(0, seconds * 1000) : 1000;
+  return ms <= MAX_RETRY_WAIT_MS ? ms : undefined;
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    signal?.throwIfAborted();
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => (clearTimeout(timer), reject(signal.reason)), { once: true });
+  });
 }

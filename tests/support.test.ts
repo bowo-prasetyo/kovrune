@@ -217,3 +217,43 @@ describe("answer status with sentence support", () => {
     assert.equal(describeStatus("verified", [bad, ok], { judged: 0, backed: 0 }).label, "Some quotes not found (1 of 2 found)");
   });
 });
+
+describe("negations, months and units in a backed sentence (harness 0.36.0)", () => {
+  const q = (quote: string, docId = "doc") => ({ docId, quote });
+  const title = () => "LumenDB overview";
+
+  it("backs a \"not\" only with a quote that makes the same claim", () => {
+    // Before 0.36.0 any negating quote let every sentence say "not".
+    assert.equal(marks("Cobble does not support transactions.", [q("Cobble supports transactions."), q("Wikipedia is not a reliable source.")]), "-");
+    assert.equal(marks("Cobble does not support transactions.", [q("Cobble does not support transactions across shards.")]), "+");
+    // The negating quote must name the sentence's numbers too: it is about version 2.x, not 3.0.
+    const quotes = [q("LumenDB 3.0 was released in March 2024."), q("Version 2.x did not support encryption at rest.")];
+    assert.equal(marks("LumenDB 3.0 does not support encryption at rest.", quotes, title), "-");
+    assert.equal(marks("LumenDB 2.x did not support encryption at rest.", quotes, title), "+");
+  });
+
+  it("backs a month in a date only when the quotes, titles or question name it", () => {
+    const quotes = [q("LumenDB 3.0 was released in March 2024.")];
+    assert.equal(marks("LumenDB 3.0 was released in May 2024.", quotes, title), "-");
+    assert.equal(marks("LumenDB 3.0 was released in March 2024.", quotes, title), "+");
+    assert.equal(marks("LumenDB 3.0 was released in Mar. 2024.", quotes, title), "+", "short forms");
+    // A month in digits counts: the advisory LSA-2024-07 was published in July 2024 (pdf task p04).
+    assert.equal(
+      marks("The advisory published in July 2024 was reported by Jonas Feld.", [q("The issue was reported by Jonas Feld.", "adv")], () => "Security advisory LSA-2024-07"),
+      "+",
+    );
+    // "may" next to no number is a verb, not a month.
+    assert.equal(marks("Users may export answers as Markdown files.", [q("Users can export answers as Markdown files.")]), "+");
+  });
+
+  it("gives a number only the unit the quotes give it", () => {
+    const quotes = [q("The maximum key size is 4 KiB, and the cache holds 8 MB.")];
+    assert.equal(marks("The cache holds 8 GB.", quotes), "-");
+    assert.equal(marks("The cache holds 8 MB.", quotes), "+");
+    assert.equal(marks("The maximum key size is 4 KB.", quotes), "+", "binary and decimal sizes are one unit");
+    assert.equal(marks("The server context is 4096 tokens.", [q("Start the server context with -c 4096.")]), "+", "a bare number may take a unit");
+    assert.equal(marks("The cure period lasts 30 days.", [q("The cure period lasts 30 days after notice.")]), "+");
+    assert.equal(marks("The cure period lasts 30 weeks.", [q("The cure period lasts 30 days after notice.")]), "-");
+  });
+});
+

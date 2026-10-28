@@ -33,7 +33,7 @@ export const BROWSER_MODELS: BrowserModel[] = [
   {
     key: "qwen3.5-2b",
     label: "Qwen3.5-2B",
-    description: "Lighter and faster, for GPUs with less memory. Answers fewer questions correctly.",
+    description: "Lighter and faster, for GPUs with less memory. Answers fewer questions correctly, so its answers need more checking.",
     downloadMB: 1080,
     f16: { modelId: "Qwen3.5-2B-q4f16_1-MLC", vramMB: 2245 },
     f32: { modelId: "Qwen3.5-2B-q4f32_1-MLC", vramMB: 2592 },
