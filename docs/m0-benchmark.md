@@ -134,11 +134,18 @@ For automation, the page exposes `window.kovruneBench.run(options)`, which retur
 
 **Prefer llama.cpp server.** It applies the model's own chat template, and all native quality results so far use it. Ollama 0.40.10 with Qwen3.5 and thinking off repeated its first search on every call in a multi-step run, while llama.cpp server with the same model file on the same laptop did not (see [Field notes](#field-notes-not-gate-results)). The self-check now catches this.
 
+**For quality runs, build llama.cpp portably.** A build tuned to its CPU (`-DGGML_NATIVE=ON`, the default) gives other results on another CPU, and can stop with an illegal instruction there. Built as below, the same tasks gave the same results on two different CPUs, all 97 alike, so runs on different machines compare. Pass the build with `--build`; speeds still depend on the machine.
+
 ```bash
+# A portable llama.cpp build: AVX2 and FMA, nothing tuned to this CPU
+cmake -B build -DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target llama-server -j
+
 # llama.cpp server, with thinking disabled for Qwen3 / Qwen3.5 models
 llama-server -m Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
 npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-2b --context 4096 \
   --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --hardware-class 2 \
+  --build "llama.cpp <commit>, -DGGML_NATIVE=OFF, AVX2" \
   --out eval/results/llamacpp-qwen3.5-2b-class2.json
 
 # Ollama (thinking is turned off with reasoning_effort; check the self-check passes)
@@ -199,7 +206,7 @@ The harness evaluates these automatically and includes the result in every repor
 
 **Two questions, answered in order.** The gate mixes a quality question and a speed question, and only speed depends on the hardware:
 
-1. **Quality:** can a browser-sized model do the tasks at all? The same model file gives the same answers on any machine, so this is measured with **native runs**: the same GGUF files served by llama.cpp on whatever hardware is available, through `bench:endpoint`. Only research success and valid action rate count; speed figures from these runs are ignored.
+1. **Quality:** can a browser-sized model do the tasks at all? The same model file gives the same answers on any machine when llama.cpp is built portably (below; a CPU-tuned build does not, see [`eval/field/README.md`](../eval/field/README.md#runs-repeat-on-one-machine-not-across-machines)), so this is measured with **native runs**: the same GGUF files served by llama.cpp on whatever hardware is available, through `bench:endpoint`. Only research success and valid action rate count; speed figures from these runs are ignored.
 2. **Speed:** is a model that passes on quality fast enough in the browser on class 2 hardware? This needs a WebLLM or wllama run on a class 2 machine.
 
 If no candidate passes on quality, M0 is a no-go for browser-first without needing class 2 runs.

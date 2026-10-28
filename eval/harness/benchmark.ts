@@ -14,7 +14,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.30.0";
+export const HARNESS_VERSION = "0.31.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -51,6 +51,12 @@ export interface Environment {
   /** Reference hardware class from docs/m0-benchmark.md: "1", "2", "3", or "other". */
   hardwareClass: string;
   hardware: Record<string, unknown>;
+  /**
+   * How the model server was built, e.g. "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2". A portable
+   * build (GGML_NATIVE=OFF) gives the same results on another CPU; a CPU-tuned one does not
+   * (eval/field/README.md), so bench:compare reads it.
+   */
+  build?: string;
   notes?: string;
 }
 

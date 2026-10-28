@@ -5,6 +5,9 @@
 import type { Report, TaskResult } from "./benchmark.ts";
 import { mcnemar } from "./stats.ts";
 
+/** Whether a build description names a portable llama.cpp build, one not tuned to the CPU it was built on. */
+export const isPortable = (build: string) => /GGML_NATIVE=OFF/i.test(build);
+
 /** Suites whose tasks are named only as counts, so a change is not tuned on them (eval/field/README.md). */
 export const HELD_OUT_SUITES = new Set(["holdout"]);
 
@@ -39,9 +42,15 @@ export function compareReports(before: Report, after: Report): Comparison {
   const [envBefore, envAfter] = [before.environment, after.environment];
   if (envBefore.modelId !== envAfter.modelId) warnings.push(`The models differ: ${envBefore.modelId} and ${envAfter.modelId}.`);
   const [cpuBefore, cpuAfter] = [envBefore.hardware?.cpu, envAfter.hardware?.cpu];
-  if (cpuBefore !== cpuAfter) {
+  const [buildBefore, buildAfter] = [envBefore.build, envAfter.build];
+  if (buildBefore && buildAfter && buildBefore !== buildAfter) {
+    warnings.push(`The model server builds differ (${buildBefore} and ${buildAfter}): a portable and a CPU-tuned llama.cpp take different actions on about a third of the tasks, so the difference may not be the change's.`);
+  }
+  // A portable build gave the same results on two CPUs, all 97 tasks alike (eval/field/README.md); a CPU-tuned one did not.
+  const portable = buildBefore !== undefined && buildBefore === buildAfter && isPortable(buildBefore);
+  if (cpuBefore !== cpuAfter && !portable) {
     warnings.push(
-      `The runs used different CPUs (${cpuBefore ?? "unknown"} and ${cpuAfter ?? "unknown"}): results do not repeat across machines, so the difference may not be the change's.`,
+      `The runs used different CPUs (${cpuBefore ?? "unknown"} and ${cpuAfter ?? "unknown"}) without a shared portable build (--build with GGML_NATIVE=OFF): results do not repeat across machines, so the difference may not be the change's.`,
     );
   }
   if (!before.complete || !after.complete) warnings.push("A report is incomplete; only tasks in both are compared.");
