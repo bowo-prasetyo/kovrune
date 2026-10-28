@@ -610,6 +610,23 @@ describe("helpers", () => {
     assert.equal(index.search("Which hardware is reference class 1?")[0]?.docId, "classes");
   });
 
+  it("gives every form of a word one stem (audit F3)", () => {
+    const families = [
+      ["setting", "settings", "set"], ["string", "strings"], ["warning", "warnings", "warn", "warned"], ["embedding", "embeddings", "embed", "embedded"],
+      ["speed", "speeds"], ["use", "uses", "used", "using"], ["run", "runs", "running"], ["license", "licenses", "licensed", "licensing"],
+      ["study", "studies", "studied"], ["copy", "copies", "copied"], ["stop", "stops", "stopped"], ["add", "adds", "added", "adding"],
+      ["install", "installs", "installed", "installing"], ["match", "matches", "matched"], ["bus", "buses"], ["need", "needs", "needed"],
+    ];
+    for (const family of families) assert.equal(new Set(family.map(stem)).size, 1, family.map((w) => `${w}: ${stem(w)}`).join(", "));
+    // A final "s" after "s", "i" or "u" is part of the word; words without a vowel before "-ing" keep it.
+    assert.deepEqual(["status", "analysis", "class", "thing", "things", "string"].map(stem), ["status", "analysis", "class", "thing", "thing", "string"]);
+    const index = new DocumentIndex([
+      { id: "guide", title: "User guide", text: "Open Settings to change the model." },
+      { id: "notes", title: "Notes", text: "The setting is described below." },
+    ]);
+    assert.deepEqual(new Set(index.search("Where is the setting?").map((hit) => hit.docId)), new Set(["guide", "notes"]));
+  });
+
   it("does not match a \"not\" in a question with every note (audit F3)", () => {
     const index = new DocumentIndex([
       { id: "notes", title: "Meeting notes", text: "Notes from the meeting. We noted the agenda." },

@@ -25,13 +25,37 @@ const STOP_WORDS = new Set(
 );
 
 /**
- * Light suffix stripping so "maintain", "maintains" and "maintained" match. A final "s" after
- * another is part of the word, so "class" and "classes" both give "class".
+ * Light suffix stripping, so a word and its other forms match: "license", "licenses", "licensed" and
+ * "licensing" all give "licens". The steps run in order, so a plural and its singular end alike (the
+ * old single-suffix rule gave "settings" "setting" but "setting" "sett", so one did not find the other):
+ * 1. a plural or third person: "classes" is "class", "studies" "study", "settings" "setting". A final
+ *    "s" after "s", "i" or "u" is part of the word ("class", "analysis", "status");
+ * 2. "-ing" or "-ed" (ending), "-ied" as "y" ("studied" is "study");
+ * 3. a final "e" ("license" is "licens"), as in "licensed".
+ * Words of three letters or fewer, and words with digits, are kept as they are.
  */
 export function stem(token: string): string {
-  if (/\d/.test(token)) return token;
-  const match = /^(.{3,}?)(?:ing|ed|es|(?<!s)s|e)$/.exec(token);
-  return match ? match[1]! : token;
+  if (/\d/.test(token) || token.length <= 3) return token;
+  let word = token;
+  if (word.endsWith("sses")) word = word.slice(0, -2);
+  else if (word.length > 4 && word.endsWith("ies")) word = `${word.slice(0, -3)}y`;
+  else if (/[^siu]s$/.test(word)) word = word.slice(0, -1);
+  word = word.length > 4 && word.endsWith("ied") ? `${word.slice(0, -3)}y` : withoutEnding(word);
+  return word.length >= 4 && /[^e]e$/.test(word) ? word.slice(0, -1) : word;
+}
+
+/**
+ * A word without "-ing" or "-ed", when what is left has a vowel: "string", "thing" and "speed" are kept.
+ * A doubled consonant is undoubled ("running" is "run", "stopped" "stop"), and the rest is trimmed again,
+ * so "embedded" ends like "embed". A two-letter rest gets back its "e": "used" and "using" are "use".
+ */
+function withoutEnding(word: string): string {
+  const suffix = /(?:ing|ed)$/.exec(word)?.[0];
+  if (!suffix || word.endsWith("eed")) return word;
+  const base = word.slice(0, -suffix.length);
+  if (base.length === 2 && /[aeiouy]/.test(base)) return `${base}e`;
+  if (base.length < 3 || !/[aeiouy]/.test(base)) return word;
+  return base.length > 3 && /([^aeiouylsz])\1$/.test(base) ? withoutEnding(base.slice(0, -1)) : base;
 }
 
 /**
