@@ -193,7 +193,9 @@ function answerInQuote(
  * word checks: nothing compared it with the quotes. In the harness 0.15.0 reports (Qwen3.5-2B and
  * 4B), such answers were 13 of the 16 wrong answers labelled "Quotes found", and 13 of the 38 so
  * labelled were wrong. Since harness 0.34.0 the model's own check is asked about them too
- * (reviewAsked), and one it confirms with "yes" is labelled.
+ * (reviewAsked), for models whose check is measured for it (review.ts reviewsShortAnswers; since
+ * 0.35.0 only Qwen3.5-4B), and one
+ * it confirms with "yes" is labelled.
  *
  * Since harness 0.28.0 the model is also asked whether the quotes back the answer (review.ts), and
  * an answer it does not confirm with "yes" is not labelled. Since 0.34.0 that includes a check
@@ -220,9 +222,10 @@ export function wordChecksPass(
 }
 
 /**
- * Whether the model's own check is asked about an answer (review.ts): every quote is in its source,
- * and either the word checks pass, or the answer is too short for them to judge (no sentence long
- * enough), so that the check is all that can tell a right short answer from a wrong one.
+ * Whether the model's own check may be asked about an answer (review.ts): every quote is in its
+ * source, and either the word checks pass, or the answer is too short for them to judge (no sentence
+ * long enough), so that the check is all that can tell a right short answer from a wrong one. Short
+ * answers are asked about only for some models (review.ts reviewsShortAnswers, research.ts).
  */
 export function reviewAsked(
   status: AnswerStatus | "no-answer",

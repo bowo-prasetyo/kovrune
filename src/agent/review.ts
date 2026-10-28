@@ -19,6 +19,19 @@ const VERDICTS = ["yes", "partly", "no"] as const;
 export const REVIEW_SYSTEM =
   "You check whether quoted sources back an answer to a question. Judge only from the passages you are given, not from what you know.";
 
+/**
+ * Whether the model's check is asked about answers too short for the sentence check (support.ts
+ * reviewAsked), by the model's ID. Only for Qwen3.5-4B: on the recorded runs its check caught a
+ * wrong answer and rejected no right one, while Qwen3.5-2B's said yes to 3 of the 4 wrong answers
+ * it was asked about, so its short answers would gain the label right or wrong (eval/field/README.md).
+ * Other models keep the "too short to check" label until their check is measured the same way.
+ * Matches the IDs the app and the benchmark use: "Qwen3.5-4B-q4f16_1-MLC" (WebLLM),
+ * "Qwen3.5-4B-Q4_K_M.gguf" or "qwen3.5-4b-q4km" (llama.cpp), "qwen3.5:4b" (Ollama).
+ */
+export function reviewsShortAnswers(modelId: string): boolean {
+  return /qwen3\.5[-_:]4b(?![\p{L}\p{N}])/iu.test(modelId);
+}
+
 /** The review prompt: the question, the answer, and each verified quote in the text around it. */
 export function reviewPrompt(question: string, answer: string, evidence: CheckedEvidence[], titleFor: (docId: string) => string | undefined): string {
   const passages = evidence
