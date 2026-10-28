@@ -30,9 +30,9 @@ The model writes its own queries, so this is a fixed yardstick for search, not a
 
 | Search | Research (19) | PDF (4) | Field (35): documents | Field: answer passages | Field: everything found |
 | --- | --- | --- | --- | --- | --- |
-| **3 results (the app, harness 0.26.0)** | 100% | 100% | 94.4% | 81.8% | 30 |
+| 3 results (harness 0.26.0 to 0.29.0) | 100% | 100% | 94.4% | 81.8% | 30 |
 | 5 results, measured and run, [not adopted](#five-search-results) | 100% | 100% | 97.2% | 88.6% | 32 |
-| 3 results with consistent stems and the parts of joined words, measured and run, [not adopted](#search-ranking) | 100% | 100% | 97.2% | 88.6% | 32 |
+| **3 results with consistent stems and the parts of joined words (the app, [adopted in 0.30.0](#read-before-answering))** | 100% | 100% | 97.2% | 88.6% | 32 |
 | At most one passage per document, 3 results, measured, not adopted | 100% | 100% | 97.2% | 81.8% | 30 |
 
 - **The synthetic suites cannot tell search changes apart:** every variant finds everything there. Only the field suite's long, real documents do.
@@ -101,6 +101,7 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.28.0, the model checks its answer | 35/47 (74%) | 15/22 | 5/8 | 3/4 | 2 of 16 | [json](../results/field-0.28-review-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.28.0, portable llama.cpp build | 32/47 (68%) | 17/22 | 5/8 | 3/4 | 2 of 17 | [json](../results/field-0.29-baseline-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.29.0, search ranking, not adopted | 33/47 (70%) | 17/22 | 5/8 | 3/4 | 1 of 15 | [json](../results/field-0.29-ranking-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.30.0, search ranking and read before answering | 33/47 (70%) | 17/22 | 5/8 | 3/4 | 1 of 15 | [json](../results/field-0.30-guard-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
@@ -118,6 +119,7 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.28.0, the model checks its answer | 40/47 (85%) | 19/22 | 8/8 | 4/4 | **1 of 21** | [json](../results/field-0.28-review-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.28.0, portable llama.cpp build | 40/47 (85%) | 19/22 | 8/8 | 4/4 | 2 of 20 | [json](../results/field-0.29-baseline-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.29.0, search ranking, not adopted | 42/47 (89%) | 19/22 | 8/8 | 3/4 | 1 of 20 | [json](../results/field-0.29-ranking-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.30.0, search ranking and read before answering | **42/47 (89%)** | 19/22 | 8/8 | 4/4 | 1 of 20 | [json](../results/field-0.30-guard-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -259,7 +261,20 @@ Keeping a final "s" after another, and indexing each joined word's parts as well
 - **The field suite gains what retrieval predicted:** 4B's `f13` and 2B's `f06`, both answer passages the fix brought into the first three. 4B's `f07` was gained too, as a right "not found".
 - **Each model loses one task in a suite the rule protects.** 4B's `p04`: search now shows both documents the question needs at once, and 4B answered from the snippets, "spent EUR on security audits", without reading the report and its 96,000; with the old ranking it was sent back to read first and got the number. 2B lost one held-out task in total.
 - **False reassurance moves both ways:** on the field suite it falls on both models, by one answer each; on 4B's research suite it rises from 1 of 12 to 2 of 13.
-- **Against the rule:** the field suite improves on both models, but the pdf suite falls on 4B and the held-out suite on 2B, so it is not adopted and search is unchanged. The two defects are real, and the second keeps a user's documents from being found by their file names; a later change can fix them together with what made `p04` answer from snippets (the read-before-answering guards), and be judged the same way.
+- **Against the rule:** the field suite improves on both models, but the pdf suite falls on 4B and the held-out suite on 2B, so it was not adopted in 0.29.0. The two defects are real, and the second keeps a user's documents from being found by their file names. In 0.30.0 they were [adopted as defect fixes](#read-before-answering), with a guard for what made `p04` answer from snippets.
+
+<a id="read-before-answering"></a>**Read before answering, and the search fixes as defect fixes (0.30.0, adopted).** Two changes, judged separately, on the machine and llama.cpp build of the 0.29.0 runs:
+- **The search fixes return** under the [rule for defect fixes](#rule-for-prompt-and-guard-changes): each is a word or a title search plainly gets wrong, with a unit test. Their 0.29.0 losses are one task each, 4B's `p04` and one held-out task on 2B, both with p = 1, so they pass.
+- **A guard for what `p04` showed:** the read-before-"not found" guard of 0.20.0, for answers. A found answer that quotes a document the model has seen only as a search snippet is sent back once to read it, since a snippet is one sentence and can cut a number off. A part counts as read when that part was, a whole document when any of its parts was, and an open source when any read of it was. Not asked on the last step.
+
+| Model | Guard, against the search fixes alone | Both, against `main` | Guard fired on | Model calls per task | Median task, field |
+| --- | --- | --- | --- | --- | --- |
+| 4B | pdf 3 → **4**/4 (`p04`), nothing else changed | field 40 → **42**/47, every other suite unchanged | 32 of 97 tasks | 3.35 → 4.04 | 51 → 64 s |
+| 2B | no result changed | field 32 → **33**/47, held out 10 → 9/16 | 5 of 97 tasks | 4.54 → 4.67 | 25 → 27 s |
+
+- **`p04` comes back:** sent back, 4B reads the annual report and answers "EUR 96,000". The fixes no longer lose anything on 4B, and the research answer they had wrongly labelled **Quotes found** is gone (1 of 12 again, against 2 of 13).
+- **Against the rule for guards:** the field suite does not improve on either model; the guard fixes the failure it was written for and changes nothing else, as the 0.21.0 language guard did when it was adopted. Adopted on that precedent.
+- **Its cost is real on 4B:** it fired on a third of the tasks, about 0.7 more model calls each, and the median task took 13 to 25 seconds longer (research 32 → 46 s, held out 42 → 67 s). The median field task takes about a quarter longer, and the same share of a slower laptop's time. 4B reads more than it needs when sent back; a narrower guard (only quotes with a number, or only when a snippet is cut) would cost less, and be judged the same way.
 
 ### Runs repeat on one machine, not across machines
 
