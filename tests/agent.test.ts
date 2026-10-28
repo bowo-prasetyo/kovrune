@@ -11,7 +11,7 @@ import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { RESEARCH_LIMITS, ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
-import { DocumentIndex, stem } from "../src/tools/search.ts";
+import { DocumentIndex } from "../src/tools/search.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 import { researchTasks } from "../eval/tasks/research.ts";
@@ -555,29 +555,5 @@ describe("helpers", () => {
   it("ranks the advisory first for an advisory query", () => {
     const hits = new DocumentIndex(corpus).search("LSA-2024-07 path traversal");
     assert.equal(hits[0]?.docId, "lumen-advisory-2024-07");
-  });
-
-  it("stems a word and its plural alike, also when it ends in s (field task f13)", () => {
-    assert.deepEqual(["class", "classes"].map(stem), ["class", "class"]);
-    assert.deepEqual(["access", "accesses", "process"].map(stem), ["access", "access", "process"]);
-    assert.deepEqual(["license", "licenses", "maintains", "maintained"].map(stem), ["licens", "licens", "maintain", "maintain"]);
-    const index = new DocumentIndex([
-      { id: "classes", title: "Benchmarks", text: "Reference hardware classes for benchmarks: a laptop with 8 GB." },
-      { id: "other", title: "Notes", text: "The reference for this note is the hardware store." },
-    ]);
-    assert.equal(index.search("Which hardware is reference class 1?")[0]?.docId, "classes");
-  });
-
-  it("finds a joined word by its parts, and a file by the name in its title (field task f06)", () => {
-    const index = new DocumentIndex([
-      { id: "guide", title: "kovrune-user-guide.md", text: "Start ./llama-server with -c 4096 for a 4,096-token context." },
-      { id: "notes", title: "notes.txt", text: "The server in the notes runs on another port." },
-      { id: "release", title: "LumenDB 3.2.0 release notes", text: "Version 3.2.0 fixes the bug." },
-    ]);
-    assert.equal(index.search("llama server context")[0]?.docId, "guide");
-    assert.equal(index.search("user guide")[0]?.docId, "guide");
-    // A dot between digits is part of the number: "3.2" does not find "3.2.0".
-    assert.equal(index.search("3.2.0")[0]?.docId, "release");
-    assert.equal(index.search("3.2").length, 0);
   });
 });

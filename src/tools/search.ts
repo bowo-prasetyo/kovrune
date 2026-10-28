@@ -22,32 +22,16 @@ const STOP_WORDS = new Set(
   "a an and are as at be by did do does for from has have how in is it its of on or since that the this to was what when which who why with".split(" "),
 );
 
-/**
- * Light suffix stripping so "maintain", "maintains" and "maintained" match. A final "s" after
- * another is part of the word, so "class" and "classes" both give "class".
- */
+/** Light suffix stripping so "maintain", "maintains" and "maintained" match. */
 export function stem(token: string): string {
   if (/\d/.test(token)) return token;
-  const match = /^(.{3,}?)(?:ing|ed|es|(?<!s)s|e)$/.exec(token);
+  const match = /^(.{3,}?)(?:ing|ed|es|s|e)$/.exec(token);
   return match ? match[1]! : token;
 }
 
-/**
- * Search terms: words in any script (scripts.ts), without English stop words, stemmed. A word
- * joined by "-" or "." also gives its parts, so "llama server" finds "llama-server" and "report"
- * finds a document titled "report.pdf"; a dot between digits ("3.2.0") joins one number.
- */
+/** Search terms: words in any script (scripts.ts), without English stop words, stemmed. */
 function tokenize(text: string): string[] {
-  const terms: string[] = [];
-  for (const word of words(text)) {
-    if (STOP_WORDS.has(word)) continue;
-    terms.push(stem(word));
-    if (!/[-.]/.test(word)) continue;
-    for (const part of word.split(/-|\.(?!\d)|(?<!\d)\./)) {
-      if (part && !STOP_WORDS.has(part)) terms.push(stem(part));
-    }
-  }
-  return terms;
+  return words(text).filter((t) => !STOP_WORDS.has(t)).map(stem);
 }
 
 export class DocumentIndex {
