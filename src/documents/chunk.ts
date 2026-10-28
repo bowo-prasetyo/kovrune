@@ -108,6 +108,11 @@ function splitRun(text: string, maxChars: number): string[] {
   return out;
 }
 
+/** A chunk's title without its " (part 2 of 5)" label: the title of the document it belongs to. */
+export function withoutPartLabel(title: string): string {
+  return title.replace(/ \(part \d+ of \d+\)$/, "");
+}
+
 /** The document ID a chunk belongs to (the ID itself for unchunked documents). */
 export function parentId(chunkId: string): string {
   const i = chunkId.lastIndexOf(CHUNK_SEPARATOR);

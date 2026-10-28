@@ -47,6 +47,15 @@ export const MIN_BACKED_SHARE = 0.5;
  * exactly two thirds.
  */
 export const SHORT_ANSWER_QUESTION_SHARE = 2 / 3;
+/**
+ * The most words a quote may leave out in one place ("...") and still back a sentence. Leaving out an
+ * aside ("Cobble, which ... never loses data") keeps the claim; leaving out more can join a subject to
+ * another claim: "Cobble is released under ... the Apache-2.0 license" verifies against "Cobble is
+ * released under the Business Source License 1.1, and each release converts to the Apache-2.0
+ * license" (docs/ai-ml-audit.md, N3). Such a quote is still found and shown with the words it leaves
+ * out, but backs no sentence.
+ */
+export const MAX_BACKING_ELIDED_WORDS = 5;
 
 // Wider than the search's stop words: pronouns and auxiliaries say nothing about whether a quote backs a claim.
 const STOP_WORDS = new Set(
@@ -64,12 +73,21 @@ function contentWords(text: string): string[] {
 }
 
 /**
- * The numbers in a text, without thousands separators ("4,096" is "4096"). A list item's own
- * number ("1. Open the perspective") is not one of them.
+ * A number as written, in one form: without thousands separators ("4,096" and "21,196.18" are "4096"
+ * and "21196.18"), and with a decimal comma as a point ("1,5", as French, German and other languages
+ * write 1.5, is "1.5", so it does not pass for 15). A comma is a thousands separator when every group
+ * after it has three digits, and a decimal comma when it is the only one and the number has no point.
  */
+export function plainNumber(written: string): string {
+  const groups = written.split(",");
+  if (groups.length === 1 || groups.slice(1).every((group) => /^\p{Nd}{3}(?:\.\p{Nd}+)?$/u.test(group))) return groups.join("");
+  return groups.length === 2 && !written.includes(".") ? groups.join(".") : groups.join("");
+}
+
+/** The numbers in a text (plainNumber). A list item's own number ("1. Open the perspective") is not one of them. */
 function numbers(text: string): string[] {
   const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
-  return [...body.matchAll(/\p{Nd}+(?:[.,]\p{Nd}+)*/gu)].map(([n]) => n.replace(/,/g, ""));
+  return [...body.matchAll(/\p{Nd}+(?:[.,]\p{Nd}+)*/gu)].map(([n]) => plainNumber(n));
 }
 
 /**
@@ -139,7 +157,7 @@ function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
   const bare = new Set<string>();
   const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
   for (const match of body.matchAll(/(\p{Nd}+(?:[.,]\p{Nd}+)*)\s?(%|[\p{L}]+(?:\s?cent)?)?/gu)) {
-    const number = match[1]!.replace(/,/g, "");
+    const number = plainNumber(match[1]!);
     const unit = match[2] && UNITS.find(([, pattern]) => pattern.test(match[2]!))?.[0];
     if (unit) pairs.add(`${number} ${unit}`);
     else bare.add(number);
@@ -175,7 +193,8 @@ export function splitSentences(answer: string): string[] {
 
 /**
  * Marks each sentence of an answer as backed or not by the verified quotes: backed when at
- * least half of its content words appear in them. Unverified quotes back nothing.
+ * least half of its content words appear in them. Unverified quotes back nothing, and neither do
+ * quotes that leave out more than MAX_BACKING_ELIDED_WORDS words in one place.
  *
  * The titles of the cited documents name what the quotes are about, so their words are left
  * out of the count: "LumenDB version 3.2 contains the fix" is backed by "This release includes
@@ -210,7 +229,8 @@ export function sentenceSupport(
    */
   question?: string,
 ): SentenceSupport {
-  const verified = evidence.filter((e) => e.verified);
+  // Only verified quotes back sentences, and of those that leave words out, only those that leave out few.
+  const verified = evidence.filter((e) => e.verified && (e.elidedWords ?? 0) <= MAX_BACKING_ELIDED_WORDS);
   const quoteWords = contentWords(verified.map((e) => e.quote).join(" "));
   const subjectWords = contentWords(verified.map((e) => titleFor(e.docId) ?? "").join(" "));
   const quoted = [...new Set(verified.flatMap((e) => [...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]))];

@@ -265,4 +265,6 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 | 4 | Tighten elision: no skipped numbers or names, shorter gaps (N3) | Small | Re-scoring only |
 | 5 | Index titles without part labels (N4) | Small | No (retrieval unchanged) |
 | 6 | Decimal commas (N5); replay `finishReason` (N6); Ollama warning (N9) | Small | No |
+
+**Done in harness 0.37.0:** N3, N4, N5 and N6 ([field README](../eval/field/README.md#elided-quotes-part-labels-decimal-commas-and-resumed-cut-offs-0370)). N3 differs from the fix proposed above. A quote that leaves out more than five words in one place is still found, but backs no sentence. Rejecting it outright would have failed the right answer to r01. Re-scoring all 52 reports changes no label, and search results are unchanged.
 | 7 | Length limits in the answer schema (N8) | Small | Yes |

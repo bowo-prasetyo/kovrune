@@ -2,6 +2,7 @@
 // uses it so results depend on the model and not on a retrieval model; the
 // app uses the same search over the user's documents.
 
+import { withoutPartLabel } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
 
 export interface SourceDocument {
@@ -61,7 +62,9 @@ export class DocumentIndex {
     this.docs = docs;
     this.termFreqs = docs.map((doc) => {
       const freqs = new Map<string, number>();
-      for (const token of tokenize(`${doc.title} ${doc.title} ${doc.text}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
+      // A chunk's part label is not indexed: its "part", "4" and "12" would match any question with a small number.
+      const title = withoutPartLabel(doc.title);
+      for (const token of tokenize(`${title} ${title} ${doc.text}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
       for (const token of freqs.keys()) this.docFreq.set(token, (this.docFreq.get(token) ?? 0) + 1);
       return freqs;
     });

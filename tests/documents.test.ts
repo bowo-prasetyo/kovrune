@@ -145,6 +145,14 @@ describe("evidence check", () => {
     assert.equal(check("Cobble, which ... never loses data", text).verified, true, "the left-out words do not negate");
   });
 
+  it("records how many words an elided quote leaves out (audit N3)", () => {
+    const text = "Cobble, which is written in Go, never loses data.";
+    assert.equal(check("Cobble, which ... never loses data", text).elidedWords, 4);
+    assert.equal(check("Cobble, which is written in Go, never loses data", text).elidedWords, undefined, "a whole quote leaves nothing out");
+    const overview = corpus.find((doc) => doc.id === "lumen-overview")!.text;
+    assert.equal(check("LumenDB ... has been maintained by the Tessel Foundation since 2022.", overview).elidedWords, 21);
+  });
+
   it("matches ligatures, soft hyphens and words hyphenated at a line end", () => {
     const quote = "the financial statements were audited";
     assert.equal(check(quote, "We confirm the ﬁnancial statements were audited.").verified, true, "ligature");

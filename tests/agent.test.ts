@@ -12,6 +12,7 @@ import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { RESEARCH_LIMITS, ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
 import { DocumentIndex, stem } from "../src/tools/search.ts";
+import { chunkDocument } from "../src/documents/chunk.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 import { researchTasks } from "../eval/tasks/research.ts";
@@ -620,5 +621,14 @@ describe("helpers", () => {
     // A dot between digits is part of the number: "3.2" does not find "3.2.0".
     assert.equal(index.search("3.2.0")[0]?.docId, "release");
     assert.equal(index.search("3.2").length, 0);
+  });
+
+  it("does not match a chunk by its part label (audit N4)", () => {
+    const body = "General guidance about the office, the kitchen and the meeting rooms. ".repeat(30);
+    const handbook = chunkDocument({ id: "handbook", title: "Staff handbook", text: Array.from({ length: 6 }, () => body).join("\n\n") });
+    assert.ok(handbook.length >= 4 && handbook[3]!.title.endsWith(`(part 4 of ${handbook.length})`));
+    const index = new DocumentIndex([...handbook, { id: "notes", title: "Release notes", text: "Kovrune 4 adds a scale test." }]);
+    assert.deepEqual(index.search("What does Kovrune 4 add?").map((hit) => hit.docId), ["notes"]);
+    assert.deepEqual(index.search("staff handbook kitchen").length, 3, "the title without its label is still indexed");
   });
 });
