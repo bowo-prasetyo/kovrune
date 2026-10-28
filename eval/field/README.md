@@ -65,7 +65,7 @@ The model writes its own queries, so this is a fixed yardstick for search, not a
 
 ## Held-out suite
 
-Each guard and prompt change since 0.15.0 was written for a field task that failed, then judged on the same suite, so the field suite now flatters the changes made on it. `eval/field/holdout.ts` adds 16 questions over the same seven documents, in the field suite's mix: lookups in each document, a two-document question, questions in Japanese, Chinese and French, and two the documents do not answer. Their facts are checked against the documents by `tests/field.test.ts`, as the field suite's are.
+Each guard and prompt change since 0.15.0 was written for a field task that failed, then judged on the same suite, so the field suite now flatters the changes made on it. `eval/field/holdout.ts` adds 16 questions (37 [since 0.32.0](#growing-the-suites)) over the same seven documents, in the field suite's mix: lookups in each document, a two-document question, questions in Japanese, Chinese and French, and two the documents do not answer. Their facts are checked against the documents by `tests/field.test.ts`, as the field suite's are.
 
 To stay held out, they are used one way only: a change developed on the field suite is confirmed on them, by their totals. The benchmark prints no result for them as they run, and `bench:compare` gives them only as counts; their reports name each task, for the record, but are not read task by task while developing.
 
@@ -78,6 +78,23 @@ First runs, harness 0.27.0, on the machine of the 0.26.0 runs (constrained, nati
 
 - **The intervals overlap:** with 16 tasks, the held-out suite cannot tell either model's rate apart from its field rate. It is a check that a change does not fall on new questions, not a second, finer measure.
 - **They are new questions written after the field suite, not a random sample of one pool:** 13 of the 16 are lookups, so the two suites' rates are not expected to match.
+
+## Growing the suites
+
+Harness 0.32.0 grows the field suite from 47 to 89 tasks and the held-out suite from 16 to 37, with more questions over the same seven documents. No document is added, so nothing new needs a licence check, and the earlier tasks are unchanged.
+
+**Why:** [no recorded decision](#how-sure-the-decisions-were) got below p = 0.25, because one to three tasks changed each time. The test needs discordant tasks: at the rate of the past decisions, where about one task in ten changed, twice the tasks gives about twice the discordant ones, and a split of six to none, the first below 0.05, becomes possible for a change that helps on many questions. The held-out suite had the same problem in total: with 16 tasks its interval was about ±20 points, so it could not tell a model's rate from its field rate.
+
+**How the new questions were written:**
+- **Same mix as before.** In the field suite (`f48`–`f89`): 10 on the user guide, 12 on the design report (one unanswerable), 8 on the licence (one unanswerable), 5 on Ada Lovelace (one unanswerable), 2 that need two documents, and 5 across languages: Japanese and Chinese questions about their documents, a French one, and an English question about the French document. In the held-out suite (`h17`–`h37`): 21 in the same proportions, with two unanswerable and one two-document question.
+- **Each answer is in the text.** `tests/field.test.ts` checks that every fact group has a spelling in the cited documents, for both suites. A question whose answer must be worked out (how many years between two dates) was rewritten to ask for the two dates, because scoring matches spellings.
+- **Facts are the smallest spelling that says the answer** ("8 GB", "Zod", "嘉峪关"), with the other spellings a correct answer could use, so that scoring does not depend on phrasing.
+- **Unanswerable questions are near the text:** the signature algorithm (the design names signatures, not an algorithm), how many days to answer a patent claim (the licence has patent clauses, no such period), Ada Lovelace's university (she was taught privately), the largest file size, the tower's colour.
+
+**Caveats:**
+- **They were written by the same author as the changes they judge,** after reading the documents and the past failures, so they are not a random sample of what users ask. They are meant to be harder to tune to, not to estimate a user's success rate.
+- **Results before 0.32.0 are on the smaller suites.** A comparison pairs tasks, so a 0.31.0 report against a 0.32.0 one compares only the tasks in both; new baselines are run on the grown suites.
+- **The retrieval figures change with the suite:** `bench:retrieval` now counts 74 answerable field tasks in one writing system, against 35 before. The app's search finds the cited documents for 97.4% and the answer passages for 93.3%, everything for 69 of 74; of the new tasks it misses an answer passage only for the two-document `f83` and `f84`. The floors in `tests/retrieval.test.ts` are raised to these figures.
 
 ## Results
 
