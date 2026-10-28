@@ -46,6 +46,34 @@ describe("evidence check", () => {
     assert.equal(check("That permission is called Apps on computer", guide), false, "words must still match");
   });
 
+  it("reads Markdown links and backslash escapes as they read, which models quote", () => {
+    // Field suite, harness 0.32.0 baselines: 2B quoted the user guide as it reads and both right
+    // answers failed their quote (f48, f53).
+    const setup = "**Or run it locally.** You need [Node.js](https://nodejs.org/) 22 or newer and git. In a terminal:";
+    const table =
+      "| `couldn't bind HTTP server socket ... port: 8080` | Another server (often an earlier llama-server) is using the port | `ss -ltnp \\| grep 8080` shows it; stop it with `pkill -x llama-server`, or start on another port (`--port 8081`) and use that address in the app |";
+    const check = (quote: string, text: string) => checkEvidence([{ docId: "d", quote }], () => text)[0]!.verified;
+    assert.equal(check("You need Node.js 22 or newer and git.", setup), true);
+    assert.equal(
+      check("`ss -ltnp | grep 8080` shows it; stop it with `pkill -x llama-server`, or start on another port (`--port 8081`) and use that address in the app", table),
+      true,
+    );
+    assert.equal(check("You need [Node.js](https://nodejs.org/) 22 or newer", setup), true, "quotes that keep the link still match");
+    assert.equal(check("ss -ltnp \\| grep 8080 shows it", table), true, "and quotes that keep the escape");
+    assert.equal(check("You need nodejs.org 22 or newer", setup), false, "a link's address is not its text");
+    assert.equal(check("You need Node.js 20 or newer and git.", setup), false, "words must still match");
+
+    const images = 'See ![the model test](img/test.png "Model test") and [the guide on servers](https://example.org/a_(b)) first.';
+    assert.equal(normalizeForMatch(images), "see the model test and the guide on servers first.");
+    assert.equal(normalizeForMatch("C:\\Users\\me and 2 \\* 3"), "c:\\users\\me and 2 3", "only punctuation is escaped");
+
+    // The passage shown with a verified quote is found in the source, links and all.
+    const [verified] = checkEvidence([{ docId: "d", quote: "You need Node.js 22 or newer and git." }], () => setup);
+    assert.equal(verified!.context?.passage, "You need [Node.js](https://nodejs.org/) 22 or newer and git.");
+    const spaced = "Install [Node js](https://nodejs.org/) 22 or newer first.";
+    assert.equal(checkEvidence([{ docId: "d", quote: "Install Node js 22 or newer" }], () => spaced)[0]!.context?.passage, "Install [Node js](https://nodejs.org/) 22 or newer");
+  });
+
   it("does not pair different symbols in the closest-passage diff", () => {
     // Class 1 preview check: the diff showed "Choose • Papyrus Project »", pairing the quote's "«"
     // with the source's "•" because neither has letters.
