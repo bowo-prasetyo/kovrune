@@ -184,3 +184,85 @@ The smaller F7 items are done too: the self-check's time estimate includes the r
   - facts that match only as substrings.
 - Ran the stemmer, sentence-support and evidence functions on the cases above.
 - Ran `bench:retrieval` before and after a trial stemmer change, then reverted the change.
+
+## Follow-up audit, at `927742b` (harness 0.36.0)
+
+A second pass, after the fixes in #80 to #82. It checks those fixes and looks for what the first audit missed. As before, no model was run. Everything below comes from the code, the committed reports, `bench:retrieval`, `bench:rescore`, and scripts run against the functions named.
+
+### Verdict
+
+**The AI/ML features are coherent, and in good shape for what they have been measured on: lookups of one fact, with Qwen3.5-4B on llama.cpp.** The app and the benchmark run one code path. One function (`labelledQuotesFound`) decides the label for the app's trace and for `bench:rescore`. Every guard and label rule is tied to a recorded failure. The fixes from the first audit are in place and tested:
+
+- the review fails closed;
+- the negation rule is scoped to its quote;
+- months and units are checked;
+- cut-offs are detected from `finish_reason`;
+- `/props` is read on connect;
+- requests time out, and a 429 gets one retry;
+- 2B users see a caution.
+
+`npm test` passes (339 tests) and `npm run typecheck` is clean.
+
+Three things are still unproven. Users will meet all three:
+
+1. **The browser path** (F1). It is still unmeasured.
+2. **Questions that need more than one passage.** They are the weakest kind, and the suites hardly test them (N2).
+3. **The 4B short-answer review.** It shipped in 0.34.0 without the run that the project's own rule asks for. The field README says so. The predicted cost is small (at worst 3 of 67 wrong among answers labelled **Quotes found** on the field suite), but it is still a prediction.
+
+### New findings
+
+**N1. High: two adopted changes still wait for their runs.** The browser benchmark (F1) has not been run. The 4B short-answer review was adopted before its run, against the [rule for label changes](../eval/field/README.md#rule-for-prompt-and-guard-changes). Both runs need a model and nothing else. Until they are done, the README's label descriptions are predictions, not measurements.
+
+**N2. Medium: the headline figures describe lookups.** In the 0.32.0 field and held-out runs, 104 of the 126 tasks are lookups. The other questions do much worse:
+
+| Kind | 4B | 2B |
+| --- | --- | --- |
+| Lookup | 97/104 (93%) | 80/104 (77%) |
+| Multi-hop and comparison | **3/7** | **3/7** |
+| Unanswerable | 14/15 | 9/15 |
+
+Seven tasks are too few to put a number on. Still, the agent's design limits it on these questions: 8 calls, a read guard after every search, 3 search results, and 2,400 characters for each read. That design fits single-passage lookups. The README's "86%" is from the original research set, which is also mostly lookups. **Fix:** write 15 to 20 two-document and comparison questions, by a second author if possible. Report them as their own row, so a change that helps lookups but hurts synthesis shows up.
+
+**N3. Medium: an elided quote can say the opposite of its source and still verify.** `containsElided` blocks only a skipped negation word. Checked against the self-check documents:
+
+- Source: "Cobble is released under the Business Source License 1.1, and each release converts to the Apache-2.0 license four years after…"
+- Quote: "Cobble is released under ... the Apache-2.0 license"
+- Answer: "Cobble is released under the Apache-2.0 license."
+- Result: the quote is verified, the sentence is backed, and the word checks give **Quotes found**.
+
+Only the review stands in the way. It does see the skipped text, because `quoteContext` spans the whole passage. Elided quotes are rare: 1 of about 400 quotes in the 0.30.0 and 0.32.0 runs, and that one was harmless. Still, "every quote is word for word in your documents" is not true of these quotes. **Fix:** do not verify an elision that skips a number, or a capitalised word missing from the quote, or more than about 80 characters. The recorded runs hold only one elided quote, so `bench:rescore` can measure the cost.
+
+**N4. Low: chunk part labels are indexed as search words.** A chunk's title is "Handbook (part 4 of 12)", and titles are counted twice. So "part", "4" and "12" are search terms for every chunk. A question about "Kovrune 4" or "the second part of the plan" ranks `handbook#4` or `handbook#2` second, from the label alone (checked with `DocumentIndex`). With hundreds of long documents, this fills the 3 results with noise for any question that has a small number in it. **Fix:** index the title without the part label. Trying this for this audit left `bench:retrieval` unchanged: 69 of 74 at 0 and at 300 distractors, and research and pdf at 100%. The change was then reverted. It is a defect fix with no measured cost.
+
+**N5. Low: numbers with a decimal comma are read as integers.** `numbers()` removes every comma as a thousands separator. So "1,5 Go" is 15, and the answer "La taille maximale du cache est de 15 Go" is backed by a quote saying "1,5 Go" (checked). The app supports French, German, Spanish, Italian, Portuguese and Dutch, which all write decimals with a comma. **Fix:** treat a comma followed by one or two digits, or by more than three, as a decimal mark.
+
+**N6. Low: a resumed task goes a different way after a cut-off reply.** `ReplayingModel` saves only the text of each reply, not `finish_reason` or usage. On resume, a reply that was cut off reads as merely invalid. The agent then sends the format error instead of "you have more room", and keeps the 512-token limit. The next fingerprint differs, so replay stops and the live model takes over a step early. **Fix:** save `finishReason` (and usage) in `RecordedCall`, and replay them.
+
+**N7. Low: the word checks still pass swapped names and opposite words.** As F2 said, the review is the only guard. Two checked cases:
+
+- "Cobble uses the Mozilla Public License 2.0" is backed by a LumenDB quote.
+- "Revenue decreased by 10%" is backed by "revenue increased by 10%".
+
+On the recorded runs, the review caught 2 of the 8 wrong answers it was asked about. The more specific review prompt (priority 4) is still the most valuable change not yet made. It can be judged by re-reviewing recorded answers.
+
+**N8. Low: the answer schema does not limit length.** Cut-offs come from long quotes, and the agent works around them with a retry at 1,024 tokens, which costs a call and context. `final_answer` could set `maxLength` on `quote` (about 300 characters) and `maxItems` on `evidence` (about 4). Constrained decoding would then never produce a reply that does not fit. Before relying on this, check that both grammar engines honour these keywords: llama.cpp's `json_schema` and the XGrammar version in WebLLM. This changes what the model can write, so it needs runs.
+
+**N9. Low: Ollama's context is not checked.** Ollama has no `/props`. It truncates prompts that are longer than its `num_ctx` without saying so, and its default may be smaller than the 4,096 the app plans for. The Ollama path is marked experimental, but the server step should warn about this.
+
+**Still open from the first audit:**
+
+- the stemmer (F3), for example "running" gives `runn` and "used" does not match "use";
+- the index is rebuilt for every question (F7);
+- facts are scored as substrings (F5). No recorded pass depends on this: the two answers that match only inside a longer number give "21,196.18" for the fact "21,196", which is right.
+
+### Priorities
+
+| # | Action | Effort | Needs a model run |
+| --- | --- | --- | --- |
+| 1 | Run the 4B short-answer review on field and held out, and the browser benchmark on a GPU (N1, F1) | Medium | Yes |
+| 2 | More specific review prompt, judged by re-reviewing recorded answers (N7, F2) | Medium | Re-review only |
+| 3 | Write multi-passage questions and report them separately (N2) | Medium | Yes |
+| 4 | Tighten elision: no skipped numbers or names, shorter gaps (N3) | Small | Re-scoring only |
+| 5 | Index titles without part labels (N4) | Small | No (retrieval unchanged) |
+| 6 | Decimal commas (N5); replay `finishReason` (N6); Ollama warning (N9) | Small | No |
+| 7 | Length limits in the answer schema (N8) | Small | Yes |
