@@ -280,9 +280,18 @@ Keeping a final "s" after another, and indexing each joined word's parts as well
 
 - **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results.
 - **Across machines, they differ.** The 0.16.0 baseline used the same llama.cpp commit and model files as the 0.15.0 runs, and the same prompt. Its actions differed on 20 of 58 tasks for 4B and 34 of 58 for 2B. A few results changed: `p04` (4B) now fails, and `r17` (2B) now passes. The likely cause is floating-point differences between CPUs and builds, which change which token wins at temperature 0.
-- **So a change is judged against a baseline run on the same machine, never against a report from another one.** One run of each is enough there, but a difference of one or two tasks is still specific to that machine.
-- **A portable llama.cpp build may make runs repeat across machines (0.29.0).** The container moved between three CPUs during the 0.29.0 runs, and a llama.cpp built with `-DGGML_NATIVE=ON` on one stopped with an illegal instruction on another. Rebuilt with `-DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON`, the same 12 tasks (8 field, 4 research, Qwen3.5-2B) took the same actions and gave the same final answers on an Intel Xeon @ 2.80GHz and @ 2.10GHz. Twelve tasks on two CPUs is evidence, not proof; if it holds, a baseline from another machine with this build is comparable, which the native builds never were.
-- **A portable run is not comparable with a native one:** the same code with the two builds took the same actions on 30 of 47 field tasks for 4B and 28 of 47 for 2B, and 2B's field suite went from 35 to 32 (the native runs were on a third CPU, so the build is not the only difference). So reports from 0.29.0 on name the build in their notes, and baselines are run with the build of the change.
+- **So a change is judged against a baseline run on the same machine, never against a report from another one,** unless both use the same portable build (below). One run of each is enough there, but a difference of one or two tasks is still specific to that machine.
+- **A portable llama.cpp build repeats across machines (0.29.0, confirmed in 0.31.0).** The container moved between three CPUs during the 0.29.0 runs, and a llama.cpp built with `-DGGML_NATIVE=ON` on one stopped with an illegal instruction on another. Rebuilt with `-DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON`, 12 tasks first took the same actions on two CPUs. Then the whole 0.29.0 baseline of Qwen3.5-2B, all five suites, was run again with the same code (`e34aa00`) and build on the other CPU ([json](../results/field-0.29-baseline-xmachine-qwen3.5-2b-q4km.json)):
+
+  | Same in both runs | Intel Xeon @ 2.80GHz against @ 2.10GHz (with AMX) |
+  | --- | --- |
+  | Actions, in order | 97 of 97 tasks |
+  | Final answer, pass or fail, quote verdicts, sentence support, label | 97 of 97 |
+  | Prompt and completion tokens | 97 of 97 |
+  | Speed | 13–16 tokens/s, slightly faster on the 2.80GHz CPU |
+
+  With the CPU-tuned builds, 20 of 58 tasks took other actions on another machine. So with this build, which CPU a run lands on does not change its results, only its speed, and a baseline from another machine with the same build is a valid baseline. Benchmark runs give the build with `--build` (harness 0.31.0), and `bench:compare` warns about different CPUs only when the two runs do not share a portable build. What this covers: one model (2B) and two of the three CPUs seen; Qwen3.5-4B ran its 0.29.0 baseline and change on one CPU and was not checked across.
+- **A portable run is not comparable with a native one:** the same code with the two builds took the same actions on 30 of 47 field tasks for 4B and 28 of 47 for 2B, and 2B's field suite went from 35 to 32 (the native runs were on a third CPU, so the build is not the only difference). So reports from 0.29.0 on name the build (in their notes, and from 0.31.0 in `environment.build`), and baselines are run with the build of the change.
 
 **What the suite shows that the synthetic suites don't** (0.15.0 failures):
 

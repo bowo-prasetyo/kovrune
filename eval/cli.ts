@@ -3,6 +3,9 @@
 //   npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model qwen3:4b \
 //     --context 8192 --hardware-class 2 --out eval/results/qwen3-4b-ollama.json
 //
+// --build names how the model server was built, e.g. --build "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2".
+// With a portable build (GGML_NATIVE=OFF), runs on different CPUs compare (eval/field/README.md).
+//
 // The field suite (real documents, eval/field/) runs only when named: --suites field. So does the
 // held-out suite over the same documents (--suites field,holdout); its tasks print no result as they
 // run, so a change is not developed against them (eval/field/holdout.ts).
@@ -37,6 +40,7 @@ const { values } = parseArgs({
     tasks: { type: "string" },
     "ignore-self-check": { type: "boolean", default: false },
     "hardware-class": { type: "string", default: "other" },
+    build: { type: "string" },
     notes: { type: "string" },
     out: { type: "string" },
   },
@@ -101,6 +105,7 @@ const report = await runBenchmark({
       memoryGb: Math.round(totalmem() / 2 ** 30),
       endpoint: values["base-url"],
     },
+    build: values.build,
     notes: values.notes,
   },
   config: {

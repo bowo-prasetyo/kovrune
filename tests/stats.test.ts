@@ -45,12 +45,12 @@ const result = (suite: TaskResult["suite"], taskId: string, passed: boolean, act
   actions,
 });
 
-const report = (results: TaskResult[], cpu = "Intel Xeon @ 2.30GHz"): Report =>
+const report = (results: TaskResult[], cpu = "Intel Xeon @ 2.30GHz", build?: string): Report =>
   ({
     harnessVersion: "0.27.0",
     createdAt: "",
     complete: true,
-    environment: { runtime: "local-endpoint", modelId: "qwen3.5-4b-q4km", contextLength: 4096, hardwareClass: "other", hardware: { cpu } },
+    environment: { runtime: "local-endpoint", modelId: "qwen3.5-4b-q4km", contextLength: 4096, hardwareClass: "other", hardware: { cpu }, ...(build ? { build } : {}) },
     config: { suites: ["field", "holdout"], modes: ["constrained"] },
     summary: [],
     gate: { passed: false, criteria: [] },
@@ -96,5 +96,19 @@ describe("comparing two runs", () => {
     assert.match(compareReports(before, elsewhere).warnings.join(" "), /different CPUs/);
     const failed = report([{ ...result("field", "f01", false), error: "fetch failed" }]);
     assert.match(compareReports(before, failed).warnings.join(" "), /stopped with an error: 0 before, 1 after/);
+  });
+
+  it("compares runs on different CPUs with the same portable build, but not across builds", () => {
+    const portable = "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2";
+    const here = report(before.results, "Intel Xeon @ 2.80GHz", portable);
+    const there = report(after.results, "Intel Xeon @ 2.10GHz", portable);
+    assert.deepEqual(compareReports(here, there).warnings, []);
+    // A CPU-tuned build on both sides is no help: it was built for one of the CPUs.
+    const tuned = "llama.cpp fae9ac5, -DGGML_NATIVE=ON";
+    assert.match(compareReports(report(before.results, "a", tuned), report(after.results, "b", tuned)).warnings.join(" "), /different CPUs/);
+    // Another build on the same CPU changes results too.
+    const mixed = compareReports(report(before.results, "a", portable), report(after.results, "a", tuned)).warnings.join(" ");
+    assert.match(mixed, /builds differ/);
+    assert.doesNotMatch(mixed, /different CPUs/);
   });
 });
