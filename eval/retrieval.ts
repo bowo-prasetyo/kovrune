@@ -2,21 +2,29 @@
 //
 //   npm run bench:retrieval                # the search as the app runs it
 //   npm run bench:retrieval -- --limit 5   # with more results, to compare
+//   npm run bench:retrieval -- --distractors 300   # the field library with 300 generated documents added
 //
 // It takes a few seconds, so run it before a benchmark run for any change to search or chunking.
 
 import { parseArgs } from "node:util";
 import { loadFieldSuite } from "./harness/field.ts";
 import { loadNodePdfLibrary } from "./harness/pdf-node.ts";
+import { distractorDocuments } from "./harness/distractors.ts";
 import { appSearch, measureRetrieval, summarizeRetrieval } from "./harness/retrieval.ts";
+import { ResearchLibrary } from "../src/agent/research.ts";
 import { baseLibrary } from "./harness/suites.ts";
 import { pdfTasks } from "./tasks/pdf.ts";
 import { researchTasks } from "./tasks/research.ts";
 
-const { values } = parseArgs({ options: { limit: { type: "string" } } });
+const { values } = parseArgs({ options: { limit: { type: "string" }, distractors: { type: "string" } } });
 const limit = values.limit === undefined ? undefined : Number(values.limit);
 if (limit !== undefined && !(Number.isInteger(limit) && limit > 0)) {
   console.error(`--limit must be a whole number above 0, not "${values.limit}".`);
+  process.exit(1);
+}
+const distractors = values.distractors === undefined ? 0 : Number(values.distractors);
+if (!(Number.isInteger(distractors) && distractors >= 0)) {
+  console.error(`--distractors must be a whole number, not "${values.distractors}".`);
   process.exit(1);
 }
 
@@ -26,6 +34,15 @@ const suites = [
   { name: "research", library: baseLibrary, tasks: researchTasks },
   { name: "pdf", library: await loadNodePdfLibrary(), tasks: pdfTasks },
   { name: "field", library: field.library, tasks: field.tasks },
+  ...(distractors
+    ? [
+        {
+          name: `field with ${distractors} generated documents`,
+          library: new ResearchLibrary([...field.library.documents, ...distractorDocuments(distractors)]),
+          tasks: field.tasks,
+        },
+      ]
+    : []),
 ];
 const percent = (n: number) => `${Math.round(n * 1000) / 10}%`;
 

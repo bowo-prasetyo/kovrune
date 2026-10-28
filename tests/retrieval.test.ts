@@ -4,6 +4,7 @@ import { ResearchLibrary } from "../src/agent/research.ts";
 import { loadFieldSuite } from "../eval/harness/field.ts";
 import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { appSearch, measureRetrieval, summarizeRetrieval } from "../eval/harness/retrieval.ts";
+import { DISTRACTOR_PREFIX, distractorDocuments } from "../eval/harness/distractors.ts";
 import { baseLibrary } from "../eval/harness/suites.ts";
 import { pdfTasks } from "../eval/tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../eval/tasks/research.ts";
@@ -48,6 +49,15 @@ describe("retrieval measure", () => {
     assert.equal(summarizeRetrieval(results).acrossScripts, 1);
   });
 
+  it("does not count an answer's spelling in a generated document as its passage", () => {
+    const withDistractor = new ResearchLibrary([
+      { id: "pages", title: "Storage notes", text: "The default page size is 4 KiB." },
+      { id: `${DISTRACTOR_PREFIX}1`, title: "Other notes", text: "The default page size is 8 KiB, and the cache page size is 4 KiB." },
+    ]);
+    const [result] = measureRetrieval(withDistractor, [task("t4", "What is the cache page size?", [["pages"]], [["8 KiB"]])]);
+    assert.deepEqual(result!.passages, { found: 0, wanted: 1 });
+  });
+
   it("measures more results when asked", () => {
     const [few] = measureRetrieval(library, [task("t3", "page size project", [["history"]], [])], appSearch(1));
     const [more] = measureRetrieval(library, [task("t3", "page size project", [["history"]], [])], appSearch(3));
@@ -78,3 +88,29 @@ describe("retrieval on the evaluation set", () => {
 });
 
 const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };
+
+// A user's library can hold hundreds of documents; the field library has seven. With 300 generated
+// documents near its topics added (eval/harness/distractors.ts), search still has to find what it
+// finds now. Over seeds 1 to 5 the figures are 90.9–93.5% and 89.9–91%, 67 to 69 tasks, so a change
+// that falls below the floors of seed 1 loses ground to a larger library, not to chance in the seed.
+describe("retrieval in a library of hundreds of documents", () => {
+  it("generates the same documents for the same seed, apart from the real ones", () => {
+    const docs = distractorDocuments(300);
+    assert.equal(docs.length, 300);
+    assert.deepEqual(distractorDocuments(300), docs);
+    assert.notDeepEqual(distractorDocuments(300, 2), docs);
+    assert.ok(docs.every((d) => d.id.startsWith(DISTRACTOR_PREFIX) && d.text.length > 0));
+    assert.ok(docs.filter((d) => d.text.length > 1800).length >= 30, "some are long enough to be split into parts");
+  });
+
+  it("keeps the field suite's retrieval with 300 generated documents added", async () => {
+    const field = await loadFieldSuite();
+    const library = new ResearchLibrary([...field.library.documents, ...distractorDocuments(300)]);
+    const summary = summarizeRetrieval(measureRetrieval(library, field.tasks));
+    assert.ok(summary.documentRecall >= SCALE_FLOOR.documentRecall, `cited documents: ${summary.documentRecall}`);
+    assert.ok(summary.passageRecall >= SCALE_FLOOR.passageRecall, `answer passages: ${summary.passageRecall}`);
+    assert.ok(summary.complete >= SCALE_FLOOR.complete, `complete: ${summary.complete}`);
+  });
+});
+
+const SCALE_FLOOR = { documentRecall: 0.935, passageRecall: 0.91, complete: 69 };

@@ -86,19 +86,62 @@ describe("the model's own check of an answer", () => {
     assert.match(describeStatus(status as "verified", evidence, { ...support!, review: "no" }).detail, /model said they do not/);
   });
 
-  it("keeps the label when the model confirms it, or gives no readable verdict", async () => {
-    for (const [reply, review] of [
-      [`{"verdict":"yes"}`, "yes"],
-      ["I am not sure.", undefined],
+  it("keeps the label when the model confirms it", async () => {
+    const { support, status, evidence } = await ask(`{"verdict":"yes"}`).result;
+    assert.equal(support!.review, "yes");
+    assert.equal(labelledQuotesFound(status, evidence, support), true);
+    assert.equal(describeStatus(status as "verified", evidence, support).label, "Quotes found");
+  });
+
+  it("takes the label away when the check gives no readable verdict or fails (fails closed)", async () => {
+    const { support, status, evidence } = await ask("I am not sure.").result;
+    assert.equal(support!.review, "unclear");
+    assert.equal(labelledQuotesFound(status, evidence, support), false);
+    const shown = describeStatus(status as "verified", evidence, support);
+    assert.equal(shown.label, "Quotes found, answer not confirmed");
+    assert.match(shown.detail, /gave no clear reply/);
+
+    // A server error during the check, not a stop by the user.
+    const failing = new ScriptedModel([search, read, wrong]);
+    const generate = failing.generate.bind(failing);
+    failing.generate = (request) => {
+      if (failing.requests.length === 3) throw new Error("Endpoint returned 500");
+      return generate(request);
+    };
+    const failed = await runResearch({ question: QUESTION, library, model: failing });
+    assert.equal(failed.support!.review, "unclear");
+    assert.equal(labelledQuotesFound(failed.status, failed.evidence, failed.support), false);
+  });
+
+  it("asks about answers too short for the word checks, and labels them only on yes", async () => {
+    const short = JSON.stringify({
+      tool: "final_answer",
+      args: { found: true, answer: "30 days", evidence: [{ docId: "mpl", quote: "if You become compliant prior to 30 days after Your receipt of the notice" }] },
+    });
+    for (const [reply, verdict, label] of [
+      [`{"verdict":"yes"}`, "yes", "Quotes found"],
+      [`{"verdict":"partly"}`, "partly", "Quotes found, answer not confirmed"],
     ] as const) {
-      const { support, status, evidence } = await ask(reply).result;
-      assert.equal(support!.review, review);
-      assert.equal(labelledQuotesFound(status, evidence, support), true);
-      assert.equal(describeStatus(status as "verified", evidence, support).label, "Quotes found");
+      const model = new ScriptedModel([search, read, short, reply]);
+      const { support, status, evidence } = await runResearch({ question: QUESTION, library, model });
+      assert.equal(support!.judged, 0, "too short for the sentence check");
+      assert.equal(model.requests.length, 4, "the check is asked");
+      assert.equal(support!.review, verdict);
+      assert.equal(labelledQuotesFound(status, evidence, support), verdict === "yes");
+      const shown = describeStatus(status as "verified", evidence, support);
+      assert.equal(shown.label, label);
+      if (verdict === "yes") assert.match(shown.detail, /too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes/);
     }
   });
 
-  it("asks only about answers the word checks would label", async () => {
+  it("is not constrained when the agent runs unconstrained", async () => {
+    const model = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`]);
+    const { support } = await runResearch({ question: QUESTION, library, model, constrained: false });
+    assert.equal(support!.review, "yes");
+    assert.ok(model.requests.every((r) => !r.responseSchema));
+  });
+
+  it("does not ask about answers with a sentence no quote backs", async () => {
     const unbacked = JSON.stringify({
       tool: "final_answer",
       args: {
@@ -115,5 +158,10 @@ describe("the model's own check of an answer", () => {
 
   it("keeps the label of answers saved before the check", () => {
     assert.equal(labelledQuotesFound("verified", [{ verified: true }], { judged: 1, backed: 1 }), true);
+    assert.equal(labelledQuotesFound("verified", [{ verified: true }], { judged: 0, backed: 0 }), false, "short answers stay too short to check");
+    assert.equal(
+      describeStatus("verified", [{ verified: true }], { judged: 0, backed: 0 }).label,
+      "Quotes found, answer too short to check",
+    );
   });
 });

@@ -26,9 +26,9 @@ export interface SentenceSupport {
    */
   answerInQuote?: boolean;
   /**
-   * The model's own check (review.ts), asked only of answers the word checks would label "Quotes
-   * found": whether the quoted passages state what the answer says. Absent when not asked, or when
-   * the check gave no readable reply.
+   * The model's own check (review.ts), asked of answers the word checks would label "Quotes found"
+   * and of answers too short for them to judge (reviewAsked): whether the quoted passages state what
+   * the answer says. "unclear" when the check gave no readable reply; absent when not asked.
    */
   review?: ReviewVerdict;
 }
@@ -189,28 +189,45 @@ function answerInQuote(
  * label a reader is most likely to take as "the answer is right", so the share of such answers
  * that are wrong is tracked as the false reassurance rate (docs/design.md §1.6).
  *
- * An answer too short to judge, such as "LumenDB 3.2" or "40", does not get the label: nothing
- * compared it with the quotes. In the harness 0.15.0 reports (Qwen3.5-2B and 4B), such answers
- * were 13 of the 16 wrong answers labelled "Quotes found", and 13 of the 38 so labelled were wrong.
- * Answers saved before sentence support have no `support` and keep the rule they had.
+ * An answer too short to judge, such as "LumenDB 3.2" or "40", does not get the label from the
+ * word checks: nothing compared it with the quotes. In the harness 0.15.0 reports (Qwen3.5-2B and
+ * 4B), such answers were 13 of the 16 wrong answers labelled "Quotes found", and 13 of the 38 so
+ * labelled were wrong. Since harness 0.34.0 the model's own check is asked about them too
+ * (reviewAsked), and one it confirms with "yes" is labelled.
  *
  * Since harness 0.28.0 the model is also asked whether the quotes back the answer (review.ts), and
- * an answer it does not confirm with "yes" is not labelled. Answers saved before the check have no
- * `review` and keep the rule they had.
+ * an answer it does not confirm with "yes" is not labelled. Since 0.34.0 that includes a check
+ * that gave no readable verdict ("unclear"): a failed check does not read like a passed one.
+ * Answers saved before sentence support have no `support`, and answers saved before the check
+ * have no `review`; both keep the rule they had.
  */
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
   support?: { judged: number; backed: number; review?: ReviewVerdict },
 ): boolean {
-  return wordChecksPass(status, evidence, support) && (!support?.review || support.review === "yes");
+  if (support?.review) return support.review === "yes" && reviewAsked(status, evidence, support);
+  return wordChecksPass(status, evidence, support);
 }
 
-/** Whether the quote and sentence checks alone would label the answer "Quotes found": the cases the model's review is asked about. */
+/** Whether the quote and sentence checks alone would label the answer "Quotes found". */
 export function wordChecksPass(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
   support?: { judged: number; backed: number },
 ): boolean {
   return status === "verified" && evidence.every((e) => e.verified) && (!support || (support.judged > 0 && support.backed === support.judged));
+}
+
+/**
+ * Whether the model's own check is asked about an answer (review.ts): every quote is in its source,
+ * and either the word checks pass, or the answer is too short for them to judge (no sentence long
+ * enough), so that the check is all that can tell a right short answer from a wrong one.
+ */
+export function reviewAsked(
+  status: AnswerStatus | "no-answer",
+  evidence: Array<{ verified: boolean }>,
+  support: { judged: number; backed: number },
+): boolean {
+  return status === "verified" && evidence.every((e) => e.verified) && (support.judged === 0 || support.backed === support.judged);
 }

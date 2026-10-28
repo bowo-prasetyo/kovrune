@@ -117,3 +117,29 @@ export async function listModels(
   const body = (await response.json()) as { data?: Array<{ id?: unknown }> };
   return (body.data ?? []).map((m) => m.id).filter((id): id is string => typeof id === "string");
 }
+
+/**
+ * The context each request gets on a llama.cpp server, from GET /props: its per-slot `n_ctx`, so a
+ * server started with several slots (`-np`) reports its context divided between them. Undefined
+ * when the server does not say (Ollama and other servers have no /props), or the request fails.
+ */
+export async function serverContextLength(
+  baseUrl: string,
+  options: { apiKey?: string; signal?: AbortSignal; fetchImpl?: typeof fetch } = {},
+): Promise<number | undefined> {
+  const { apiKey, signal, fetchImpl = fetch } = options;
+  try {
+    // /props is beside the OpenAI-compatible API, not under it.
+    const response = await fetchImpl(`${baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "")}/props`, {
+      headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {},
+      signal,
+    });
+    if (!response.ok) return undefined;
+    const body = (await response.json()) as { default_generation_settings?: { n_ctx?: unknown }; n_ctx?: unknown };
+    const n = body.default_generation_settings?.n_ctx ?? body.n_ctx;
+    return typeof n === "number" && Number.isInteger(n) && n > 0 ? n : undefined;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return undefined;
+  }
+}

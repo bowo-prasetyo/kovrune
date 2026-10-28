@@ -14,7 +14,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.33.0";
+export const HARNESS_VERSION = "0.34.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -88,7 +88,8 @@ export interface TaskResult {
   evidence?: Array<{ docId: string; verified: boolean; reason?: string }>;
   /**
    * Research tasks: how many answer sentences were long enough to judge, how many a found quote backs,
-   * and the model's own check of the answer, asked when the word checks would label it (agent/review.ts).
+   * and the model's own check of the answer, asked when the word checks would label it or the answer
+   * is too short for them to judge (agent/review.ts).
    */
   support?: { judged: number; backed: number; review?: string };
   /** Research tasks: whether the app would label the answer "Quotes found". */

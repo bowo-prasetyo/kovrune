@@ -142,6 +142,33 @@ Harness 0.33.0 fixes the defect the 0.32.0 baselines found: quote verification c
 - **Adopted** under the defect-fix clause: no protected suite loses a task on either model.
 - **What it does not cover:** other Markdown the guide does not use (reference links, autolinks, HTML tags), and quotes from documents that are not Markdown, which have no links of this form to change.
 
+### Retrieval in a larger library
+
+The field library has seven documents; a user's may have hundreds, and search shows three results, so passages from other documents can push the answer out of them (audit F5, [`docs/ai-ml-audit.md`](../../docs/ai-ml-audit.md)). `npm run bench:retrieval -- --distractors 300` adds generated documents to the field library and measures search again (`eval/harness/distractors.ts`). They are near the field documents' topics and share their words (install guides with servers, ports and context sizes; design reports with milestones and hardware classes; licences with notices, days and patents; encyclopedia leads with births, marriages and heritage listings), but describe fictional things, so none answers a field question. A spelling of an answer in a generated document ("30 days") is not counted as its passage. They are generated from a fixed seed, so the measure repeats exactly, and nothing with a licence of its own is committed.
+
+| Field library | Cited documents | Answer passages | Everything found (of 74) |
+| --- | --- | --- | --- |
+| 7 documents | 97.4% | 93.3% | 69 |
+| + 100 generated | 93.5% | 91.0% | 68 |
+| + 300 generated (seed 1, the test's floor) | 93.5% | 91.0% | 69 |
+| + 300 generated, seeds 1–5 | 90.9–93.5% | 89.9–91.0% | 67–69 |
+| + 1,000 generated, seeds 1–5 | 92.2–93.5% | 88.8–89.9% | 67–68 |
+
+- **Search loses a little, not much.** Most field questions name rare words ("Trystero", "Secondary Licenses", "cure"), and BM25 weighs rare words most. What is lost is where the questions use common words: `f13`'s "class 1" laptop, the licence questions (`f17`, `f23`, `f45`) against generated licences, and the two-document `f84`.
+- **What it does not show:** the generated documents are in English, so the Japanese and Chinese tasks are not tested; and they are not real documents, so a real library with several versions of one report, nearly the same text, would be harder. `tests/retrieval.test.ts` keeps the 300-document figures as floors, so a change to search or chunking that loses ground in a larger library shows in the tests.
+
+### Short answers checked by the model, and a check that fails closed (0.34.0)
+
+Two changes to the model's check of an answer (`src/agent/review.ts`), from the audit (F2, F6):
+
+- **Fails closed.** A check that gave no readable verdict, or whose call failed, used to leave the label as the word checks gave it: a failed check read like a passed one. Now it is recorded as `"unclear"`, and the answer reads **Quotes found, answer not confirmed**. In the recorded reports, every check gave a readable verdict, so no recorded label changes.
+- **Short answers are checked too.** An answer too short for the sentence check (no sentence of three content words, such as "4 KiB" or "1987年") read **Quotes found, answer too short to check** whatever it said. In the 0.32.0 baselines, 28 of the 30 such answers from 4B were right, and 28 of 41 from 2B. Now, when every quote is found, the model is asked about them as about the others, and the answer is labelled **Quotes found** if it says yes. Answers saved before keep their label.
+- **The check follows the agent's mode:** it is constrained to a verdict only when the agent's calls are, so unconstrained benchmark runs are unconstrained throughout.
+
+**Not yet measured.** The second change is a label change, and the [rule](#rule-for-prompt-and-guard-changes) asks for runs of both models before it is adopted. It needs one model call per short answer, so it cannot be judged by re-scoring the recorded reports. What the recorded verdicts predict:
+- **4B:** its check said "partly" to 1 of the 3 wrong answers it was asked about, and "yes" to all 64 right ones. Its short answers are 20 right and 1 wrong on the field suite, 8 and 1 held out. So the right ones would likely gain the label, and false reassurance would stay near where it is: at worst 3 of 67 on the field suite (now 2 of 46), and 1 of 29 held out (now 0 of 20).
+- **2B:** its check said "yes" to 3 of the 4 wrong answers it was asked about. Its short answers are 21 right and 7 wrong on the field suite, 7 and 6 held out, and most of the wrong ones would likely gain the label too. So **2B's false reassurance would likely rise**: at worst 10 of 68 on the field suite (now 3 of 40), and 6 of 27 held out (now 0 of 14). If the runs confirm this, the short-answer check should apply only to models whose check has been measured to catch wrong short answers, and 2B's short answers keep the amber label.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
