@@ -2,7 +2,7 @@
 // saved separately (research/store.ts); tasks are not persisted until M2.
 
 import { browserModelFor } from "../models/catalog.ts";
-import { SERVER_PRESETS, type ServerKind } from "./servers.ts";
+import { MIN_CONTEXT_LENGTH, SERVER_PRESETS, type ServerKind } from "./servers.ts";
 
 /** The model test's result when the setup was saved, so it can be checked later without testing again. */
 export interface LastTest {
@@ -64,7 +64,7 @@ export function parseSettings(raw: string | null): Settings | undefined {
       typeof value.baseUrl === "string" &&
       typeof value.model === "string" &&
       typeof value.contextLength === "number" &&
-      value.contextLength >= 2048
+      value.contextLength >= MIN_CONTEXT_LENGTH
     ) {
       const { serverKind, baseUrl, model, contextLength, apiKey } = value as Omit<ServerSettings, "path">;
       return {

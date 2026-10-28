@@ -8,6 +8,7 @@ import { normalizeForMatch } from "../../src/agent/evidence.ts";
 import type { ResearchLibrary } from "../../src/agent/research.ts";
 import { mainScript } from "../../src/documents/scripts.ts";
 import type { ResearchTask } from "../tasks/research.ts";
+import { DISTRACTOR_PREFIX } from "./distractors.ts";
 
 /** What search shows the model for one query: the results' document or passage IDs, best first. */
 export type Search = (library: ResearchLibrary, query: string) => string[];
@@ -54,8 +55,9 @@ export function measureRetrieval(library: ResearchLibrary, tasks: ResearchTask[]
     .map((task) => {
       const results = search(library, task.question);
       const documents = new Set(results.map(parentId));
-      // A result's own text: the passage the model sees a snippet of, and reads next.
-      const texts = results.map((id) => library.index.get(id)?.text ?? "");
+      // A result's own text: the passage the model sees a snippet of, and reads next. Generated
+      // documents (distractors.ts) may hold an answer's spelling by chance ("30 days"), but not the answer.
+      const texts = results.filter((id) => !id.startsWith(DISTRACTOR_PREFIX)).map((id) => library.index.get(id)?.text ?? "");
       const script = mainScript(task.question)?.script;
       const cited = task.citations.flat().map((id) => mainScript(library.documentFor(id)?.text ?? "")?.script);
       return {

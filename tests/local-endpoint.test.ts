@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
+import { LocalEndpointModel, serverContextLength } from "../src/models/local-endpoint.ts";
+import { contextFromServer } from "../src/app/servers.ts";
 
 function sseResponse(events: string[]): Response {
   const encoder = new TextEncoder();
@@ -63,5 +64,46 @@ describe("LocalEndpointModel", () => {
         // drain
       }
     }, /404: model not found/);
+  });
+});
+
+describe("the server's context (llama.cpp /props)", () => {
+  const props = (body: unknown, status = 200) =>
+    (async (url: string, init: RequestInit) => {
+      props.calls.push({ url, auth: (init.headers as Record<string, string>).authorization });
+      return new Response(JSON.stringify(body), { status });
+    }) as typeof fetch;
+  props.calls = [] as Array<{ url: string; auth?: string }>;
+
+  it("reads the per-request context from /props, beside the /v1 API", async () => {
+    // llama-server -c 8192 -np 2: each slot, so each request, gets 4096.
+    const fetchImpl = props({ default_generation_settings: { n_ctx: 4096 }, total_slots: 2 });
+    assert.equal(await serverContextLength("http://127.0.0.1:8080/v1/", { apiKey: "k", fetchImpl }), 4096);
+    assert.deepEqual(props.calls.at(-1), { url: "http://127.0.0.1:8080/props", auth: "Bearer k" });
+    assert.equal(await serverContextLength("http://127.0.0.1:8080/v1", { fetchImpl: props({ n_ctx: 2048 }) }), 2048);
+  });
+
+  it("says nothing for servers without /props, or with an answer it cannot read", async () => {
+    assert.equal(await serverContextLength("http://127.0.0.1:11434/v1", { fetchImpl: props("404 page not found", 404) }), undefined);
+    assert.equal(await serverContextLength("http://127.0.0.1:8080/v1", { fetchImpl: props({ default_generation_settings: {} }) }), undefined);
+    const offline = (async () => {
+      throw new TypeError("Failed to fetch");
+    }) as typeof fetch;
+    assert.equal(await serverContextLength("http://127.0.0.1:8080/v1", { fetchImpl: offline }), undefined);
+  });
+
+  it("sets the context length to the server's, and says why", () => {
+    assert.deepEqual(contextFromServer(undefined, 4096), { contextLength: 4096 });
+    assert.deepEqual(contextFromServer(4096, 4096), { contextLength: 4096 });
+    const less = contextFromServer(4096, 8192);
+    assert.equal(less.contextLength, 4096);
+    assert.match(less.note!, /gives each request 4096 tokens of context.*-np 1/);
+    const more = contextFromServer(8192, 4096);
+    assert.equal(more.contextLength, 8192);
+    assert.doesNotMatch(more.note!, /-np/);
+    // llama-server -c 4096 with its default of several slots.
+    const small = contextFromServer(1024, 4096);
+    assert.equal(small.tooSmall, true);
+    assert.match(small.note!, /only 1024 tokens.*-c 4096 -np 1/);
   });
 });

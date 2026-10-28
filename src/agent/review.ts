@@ -7,10 +7,14 @@
 import { stripThinking, type LanguageModel } from "../models/types.ts";
 import type { CheckedEvidence } from "./evidence.ts";
 
-/** "yes": the passages state everything the answer says; "partly": not all of it; "no": they do not answer the question. */
-export type ReviewVerdict = "yes" | "partly" | "no";
+/**
+ * "yes": the passages state everything the answer says; "partly": not all of it; "no": they do not
+ * answer the question; "unclear": the check was asked but gave no readable verdict, or failed.
+ */
+export type ReviewVerdict = "yes" | "partly" | "no" | "unclear";
 
-const VERDICTS: ReviewVerdict[] = ["yes", "partly", "no"];
+/** The verdicts the model may reply with; "unclear" is the app's, for a reply it cannot read. */
+const VERDICTS = ["yes", "partly", "no"] as const;
 
 export const REVIEW_SYSTEM =
   "You check whether quoted sources back an answer to a question. Judge only from the passages you are given, not from what you know.";
@@ -44,17 +48,18 @@ const RESPONSE_SCHEMA = {
 };
 
 /** Reads a verdict from a reply: the JSON asked for, or failing that a lone verdict word. */
-export function parseVerdict(text: string): ReviewVerdict | undefined {
+export function parseVerdict(text: string): Exclude<ReviewVerdict, "unclear"> | undefined {
   const cleaned = stripThinking(text);
   const json = /"verdict"\s*:\s*"(yes|partly|no)"/i.exec(cleaned);
-  if (json) return json[1]!.toLowerCase() as ReviewVerdict;
+  if (json) return json[1]!.toLowerCase() as "yes" | "partly" | "no";
   const word = /^\W*(yes|partly|no)\W*$/i.exec(cleaned);
-  return word ? (word[1]!.toLowerCase() as ReviewVerdict) : undefined;
+  return word ? (word[1]!.toLowerCase() as "yes" | "partly" | "no") : undefined;
 }
 
 /**
- * Asks the model whether the verified quotes back the answer. Undefined when the reply cannot be
- * read or the call fails: the check then says nothing, and the label is as the word checks give it.
+ * Asks the model whether the verified quotes back the answer. "unclear" when the reply cannot be
+ * read or the call fails: a check that did not say yes does not give the label (support.ts), so a
+ * failed check never reads like a passed one.
  */
 export async function reviewAnswer(options: {
   model: LanguageModel;
@@ -62,8 +67,10 @@ export async function reviewAnswer(options: {
   answer: string;
   evidence: CheckedEvidence[];
   titleFor: (docId: string) => string | undefined;
+  /** Constrain the reply to a verdict when the runtime can (default), as the agent's own calls are. */
+  constrained?: boolean;
   signal?: AbortSignal;
-}): Promise<ReviewVerdict | undefined> {
+}): Promise<ReviewVerdict> {
   const { model, signal } = options;
   let text = "";
   try {
@@ -74,14 +81,14 @@ export async function reviewAnswer(options: {
       ],
       maxTokens: 16,
       temperature: 0,
-      responseSchema: model.supportsConstrainedDecoding() ? RESPONSE_SCHEMA : undefined,
+      responseSchema: (options.constrained ?? true) && model.supportsConstrainedDecoding() ? RESPONSE_SCHEMA : undefined,
       signal,
     })) {
       text += chunk.text;
     }
   } catch (error) {
     if (signal?.aborted) throw error;
-    return undefined;
+    return "unclear";
   }
-  return parseVerdict(text);
+  return parseVerdict(text) ?? "unclear";
 }

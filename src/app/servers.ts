@@ -81,3 +81,28 @@ export function describeConnectionError(
 export function modelLabel(id: string): string {
   return id.split(/[\\/]/).filter(Boolean).at(-1) ?? id;
 }
+
+/** The smallest context the research agent runs in (settings.ts checks saved settings against it). */
+export const MIN_CONTEXT_LENGTH = 2048;
+
+/**
+ * The context length to use once the server has said what it gives each request (llama.cpp's
+ * /props), with a note when that differs from the one typed. The agent fits its conversation into
+ * the context it is told; told more than the server has, a long question fails partway through.
+ */
+export function contextFromServer(reported: number | undefined, typed: number): { contextLength: number; note?: string; tooSmall?: boolean } {
+  if (reported === undefined || reported === typed) return { contextLength: typed };
+  if (reported < MIN_CONTEXT_LENGTH) {
+    return {
+      contextLength: reported,
+      tooSmall: true,
+      note: `The server gives each request only ${reported} tokens of context; Kovrune needs at least ${MIN_CONTEXT_LENGTH}. Restart it with -c 4096 -np 1 (-np 1 keeps the whole context for one request).`,
+    };
+  }
+  return {
+    contextLength: reported,
+    note:
+      `The server gives each request ${reported} tokens of context, so the context length is set to that.` +
+      (reported < typed ? " To give it more, restart the server with a larger -c, and -np 1 so that one request gets all of it." : ""),
+  };
+}

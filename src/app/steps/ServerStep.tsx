@@ -1,6 +1,14 @@
 import { useState } from "react";
-import { listModels } from "../../models/local-endpoint.ts";
-import { describeConnectionError, modelLabel, RECOMMENDED_GGUF, SERVER_PRESETS, type ServerKind } from "../servers.ts";
+import { listModels, serverContextLength } from "../../models/local-endpoint.ts";
+import {
+  contextFromServer,
+  describeConnectionError,
+  MIN_CONTEXT_LENGTH,
+  modelLabel,
+  RECOMMENDED_GGUF,
+  SERVER_PRESETS,
+  type ServerKind,
+} from "../servers.ts";
 import { isPublicHttpsPage } from "../build-info.ts";
 import { accessState, addressSpaceOf, describeBlockedAccess } from "../local-access.ts";
 import type { ServerSettings } from "../settings.ts";
@@ -21,6 +29,8 @@ export function ServerStep({
   const [models, setModels] = useState<string[]>();
   const [model, setModel] = useState(initial?.model ?? "");
   const [status, setStatus] = useState<{ busy: boolean; error?: string }>({ busy: false });
+  // What the server said about its context (llama.cpp's /props), when it differs from the one typed.
+  const [contextNote, setContextNote] = useState<{ text: string; tooSmall?: boolean }>();
 
   const preset = SERVER_PRESETS[kind];
 
@@ -34,9 +44,16 @@ export function ServerStep({
   async function connect() {
     setStatus({ busy: true });
     setModels(undefined);
+    setContextNote(undefined);
     try {
-      const found = await listModels(baseUrl, { apiKey: apiKey.trim() || undefined });
+      const key = apiKey.trim() || undefined;
+      const found = await listModels(baseUrl, { apiKey: key });
       if (!found.length) throw new Error("The server is running but reports no models. Load a model and try again.");
+      // Ollama has no /props; llama.cpp and other servers may.
+      const reported = kind === "ollama" ? undefined : await serverContextLength(baseUrl, { apiKey: key });
+      const server = contextFromServer(reported, contextLength);
+      setContextLength(server.contextLength);
+      if (server.note) setContextNote({ text: server.note, tooSmall: server.tooSmall });
       setModels(found);
       setModel((current) => (found.includes(current) ? current : found[0]!));
       setStatus({ busy: false });
@@ -119,12 +136,17 @@ export function ServerStep({
         Context length (tokens)
         <input
           type="number"
-          min={2048}
+          min={MIN_CONTEXT_LENGTH}
           step={1024}
           value={contextLength}
           onChange={(e) => setContextLength(Number(e.target.value))}
         />
       </label>
+      {contextNote && (
+        <p className={contextNote.tooSmall ? "warning" : "hint"} role="status">
+          {contextNote.text}
+        </p>
+      )}
 
       <div className="actions">
         <button onClick={onBack}>Back</button>
@@ -154,7 +176,7 @@ export function ServerStep({
           <div className="actions">
             <button
               className="primary"
-              disabled={!model || contextLength < 2048}
+              disabled={!model || contextLength < MIN_CONTEXT_LENGTH}
               onClick={() =>
                 onContinue({
                   path: "local-server",

@@ -3,7 +3,7 @@
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
 import type { ReviewVerdict } from "../../agent/review.ts";
-import { labelledQuotesFound, wordChecksPass } from "../../agent/support.ts";
+import { labelledQuotesFound, reviewAsked } from "../../agent/support.ts";
 
 /** ": 5 results", ": 1 document", ": nothing found", or nothing while the search runs. */
 const found = (count: number | undefined, noun: string) =>
@@ -78,18 +78,23 @@ export function describeStatus(
             ? "Every quote below is word for word in the source it cites, and the answer is in one of them, in a passage that shares most of the words of your question. Check that the quote answers what you asked."
             : support?.judged
             ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
+            : support?.review === "yes"
+            ? "Every quote below is word for word in the source it cites. The answer is too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes. Check that the quotes answer your question."
             : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
           tone: "verified",
         };
       }
-      // The word checks pass, but the model's own check does not confirm the answer (review.ts).
-      if (support?.review && support.review !== "yes" && wordChecksPass(status, evidence, support)) {
+      // Every quote is found, but the model's own check does not confirm the answer (review.ts).
+      if (support?.review && support.review !== "yes" && reviewAsked(status, evidence, support)) {
         return {
           label: "Quotes found, answer not confirmed",
-          detail:
-            support.review === "no"
-              ? "Every quote below is word for word in the source it cites, but asked whether the quoted passages answer your question, the model said they do not. The answer may come from the wrong passage: check it against the sources."
-              : "Every quote below is word for word in the source it cites, but asked whether the quoted passages state everything the answer says, the model said only partly. Part of the answer, such as a number or a condition, may differ from the sources or be missing: check it against them.",
+          detail: {
+            no: "Every quote below is word for word in the source it cites, but asked whether the quoted passages answer your question, the model said they do not. The answer may come from the wrong passage: check it against the sources.",
+            partly:
+              "Every quote below is word for word in the source it cites, but asked whether the quoted passages state everything the answer says, the model said only partly. Part of the answer, such as a number or a condition, may differ from the sources or be missing: check it against them.",
+            unclear:
+              "Every quote below is word for word in the source it cites, but the model's check of whether the quoted passages state what the answer says gave no clear reply. Check the answer against the sources.",
+          }[support.review],
           tone: "unverified",
         };
       }

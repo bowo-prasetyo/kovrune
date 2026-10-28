@@ -75,6 +75,8 @@ async function savedAnswer(): Promise<SavedAnswer> {
         ],
       },
     }),
+    // The model's own check of the answer (agent/review.ts).
+    `{"verdict":"yes"}`,
   ]);
   const result = await runResearch({ question: "What is the 2025 budget?", library, model, sources: [createOpenAlex(openAlexFetch)] });
   return toSavedAnswer({
