@@ -610,6 +610,14 @@ describe("helpers", () => {
     assert.equal(index.search("Which hardware is reference class 1?")[0]?.docId, "classes");
   });
 
+  it("does not match a \"not\" in a question with every note (audit F3)", () => {
+    const index = new DocumentIndex([
+      { id: "notes", title: "Meeting notes", text: "Notes from the meeting. We noted the agenda." },
+      { id: "server", title: "Troubleshooting", text: "If the server does not start, check the port." },
+    ]);
+    assert.deepEqual(index.search("Why does the server not start?").map((hit) => hit.docId), ["server"]);
+  });
+
   it("finds a joined word by its parts, and a file by the name in its title (field task f06)", () => {
     const index = new DocumentIndex([
       { id: "guide", title: "kovrune-user-guide.md", text: "Start ./llama-server with -c 4096 for a 4,096-token context." },

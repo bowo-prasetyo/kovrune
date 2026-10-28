@@ -54,7 +54,7 @@ You can choose the other option anyway. Either way, the next step tests the mode
 
 ## 3. Set up a local model server
 
-[llama.cpp](https://github.com/ggml-org/llama.cpp) server is the supported local server. Ollama works but is experimental: in testing, some versions repeated the same step instead of answering.
+[llama.cpp](https://github.com/ggml-org/llama.cpp) server is the supported local server. Ollama works but is experimental: in testing, some versions repeated the same step instead of answering. Ollama also cuts a prompt that is longer than the context it gives the model, without saying so, which can leave out the documents an answer quotes. After the model test, Kovrune asks Ollama for that context and uses it; if Ollama doesn't say, the test shows a warning. To give models more context, start Ollama with `OLLAMA_CONTEXT_LENGTH=4096` or more (for example `OLLAMA_CONTEXT_LENGTH=8192 ollama serve`).
 
 ### Install llama.cpp
 
@@ -230,6 +230,7 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 | **Connect** fails on the preview site but works with `npm run dev`. The browser console (F12) shows "Permission was denied for this request to access the `loopback` address space" | The browser blocked the web page from reaching servers on your computer | Icon left of the address bar → **Site settings** → **Apps on device**: **Allow**, then reload. **Local network access** is not the one. Safari may block it entirely; use Chrome or Edge |
 | **Connect** to a server on another computer fails | The server listens only on its own computer, its firewall blocks the port, or the browser blocked the request | Start it with `--host 0.0.0.0` and allow port 8080 in its firewall. On the preview site, use its IP address or `.local` name and set **Local network access** to **Allow** ([section 3](#use-a-model-server-on-another-computer)) |
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
+| After the model test, a note says Ollama runs the model with less context than you set, or didn't say how much | Ollama's default context is smaller than Kovrune needs, and Ollama cuts longer prompts without saying so | Start Ollama with `OLLAMA_CONTEXT_LENGTH=4096` or more, then test again |
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |
 | The model test reports far fewer tokens/s than the table in [section 3](#download-a-model), and the first request is the slowest | The model is short of memory: other programs (large spreadsheets, many browser tabs) use it, so parts of the model are moved to disk. WSL gets only half the computer's memory by default | Close those programs and test again. With WSL, give it more memory: in `%UserProfile%\.wslconfig` put `[wsl2]` and `memory=6GB` on two lines, run `wsl --shutdown`, and start the server again. In WSL, `free -h` shows whether swap is in use |

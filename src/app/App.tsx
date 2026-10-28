@@ -187,9 +187,10 @@ export function App() {
           settings={draft}
           // Re-testing a saved setup goes back to research: editing it needs "Change setup", which reloads (csp.ts).
           onBack={() => setStep(active ? "research" : draft.path === "browser" && caps ? "browser" : draft.path === "browser" ? "device" : "server")}
-          onPassed={(result) => {
+          onPassed={(result, contextLength) => {
             const tested: Settings = {
               ...draft,
+              ...(draft.path === "local-server" && contextLength !== undefined ? { contextLength } : {}),
               lastTest: {
                 at: new Date().toISOString(),
                 tokensPerSecond: result.decodeTokensPerSecond,

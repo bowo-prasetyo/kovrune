@@ -148,6 +148,50 @@ export async function listModels(
 }
 
 /**
+ * The context Ollama gives a model (docs/ai-ml-audit.md, N9). For a loaded model, the context it runs
+ * with: `context_length` in GET /api/ps. Otherwise the model's own `num_ctx` parameter, when its
+ * Modelfile sets one (POST /api/show). Undefined when Ollama says neither (versions before the context
+ * was added to /api/ps, with no `num_ctx` set), or the requests fail. Ollama cuts a prompt longer than
+ * its context from the start without saying so, so the agent must plan for this context, not more.
+ */
+export async function ollamaContextLength(
+  baseUrl: string,
+  model: string,
+  options: { apiKey?: string; signal?: AbortSignal; fetchImpl?: typeof fetch } = {},
+): Promise<number | undefined> {
+  const { apiKey, signal, fetchImpl = fetch } = options;
+  // The native API is beside the OpenAI-compatible one, not under it.
+  const root = baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+  const headers: Record<string, string> = apiKey ? { authorization: `Bearer ${apiKey}` } : {};
+  // "qwen3.5" and "qwen3.5:latest" name one model.
+  const tagged = (name: unknown) => (typeof name === "string" && !name.includes(":") ? `${name}:latest` : name);
+  const wanted = tagged(model);
+  const positive = (n: unknown) => (typeof n === "number" && Number.isInteger(n) && n > 0 ? n : undefined);
+  try {
+    const running = await fetchImpl(`${root}/api/ps`, { headers, signal });
+    if (running.ok) {
+      const body = (await running.json()) as { models?: Array<{ name?: unknown; model?: unknown; context_length?: unknown }> };
+      const loaded = body.models?.find((m) => tagged(m.name) === wanted || tagged(m.model) === wanted);
+      const n = positive(loaded?.context_length);
+      if (n) return n;
+    }
+    const shown = await fetchImpl(`${root}/api/show`, {
+      method: "POST",
+      headers: { ...headers, "content-type": "application/json" },
+      body: JSON.stringify({ model }),
+      signal,
+    });
+    if (!shown.ok) return undefined;
+    const { parameters } = (await shown.json()) as { parameters?: unknown };
+    const set = typeof parameters === "string" ? /^num_ctx\s+(\d+)\s*$/m.exec(parameters) : null;
+    return set ? positive(Number(set[1])) : undefined;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return undefined;
+  }
+}
+
+/**
  * The context each request gets on a llama.cpp server, from GET /props: its per-slot `n_ctx`, so a
  * server started with several slots (`-np`) reports its context divided between them. Undefined
  * when the server does not say (Ollama and other servers have no /props), or the request fails.

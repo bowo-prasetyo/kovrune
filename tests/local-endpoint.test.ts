@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { LocalEndpointModel, serverContextLength } from "../src/models/local-endpoint.ts";
+import { LocalEndpointModel, ollamaContextLength, serverContextLength } from "../src/models/local-endpoint.ts";
 import { contextFromServer } from "../src/app/servers.ts";
 
 function sseResponse(events: string[]): Response {
@@ -136,5 +136,58 @@ describe("the server's context (llama.cpp /props)", () => {
     const small = contextFromServer(1024, 4096);
     assert.equal(small.tooSmall, true);
     assert.match(small.note!, /only 1024 tokens.*-c 4096 -np 1/);
+  });
+});
+
+describe("the context Ollama gives a model (audit N9)", () => {
+  /** An Ollama that answers /api/ps and /api/show with these bodies (undefined: 404), recording its requests. */
+  const ollama = (ps: unknown, show: unknown) => {
+    const calls: Array<{ url: string; method: string; body?: string; auth?: string }> = [];
+    const fetchImpl = (async (url: string, init: RequestInit = {}) => {
+      calls.push({ url, method: init.method ?? "GET", body: init.body as string | undefined, auth: (init.headers as Record<string, string>)?.authorization });
+      const body = url.endsWith("/api/ps") ? ps : show;
+      return body === undefined ? new Response("404 page not found", { status: 404 }) : new Response(JSON.stringify(body));
+    }) as typeof fetch;
+    return { calls, fetchImpl };
+  };
+  const loaded = (name: string, context_length?: number) => ({ models: [{ name, model: name, ...(context_length ? { context_length } : {}) }] });
+
+  it("reads the context of the loaded model from /api/ps, beside the /v1 API", async () => {
+    const server = ollama(loaded("qwen3.5:4b", 2048), { parameters: "num_ctx 8192" });
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1/", "qwen3.5:4b", { apiKey: "k", fetchImpl: server.fetchImpl }), 2048);
+    assert.deepEqual(server.calls, [{ url: "http://127.0.0.1:11434/api/ps", method: "GET", body: undefined, auth: "Bearer k" }]);
+    // A model named without a tag is the ":latest" one.
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1", "llama3.2", { fetchImpl: ollama(loaded("llama3.2:latest", 4096), {}).fetchImpl }), 4096);
+  });
+
+  it("falls back to the model's num_ctx when the model is not loaded, or Ollama is too old to say", async () => {
+    const server = ollama(loaded("other:1b", 4096), { parameters: 'stop "<|im_end|>"\nnum_ctx 8192\ntemperature 0.6' });
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1", "qwen3.5:4b", { fetchImpl: server.fetchImpl }), 8192);
+    assert.deepEqual(server.calls.at(-1), { url: "http://127.0.0.1:11434/api/show", method: "POST", body: '{"model":"qwen3.5:4b"}', auth: undefined });
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1", "qwen3.5:4b", { fetchImpl: ollama(loaded("qwen3.5:4b"), { parameters: "num_ctx 4096" }).fetchImpl }), 4096);
+  });
+
+  it("says nothing when Ollama says neither, or cannot be asked", async () => {
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1", "qwen3.5:4b", { fetchImpl: ollama({ models: [] }, { parameters: "temperature 0.6" }).fetchImpl }), undefined);
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1", "qwen3.5:4b", { fetchImpl: ollama(undefined, undefined).fetchImpl }), undefined);
+    const offline = (async () => {
+      throw new TypeError("Failed to fetch");
+    }) as typeof fetch;
+    assert.equal(await ollamaContextLength("http://127.0.0.1:11434/v1", "qwen3.5:4b", { fetchImpl: offline }), undefined);
+  });
+
+  it("sets the context length to Ollama's, and warns when Ollama does not say", () => {
+    const less = contextFromServer(2048, 4096, "ollama");
+    assert.equal(less.contextLength, 2048);
+    assert.match(less.note!, /runs this model with 2048 tokens.*OLLAMA_CONTEXT_LENGTH=4096/);
+    assert.doesNotMatch(less.note!, /-np/, "no llama.cpp advice");
+    assert.deepEqual(contextFromServer(4096, 4096, "ollama"), { contextLength: 4096 });
+    const unknown = contextFromServer(undefined, 4096, "ollama");
+    assert.equal(unknown.contextLength, 4096);
+    assert.match(unknown.note!, /didn't say.*cuts prompts longer than that without saying so/);
+    const small = contextFromServer(1024, 4096, "ollama");
+    assert.equal(small.tooSmall, true);
+    assert.match(small.note!, /only 1024 tokens/);
+    assert.doesNotMatch(contextFromServer(8192, 4096, "ollama").note!, /To give it more/);
   });
 });

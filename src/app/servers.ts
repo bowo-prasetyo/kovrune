@@ -87,10 +87,17 @@ export const MIN_CONTEXT_LENGTH = 2048;
 
 /**
  * The context length to use once the server has said what it gives each request (llama.cpp's
- * /props), with a note when that differs from the one typed. The agent fits its conversation into
- * the context it is told; told more than the server has, a long question fails partway through.
+ * /props, Ollama's /api/ps or the model's num_ctx), with a note when that differs from the one typed.
+ * The agent fits its conversation into the context it is told; told more than the server has, a long
+ * question fails partway through on llama.cpp, and on Ollama loses its start without a word: the
+ * system prompt, the question, or the documents an answer quotes.
  */
-export function contextFromServer(reported: number | undefined, typed: number): { contextLength: number; note?: string; tooSmall?: boolean } {
+export function contextFromServer(
+  reported: number | undefined,
+  typed: number,
+  kind: ServerKind = "llama.cpp",
+): { contextLength: number; note?: string; tooSmall?: boolean } {
+  if (kind === "ollama") return contextFromOllama(reported, typed);
   if (reported === undefined || reported === typed) return { contextLength: typed };
   if (reported < MIN_CONTEXT_LENGTH) {
     return {
@@ -104,5 +111,36 @@ export function contextFromServer(reported: number | undefined, typed: number): 
     note:
       `The server gives each request ${reported} tokens of context, so the context length is set to that.` +
       (reported < typed ? " To give it more, restart the server with a larger -c, and -np 1 so that one request gets all of it." : ""),
+  };
+}
+
+/** How to give a model more context on Ollama: the server's default, for every model without its own num_ctx. */
+const OLLAMA_CONTEXT_ADVICE = "start Ollama with OLLAMA_CONTEXT_LENGTH=4096 or more (for example OLLAMA_CONTEXT_LENGTH=8192 ollama serve), then test again";
+
+/**
+ * contextFromServer for Ollama (ollamaContextLength). Unlike llama.cpp, Ollama does not refuse a prompt
+ * that is too long: it cuts it without saying so. So when Ollama does not say what context it gives
+ * the model, the note warns about that rather than staying silent.
+ */
+function contextFromOllama(reported: number | undefined, typed: number): { contextLength: number; note?: string; tooSmall?: boolean } {
+  if (reported === undefined) {
+    return {
+      contextLength: typed,
+      note: `Ollama didn't say how much context it gives this model. It cuts prompts longer than that without saying so, which can leave out the documents an answer quotes. To be sure it has ${typed} tokens, ${OLLAMA_CONTEXT_ADVICE}.`,
+    };
+  }
+  if (reported === typed) return { contextLength: typed };
+  if (reported < MIN_CONTEXT_LENGTH) {
+    return {
+      contextLength: reported,
+      tooSmall: true,
+      note: `Ollama runs this model with only ${reported} tokens of context; Kovrune needs at least ${MIN_CONTEXT_LENGTH}. To give it more, ${OLLAMA_CONTEXT_ADVICE}.`,
+    };
+  }
+  return {
+    contextLength: reported,
+    note:
+      `Ollama runs this model with ${reported} tokens of context, so the context length is set to that.` +
+      (reported < typed ? ` To give it more, ${OLLAMA_CONTEXT_ADVICE}.` : ""),
   };
 }
