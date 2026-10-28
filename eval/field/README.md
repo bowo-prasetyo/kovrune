@@ -30,6 +30,7 @@ The model writes its own queries, so this is a fixed yardstick for search, not a
 | --- | --- | --- | --- | --- | --- |
 | **3 results (the app, harness 0.26.0)** | 100% | 100% | 94.4% | 81.8% | 30 |
 | 5 results, measured and run, [not adopted](#five-search-results) | 100% | 100% | 97.2% | 88.6% | 32 |
+| 3 results with consistent stems and the parts of joined words, measured and run, [not adopted](#search-ranking) | 100% | 100% | 97.2% | 88.6% | 32 |
 | At most one passage per document, 3 results, measured, not adopted | 100% | 100% | 97.2% | 81.8% | 30 |
 
 - **The synthetic suites cannot tell search changes apart:** every variant finds everything there. Only the field suite's long, real documents do.
@@ -96,6 +97,8 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-2B | 0.26.0 | 35/47 (74%) | 15/22 | 5/8 | 3/4 | 2 of 16 | [json](../results/field-0.26-baseline-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.26.0, five search results, not adopted | 33/47 (70%) | 15/22 | 5/8 | 3/4 | 2 of 13 | [json](../results/field-0.26-five-results-qwen3.5-2b-q4km.json) |
 | Qwen3.5-2B | 0.28.0, the model checks its answer | 35/47 (74%) | 15/22 | 5/8 | 3/4 | 2 of 16 | [json](../results/field-0.28-review-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.28.0, portable llama.cpp build | 32/47 (68%) | 17/22 | 5/8 | 3/4 | 2 of 17 | [json](../results/field-0.29-baseline-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.29.0, search ranking, not adopted | 33/47 (70%) | 17/22 | 5/8 | 3/4 | 1 of 15 | [json](../results/field-0.29-ranking-qwen3.5-2b-q4km.json) |
 | Qwen3.5-4B | 0.14.0 | 19/24 (79%) | 18/22 | 8/8 | 4/4 | 3 of 17 | [json](../results/field-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.15.0 | **20/24 (83%)** | 18/22 | 8/8 | 4/4 | 3 of 18 | [json](../results/field-fix-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.16.0 | 20/24 (83%) | 19/22 | 8/8 | 3/4 | 3 of 14 | [json](../results/field-0.16-qwen3.5-4b-q4km.json) |
@@ -111,6 +114,8 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.26.0 | 40/47 (85%) | 19/22 | 8/8 | 4/4 | 2 of 22 | [json](../results/field-0.26-baseline-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.26.0, five search results, not adopted | 41/47 (87%) | 19/22 | 8/8 | 4/4 | 0 of 19 | [json](../results/field-0.26-five-results-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.28.0, the model checks its answer | 40/47 (85%) | 19/22 | 8/8 | 4/4 | **1 of 21** | [json](../results/field-0.28-review-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.28.0, portable llama.cpp build | 40/47 (85%) | 19/22 | 8/8 | 4/4 | 2 of 20 | [json](../results/field-0.29-baseline-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.29.0, search ranking, not adopted | 42/47 (89%) | 19/22 | 8/8 | 3/4 | 1 of 20 | [json](../results/field-0.29-ranking-qwen3.5-4b-q4km.json) |
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.
@@ -236,11 +241,31 @@ Both models were run on all five suites, on the machine of the 0.26.0 and 0.27.0
 - **2B says yes to everything,** right or wrong. A small model checking its own answer mostly agrees with it, and 2B more than 4B.
 - **Against the rule for label changes:** false reassurance falls on 4B and stays on 2B, no right answer loses its label, and the held-out suite's labels are unchanged. Adopted, as a weak check: it costs one short call, only for answers the word checks would label. The prompt was not tuned on `f23`, which the held-out discipline would forbid; a stronger check would ask something more specific (each number or condition of the answer against its passage) and be judged the same way.
 
+<a id="search-ranking"></a>**Search ranking (0.29.0, not adopted).** With three results, the answer passages of `f06`, `f13`, `f17` and `f23` ranked 4th to 6th. The cause was in tokenizing, not in BM25: a bonus for query words that appear in one sentence, tried at five weights, found no more answer passages, and at the higher weights fewer. Two defects did:
+- **The stemmer was inconsistent:** it stripped one "s" from words ending in "ss", so "class" gave `clas` and "classes" gave `class`, and `f13`'s "Reference hardware classes" did not match the question's "class".
+- **Words joined by "-" or "." were one term:** "llama-server" matched only "llama-server", and titles, which are file names ("kovrune-user-guide.md", or a user's "report.pdf"), matched no query at all.
+
+Keeping a final "s" after another, and indexing each joined word's parts as well, gave three results the retrieval of five: cited documents 94.4% → 97.2%, answer passages 81.8% → 88.6%, everything found for 32 of 35 tasks instead of 30. Research and pdf still found everything; the held-out suite, checked once by its totals, went from 87.5% to 100% of answer passages. No recorded label changed (1,342 answers re-scored). Run on both models, all five suites, against a baseline of `main` on the same llama.cpp build:
+
+| Model | Field | Research | Unanswerable | PDF | Held out | Quotes found, wrong (field) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4B, `main` | 40/47 | 19/22 | 8/8 | **4/4** | 15/16 | 2 of 20 |
+| 4B, ranking | **42/47** (+2, −0, p 0.50) | 19/22 | 8/8 | 3/4 | 15/16 | 1 of 20 |
+| 2B, `main` | 32/47 | 17/22 | 5/8 | 3/4 | **10/16** | 2 of 17 |
+| 2B, ranking | **33/47** (+1, −0, p 1) | 17/22 | 5/8 | 3/4 | 9/16 | 1 of 15 |
+
+- **The field suite gains what retrieval predicted:** 4B's `f13` and 2B's `f06`, both answer passages the fix brought into the first three. 4B's `f07` was gained too, as a right "not found".
+- **Each model loses one task in a suite the rule protects.** 4B's `p04`: search now shows both documents the question needs at once, and 4B answered from the snippets, "spent EUR on security audits", without reading the report and its 96,000; with the old ranking it was sent back to read first and got the number. 2B lost one held-out task in total.
+- **False reassurance moves both ways:** on the field suite it falls on both models, by one answer each; on 4B's research suite it rises from 1 of 12 to 2 of 13.
+- **Against the rule:** the field suite improves on both models, but the pdf suite falls on 4B and the held-out suite on 2B, so it is not adopted and search is unchanged. The two defects are real, and the second keeps a user's documents from being found by their file names; a later change can fix them together with what made `p04` answer from snippets (the read-before-answering guards), and be judged the same way.
+
 ### Runs repeat on one machine, not across machines
 
 - **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results.
 - **Across machines, they differ.** The 0.16.0 baseline used the same llama.cpp commit and model files as the 0.15.0 runs, and the same prompt. Its actions differed on 20 of 58 tasks for 4B and 34 of 58 for 2B. A few results changed: `p04` (4B) now fails, and `r17` (2B) now passes. The likely cause is floating-point differences between CPUs and builds, which change which token wins at temperature 0.
 - **So a change is judged against a baseline run on the same machine, never against a report from another one.** One run of each is enough there, but a difference of one or two tasks is still specific to that machine.
+- **A portable llama.cpp build may make runs repeat across machines (0.29.0).** The container moved between three CPUs during the 0.29.0 runs, and a llama.cpp built with `-DGGML_NATIVE=ON` on one stopped with an illegal instruction on another. Rebuilt with `-DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON`, the same 12 tasks (8 field, 4 research, Qwen3.5-2B) took the same actions and gave the same final answers on an Intel Xeon @ 2.80GHz and @ 2.10GHz. Twelve tasks on two CPUs is evidence, not proof; if it holds, a baseline from another machine with this build is comparable, which the native builds never were.
+- **A portable run is not comparable with a native one:** the same code with the two builds took the same actions on 30 of 47 field tasks for 4B and 28 of 47 for 2B, and 2B's field suite went from 35 to 32 (the native runs were on a third CPU, so the build is not the only difference). So reports from 0.29.0 on name the build in their notes, and baselines are run with the build of the change.
 
 **What the suite shows that the synthetic suites don't** (0.15.0 failures):
 
