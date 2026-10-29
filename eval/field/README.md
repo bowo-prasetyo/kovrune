@@ -227,6 +227,19 @@ The review of short answers ([above](#short-answers-checked-by-the-model-and-a-c
 
 This run is also the fresh 4B baseline for later changes on the same build, such as the stemmer proposed in [pull request #85](https://github.com/bowo-prasetyo/kovrune/pull/85).
 
+**The 2B baseline on `main` (0.38.0).** Qwen3.5-2B on the same build, flags and CPU, at `38159be`, all five suites, in nine parts merged into one report ([json](../results/field-0.38-main-qwen3.5-2b-q4km.json)). It is the 2B baseline for the stemmer and later changes. Against its 0.32.0 baseline (0.30.0 for the synthetic suites):
+
+| Suite | Before | 0.38.0 | Same actions | Quotes found, wrong: before | Now |
+| --- | --- | --- | --- | --- | --- |
+| Field | 68/89 | 69/89 | 86 of 89 | 3 of 40 | 3 of 41 |
+| Held out | 24/37 | 24/37 | 36 of 37 | 0 of 14 | 0 of 14 |
+| Research | 17/22 | 17/22 | 22 of 22 | 0 of 9 | 0 of 9 |
+| Unanswerable | 5/8 | 5/8 | 8 of 8 | 0 of 0 | 0 of 0 |
+| PDF | 3/4 | 3/4 | 4 of 4 | 0 of 3 | 0 of 3 |
+
+- **Field gains `f48` and `f53` with the same actions:** the [0.33.0](#quotes-compared-as-they-read) Markdown fix, as re-scoring predicted. It loses `f69`, which took other actions; the search changes since 0.32.0 (part labels in 0.37.0, stop words in 0.38.0) can change what the model reads.
+- **2B's short answers are not reviewed** (`reviewsShortAnswers`), so they keep **Quotes found, answer too short to check**: on the field suite 21 such answers are right and 7 wrong, held out 7 and 6.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
