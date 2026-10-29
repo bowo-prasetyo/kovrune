@@ -199,7 +199,7 @@ Two more findings from the follow-up audit ([`docs/ai-ml-audit.md`](../../docs/a
 - **Ollama's context is read after the model test (N9).** Ollama has no `/props`, and it cuts a prompt longer than its context without saying so, keeping the end: the agent could lose its system prompt, its question or the documents it quotes, with no error. The model test loads the model, so afterwards Kovrune reads the context Ollama runs it with (`context_length` in `/api/ps`, or failing that the model's `num_ctx` in `/api/show`; `ollamaContextLength` in `src/models/local-endpoint.ts`) and saves it as the context length, as it does with llama.cpp's `/props`. When Ollama says neither, the test shows a warning with the fix (`OLLAMA_CONTEXT_LENGTH`). Below 2,048 tokens the setup cannot be saved. The response shapes are from Ollama's own client library (`ollama` 0.6.3 for Python); no Ollama server was run. The benchmark does not use Ollama, so no result changes.
 - **"not" and "no" are search stop words (F3).** The stemmer gives "note", "notes" and "noted" the stem "not", so a question with "not" ("Why does the server not start?") matched every note. Neither word helps find a passage. `bench:retrieval` is unchanged with and without 300 generated documents, and so are the results of every search query the models made in the recorded runs of the two tasks the stemmer change below affects.
 
-**The stemmer itself is not in this version.** A stemmer whose forms of a word all meet ("setting" and "settings", "used" and "use", "running" and "run") was built and measured: it found nothing more, and pushed `p04`'s advisory out of the three results, also for the queries the models made in the recorded runs, because a correct match ("advisories" for "advisory") lifts another document. With 300 generated documents, `f60` lost its answer passages too. It is proposed separately, to be judged by runs of both models under the [defect-fix clause](#rule-for-prompt-and-guard-changes).
+The stemmer itself was measured worse on retrieval, then run on both models, and is [not adopted](#a-stemmer-whose-forms-of-a-word-meet-measured-not-adopted).
 
 ### The 4B short-answer review, measured (0.38.0 run)
 
@@ -225,7 +225,7 @@ The review of short answers ([above](#short-answers-checked-by-the-model-and-a-c
 - **As predicted.** The README's prediction before the run was at worst 3 of 67 on the field suite and 1 of 29 held out; the run gives 2 of 66 and 1 of 29.
 - **Against the rule for label changes,** as applied to the model's check in 0.28.0 ([Results](#results)): no right answer loses its label, and false reassurance falls on the field suite. But held out and research each gain one wrong labelled answer, where the 0.28.0 check left the held-out labels unchanged. The check caught one of the three wrong short answers. That is the check's known weakness ([audit F2](../../docs/ai-ml-audit.md)), now on short answers too: a more specific review prompt, judged by re-reviewing the recorded answers, is the next step. Whether to keep the review of short answers, or keep it and work on the prompt, is the project owner's decision; the run is recorded either way.
 
-This run is also the fresh 4B baseline for later changes on the same build, such as the stemmer proposed in [pull request #85](https://github.com/bowo-prasetyo/kovrune/pull/85).
+This run is also the fresh 4B baseline for later changes on the same build, such as the [stemmer](#a-stemmer-whose-forms-of-a-word-meet-measured-not-adopted) proposed in [pull request #85](https://github.com/bowo-prasetyo/kovrune/pull/85).
 
 **The 2B baseline on `main` (0.38.0).** Qwen3.5-2B on the same build, flags and CPU, at `38159be`, all five suites, in nine parts merged into one report ([json](../results/field-0.38-main-qwen3.5-2b-q4km.json)). It is the 2B baseline for the stemmer and later changes. Against its 0.32.0 baseline (0.30.0 for the synthetic suites):
 
@@ -239,6 +239,36 @@ This run is also the fresh 4B baseline for later changes on the same build, such
 
 - **Field gains `f48` and `f53` with the same actions:** the [0.33.0](#quotes-compared-as-they-read) Markdown fix, as re-scoring predicted. It loses `f69`, which took other actions; the search changes since 0.32.0 (part labels in 0.37.0, stop words in 0.38.0) can change what the model reads.
 - **2B's short answers are not reviewed** (`reviewsShortAnswers`), so they keep **Quotes found, answer too short to check**: on the field suite 21 such answers are right and 7 wrong, held out 7 and 6.
+
+### A stemmer whose forms of a word meet (measured, not adopted)
+
+The old rule stripped one suffix, shortest stem first, so a word and its plural could part: "setting" gave `sett` and "settings" `setting`, "string" `str` and "strings" `string`, "used" stayed whole while "use" and "uses" gave `use`. Of 30 common word families, 10 split. The proposed `stem` ([pull request #85](https://github.com/bowo-prasetyo/kovrune/pull/85), harness 0.39.0 on that branch only) runs three steps in order (a plural; "-ing" or "-ed", only when what is left has a vowel, undoubling "running" to "run"; a final "e"), and none of the 30 split. The sentence check uses the same stems.
+
+**Measured without a model, it costs more than it finds:**
+- `bench:retrieval`: no task gains. With 3 results, pdf `p04` loses its second document, the advisory, now fourth behind the governance document, whose "numbered advisories" now match "advisory". With 300 generated documents, `f60` loses its answer passages too. On the search queries the models made in the recorded runs, `p04`'s loss holds (its two recorded queries no longer find the advisory) and `f60`'s does not: each of its three recorded queries still finds a passage that names both sandboxes, part 10 of the design document before and part 21 after.
+- `bench:rescore` over all 52 reports: 4 labels change. Three right answers gain **Quotes found** (2B `f53`, 2B and 4B `f59`, in the 0.32.0 baselines) and so does one wrong answer (4B `f07` in the 0.17.0 run that was not adopted).
+- The pull request lowered the retrieval floors in `tests/retrieval.test.ts` to match: pdf allowing `p04` to miss its second document, and the 300-document floor falling from 91% to 88.8% of answer passages, 69 to 68 tasks.
+
+It is a defect fix in the sense of the [rule](#rule-for-prompt-and-guard-changes), shown by a unit test, so it is judged by runs of both models on all suites: adopted unless a protected suite loses at least two more tasks than it gains, or loses with a p-value below 0.25.
+
+**Run on both models, it loses four tasks and gains none.** Each model ran the stemmer branch (`8d00bde`) on all five suites, on the build, flags and CPU of its 0.38.0 baseline on `main` ([both baselines](#the-4b-short-answer-review-measured-0380-run)), in nine parts merged into one report each ([2B json](../results/field-0.39-stemmer-qwen3.5-2b-q4km.json), [4B json](../results/field-0.39-stemmer-qwen3.5-4b-q4km.json)). By `bench:compare`:
+
+| Suite | 2B: baseline → stemmer | Gained, lost | 4B: baseline → stemmer | Gained, lost (p) |
+| --- | --- | --- | --- | --- |
+| Research | 17/22 → 17/22 | 0, 0 | 19/22 → 19/22 | 0, 0 |
+| Unanswerable | 5/8 → 5/8 | 0, 0 | 8/8 → 8/8 | 0, 0 |
+| PDF | 3/4 → 3/4 | 0, 0 | 4/4 → **3/4** | 0, 1 (p = 1) |
+| Field | 69/89 → 69/89 | 0, 0 | 79/89 → **76/89** | 0, 3 (p = 0.25) |
+| Held out | 24/37 → 24/37 | 0, 0 | 35/37 → 35/37 | 0, 0 |
+| Quotes found, wrong (all suites) | 3 of 67 → 3 of 69 | | 5 of 117 → 7 of 116 | |
+
+The four 4B losses, three of them from the ranking change measured above:
+- **`p04` (pdf):** the advisory is no longer among the three results, so 4B answers without reading it, missing the reporter. That wrong answer is labelled **Quotes found**, as 2B's is too (2B fails `p04` in both runs).
+- **`f60`:** the new ranking puts parts 31 and 33 of the design document first; 4B reads those, not the part that names the sandboxes, and answers wrongly.
+- **`f07`:** 4B reads another part of the user guide and answers a question the guide does not answer, where before it said the answer was not there.
+- **`f74`:** the same answer, but its quote now starts with the section heading and has the line breaks written as `\n`, so it is not found in the document. The search results it saw differ, which is the stemmer's effect; the failure itself is a separate weakness of the quote check, for a quote with literal `\n`, and worth a defect fix of its own.
+
+**Not adopted, at the project owner's decision.** By the letter of the defect-fix clause the stemmer would pass: no protected suite loses two more tasks than it gains (4B's pdf loses one, with p = 1), and none loses with p below 0.25. But it gains nothing on either model and loses four tasks on 4B, three of them traced to the ranking change, and adds a wrong answer labelled **Quotes found** on both models' pdf suite. The clause guards a correct fix against losses that chance could explain; these losses have a cause. So `main` keeps the old stemmer, and its reports are kept here as the record. They carry harness 0.39.0, the version on the pull request's branch, so the next version on `main` should be 0.40.0 to keep the numbers apart. A stemmer is worth trying again together with something that counters the ranking change, such as weighting a document's title or limiting how many results one long document can take.
 
 ## Results
 
