@@ -201,7 +201,7 @@ Two more findings from the follow-up audit ([`docs/ai-ml-audit.md`](../../docs/a
 
 The stemmer itself was measured worse on retrieval and is proposed separately, below.
 
-### A stemmer whose forms of a word meet (0.39.0, model runs pending)
+### A stemmer whose forms of a word meet (0.39.0, measured)
 
 The old rule stripped one suffix, shortest stem first, so a word and its plural could part: "setting" gave `sett` and "settings" `setting`, "string" `str` and "strings" `string`, "used" stayed whole while "use" and "uses" gave `use`. Of 30 common word families, 10 split. The new `stem` (`src/tools/search.ts`) runs three steps in order (a plural; "-ing" or "-ed", only when what is left has a vowel, undoubling "running" to "run"; a final "e"), and none of the 30 split. The sentence check uses the same stems.
 
@@ -210,7 +210,26 @@ The old rule stripped one suffix, shortest stem first, so a word and its plural 
 - `bench:rescore` over all 52 reports: 4 labels change. Three right answers gain **Quotes found** (2B `f53`, 2B and 4B `f59`, in the 0.32.0 baselines) and so does one wrong answer (4B `f07` in the 0.17.0 run that was not adopted).
 - The retrieval floors in `tests/retrieval.test.ts` are lowered to match: pdf allows `p04` to miss its second document, and the 300-document floor falls from 91% to 88.8% of answer passages, 69 to 68 tasks.
 
-It is a defect fix in the sense of the [rule](#rule-for-prompt-and-guard-changes), shown by a unit test, so it is judged by runs of both models on all suites. It is adopted unless a protected suite loses at least two more tasks than it gains, or loses with a p-value below 0.25. Until those runs, it is proposed in a pull request of its own and not merged.
+It is a defect fix in the sense of the [rule](#rule-for-prompt-and-guard-changes), shown by a unit test, so it is judged by runs of both models on all suites: adopted unless a protected suite loses at least two more tasks than it gains, or loses with a p-value below 0.25.
+
+**Run on both models, it loses four tasks and gains none.** Each model ran the stemmer branch (`8d00bde`) on all five suites, on the build, flags and CPU of its 0.38.0 baseline on `main` ([both baselines](#the-4b-short-answer-review-measured-0380-run)), in nine parts merged into one report each ([2B json](../results/field-0.39-stemmer-qwen3.5-2b-q4km.json), [4B json](../results/field-0.39-stemmer-qwen3.5-4b-q4km.json)). By `bench:compare`:
+
+| Suite | 2B: baseline → stemmer | Gained, lost | 4B: baseline → stemmer | Gained, lost (p) |
+| --- | --- | --- | --- | --- |
+| Research | 17/22 → 17/22 | 0, 0 | 19/22 → 19/22 | 0, 0 |
+| Unanswerable | 5/8 → 5/8 | 0, 0 | 8/8 → 8/8 | 0, 0 |
+| PDF | 3/4 → 3/4 | 0, 0 | 4/4 → **3/4** | 0, 1 (p = 1) |
+| Field | 69/89 → 69/89 | 0, 0 | 79/89 → **76/89** | 0, 3 (p = 0.25) |
+| Held out | 24/37 → 24/37 | 0, 0 | 35/37 → 35/37 | 0, 0 |
+| Quotes found, wrong (all suites) | 3 of 67 → 3 of 69 | | 5 of 117 → 7 of 116 | |
+
+The four 4B losses, three of them from the ranking change measured above:
+- **`p04` (pdf):** the advisory is no longer among the three results, so 4B answers without reading it, missing the reporter. That wrong answer is labelled **Quotes found**, as 2B's is too (2B fails `p04` in both runs).
+- **`f60`:** the new ranking puts parts 31 and 33 of the design document first; 4B reads those, not the part that names the sandboxes, and answers wrongly.
+- **`f07`:** 4B reads another part of the user guide and answers a question the guide does not answer, where before it said the answer was not there.
+- **`f74`:** the same answer, but its quote now starts with the section heading and has the line breaks written as `\n`, so it is not found in the document. The search results it saw differ, which is the stemmer's effect; the failure itself is a separate weakness of the quote check, for a quote with literal `\n`, and worth a defect fix of its own.
+
+**Recommendation: do not adopt; the decision is the project owner's.** By the letter of the defect-fix clause the stemmer would pass: no protected suite loses two more tasks than it gains (4B's pdf loses one, with p = 1), and none loses with p below 0.25. But it gains nothing on either model and loses four tasks on 4B, three of them traced to the ranking change, and adds a wrong answer labelled **Quotes found** on both models' pdf suite. The clause guards a correct fix against losses that chance could explain; these losses have a cause. Until the decision, `main` keeps the old rule. A stemmer is worth trying again together with something that counters the ranking change, such as weighting a document's title or limiting how many results one long document can take.
 
 ### The 4B short-answer review, measured (0.38.0 run)
 
