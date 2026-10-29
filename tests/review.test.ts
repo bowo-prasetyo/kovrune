@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
-import { itemizedReviewPrompt, parseVerdict, reviewAnswer, reviewPrompt, reviewsShortAnswers } from "../src/agent/review.ts";
+import { parseVerdict, reviewAnswer, reviewPrompt, reviewsShortAnswers } from "../src/agent/review.ts";
+import { itemizedReviewPrompt } from "../eval/harness/review-prompts.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -76,7 +77,7 @@ describe("the model's own check of an answer", () => {
     assert.doesNotMatch(prompt, /^2\./m);
   });
 
-  it("asks the itemized prompt about the same material, point by point (audit F2)", async () => {
+  it("asks a candidate prompt, such as the itemized one, about the same material (audit F2)", async () => {
     const evidence = checkEvidence([{ docId: "mpl", quote: "prior to 60 days after You have come back into compliance" }], () => MPL.text);
     const current = reviewPrompt(QUESTION, "60 days.", evidence, () => "MPL-2.0");
     const itemized = itemizedReviewPrompt(QUESTION, "60 days.", evidence, () => "MPL-2.0");

@@ -41,29 +41,11 @@ export function reviewPrompt(question: string, answer: string, evidence: Checked
   ].join("\n");
 }
 
-/**
- * A more specific review prompt (audit F2, priority 2): rather than ask whether the passages state what
- * the answer says, it names the points the broad question lets through (a value from the wrong clause,
- * a condition of the question the passage does not meet, half an answer, a claim from memory) and asks
- * for "yes" only when each one holds. Judged by re-reviewing recorded answers (eval/rereview.ts).
- */
-export function itemizedReviewPrompt(question: string, answer: string, evidence: CheckedEvidence[], titleFor: (docId: string) => string | undefined): string {
-  return [
-    ...reviewMaterial(question, answer, evidence, titleFor),
-    "Check the answer against the passages, point by point:",
-    "- Values: every number, date, name and unit in the answer is in a passage, with the same value, and about the same thing the answer says it is about.",
-    '- Conditions: when the question names a version, a year, a place, a person or a limit such as "since", "until", "before" or "after", the passage the answer relies on meets it.',
-    "- Completeness: the answer gives everything the question asks for. A question in two parts needs both.",
-    "- Nothing added: the answer claims nothing the passages do not state.",
-    'Reply "yes" only if all four hold. Reply "partly" if any one of them fails. Reply "no" if the passages do not answer the question at all.',
-    VERDICT_FORMAT,
-  ].join("\n");
-}
-
-const VERDICT_FORMAT = 'Reply with exactly one JSON object: {"verdict":"yes"}, {"verdict":"partly"} or {"verdict":"no"}.';
+/** How every review prompt asks for its reply. */
+export const VERDICT_FORMAT = 'Reply with exactly one JSON object: {"verdict":"yes"}, {"verdict":"partly"} or {"verdict":"no"}.';
 
 /** The question, the answer, and each verified quote in the text around it: what every review prompt shows the model. */
-function reviewMaterial(question: string, answer: string, evidence: CheckedEvidence[], titleFor: (docId: string) => string | undefined): string[] {
+export function reviewMaterial(question: string, answer: string, evidence: CheckedEvidence[], titleFor: (docId: string) => string | undefined): string[] {
   const passages = evidence
     .filter((e) => e.verified)
     .map((e, i) => {
@@ -106,7 +88,7 @@ export async function reviewAnswer(options: {
   titleFor: (docId: string) => string | undefined;
   /** Constrain the reply to a verdict when the runtime can (default), as the agent's own calls are. */
   constrained?: boolean;
-  /** The prompt to ask with (reviewPrompt by default); eval/rereview.ts compares others on recorded answers. */
+  /** The prompt to ask with (reviewPrompt by default); eval/rereview.ts compares candidates on recorded answers. */
   prompt?: typeof reviewPrompt;
   signal?: AbortSignal;
 }): Promise<ReviewVerdict> {

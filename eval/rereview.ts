@@ -16,20 +16,19 @@ import { readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { answerStatus, checkEvidence, type EvidenceItem } from "../src/agent/evidence.ts";
 import { withoutPartLabels, type ResearchLibrary } from "../src/agent/research.ts";
-import { itemizedReviewPrompt, reviewAnswer, reviewPrompt, reviewsShortAnswers, type ReviewVerdict } from "../src/agent/review.ts";
+import { reviewAnswer, reviewsShortAnswers, type ReviewVerdict } from "../src/agent/review.ts";
 import { reviewAsked, sentenceSupport, wordChecksPass } from "../src/agent/support.ts";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import type { Report } from "./harness/benchmark.ts";
 import { HELD_OUT_SUITES } from "./harness/compare.ts";
 import { loadFieldSuite } from "./harness/field.ts";
+import { REVIEW_PROMPTS } from "./harness/review-prompts.ts";
 import { loadNodePdfLibrary } from "./harness/pdf-node.ts";
 import { baseLibrary } from "./harness/suites.ts";
 import { holdoutTasks } from "./field/holdout.ts";
 import { pdfTasks } from "./tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "./tasks/research.ts";
 import { unanswerableTasks } from "./tasks/unanswerable.ts";
-
-const PROMPTS = { current: reviewPrompt, itemized: itemizedReviewPrompt };
 
 const { values, positionals } = parseArgs({
   options: {
@@ -43,9 +42,9 @@ const { values, positionals } = parseArgs({
   },
   allowPositionals: true,
 });
-const prompt = PROMPTS[values.prompt as keyof typeof PROMPTS];
+const prompt = REVIEW_PROMPTS[values.prompt!];
 if (positionals.length !== 1 || !values.model || !prompt) {
-  console.error(`Give one report, --model and --prompt (${Object.keys(PROMPTS).join(" or ")}).`);
+  console.error(`Give one report, --model and --prompt (${Object.keys(REVIEW_PROMPTS).join(" or ")}).`);
   process.exit(1);
 }
 

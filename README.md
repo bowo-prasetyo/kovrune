@@ -63,6 +63,8 @@ npm run bench:browser     # M0 benchmark page (WebLLM)
 npm run bench:endpoint    # M0 benchmark against a local model server
 npm run bench:retrieval   # the search on its own, no model needed
 npm run bench:compare -- a.json b.json   # two runs task by task, with how sure the difference is
+npm run bench:rescore -- a.json          # recorded answers checked and labelled again, without a model
+npm run bench:rereview -- --model m a.json   # the model's check of recorded answers asked again, with a chosen prompt
 ```
 
 Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
