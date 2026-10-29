@@ -165,7 +165,7 @@ Two changes to the model's check of an answer (`src/agent/review.ts`), from the 
 - **Short answers are checked too.** An answer too short for the sentence check (no sentence of three content words, such as "4 KiB" or "1987年") read **Quotes found, answer too short to check** whatever it said. In the 0.32.0 baselines, 28 of the 30 such answers from 4B were right, and 28 of 41 from 2B. Now, when every quote is found, the model is asked about them as about the others, and the answer is labelled **Quotes found** if it says yes. Answers saved before keep their label.
 - **The check follows the agent's mode:** it is constrained to a verdict only when the agent's calls are, so unconstrained benchmark runs are unconstrained throughout.
 
-**Not yet measured.** The second change is a label change, and the [rule](#rule-for-prompt-and-guard-changes) asks for runs of both models before it is adopted. It needs one model call per short answer, so it cannot be judged by re-scoring the recorded reports. What the recorded verdicts predict:
+**Not yet measured** when it was adopted; [measured since on 4B](#the-4b-short-answer-review-measured-0380-run). The second change is a label change, and the [rule](#rule-for-prompt-and-guard-changes) asks for runs of both models before it is adopted. It needs one model call per short answer, so it cannot be judged by re-scoring the recorded reports. What the recorded verdicts predict:
 - **4B:** its check said "partly" to 1 of the 3 wrong answers it was asked about, and "yes" to all 64 right ones. Its short answers are 20 right and 1 wrong on the field suite, 8 and 1 held out. So the right ones would likely gain the label, and false reassurance would stay near where it is: at worst 3 of 67 on the field suite (now 2 of 46), and 1 of 29 held out (now 0 of 20).
 - **2B:** its check said "yes" to 3 of the 4 wrong answers it was asked about. Its short answers are 21 right and 7 wrong on the field suite, 7 and 6 held out, and most of the wrong ones would likely gain the label too. So **2B's false reassurance would likely rise**: at worst 10 of 68 on the field suite (now 3 of 40), and 6 of 27 held out (now 0 of 14). If the runs confirm this, the short-answer check should apply only to models whose check has been measured to catch wrong short answers, and 2B's short answers keep the amber label.
 
@@ -200,6 +200,32 @@ Two more findings from the follow-up audit ([`docs/ai-ml-audit.md`](../../docs/a
 - **"not" and "no" are search stop words (F3).** The stemmer gives "note", "notes" and "noted" the stem "not", so a question with "not" ("Why does the server not start?") matched every note. Neither word helps find a passage. `bench:retrieval` is unchanged with and without 300 generated documents, and so are the results of every search query the models made in the recorded runs of the two tasks the stemmer change below affects.
 
 **The stemmer itself is not in this version.** A stemmer whose forms of a word all meet ("setting" and "settings", "used" and "use", "running" and "run") was built and measured: it found nothing more, and pushed `p04`'s advisory out of the three results, also for the queries the models made in the recorded runs, because a correct match ("advisories" for "advisory") lifts another document. With 300 generated documents, `f60` lost its answer passages too. It is proposed separately, to be judged by runs of both models under the [defect-fix clause](#rule-for-prompt-and-guard-changes).
+
+### The 4B short-answer review, measured (0.38.0 run)
+
+The review of short answers ([above](#short-answers-checked-by-the-model-and-a-check-that-fails-closed-0340-limited-to-4b-in-0350)) was adopted before its run (audit N1). This is that run: Qwen3.5-4B on `main` at harness 0.38.0 (`abb125a`), all five suites, with the build, model file, flags and CPU (Intel Xeon @ 2.80GHz) of the 0.32.0 baseline. It ran in eight parts on one machine and was merged; two parts were run again from the start after the container restarted ([json](../results/field-0.38-main-qwen3.5-4b-q4km.json)).
+
+| Suite | 0.32.0 baseline (0.30.0 for research, unanswerable, pdf) | 0.38.0 | Same actions | Quotes found, wrong: before | Now |
+| --- | --- | --- | --- | --- | --- |
+| Field | 79/89 | 79/89 | 87 of 89 | 2 of 46 | **2 of 66** |
+| Held out | 35/37 | 35/37 | 37 of 37 | 0 of 20 | **1 of 29** |
+| Research | 19/22 | 19/22 | 22 of 22 | 1 of 12 | **2 of 18** |
+| Unanswerable | 8/8 | 8/8 | 8 of 8 | 0 of 0 | 0 of 0 |
+| PDF | 4/4 | 4/4 | 4 of 4 | 0 of 4 | 0 of 4 |
+
+- **The runs repeat.** 158 of 160 tasks took the same actions as in the baselines, among them all 34 synthetic tasks first run on another CPU (0.30.0). The two that differ, field `f15` and `f69`, pass in both. So the label counts are the short-answer review's effect, and not a change in what the model did. The median field task took 102 s (103 s before).
+- **The review was asked about 36 short answers, and rejected none of the 33 right ones.** Its verdicts, against the task's result:
+
+  | Short answers (every quote found, no sentence long enough to judge) | Right | Wrong |
+  | --- | --- | --- |
+  | Review said "yes": labelled **Quotes found** | 33 (field 20, held out 8, research 5) | 2 (held out 1, research 1) |
+  | Review said "no": **Quotes found, answer not confirmed** | 0 | 1 (field) |
+
+- **So 35 more answers read Quotes found, and 2 of them are wrong.** Over all suites, false reassurance goes from 3 of 82 labelled answers (3.7%) to 5 of 117 (4.3%), against the gate's 10%. On the field suite it falls, from 4.3% to 3.0%. One of the two new wrong ones, research `r12`, is right as an answer ("Node.js 18", from a real quote that states it) and fails its task only for not citing a second document the task requires. The held-out one is read as a total, as the held-out discipline asks.
+- **As predicted.** The README's prediction before the run was at worst 3 of 67 on the field suite and 1 of 29 held out; the run gives 2 of 66 and 1 of 29.
+- **Against the rule for label changes,** as applied to the model's check in 0.28.0 ([Results](#results)): no right answer loses its label, and false reassurance falls on the field suite. But held out and research each gain one wrong labelled answer, where the 0.28.0 check left the held-out labels unchanged. The check caught one of the three wrong short answers. That is the check's known weakness ([audit F2](../../docs/ai-ml-audit.md)), now on short answers too: a more specific review prompt, judged by re-reviewing the recorded answers, is the next step. Whether to keep the review of short answers, or keep it and work on the prompt, is the project owner's decision; the run is recorded either way.
+
+This run is also the fresh 4B baseline for later changes on the same build, such as the stemmer proposed in [pull request #85](https://github.com/bowo-prasetyo/kovrune/pull/85).
 
 ## Results
 
