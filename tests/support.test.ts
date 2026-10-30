@@ -274,6 +274,13 @@ describe("elided quotes and decimal commas (harness 0.37.0)", () => {
     assert.equal(sentenceSupport("Cobble never loses data.", aside).backed, 1);
   });
 
+  it("does not count a line break written out as text as part of a word (field task f74)", () => {
+    const quotes = [{ docId: "mpl", quote: "10.3. Modified Versions\\n\\nIf you create a new license, rename the license" }];
+    assert.equal(marks("You must rename the license if you create a new license.", quotes), "+");
+    // Read as text, "Cobble\\nsupports\\ntransactions" gives the words "nsupports" and "ntransactions".
+    assert.equal(marks("Cobble supports transactions.", [{ docId: "c", quote: "Cobble\\nsupports\\ntransactions across shards" }]), "+");
+  });
+
   it("reads a decimal comma as a decimal point, not a thousands separator (audit N5)", () => {
     assert.deepEqual(["1,5", "4,096", "21,196.18", "1,234,567", "3,14159", "2.5"].map(plainNumber), ["1.5", "4096", "21196.18", "1234567", "3.14159", "2.5"]);
     const quotes = [{ docId: "fr", quote: "La taille maximale du cache est de 1,5 Go par défaut." }];

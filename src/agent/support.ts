@@ -5,7 +5,7 @@
 
 import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
-import { hasNegation, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
 import type { CrossCheck } from "./crosscheck.ts";
 import type { ReviewVerdict } from "./review.ts";
 
@@ -76,7 +76,7 @@ const STOP_WORDS = new Set(
 
 /** Words, without stop words, stemmed. In Chinese or Japanese, the pairs of neighbouring characters (scripts.ts). */
 export function contentWords(text: string): string[] {
-  return [...new Set(words(text).filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
+  return [...new Set(words(text.replace(LITERAL_BREAKS, " ")).filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
 }
 
 /**

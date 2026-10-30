@@ -43,6 +43,11 @@ const suites: Record<string, { library: ResearchLibrary; tasks: ResearchTask[] }
 
 for (const file of positionals) {
   const report = JSON.parse(await readFile(file, "utf8")) as Report;
+  // eval/results also holds the outputs of bench:rereview and bench:crosscheck, which are not reports.
+  if (!Array.isArray(report.results)) {
+    console.error(`${file.split("/").pop()}: not a benchmark report, skipped.`);
+    continue;
+  }
   let rescored = 0;
   let skipped = 0;
   const totals = { recorded: { labelled: 0, wrong: 0 }, now: { labelled: 0, wrong: 0 } };

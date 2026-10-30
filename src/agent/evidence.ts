@@ -68,9 +68,18 @@ export function hasNegation(text: string): boolean {
 /** A Markdown inline link or image, "[text](url)" or "![alt](url "title")", with its text in group 1. */
 const MARKDOWN_LINK = /!?\[([^\]\n]*)\]\((?:[^()\s]|\([^()\s]*\))*(?:\s+"[^"\n]*")?\)/g;
 
+/**
+ * A line break or tab written out as text, "\\n", "\\r" or "\\t": what a model leaves in a quote when it
+ * escapes a line break twice in its JSON. Field task f74 quoted the licence's "10.3. Modified Versions\\n\\nIf
+ * you create…" this way, and its right answer failed the quote check. It counts as whitespace, in the
+ * quote and in the source alike, so a source that has the characters themselves still matches a quote of it.
+ */
+export const LITERAL_BREAKS = /\\[nrt]/g;
+
 /** Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote. */
 export function normalizeForMatch(text: string): string {
   const unified = text
+    .replace(LITERAL_BREAKS, " ")
     // Compatibility forms are the same text: ligatures ("ﬁ" is "fi"), full-width letters, "…" as "...".
     .normalize("NFKC")
     .toLowerCase()
@@ -217,6 +226,8 @@ const hasWordChar = (key: string) => /[\p{L}\p{N}]/u.test(key);
  * passage shown includes what the quote left out.
  */
 export function locateQuote(quote: string, text: string): { start: number; end: number } | undefined {
+  // Two spaces for the two characters of a written-out line break, so offsets in the text stay as they are.
+  [quote, text] = [quote.replace(LITERAL_BREAKS, "  "), text.replace(LITERAL_BREAKS, "  ")];
   const pieces = quote
     .split(ELISION)
     .map((piece) => piece.split(/\s+/).map(wordKey).filter(hasWordChar))
@@ -310,6 +321,7 @@ const wordKey = (word: string) => {
  * quote's words appear, in order, in one passage.
  */
 export function closestPassage(quote: string, text: string): DiffPart[] | undefined {
+  [quote, text] = [quote.replace(LITERAL_BREAKS, " "), text.replace(LITERAL_BREAKS, " ")];
   const q = quote.split(/\s+/).filter(Boolean);
   const qKeys = q.map(wordKey);
   const words = text.split(/\s+/).filter(Boolean);
