@@ -309,6 +309,37 @@ A model sometimes escapes a line break twice in its JSON reply, so its quote hol
 
 **Measured by re-scoring** all reports in `eval/results/`, before and after, one line per answer (`bench:rescore -- --labels`): exactly two answers change, 2B's `f17` in the 0.26.0 and 0.28.0 runs, whose quote `1.12. "Secondary License"\n    means either the GNU General Public License…` now verifies. Both now pass their task and are labelled **Quotes found**; nothing else changes. Most such quotes cannot be counted, as reports keep only 600 characters of each final answer, and `f74`'s is one of them. A defect fix, adopted under the [rule](#rule-for-prompt-and-guard-changes). `bench:rescore` also skips the files in `eval/results/` that are not benchmark reports, the outputs of `bench:rereview` and `bench:crosscheck`, which it stopped on.
 
+### The cross-check, run live (0.42.0 run)
+
+The cross-check was judged on recorded answers. This run checks it in the agent: Qwen3.5-4B on `main` at harness 0.42.0 (`5d8eb58`, `main` after #91), all five suites, with the build, flags and model file of the [0.38.0 run](#the-4b-short-answer-review-measured-0380-run). From 0.42.0, reports record the cross-check's result with the sentence support (`support.crossCheck`: what the model read, and whether it agrees), and `bench:rescore` uses it. The run was in nine parts, merged ([json](../results/field-0.42-main-qwen3.5-4b-q4km.json)). The container restarted during the fifth part (field `f46`–`f60`), which was run again from the start. The restarted container had another CPU, so the first four parts (the synthetic suites and field `f01`–`f45`) ran on the Intel Xeon @ 2.80GHz of the 0.38.0 run, and the last five (field `f46`–`f89` and held out) on an Intel Xeon @ 2.10GHz. The report records the first CPU in `environment.hardware`. The build is portable, which [repeats across these CPUs](#runs-repeat-on-one-machine-not-across-machines), and was checked here again: the fourth part (field `f31`–`f45`) was run a second time on the 2.10GHz CPU. All 15 tasks matched the first run in actions, final answer, quote verdicts, sentence support and cross-check, label and token counts. So the parts were merged.
+
+| Suite | 0.38.0 | 0.42.0 | Same actions | Quotes found, wrong: 0.38.0 | 0.42.0 |
+| --- | --- | --- | --- | --- | --- |
+| Field | 79/89 | 79/89 | 89 of 89 | 2 of 66 | **2 of 65** |
+| Held out | 35/37 | 35/37 | 37 of 37 | 1 of 29 | **0 of 28** |
+| Research | 19/22 | 19/22 | 22 of 22 | 2 of 18 | **1 of 17** |
+| Unanswerable | 8/8 | 8/8 | 8 of 8 | 0 of 0 | 0 of 0 |
+| PDF | 4/4 | 4/4 | 4 of 4 | 0 of 4 | 0 of 4 |
+
+- **Same actions on all 160 tasks, and the same quote verdicts.** So the label counts are the cross-check's effect alone. That includes the 81 tasks run on the other CPU.
+- **The quote fix (0.41.0) changes nothing here.** `f74`'s quote with written-out line breaks came from the stemmer run; on `main` its quote has none.
+- **False reassurance over all suites falls from 5 of 117 labelled answers (4.3%) to 3 of 114 (2.6%).** The review was asked about 119 answers and said yes to 117, and the cross-check ran on all 117. It disagreed on 3, which now read **Quotes found, answer not confirmed**:
+  - research `r19`, wrong: the model read "LumenDB" where the answer said Cobble;
+  - one held-out answer, wrong (held out is read as a total);
+  - field `f43`, right: the model read "quarante ans" in the French source, for "40 years".
+- **The three wrong answers it lets through** are ones it cannot catch:
+  - `f23` takes the 60 days of the reinstatement clause for the 30-day cure period, and the model reads the same 60 days in the passages.
+  - `f84` answers with the guide's "Local model server" row, where the question asks for the design's hardware class. It quotes only the guide, so the passages give the model nothing else to read.
+  - `r12`'s answer is right ("Node.js 18"), and the task fails only for a missing second citation.
+- **As predicted, exactly.** `bench:crosscheck` on the 0.38.0 answers could check 113 of the answers the review confirms. Here, on those 113, the model read the same answers and the code gave the same verdicts, held out included. The result is 110 labelled, 2 wrong, as predicted. The 4 others were cut off in the 0.38.0 report: field `f23`, `f73`, `f74` and one held-out answer. Run live, all 4 keep the label, and `f23` is the one wrong among them.
+- **`bench:rescore` on the new report** re-scores 155 answers (5 cut off) and changes no label.
+- **Cost.** It took the 79 tasks run on the 2.80GHz CPU to compare times, since the 0.38.0 run was on that CPU:
+  - The 54 with a cross-check took a median 14 s longer than in 0.38.0, and the 25 without one about 1 s less. That is the extra call, on CPU, with the passages to read again.
+  - The report's token counts do not include it, as they do not include the review either.
+  - Speeds differ between the two CPUs, so the new report's overall speed is not comparable with 0.38.0.
+
+Against the rule for label changes, the run confirms what the recorded answers showed. False reassurance falls on held out and research, and field keeps its 2 wrong. One right answer of the 112 the review confirms loses its label (`f43`). Keeping the cross-check, which is on `main` since 0.40.0, is the project owner's decision. This run is the 4B baseline on `main` for later changes.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
