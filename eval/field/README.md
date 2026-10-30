@@ -378,9 +378,34 @@ Each tool result stays in the conversation, and when the next call would not fit
 - **Labels on these 27 tasks:** 12 labelled with 1 wrong, now 13 labelled with 1 wrong. Held out: 4 labelled, 0 wrong, in both.
 - **Cost:** 168 calls for the 27 tasks instead of 165.
 
-**Adopted** as a defect fix under the [rule](#rule-for-prompt-and-guard-changes): no suite loses a task, and no wrong answer gains the label. At 4,096 tokens it changes nothing on the 4B suites, as no 4B task loses a result there.
+**On Qwen3.5-2B,** the same test was run afterwards: `main` before the fix (`88ae60c`, 0.42.0) on all five suites at 2,048 tokens, with the build, model file and CPU of the [0.38.0 2B baseline](#the-4b-short-answer-review-measured-0380-run) ([json](../results/field-0.42-ctx2048-qwen3.5-2b-q4km.json)). Then `main` with the fix (`c0470d1`, 0.43.0) was run on the 71 tasks that lost results, plus 11 controls ([json](../results/field-0.43-ctx2048-reread-qwen3.5-2b-q4km.json)). One part was run again from the start after the container restarted. All 11 controls took the same actions, with the same answers.
 
-**What the test says about keeping research state outside the conversation.** On these suites, at half the context, dropping old results costs no task. So a separate state for the agent, such as the passages of a dropped result that best match the question kept in its place, would have nothing to show on them. It would need tasks that need more than a few documents: longer multi-hop questions, or the open sources, which add calls and longer reads.
+| Suite | 4,096 tokens (0.38.0) | 2,048 tokens | Tasks that lost results | Of those, passed: before the fix | With it |
+| --- | --- | --- | --- | --- | --- |
+| Field | 69/89 | **51/89** | 51 | 21 | 21 |
+| Held out | 24/37 | 22/37 | 20 | 11 | 11 |
+| Research | 17/22 | 17/22 | 0 | – | – |
+| Unanswerable | 5/8 | 5/8 | 0 | – | – |
+| PDF | 3/4 | 3/4 | 0 | – | – |
+
+- **Half the context costs 2B 18 field tasks** (5 gained, 23 lost, p < 0.001), and held out 2 in total. All 23 lost tasks lost results. The losses:
+  - 9 answer "not found" (21 field tasks do, against 10 at 4,096 tokens);
+  - 9 give a wrong fact from real quotes;
+  - 4 have quotes that are not found in the documents;
+  - 1 answers an unanswerable question.
+
+  With room for about one document at a time, 2B loses what it read before. Labels on field: 27 labelled with 5 wrong, against 41 with 3 at 4,096 tokens.
+- **The fix changes the path of 8 field tasks, and the score not at all.**
+  - Field `f20` gains a task: it reads the Ada Lovelace article again and answers "Lord Byron and Anne Isabella Milbanke", where it had answered "not found".
+  - Field `f77` loses one. It is unanswerable, and reading the MPL again it gives the "60 days" of another clause, where it had answered "not found". That answer is not labelled **Quotes found**.
+  - Field `f65`'s wrong answer loses its label, so wrong labelled answers on these tasks fall from 4 to 3.
+  - Held out: no task takes another path.
+  - Cost: 322 calls for the 51 field tasks instead of 312.
+- **At 4,096 tokens** one 2B task of the 0.38.0 run lost a result, and it passed, so the fix can change at most that task.
+
+**Adopted** as a defect fix under the [rule](#rule-for-prompt-and-guard-changes), on both models: no protected suite loses a task, field gains as many as it loses on 2B, and no wrong answer gains the label. At 4,096 tokens it changes nothing on the 4B suites, as no 4B task loses a result there.
+
+**What the test says about keeping research state outside the conversation.** It depends on the model. 4B loses no task at half the context, and 2B loses 18 of 89 field tasks, all of them tasks that lost results. Letting a dropped result be read again does not win them back. So 2B at 2,048 tokens is a test bed for a separate state, such as the passages of a dropped result that best match the question kept in its place. It would be judged by the [rule](#rule-for-prompt-and-guard-changes) on both models. The app gives both models 4,096 tokens, where results are almost never dropped, so its use would be for smaller contexts and for longer tasks: more documents, or the open sources.
 
 ## Results
 
