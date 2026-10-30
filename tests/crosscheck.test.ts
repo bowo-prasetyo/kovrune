@@ -37,6 +37,13 @@ describe("the cross-check of an answer (audit F2)", () => {
     assert.equal(answersAgree("1,5 Go", "La taille est de 1.5 Go."), true, "numbers compare as plain numbers");
     assert.equal(answersAgree("EUR 96,000; Jonas Feld", "The foundation spent EUR 96,000."), false, "half an answer to a two-part question");
     assert.equal(answersAgree("", "30 days"), false, "the model found no answer in the passages");
+    // Answers in another form or writing system than the extracted one (field f31, f39).
+    assert.equal(answersAgree("明", "现存的长城遗迹主要为始建于14世纪的明长城。"), true, "contained word for word");
+    assert.equal(answersAgree("21,196.18千米", "21,196.18"), true, "an answer that is only a number: numbers decide");
+    assert.equal(answersAgree("21,196.18千米", "21,196"), false);
+    assert.equal(answersAgree("Ming", "1368"), false);
+    assert.equal(answersAgree("明朝", "The Ming dynasty built it."), true, "another writing system: nothing to compare");
+    assert.equal(answersAgree("1368年", "It was built in 1421."), false, "but numbers still count");
   });
 
   it("reads the extracted answer from the JSON reply, and nothing else", () => {

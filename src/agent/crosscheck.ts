@@ -5,9 +5,20 @@
 // that with the answer given, with the sentence check's rules for words and numbers (support.ts).
 
 import { stripThinking, type LanguageModel } from "../models/types.ts";
-import type { CheckedEvidence } from "./evidence.ts";
-import { quotedPassages } from "./review.ts";
+import { quoteHas, type CheckedEvidence } from "./evidence.ts";
+import { mainScript } from "../documents/scripts.ts";
+import { quotedPassages, reviewsShortAnswers } from "./review.ts";
 import { contentWords, MIN_BACKED_SHARE, numbers, sameWord } from "./support.ts";
+
+/**
+ * Whether the cross-check is asked about answers the review confirms, by the model's ID: only Qwen3.5-4B
+ * (eval/field/README.md). On the 0.38.0 answers it caught 2 of the 4 wrong answers 4B's review lets
+ * through, and took the label from 1 of its 109 right ones; for Qwen3.5-2B it caught none and took the
+ * label from 1. The IDs are matched as for the review of short answers (review.ts reviewsShortAnswers).
+ */
+export function crossChecksAnswers(modelId: string): boolean {
+  return reviewsShortAnswers(modelId);
+}
 
 export const CROSSCHECK_SYSTEM = "You answer questions from quoted passages only, not from what you know.";
 
@@ -46,17 +57,27 @@ export function parseExtracted(text: string): string | undefined {
 }
 
 /**
- * Whether the answer given says what the model read in the passages: every number of the extracted
- * answer is in it, and at least half of the extracted answer's other content words (MIN_BACKED_SHARE).
- * Numbers are compared whole, so their pieces ("96" and "000" of "96,000") are not counted as words too:
- * otherwise a half answer that repeats the number would pass. The answer given may say more, such as
- * the sentence around a value. An extracted answer that is empty, or has neither a number nor a content
- * word, agrees with nothing: the model found no answer there.
+ * Whether the answer given says what the model read in the passages:
+ * - it contains the extracted answer word for word ("明" in "…的明长城。"); or
+ * - every number of the extracted answer is in it, and at least half of the extracted answer's other
+ *   content words (MIN_BACKED_SHARE). Numbers are compared whole, so their pieces ("96" and "000" of
+ *   "96,000") are not counted as words too: otherwise a half answer that repeats the number would pass.
+ * The answer given may say more, such as the sentence around a value. When the two are in different
+ * writing systems (the model answered in the passages' language, not the question's), words cannot be
+ * compared, so only numbers are: an extracted answer with none does not count against the answer. An
+ * answer given that is only a number is compared by its numbers alone. An
+ * extracted answer that is empty, or has neither a number nor a content word, agrees with nothing: the
+ * model found no answer there.
  */
 export function answersAgree(extracted: string, answer: string): boolean {
+  if (extracted && quoteHas(answer, extracted)) return true;
   const extractedNumbers = numbers(extracted);
   const answerNumbers = new Set(numbers(answer));
   if (extractedNumbers.some((n) => !answerNumbers.has(n))) return false;
+  const [extractedScript, answerScript] = [mainScript(extracted)?.script, mainScript(answer)?.script];
+  // An answer that is only a number ("21,196.18") has no words to compare: its numbers decide.
+  if (!answerScript) return extractedNumbers.length > 0;
+  if (extractedScript && extractedScript !== answerScript) return true;
   const withoutDigits = (text: string) => contentWords(text).filter((w) => !/\p{N}/u.test(w));
   const words = withoutDigits(extracted);
   if (!words.length) return extractedNumbers.length > 0;

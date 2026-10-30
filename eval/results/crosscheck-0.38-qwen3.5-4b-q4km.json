@@ -1,0 +1,1031 @@
+{
+  "report": "eval/results/field-0.38-main-qwen3.5-4b-q4km.json",
+  "checked": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Tessel Foundation",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r02-lumen-license",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Mozilla Public License 2.0 (MPL-2.0)",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "LumenDB 3.0.0 through 3.1.4",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "4 KiB",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r06-quillstate-rename",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "defineStore()",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r07-cobble-2-5",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "encryption at rest using AES-256-GCM and a new bulk-loading API",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r08-lumen-4-date",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "second quarter of 2025 (Q2 2025)",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r09-rfc-period",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "at least two weeks",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Brisk",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r11-lumen-chair",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Ana Lindqvist",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r12-chair-library-node",
+      "right": false,
+      "short": true,
+      "review": "yes",
+      "extracted": "Node.js 18",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r13-cobble-license-conversion",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Apache-2.0, four years",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r14-talk-city",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Lisbon",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r15-write-throughput",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Cobble, 30,000",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "LumenDB 3.x: 8 KiB; Cobble: 4 KiB",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "330,000 operations per second",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r18-brisk-levels",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "13",
+      "agrees": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r19-faster-reads-after-correction",
+      "right": false,
+      "short": false,
+      "review": "yes",
+      "extracted": "LumenDB",
+      "agrees": false
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p01-tessel-income",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "EUR 412,000",
+      "agrees": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p02-new-project",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Driftwood, a structured logging library for Rust applications",
+      "agrees": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p03-dictionary-size",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "112 KiB",
+      "agrees": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p04-audit-cost-and-reporter",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "EUR 96,000; Jonas Feld",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Apps on device",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Local network access",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f03-https-not-supported",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev`",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f04-2b-download-size",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "1.1 GB",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f05-model-test-time",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "about a minute",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f06-context-flag",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "4096",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f08-download-target",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Above 90% of started downloads",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f09-hosts",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Cloudflare Pages or Netlify",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f10-signaling",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Trystero over public signaling channels, or a minimal self-hostable signaling server",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f11-m0-duration",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "2–3 weeks",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f12-reassurance-target",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Under 10%; baseline 3 of 22 (14%)",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f13-class-1",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Laptop with integrated GPU and 8 GB RAM",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f15-cure-period",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "30 days",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f16-litigation",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "courts of a jurisdiction where the defendant maintains its principal place of business",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f19-ada-born",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "10 December 1815",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f20-ada-parents",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "poet Lord Byron and reformer Anne Isabella Milbanke",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f21-ada-music",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "music",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f25-fuji-summit",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "3776.12 m",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f26-fuji-prefectures",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "山梨県と静岡県",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f27-fuji-heritage",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "2013年",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f29-wall-heritage",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "1987年",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f30-wall-length",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "21,196.18",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f31-wall-dynasty",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "明",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f33-eiffel-height",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "330 m",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f34-eiffel-occasion",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Exposition universelle de Paris de 1889",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f35-eiffel-visitors-2016",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "5,9 millions",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f37-fuji-summit-en",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "3776.12",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f38-wall-heritage-en",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "1987",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f39-wall-length-en",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "21,196.18千米",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f40-eiffel-address-en",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "5, avenue Anatole-France",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f43-eiffel-tallest-years-en",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "quarante ans",
+      "agrees": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f48-node-version",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Node.js 22 or newer",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f49-dev-address",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "http://localhost:5173/",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f50-2b-memory",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "8 GB of memory or less",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f51-4b-download",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "2.4 GB",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f52-https-package",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "libssl-dev",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f54-scanned-pdf",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "No text found",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f55-bibtex-fields",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "authors, year, venue and DOI",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f56-past-answers-order",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "newest first",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f58-first-audience",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "technical researchers who are comfortable with a terminal",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f59-validation-library",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Zod",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f60-sandboxes",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Pyodide (Python), QuickJS-wasm (JavaScript)",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f61-coop-coep",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "SharedArrayBuffer (multithreaded WebAssembly)",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f62-default-privacy",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Local only",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f63-key-storage",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "IndexedDB",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f64-protocol-models",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "A2A and Nostr NIP-90",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f65-kovruner",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "People who participate in the community",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f66-file-system-access",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Chromium-based browsers",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f67-m2-rebuild",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "rebuilt bit-for-bit",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f68-delegation-unit",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "independent tasks",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f72-effective-date",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "the date the Contributor first distributes such Contribution",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f75-notice-url",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "https://mozilla.org/MPL/2.0/",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f76-liability-exception",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "death or personal injury resulting from such party's negligence",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f77-patent-response-days",
+      "right": false,
+      "short": true,
+      "review": "no",
+      "extracted": "60 days",
+      "agrees": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f78-ada-died",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "27 November 1852",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f79-ada-married",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "William King in 1835",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f80-bernoulli",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Bernoulli numbers",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f81-ada-tutor",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Mary Somerville",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f84-guide-laptop-class",
+      "right": false,
+      "short": false,
+      "review": "yes",
+      "extracted": "Local model server",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f85-fuji-elevation",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "3775.56",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f86-fuji-meisho",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "1952年",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f87-ming-wall-west",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "嘉峪关",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f88-eiffel-visitors-total",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "plus de 300 millions",
+      "agrees": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f89-eiffel-deck-en",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "279,11",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h01-server-address",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "http://127.0.0.1:8080/v1",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "HTTPS is not supported",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h04-class-3",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Desktop with a discrete GPU with 12 GB+ VRAM",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h05-first-result-target",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Under 15 minutes on reference hardware, including model download",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h06-after-evaluating",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "completed",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h07-license-steward",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Mozilla Foundation",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h08-exhibit-b",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Exhibit B",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h09-met-babbage",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "5 June 1833",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h10-menabrea",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Luigi Menabrea",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h11-fuji-national-park",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "1936年",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h13-eiffel-original-height",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "312 mètres",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h14-license-and-steward",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Mozilla Public License 2.0; Mozilla Foundation",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h17-stop-ollama",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "sudo systemctl stop ollama",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h18-server-ready",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "listening on http://0.0.0.0:8080",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h19-2b-pdf-time",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "1–2 minutes",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h20-file-types",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "PDF, text, Markdown or HTML",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h21-free-browser-space",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "Delete the download",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h22-unit-test-runner",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Node's built-in test runner",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h23-join-circle",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "an invitation",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h24-evicting-browser",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "Safari",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h25-team-size",
+      "right": false,
+      "short": true,
+      "review": "yes",
+      "extracted": "two",
+      "agrees": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h27-statute-description",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "a text file included with all distributions of the Covered Software under this License",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h28-old-versions",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "version 1.1 or earlier",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h30-poetical-science",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "poetical science",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h31-earl-year",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "1838",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h32-fuji-heritage-date",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "2013年6月22日",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h33-wall-buildings",
+      "right": true,
+      "short": true,
+      "review": "yes",
+      "extracted": "29,510",
+      "agrees": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h34-eiffel-arrondissement",
+      "right": true,
+      "short": false,
+      "review": "yes",
+      "extracted": "7e arrondissement",
+      "agrees": true
+    }
+  ]
+}
