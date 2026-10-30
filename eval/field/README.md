@@ -299,7 +299,7 @@ The re-review [above](#a-more-specific-review-prompt-re-reviewed-not-adopted) sh
 | Qwen3.5-2B, its 52 short answers if they were reviewed (`--short`) | 51, 20 wrong | 40, 12 wrong | 3 of 32 |
 
 - **How the comparison came about.** It was written before the run, from the review's failure: numbers must match, and half the words. A unit test then showed, before any result was read, that the pieces of a number ("96" and "000") counted as words, so a half answer that repeated the number passed; numbers are now compared only whole. On the 4B run, that comparison took the label from 3 right answers, all field tasks whose extracted answer was in another form than the answer given: "明" (one character, too short to count as a word) inside a Chinese sentence, "21,196.18千米" (with the unit from the Chinese source) for "21,196.18", and "quarante ans" (from the French source) for "40 years". Two general rules followed: an answer that contains the extracted one word for word agrees, and when the two are in different writing systems, or the answer given is only a number, only numbers are compared. Re-checked without the model (`--recheck`), the right answers that lose the label fall from 3 to 1 ("quarante ans", which is too short to tell its language from "40 years"). The held-out totals are the same with both versions (28 labelled, 1 wrong → 27, 0 wrong), so the rules did not fit the field suite at the held-out suite's cost.
-- **On 4B it halves false reassurance:** of the 4 wrong answers the review lets through, it catches 2, among them `r19`'s "Cobble" where the passages name LumenDB, and takes the label from 1 right answer. Against the rule for label changes, as applied to the review in 0.28.0, false reassurance falls, but one right answer loses its label: the project owner decides whether that trade is worth it.
+- **On 4B it halves false reassurance:** of the 4 wrong answers the review lets through, it catches 2, among them `r19`'s "Cobble" where the passages name LumenDB, and takes the label from 1 right answer. Against the rule for label changes, as applied to the review in 0.28.0, false reassurance falls, but one right answer loses its label. The project owner kept it, after the [live run](#the-cross-check-run-live-0420-run).
 - **On 2B it does not help:** on the answers its review is asked about it catches no wrong one and takes the label from one right one, and on its short answers 12 wrong ones would still be labelled. So it runs only for Qwen3.5-4B (`crossChecksAnswers`, matched like `reviewsShortAnswers`), and 2B's short answers stay unchecked.
 - **Cost:** one more short call (48 tokens at most) for each answer 4B's review confirms; the self-check counts it in its time estimate. Answers saved before keep their labels, and re-scoring the 0.38.0 reports changes none.
 
@@ -338,7 +338,24 @@ The cross-check was judged on recorded answers. This run checks it in the agent:
   - The report's token counts do not include it, as they do not include the review either.
   - Speeds differ between the two CPUs, so the new report's overall speed is not comparable with 0.38.0.
 
-Against the rule for label changes, the run confirms what the recorded answers showed. False reassurance falls on held out and research, and field keeps its 2 wrong. One right answer of the 112 the review confirms loses its label (`f43`). Keeping the cross-check, which is on `main` since 0.40.0, is the project owner's decision. This run is the 4B baseline on `main` for later changes.
+Against the rule for label changes, the run confirms what the recorded answers showed. False reassurance falls on held out and research, and field keeps its 2 wrong. One right answer of the 112 the review confirms loses its label (`f43`). This run is the 4B baseline on `main` for later changes.
+
+**Kept, at the project owner's decision.** Two fewer wrong answers labelled **Quotes found** are worth one right answer that reads **Quotes found, answer not confirmed**. That answer is not marked wrong, and its explanation shows what the model read ("quarante ans"), so a reader can see the two agree. The cross-check stays on for Qwen3.5-4B only, and adds a median 14 s to each answer it checks on CPU.
+
+### The cross-check asked to translate (measured, not adopted)
+
+`f43` loses its label because the model read "quarante ans" in the French source. The extraction prompt already asked for "the language of the question". A stronger prompt asked the model to translate the answer when the passages are in another language, and to write numbers as digits. It was judged with `bench:crosscheck` on the 0.42.0 answers, on that run's build, model and server ([json](../results/crosscheck-0.42-qwen3.5-4b-q4km-translate.json)), against the verdicts the run recorded. Since the live run gave exactly the predicted verdicts, the two compare directly. It was to be adopted only if no wrong answer gained the label.
+
+| Answers the review confirms (113, 4 wrong) | Labelled Quotes found | Right answers that lose the label |
+| --- | --- | --- |
+| Current prompt, recorded in the run | 110, 2 wrong | 1 (`f43`) |
+| Asked to translate, numbers as digits | 112, 3 wrong | 0 |
+
+- **It fixes `f43`:** the model reads "40", which agrees with "40 years".
+- **It lets a wrong held-out answer back in.** The current prompt catches it, and the new one does not. Held out is read only as a total, so which answer it is and why stay unread.
+- **The other changes are harmless.** 12 other extracted answers change on the suites that are read task by task, and all still agree: the model drops units or the 年 of a year ("2013年" → "2013"), or a part it was not asked for ("Trystero over public signaling channels, or…" → "Trystero"). The tool also checks `f77`, where the review said no and the app never asks the cross-check; its verdict does not count.
+
+**Not adopted:** a wrong answer gains the label, against the condition set before the run. `main` keeps the current prompt. A prompt that fixes `f43` without this would have to be designed and judged on new answers, not tuned against the held-out total.
 
 ## Results
 
