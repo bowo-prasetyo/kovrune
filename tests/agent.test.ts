@@ -133,6 +133,30 @@ describe("research agent", () => {
     assert.deepEqual(dropped, [...dropped].sort((x, y) => x - y), "results stay removed once removed");
   });
 
+  it("keeps the sentences of an earlier read that best match the question, when the read must leave the context", async () => {
+    const reads = ["lumen-overview", ...corpus.filter((doc) => doc.id !== "lumen-overview").slice(0, 3).map((doc) => doc.id)];
+    const model = new ScriptedModel([...reads.map((id) => `{"tool":"read","args":{"docId":"${id}"}}`), final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
+    Object.assign(model.info, { contextLength: 1600 });
+    const run = await research("r01-lumen-maintainer", [], true, model);
+    const first = run.agent.transcript[3]!.content;
+    assert.match(first, /shortened to save context/);
+    assert.match(first, /\[lumen-overview\] LumenDB project overview\n/, "its ID and title stay");
+    assert.ok(first.includes("maintained by the Tessel Foundation since 2022"), "and the sentence that answers the question");
+    assert.ok(!first.includes("copy-on-write"), "but not the rest");
+    assert.equal(run.agent.stopReason, "final");
+  });
+
+  it("removes shortened results too when the shorter forms do not fit", async () => {
+    const reads = ["lumen-overview", ...corpus.filter((doc) => doc.id !== "lumen-overview").slice(0, 5).map((doc) => doc.id)];
+    const model = new ScriptedModel([...reads.map((id) => `{"tool":"read","args":{"docId":"${id}"}}`), final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
+    Object.assign(model.info, { contextLength: 1450 });
+    const run = await research("r01-lumen-maintainer", [], true, model);
+    // The overview has a sentence that answers the question, so it was shortened first, then removed.
+    assert.match(run.agent.transcript[3]!.content, /removed to save context/);
+    assert.match(run.agent.transcript.at(-2)!.content, /^Tool result[^\n]*\n\[/, "the latest result stays whole");
+    assert.equal(run.agent.stopReason, "final");
+  });
+
   it("reads a document again when its result was removed, instead of calling it a repeat", async () => {
     const reads = corpus.slice(0, 4).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
     const model = new ScriptedModel([...reads, reads[0]!, final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);

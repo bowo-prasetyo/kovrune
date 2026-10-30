@@ -203,6 +203,15 @@ export function createResearchTools(
         unread.clear();
         return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`);
       },
+      // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
+      // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
+      // before and answered "not found" or with a fact from another passage (eval/field/README.md).
+      shorten: (_args: { docId: string }, observation: string) => {
+        if (!question || !observation.startsWith("[")) return undefined;
+        const [header, ...rest] = observation.split("\n");
+        const sentences = index.bestSentences(rest.join("\n"), question, 2);
+        return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
+      },
       onRepeat: ({ docId }: { docId: string }) => {
         const parts = session?.sourceFor(docId) ? session.partsOf(docId) : index.partsOf(parentId(docId));
         const others = parts.filter((id) => id !== docId);
