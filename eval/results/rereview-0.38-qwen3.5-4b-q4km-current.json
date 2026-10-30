@@ -1,0 +1,918 @@
+{
+  "report": "eval/results/field-0.38-main-qwen3.5-4b-q4km.json",
+  "prompt": "current",
+  "verdicts": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r02-lumen-license",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r06-quillstate-rename",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r07-cobble-2-5",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r08-lumen-4-date",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r09-rfc-period",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r11-lumen-chair",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r12-chair-library-node",
+      "right": false,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r13-cobble-license-conversion",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r14-talk-city",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r15-write-throughput",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r18-brisk-levels",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "research",
+      "taskId": "r19-faster-reads-after-correction",
+      "right": false,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p01-tessel-income",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p02-new-project",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p03-dictionary-size",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p04-audit-cost-and-reporter",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f03-https-not-supported",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f04-2b-download-size",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f05-model-test-time",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f06-context-flag",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f08-download-target",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f09-hosts",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f10-signaling",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f11-m0-duration",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f12-reassurance-target",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f13-class-1",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f15-cure-period",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f16-litigation",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f19-ada-born",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f20-ada-parents",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f21-ada-music",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f25-fuji-summit",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f26-fuji-prefectures",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f27-fuji-heritage",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f29-wall-heritage",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f30-wall-length",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f31-wall-dynasty",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f33-eiffel-height",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f34-eiffel-occasion",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f35-eiffel-visitors-2016",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f37-fuji-summit-en",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f38-wall-heritage-en",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f39-wall-length-en",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f40-eiffel-address-en",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f43-eiffel-tallest-years-en",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f48-node-version",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f49-dev-address",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f50-2b-memory",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f51-4b-download",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f52-https-package",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f54-scanned-pdf",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f55-bibtex-fields",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f56-past-answers-order",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f58-first-audience",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f59-validation-library",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f60-sandboxes",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f61-coop-coep",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f62-default-privacy",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f63-key-storage",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f64-protocol-models",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f65-kovruner",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f66-file-system-access",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f67-m2-rebuild",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f68-delegation-unit",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f72-effective-date",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f75-notice-url",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f76-liability-exception",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f77-patent-response-days",
+      "right": false,
+      "short": true,
+      "recorded": "no",
+      "verdict": "no"
+    },
+    {
+      "suite": "field",
+      "taskId": "f78-ada-died",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f79-ada-married",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f80-bernoulli",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f81-ada-tutor",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f84-guide-laptop-class",
+      "right": false,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f85-fuji-elevation",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f86-fuji-meisho",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f87-ming-wall-west",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f88-eiffel-visitors-total",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "field",
+      "taskId": "f89-eiffel-deck-en",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h01-server-address",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h04-class-3",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h05-first-result-target",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h06-after-evaluating",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h07-license-steward",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h08-exhibit-b",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h09-met-babbage",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h10-menabrea",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h11-fuji-national-park",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h13-eiffel-original-height",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h14-license-and-steward",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h17-stop-ollama",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h18-server-ready",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h19-2b-pdf-time",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h20-file-types",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h21-free-browser-space",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h22-unit-test-runner",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h23-join-circle",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h24-evicting-browser",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h25-team-size",
+      "right": false,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h27-statute-description",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h28-old-versions",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h30-poetical-science",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h31-earl-year",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h32-fuji-heritage-date",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h33-wall-buildings",
+      "right": true,
+      "short": true,
+      "recorded": "yes",
+      "verdict": "yes"
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h34-eiffel-arrondissement",
+      "right": true,
+      "short": false,
+      "recorded": "yes",
+      "verdict": "yes"
+    }
+  ]
+}

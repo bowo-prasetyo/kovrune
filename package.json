@@ -24,7 +24,8 @@
     "build:redirect": "vite build --config redirect/vite.config.ts",
     "pin:browser-models": "node --experimental-strip-types scripts/pin-browser-models.ts",
     "bench:compare": "node --experimental-strip-types eval/compare.ts",
-    "bench:rescore": "node --experimental-strip-types eval/rescore.ts"
+    "bench:rescore": "node --experimental-strip-types eval/rescore.ts",
+    "bench:rereview": "node --experimental-strip-types eval/rereview.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.85",

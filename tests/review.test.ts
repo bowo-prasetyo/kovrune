@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
-import { parseVerdict, reviewPrompt, reviewsShortAnswers } from "../src/agent/review.ts";
+import { parseVerdict, reviewAnswer, reviewPrompt, reviewsShortAnswers } from "../src/agent/review.ts";
+import { itemizedReviewPrompt } from "../eval/harness/review-prompts.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -74,6 +75,24 @@ describe("the model's own check of an answer", () => {
     assert.match(prompt, /1\. From "MPL-2\.0": Your rights are reinstated .*\[prior to 60 days after You have come back into compliance\.\] Your grants/);
     assert.doesNotMatch(prompt, /does not have/);
     assert.doesNotMatch(prompt, /^2\./m);
+  });
+
+  it("asks a candidate prompt, such as the itemized one, about the same material (audit F2)", async () => {
+    const evidence = checkEvidence([{ docId: "mpl", quote: "prior to 60 days after You have come back into compliance" }], () => MPL.text);
+    const current = reviewPrompt(QUESTION, "60 days.", evidence, () => "MPL-2.0");
+    const itemized = itemizedReviewPrompt(QUESTION, "60 days.", evidence, () => "MPL-2.0");
+    // The question, the answer and the passages are shown alike; only the question asked of them differs.
+    const material = (prompt: string) => prompt.slice(0, prompt.indexOf("\n\n", prompt.indexOf("1. From")) + 2);
+    assert.equal(material(itemized), material(current));
+    for (const point of ["- Values:", "- Conditions:", "- Completeness:", "- Nothing added:"]) assert.ok(itemized.includes(point), point);
+    assert.match(itemized, /Reply "yes" only if all four hold/);
+    assert.match(itemized, /\{"verdict":"yes"\}, \{"verdict":"partly"\} or \{"verdict":"no"\}\.$/);
+    // reviewAnswer asks with the prompt it is given (eval/rereview.ts), and with reviewPrompt by default.
+    const model = new ScriptedModel([`{"verdict":"partly"}`, `{"verdict":"yes"}`]);
+    const ask = (prompt?: typeof reviewPrompt) => reviewAnswer({ model, question: QUESTION, answer: "60 days.", evidence, titleFor: () => "MPL-2.0", prompt });
+    assert.equal(await ask(itemizedReviewPrompt), "partly");
+    assert.equal(await ask(), "yes");
+    assert.deepEqual(model.requests.map((r) => r.messages[1]!.content), [itemized, current]);
   });
 
   it("takes the label away when the model does not confirm the answer (field task f23)", async () => {
