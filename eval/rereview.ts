@@ -14,21 +14,12 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
-import { answerStatus, checkEvidence, type EvidenceItem } from "../src/agent/evidence.ts";
-import { withoutPartLabels, type ResearchLibrary } from "../src/agent/research.ts";
-import { reviewAnswer, reviewsShortAnswers, type ReviewVerdict } from "../src/agent/review.ts";
-import { reviewAsked, sentenceSupport, wordChecksPass } from "../src/agent/support.ts";
+import { reviewAnswer, type ReviewVerdict } from "../src/agent/review.ts";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import type { Report } from "./harness/benchmark.ts";
 import { HELD_OUT_SUITES } from "./harness/compare.ts";
-import { loadFieldSuite } from "./harness/field.ts";
+import { checkedAnswers, loadSuites } from "./harness/recorded.ts";
 import { REVIEW_PROMPTS } from "./harness/review-prompts.ts";
-import { loadNodePdfLibrary } from "./harness/pdf-node.ts";
-import { baseLibrary } from "./harness/suites.ts";
-import { holdoutTasks } from "./field/holdout.ts";
-import { pdfTasks } from "./tasks/pdf.ts";
-import { researchTasks, type ResearchTask } from "./tasks/research.ts";
-import { unanswerableTasks } from "./tasks/unanswerable.ts";
 
 const { values, positionals } = parseArgs({
   options: {
@@ -48,14 +39,7 @@ if (positionals.length !== 1 || !values.model || !prompt) {
   process.exit(1);
 }
 
-const field = await loadFieldSuite();
-const suites: Record<string, { library: ResearchLibrary; tasks: ResearchTask[] }> = {
-  research: { library: baseLibrary, tasks: researchTasks },
-  unanswerable: { library: baseLibrary, tasks: unanswerableTasks },
-  pdf: { library: await loadNodePdfLibrary(), tasks: pdfTasks },
-  field: { library: field.library, tasks: field.tasks },
-  holdout: { library: field.library, tasks: holdoutTasks },
-};
+const suites = await loadSuites();
 const model = new LocalEndpointModel({
   baseUrl: values["base-url"],
   model: values.model,
@@ -74,32 +58,13 @@ interface Verdict {
 }
 
 const report = JSON.parse(await readFile(positionals[0]!, "utf8")) as Report;
-const asksShort = values.short || reviewsShortAnswers(report.environment.modelId);
+const { answers, cutOff: skipped } = checkedAnswers(report, suites, { short: values.short });
 const verdicts: Verdict[] = [];
-let skipped = 0;
-for (const result of report.results) {
-  const suite = suites[result.suite];
-  const task = suite?.tasks.find((t) => t.id === result.taskId);
-  if (!suite || !task || !result.final) continue;
-  let final: { found: boolean; answer: string; evidence: EvidenceItem[] };
-  try {
-    final = JSON.parse(result.final);
-  } catch {
-    skipped++;
-    continue;
-  }
-  const { library } = suite;
-  const titleFor = (id: string) => library.documentFor(id)?.title;
-  const answer = withoutPartLabels(final.answer);
-  const evidence = checkEvidence(final.evidence, (id) => library.textFor(id), (id) => library.pageStartsFor(id));
-  const status = answerStatus(final.found, evidence);
-  const support = sentenceSupport(answer, evidence, titleFor, task.question);
-  if (!(wordChecksPass(status, evidence, support) || (asksShort && reviewAsked(status, evidence, support)))) continue;
-  const verdict = await reviewAnswer({ model, question: task.question, answer, evidence, titleFor, prompt });
-  const recorded = result.support?.review as ReviewVerdict | undefined;
-  verdicts.push({ suite: result.suite, taskId: result.taskId, right: result.passed, short: support.judged === 0, ...(recorded ? { recorded } : {}), verdict });
-  if (!HELD_OUT_SUITES.has(result.suite)) {
-    console.log(`${result.suite} ${result.taskId}: ${verdict}${recorded && recorded !== verdict ? ` (recorded ${recorded})` : ""}, ${result.passed ? "right" : "wrong"}${support.judged === 0 ? ", short" : ""}`);
+for (const a of answers) {
+  const verdict = await reviewAnswer({ model, question: a.question, answer: a.answer, evidence: a.evidence, titleFor: a.titleFor, prompt });
+  verdicts.push({ suite: a.suite, taskId: a.taskId, right: a.right, short: a.short, ...(a.recorded ? { recorded: a.recorded } : {}), verdict });
+  if (!HELD_OUT_SUITES.has(a.suite)) {
+    console.log(`${a.suite} ${a.taskId}: ${verdict}${a.recorded && a.recorded !== verdict ? ` (recorded ${a.recorded})` : ""}, ${a.right ? "right" : "wrong"}${a.short ? ", short" : ""}`);
   }
 }
 

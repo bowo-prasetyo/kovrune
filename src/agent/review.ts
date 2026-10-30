@@ -46,14 +46,18 @@ export const VERDICT_FORMAT = 'Reply with exactly one JSON object: {"verdict":"y
 
 /** The question, the answer, and each verified quote in the text around it: what every review prompt shows the model. */
 export function reviewMaterial(question: string, answer: string, evidence: CheckedEvidence[], titleFor: (docId: string) => string | undefined): string[] {
-  const passages = evidence
+  return [`Question: ${question}`, `Answer: ${answer}`, "", "Quoted passages, with the quote in [brackets] and the text around it:", ...quotedPassages(evidence, titleFor), ""];
+}
+
+/** Each verified quote in the text around it, numbered, with its document's title: as the review and the cross-check show them. */
+export function quotedPassages(evidence: CheckedEvidence[], titleFor: (docId: string) => string | undefined): string[] {
+  return evidence
     .filter((e) => e.verified)
     .map((e, i) => {
       const where = titleFor(e.docId) ?? e.docId;
       const text = e.context ? `${e.context.more.before ? "…" : ""}${e.context.before}[${e.context.passage}]${e.context.after}${e.context.more.after ? "…" : ""}` : `[${e.quote}]`;
       return `${i + 1}. From "${where}": ${text.replace(/\s+/g, " ").trim()}`;
     });
-  return [`Question: ${question}`, `Answer: ${answer}`, "", "Quoted passages, with the quote in [brackets] and the text around it:", ...passages, ""];
 }
 
 /** The check's reply is one short JSON object; the self-check counts this call in its time estimate. */

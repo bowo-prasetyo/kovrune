@@ -68,7 +68,7 @@ const STOP_WORDS = new Set(
 );
 
 /** Words, without stop words, stemmed. In Chinese or Japanese, the pairs of neighbouring characters (scripts.ts). */
-function contentWords(text: string): string[] {
+export function contentWords(text: string): string[] {
   return [...new Set(words(text).filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
 }
 
@@ -85,7 +85,7 @@ export function plainNumber(written: string): string {
 }
 
 /** The numbers in a text (plainNumber). A list item's own number ("1. Open the perspective") is not one of them. */
-function numbers(text: string): string[] {
+export function numbers(text: string): string[] {
   const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
   return [...body.matchAll(/\p{Nd}+(?:[.,]\p{Nd}+)*/gu)].map(([n]) => plainNumber(n));
 }
@@ -166,7 +166,7 @@ function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
 }
 
 /** Same word, allowing for the stemmer's single suffix: "hallucinat" (hallucinate) matches "hallucination". */
-function sameWord(a: string, b: string): boolean {
+export function sameWord(a: string, b: string): boolean {
   if (a === b) return true;
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
   return short.length >= 6 && long.startsWith(short);
