@@ -357,6 +357,31 @@ Against the rule for label changes, the run confirms what the recorded answers s
 
 **Not adopted:** a wrong answer gains the label, against the condition set before the run. `main` keeps the current prompt. A prompt that fixes `f43` without this would have to be designed and judged on new answers, not tuned against the held-out total.
 
+### A dropped result can be read again (0.43.0), and a stress test of context fitting
+
+Each tool result stays in the conversation, and when the next call would not fit the context window, `fitToContext` (`src/agent/agent.ts`) replaces the oldest results with "[earlier tool result removed to save context]". The system prompt, the question and the latest result are always kept. In the 4,096-token runs this almost never happens: no task of the [0.42.0 4B run](#the-cross-check-run-live-0420-run) and one of the 0.38.0 2B run lost a result. But running an action again after its result was dropped did not bring it back. The repeat guard answered that the result "has not changed", took the tool away, and the model could not see the text again. Now an action whose result was removed is no longer a repeat (harness 0.43.0), so reading the document again returns its text.
+
+**The stress test.** Qwen3.5-4B on `main` at 0.42.0 (`88ae60c`), all five suites, with the [0.42.0 run](#the-cross-check-run-live-0420-run)'s build, model file and CPU (Intel Xeon @ 2.80GHz), but a 2,048-token context ([json](../results/field-0.42-ctx2048-qwen3.5-4b-q4km.json)). Then the fix (`67d6e6f`) was run on the 27 tasks that lost results there, plus one task per suite and part that did not as a control, 11 in all ([json](../results/field-0.43-ctx2048-reread-qwen3.5-4b-q4km.json)). Tasks that lose no result cannot change, as the fix acts only on a removed result. All 11 controls took the same actions, with the same answers.
+
+| Suite | 4,096 tokens (0.42.0) | 2,048 tokens | Tasks that lost results | Of those, passed: before the fix | With it |
+| --- | --- | --- | --- | --- | --- |
+| Field | 79/89 | 80/89 | 17 | 14 | 14 |
+| Held out | 35/37 | 35/37 | 7 | 7 | 7 |
+| Research | 19/22 | 19/22 | 0 | – | – |
+| Unanswerable | 8/8 | 8/8 | 2 | 2 | 2 |
+| PDF | 4/4 | 4/4 | 1 | 1 | 1 |
+
+- **Half the context costs no task.** At 2,048 tokens, 27 of 160 tasks lost at least one result (up to 6), and every task still ended with an answer. Against 4,096 tokens, 12 of the 123 tasks outside the held-out suite took other actions, all among those that lost results. The only change in result is a gain, field `f24`, by chance.
+  - The guards help here. A document is read 2,400 characters at a time. The model is told to read before answering. And the answer's quotes are checked against the documents themselves, not against the conversation, so a dropped result cannot let a wrong quote through.
+- **The fix changes the path of 9 tasks and no result.** Before the fix, 10 of the field and synthetic tasks that lost results tried to read a document a second time and were refused. With it, 8 of them read again and took other paths (field `f14`, `f23`, `f28`, `f32`, `f42`, `f54`, `f69`, `f82`), and so did one held-out task. The other two (`f36`, `u06`) repeated a read whose result was still there, which stays a repeat.
+- **One answer is better backed.** Before the fix, field `f54` tried twice to read the guide's troubleshooting table again and was refused both times. It then quoted a nearby line, "Scanned PDFs (images without a text layer) can't be read", and the review said no. With the fix it reads the table again and quotes the row "A PDF shows "No text found" | The PDF is scanned images". The review says yes, the cross-check agrees, and the right answer is labelled **Quotes found**.
+- **Labels on these 27 tasks:** 12 labelled with 1 wrong, now 13 labelled with 1 wrong. Held out: 4 labelled, 0 wrong, in both.
+- **Cost:** 168 calls for the 27 tasks instead of 165.
+
+**Adopted** as a defect fix under the [rule](#rule-for-prompt-and-guard-changes): no suite loses a task, and no wrong answer gains the label. At 4,096 tokens it changes nothing on the 4B suites, as no 4B task loses a result there.
+
+**What the test says about keeping research state outside the conversation.** On these suites, at half the context, dropping old results costs no task. So a separate state for the agent, such as the passages of a dropped result that best match the question kept in its place, would have nothing to show on them. It would need tasks that need more than a few documents: longer multi-hop questions, or the open sources, which add calls and longer reads.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

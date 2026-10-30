@@ -260,6 +260,11 @@ export async function runAgent(options: {
     if (!fitted.fits) {
       return { stopReason: "context-overflow", calls, transcript };
     }
+    // An action whose result was removed is no longer a repeat: running it again brings the result
+    // back, where the repeat guard would answer that it "has not changed" and leave it out.
+    transcript.forEach((m, i) => {
+      if (m.content === REMOVED_OBSERVATION && transcript[i - 1]?.role === "assistant") executed.delete(transcript[i - 1]!.content);
+    });
 
     // Rebuilt every call: argument schemas can depend on what the task has found so far.
     // When finishing is forced, or nothing else is available, the final tool is always allowed.

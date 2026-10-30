@@ -132,6 +132,18 @@ describe("research agent", () => {
     assert.ok(dropped.at(-1)! > 0);
     assert.deepEqual(dropped, [...dropped].sort((x, y) => x - y), "results stay removed once removed");
   });
+
+  it("reads a document again when its result was removed, instead of calling it a repeat", async () => {
+    const reads = corpus.slice(0, 4).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
+    const model = new ScriptedModel([...reads, reads[0]!, final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
+    Object.assign(model.info, { contextLength: 1600 });
+    const run = await research("r01-lumen-maintainer", [], true, model);
+    assert.ok(run.agent.calls[4]!.droppedResults! > 0, "the first read's result was removed by the fifth call");
+    const reread = run.agent.transcript.at(-2)!.content;
+    assert.doesNotMatch(reread, /already ran this exact action/);
+    assert.ok(reread.includes(`[${corpus[0]!.id}]`), "the document's text is back");
+    assert.equal(run.agent.stopReason, "final");
+  });
 });
 
 describe("repeat and last-step guards", () => {
