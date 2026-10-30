@@ -153,6 +153,23 @@ describe("evidence check", () => {
     assert.equal(check("LumenDB ... has been maintained by the Tessel Foundation since 2022.", overview).elidedWords, 21);
   });
 
+  it("reads a line break written out as text in a quote as whitespace (field task f74)", () => {
+    // The model escaped the licence's line breaks twice in its JSON, so the quote has "\\n\\n" where the
+    // source has a blank line.
+    const source = "10.3. Modified Versions\n\nIf you create software not governed by this License, and you want to\ncreate a new license for such software, you may create and use a\nmodified version of this License if you rename the license.";
+    const quote = "10.3. Modified Versions\\n\\nIf you create software not governed by this License, and you want to\\ncreate a new license for such software";
+    const checked = check(quote, source);
+    assert.equal(checked.verified, true);
+    assert.match(checked.context!.passage, /^10\.3\. Modified Versions\n\nIf you create .* for such software,?$/s, "the passage shown is the source's own text");
+    // Characters that are written out in the source too still match a quote of them.
+    assert.equal(check("Use \\n to end a line in the string", "Use \\n to end a line in the string literal.").verified, true);
+    // A quote that is nearly right still gets its closest passage, without "\\n" in its words.
+    const near = check("If you create software\\nnot covered by this License", source);
+    assert.equal(near.verified, false);
+    assert.ok(near.closest?.some((part) => part.kind === "quote-only" && part.text === "covered"));
+    assert.ok(!near.closest?.some((part) => /\\n/.test(part.text)));
+  });
+
   it("matches ligatures, soft hyphens and words hyphenated at a line end", () => {
     const quote = "the financial statements were audited";
     assert.equal(check(quote, "We confirm the ﬁnancial statements were audited.").verified, true, "ligature");
