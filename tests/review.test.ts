@@ -143,16 +143,36 @@ describe("the model's own check of an answer", () => {
       [`{"verdict":"yes"}`, "yes", "Quotes found"],
       [`{"verdict":"partly"}`, "partly", "Quotes found, answer not confirmed"],
     ] as const) {
-      const model = new ScriptedModel([search, read, short, reply], "qwen3.5-4b-q4km");
+      // A "yes" is cross-checked too (crosscheck.ts): the model reads the same answer in the passages.
+      const model = new ScriptedModel([search, read, short, reply, `{"answer":"30 days"}`], "qwen3.5-4b-q4km");
       const { support, status, evidence } = await runResearch({ question: QUESTION, library, model });
       assert.equal(support!.judged, 0, "too short for the sentence check");
-      assert.equal(model.requests.length, 4, "the check is asked");
+      assert.equal(model.requests.length, verdict === "yes" ? 5 : 4, "the check is asked, and the cross-check after a yes");
       assert.equal(support!.review, verdict);
       assert.equal(labelledQuotesFound(status, evidence, support), verdict === "yes");
       const shown = describeStatus(status as "verified", evidence, support);
       assert.equal(shown.label, label);
       if (verdict === "yes") assert.match(shown.detail, /too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes/);
     }
+  });
+
+  it("takes the label away when the cross-check reads another answer in the passages (Qwen3.5-4B)", async () => {
+    const model = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`, `{"answer":"30 days"}`], "qwen3.5-4b-q4km");
+    const { support, status, evidence } = await runResearch({ question: QUESTION, library, model });
+    assert.equal(model.requests.length, 5);
+    assert.doesNotMatch(model.requests[4]!.messages[1]!.content, /60 days after the notice/, "the cross-check is not shown the answer");
+    assert.equal(support!.review, "yes");
+    assert.deepEqual(support!.crossCheck, { extracted: "30 days", agrees: false });
+    assert.equal(labelledQuotesFound(status, evidence, support), false);
+    const shown = describeStatus(status as "verified", evidence, support);
+    assert.equal(shown.label, "Quotes found, answer not confirmed");
+    assert.match(shown.detail, /without seeing this one, the model read "30 days"/);
+    // Other models are not cross-checked, and answers saved before the cross-check keep their label.
+    const other = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`], "qwen3.5-2b-q4km");
+    const before = await runResearch({ question: QUESTION, library, model: other });
+    assert.equal(other.requests.length, 4);
+    assert.equal(before.support!.crossCheck, undefined);
+    assert.equal(labelledQuotesFound(before.status, before.evidence, before.support), true);
   });
 
   it("does not ask other models about short answers, which stay too short to check (Qwen3.5-2B)", async () => {

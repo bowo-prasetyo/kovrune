@@ -2,6 +2,7 @@
 
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
+import type { CrossCheck } from "../../agent/crosscheck.ts";
 import type { ReviewVerdict } from "../../agent/review.ts";
 import { labelledQuotesFound, reviewAsked } from "../../agent/support.ts";
 
@@ -64,7 +65,7 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict },
+  support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck },
 ): { label: string; detail: string; tone: AnswerStatus } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
@@ -82,6 +83,16 @@ export function describeStatus(
             ? "Every quote below is word for word in the source it cites. The answer is too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes. Check that the quotes answer your question."
             : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
           tone: "verified",
+        };
+      }
+      // Every quote is found, and the model's check said yes, but the answer it read in the passages
+      // without seeing this one is a different one (crosscheck.ts).
+      if (support?.review === "yes" && support.crossCheck?.agrees === false && reviewAsked(status, evidence, support)) {
+        const read = support.crossCheck.extracted;
+        return {
+          label: "Quotes found, answer not confirmed",
+          detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, the model ${read ? `read "${read}"` : "found no answer in them"}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
+          tone: "unverified",
         };
       }
       // Every quote is found, but the model's own check does not confirm the answer (review.ts).

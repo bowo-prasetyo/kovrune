@@ -6,6 +6,7 @@
 import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import type { CrossCheck } from "./crosscheck.ts";
 import type { ReviewVerdict } from "./review.ts";
 
 export interface AnswerSentence {
@@ -31,6 +32,12 @@ export interface SentenceSupport {
    * the answer says. "unclear" when the check gave no readable reply; absent when not asked.
    */
   review?: ReviewVerdict;
+  /**
+   * The cross-check (crosscheck.ts), asked when the review says yes, for models it is measured for: the
+   * answer the model read in the passages without seeing this one, and whether this one agrees with it.
+   * Absent when not asked.
+   */
+  crossCheck?: CrossCheck;
 }
 
 /** Sentences with fewer content words than this are not judged. */
@@ -68,7 +75,7 @@ const STOP_WORDS = new Set(
 );
 
 /** Words, without stop words, stemmed. In Chinese or Japanese, the pairs of neighbouring characters (scripts.ts). */
-function contentWords(text: string): string[] {
+export function contentWords(text: string): string[] {
   return [...new Set(words(text).filter((t) => t.length > 1 && !STOP_WORDS.has(t)).map(stem))];
 }
 
@@ -85,7 +92,7 @@ export function plainNumber(written: string): string {
 }
 
 /** The numbers in a text (plainNumber). A list item's own number ("1. Open the perspective") is not one of them. */
-function numbers(text: string): string[] {
+export function numbers(text: string): string[] {
   const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
   return [...body.matchAll(/\p{Nd}+(?:[.,]\p{Nd}+)*/gu)].map(([n]) => plainNumber(n));
 }
@@ -166,7 +173,7 @@ function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
 }
 
 /** Same word, allowing for the stemmer's single suffix: "hallucinat" (hallucinate) matches "hallucination". */
-function sameWord(a: string, b: string): boolean {
+export function sameWord(a: string, b: string): boolean {
   if (a === b) return true;
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
   return short.length >= 6 && long.startsWith(short);
@@ -317,13 +324,17 @@ function answerInQuote(
  * that gave no readable verdict ("unclear"): a failed check does not read like a passed one.
  * Answers saved before sentence support have no `support`, and answers saved before the check
  * have no `review`; both keep the rule they had.
+ *
+ * Since harness 0.40.0, for Qwen3.5-4B, an answer the check confirms is also cross-checked
+ * (crosscheck.ts), and one whose cross-check reads a different answer in the passages is not labelled.
+ * Answers saved before have no `crossCheck`, and keep their label.
  */
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; review?: ReviewVerdict },
+  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck },
 ): boolean {
-  if (support?.review) return support.review === "yes" && reviewAsked(status, evidence, support);
+  if (support?.review) return support.review === "yes" && support.crossCheck?.agrees !== false && reviewAsked(status, evidence, support);
   return wordChecksPass(status, evidence, support);
 }
 

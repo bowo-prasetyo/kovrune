@@ -11,6 +11,7 @@ import { createResearchTools, researchSystem, type ResearchFinal, type Translate
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import { crossCheckAnswer, crossChecksAnswers } from "./crosscheck.ts";
 import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
 import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
@@ -133,6 +134,19 @@ export async function runResearch(options: {
       constrained: options.constrained,
       signal,
     });
+    // A "yes" is given to nearly every answer with real quotes, so for models it is measured for, the
+    // answer the model reads in the passages without seeing this one must agree with it (crosscheck.ts).
+    if (support.review === "yes" && crossChecksAnswers(options.model.info.id)) {
+      support.crossCheck = await crossCheckAnswer({
+        model: options.model,
+        question: options.question,
+        answer: final.answer,
+        evidence,
+        titleFor,
+        constrained: options.constrained,
+        signal,
+      });
+    }
   }
   return { status, final, evidence, support, citations, sourceErrors: sourceErrors(), agent };
 }

@@ -15,6 +15,7 @@ import { createResearchTools, RESEARCH_SYSTEM } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, systemPrompt } from "./agent.ts";
 import { RESEARCH_LIMITS } from "./research.ts";
+import { CROSSCHECK_MAX_TOKENS } from "./crosscheck.ts";
 import { REVIEW_MAX_TOKENS } from "./review.ts";
 
 export interface SelfCheckResult {
@@ -33,7 +34,8 @@ export interface SelfCheckResult {
   decodeTokensPerSecond: number;
   /**
    * Worst case for one research task over the user's documents: every call uses its full token
-   * budget (RESEARCH_LIMITS), and the model then checks its answer (review.ts). A reply cut off at
+   * budget (RESEARCH_LIMITS), and the model then checks its answer (review.ts) and, for some models,
+   * cross-checks it (crosscheck.ts). A reply cut off at
    * the limit is retried with more room, and documents in another script than a search add a short
    * translation call per search (tools/research.ts), which can take longer still.
    */
@@ -113,7 +115,8 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
   const decodeMs = Math.max(record.totalMs - record.ttftMs, 1);
   const decodeTokensPerSecond = (record.completionTokens / decodeMs) * 1000;
   const secondsPerCall = record.ttftMs / 1000 + RESEARCH_LIMITS.maxTokensPerCall / Math.max(decodeTokensPerSecond, 0.01);
-  const reviewSeconds = record.ttftMs / 1000 + REVIEW_MAX_TOKENS / Math.max(decodeTokensPerSecond, 0.01);
+  // The model's check of its answer, and for some models its cross-check (review.ts, crosscheck.ts).
+  const reviewSeconds = (2 * record.ttftMs) / 1000 + (REVIEW_MAX_TOKENS + CROSSCHECK_MAX_TOKENS) / Math.max(decodeTokensPerSecond, 0.01);
   return {
     passed: usesResult,
     constrained,
