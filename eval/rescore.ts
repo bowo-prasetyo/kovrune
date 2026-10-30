@@ -6,7 +6,8 @@
 //   npm run bench:rescore -- --labels eval/results/a.json > labels.txt  # one line per answer, to diff
 //
 // Only answers whose final answer was recorded whole can be re-scored; reports keep the first 600
-// characters. The model's own check (review.ts) is not asked again: its recorded verdict is used.
+// characters. The model's own check (review.ts) and its cross-check (crosscheck.ts) are not asked again:
+// their recorded results are used.
 // Whether an answer passes its task is scored again too, since it requires a verified quote.
 
 import { readFile } from "node:fs/promises";
@@ -70,7 +71,8 @@ for (const file of positionals) {
     const status = answerStatus(final.found, evidence);
     const support = sentenceSupport(answer, evidence, (id) => library.documentFor(id)?.title, task.question);
     const review = result.support?.review as ReviewVerdict | undefined;
-    const labelled = labelledQuotesFound(status, evidence, review ? { ...support, review } : support);
+    const crossCheck = result.support?.crossCheck;
+    const labelled = labelledQuotesFound(status, evidence, review ? { ...support, review, ...(crossCheck ? { crossCheck } : {}) } : support);
     const passed = scoreResearch(task, { status, final: { ...final, answer }, evidence, citations: {}, sourceErrors: [], agent: undefined! }, library).passed;
     for (const [key, value, right] of [["recorded", result.quotesFound ?? false, result.passed], ["now", labelled, passed]] as const) {
       if (value) {

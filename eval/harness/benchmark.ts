@@ -14,7 +14,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.41.0";
+export const HARNESS_VERSION = "0.42.0";
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -96,9 +96,11 @@ export interface TaskResult {
   /**
    * Research tasks: how many answer sentences were long enough to judge, how many a found quote backs,
    * and the model's own check of the answer, asked when the word checks would label it or the answer
-   * is too short for them to judge (agent/review.ts).
+   * is too short for them to judge (agent/review.ts), and since harness 0.42.0 its cross-check, asked
+   * after a "yes" for the models it runs for (agent/crosscheck.ts): the answer it read in the passages
+   * and whether the answer agrees.
    */
-  support?: { judged: number; backed: number; review?: string };
+  support?: { judged: number; backed: number; review?: string; crossCheck?: { extracted?: string; agrees: boolean } };
   /** Research tasks: whether the app would label the answer "Quotes found". */
   quotesFound?: boolean;
 }
@@ -198,6 +200,7 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
             judged: run.research.support.judged,
             backed: run.research.support.backed,
             ...(run.research.support.review ? { review: run.research.support.review } : {}),
+            ...(run.research.support.crossCheck ? { crossCheck: run.research.support.crossCheck } : {}),
           },
           quotesFound: labelledQuotesFound(run.research.status, run.research.evidence, run.research.support),
         }
