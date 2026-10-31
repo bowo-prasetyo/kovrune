@@ -292,6 +292,12 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 
 **Research state: search results kept as IDs and titles (measured, not adopted).** A dropped search result kept the ID and title of each result, without snippets. At 2,048 tokens on the same tasks, field falls on both models against 0.44.0: 2B 35 → 28 (2 gained, 9 lost) and 4B 20 → 18 (1 gained, 3 lost). So `main` keeps removing old search results whole. The likely cause is that the kept lines take room the shortened reads needed: prompts grow, while as many results leave the context ([field README](../eval/field/README.md#a-dropped-search-keeping-its-ids-and-titles-measured-not-adopted)).
 
+**N2, questions that need more than one passage: added (harness 0.46.0).** There are two new suites over the field documents: `multi` (13 questions) and `multiholdout` (8, read only as totals). In each question no single passage holds all the facts. First run, at 4,096 tokens:
+- **Qwen3.5-4B** passes 14 of 21 (67%), against 89% on the field suite.
+- **Qwen3.5-2B** passes 4 of 21 (19%), against 78%.
+
+Most failures answer one part of the question. The label misses that: 7 of 2B's 8 answers labelled Quotes found are wrong, and 2 of 4B's 9. Every one passed the word checks and the review, and on 4B the cross-check as well. No results were dropped at this context. A check that the answer covers every part of the question is the next step ([field README](../eval/field/README.md#questions-that-need-more-than-one-passage-0460)).
+
 The cost is 4B's `f54`: a shortened table lost the line that answers, and the model's related answer from another passage is labelled Quotes found. Over both models, 4 wrong labelled answers on these tasks instead of 5 ([field README](../eval/field/README.md#a-dropped-read-keeps-the-sentences-that-best-match-the-question-0440)).
 
 So research state kept outside the conversation, such as the best-matching passages of a dropped result, has a test bed: 2B at 2,048 tokens. At the app's 4,096 tokens, results are almost never dropped ([field README](../eval/field/README.md#a-dropped-result-can-be-read-again-0430-and-a-stress-test-of-context-fitting)).

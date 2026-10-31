@@ -1,0 +1,1153 @@
+{
+  "harnessVersion": "0.46.0",
+  "createdAt": "2026-10-31T06:19:35.689Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "notes": "Harness 0.46.0 (20e049c) on the multi-passage suites, multi and multiholdout, at the app's 4,096-token context: their first run. One run on one machine. Native llama.cpp fae9ac5 built with -DGGML_NATIVE=OFF and AVX2, on CPU (4-core cloud container, Intel(R) Xeon(R) Processor @ 2.80GHz, no GPU), 4 threads, file Qwen3.5-4B-Q4_K_M.gguf (unsloth revision e87f176, SHA-256 00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4). Speeds are not representative of any hardware class."
+  },
+  "config": {
+    "suites": [
+      "multi",
+      "multiholdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 31.4,
+    "decodeTokensPerSecond": 5.6,
+    "maxResearchTaskMinutes": 13.4,
+    "minutesPerSource": 3.2
+  },
+  "summary": [
+    {
+      "suite": "multi",
+      "mode": "constrained",
+      "tasks": 13,
+      "passed": 9,
+      "successRate": 0.692,
+      "successInterval": [
+        0.424,
+        0.873
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 5.7,
+      "prefillTokensPerSecond": 66.5,
+      "medianTaskSeconds": 177.5,
+      "maxPromptTokens": 2108,
+      "tasksWithDroppedResults": 0,
+      "falseReassurance": {
+        "labelled": 8,
+        "wrong": 1
+      }
+    },
+    {
+      "suite": "multiholdout",
+      "mode": "constrained",
+      "tasks": 8,
+      "passed": 5,
+      "successRate": 0.625,
+      "successInterval": [
+        0.306,
+        0.863
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 5.6,
+      "prefillTokensPerSecond": 61.4,
+      "medianTaskSeconds": 126,
+      "maxPromptTokens": 2208,
+      "tasksWithDroppedResults": 0,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 1
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "multi",
+      "taskId": "m01-ollama-steps",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6988,
+      "completionTokens": 444,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2108,
+      "modelMs": 158119,
+      "ttftMs": 80444,
+      "wallMs": 223122,
+      "actions": [
+        "search {\"query\":\"Ollama experimental not acting on tool results troubleshooting model file\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The model test says the model is 'not acting on tool results' due to a server problem with multi-step conversati",
+        "read {\"docId\":\"kovrune-user-guide#10\"}",
+        "read {\"docId\":\"kovrune-design-r3#10\"}",
+        "read {\"docId\":\"kovrune-design-r3#33\"}",
+        "final_answer {\"found\":true,\"answer\":\"The model test says the model is 'not acting on tool results' due to a server problem with multi-step conversations (seen w"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The model test says the model is 'not acting on tool results' due to a server problem with multi-step conversations (seen with Ollama). The troubleshooting table suggests using the llama.cpp server with the same model file instead. Ollama is experimental, while llama.cpp server is the supported local server.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#10\",\"quote\":\"| The model test says the model is \\\"not acting on tool results\\\" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |\"},{\"docId\":\"kovrune-design-r3",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#10",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-design-r3#33",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 3,
+        "backed": 3,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "Server problem with multi-step conversations; use llama.cpp server with the same model file",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m02-wsl-setup",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4706,
+      "completionTokens": 395,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1867,
+      "modelMs": 146980,
+      "ttftMs": 78938,
+      "wallMs": 209990,
+      "actions": [
+        "search {\"query\":\"WSL llama-server localhost 127.0.0.1 windows browser\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Run the commands in the WSL terminal. Use the option `--host 0.0.0.0` to allow the Windows browser to reach the ",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "final_answer {\"found\":true,\"answer\":\"Run the commands in the WSL terminal. Use the option `--host 0.0.0.0` to allow the Windows browser to reach the server runn"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Run the commands in the WSL terminal. Use the option `--host 0.0.0.0` to allow the Windows browser to reach the server running in WSL.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#1\",\"quote\":\"On Windows with WSL, run these commands in the WSL terminal and open the address in your Windows browser.\"},{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"`--host 0.0.0.0` is needed when the browser and the server run on different systems, such as Windows and WSL.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#1",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "WSL terminal; --host 0.0.0.0",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m03-wikipedia-sent",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3184,
+      "completionTokens": 263,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1325,
+      "modelMs": 98102,
+      "ttftMs": 54748,
+      "wallMs": 105832,
+      "actions": [
+        "search {\"query\":\"Kovrune Wikipedia tick send research unreachable\"}",
+        "read {\"docId\":\"kovrune-user-guide#5\"}",
+        "read {\"docId\":\"kovrune-user-guide#8\"}",
+        "final_answer {\"found\":true,\"answer\":\"When you tick Wikipedia, Kovrune sends the search words the model chooses and the pages it reads to Wikipedia. If Wikipedia"
+      ],
+      "final": "{\"found\":true,\"answer\":\"When you tick Wikipedia, Kovrune sends the search words the model chooses and the pages it reads to Wikipedia. If Wikipedia can't be reached, the search results will show \\\"nothing found\\\" for that source, and the answer will be constructed from the other available sources (your documents and any other ticked sources like OpenAlex).\",\"evidence\":[{\"docId\":\"kovrune-user-guide#5\",\"quote\":\"Tick **Wikipedia** (with its language) or **OpenAlex** (scholarly papers) to search those too; with either ticked, you can ask questions without adding documents.\"},{\"docId\":\"kovrune-user",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#5",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#8",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#8",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m04-stop-server",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4596,
+      "completionTokens": 336,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1761,
+      "modelMs": 127785,
+      "ttftMs": 69314,
+      "wallMs": 136610,
+      "actions": [
+        "search {\"query\":\"llama-server blocking port 8080 stop keys terminal\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. To stop llama-serv",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "read {\"docId\":\"kovrune-user-guide#4\"}",
+        "final_answer {\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. To stop llama-server in its o"
+      ],
+      "final": "{\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. To stop llama-server in its own terminal when switching models, press `Ctrl+C`.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#9\",\"quote\":\"`ss -ltnp \\\\| grep 8080` shows it; stop it with `pkill -x llama-server`\"},{\"docId\":\"kovrune-user-guide#4\",\"quote\":\"In the terminal where `llama-server` runs, press **Ctrl+C** to stop it.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#9",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m05-larger-work",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3069,
+      "completionTokens": 418,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1327,
+      "modelMs": 125018,
+      "ttftMs": 50901,
+      "wallMs": 193624,
+      "actions": [
+        "search {\"query\":\"MPL-2.0 Larger Work distribution terms\"}",
+        "read {\"docId\":\"mpl-2.0#1\"}",
+        "read {\"docId\":\"mpl-2.0#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"Under MPL-2.0, a \\\"Larger Work\\\" is defined as a work that combines Covered Software with other material, in a separate fil"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Under MPL-2.0, a \\\"Larger Work\\\" is defined as a work that combines Covered Software with other material, in a separate file or files, that is not Covered Software. You may distribute a Larger Work under terms of your choice, provided that you also comply with the requirements of this License for the Covered Software. If the Larger Work is a combination of Covered Software with a work governed by one or more Secondary Licenses, and the Covered Software is not Incompatible With Secondary Licenses, you may additionally distribute the Covered Software under the terms of su",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mpl-2.0#1",
+          "verified": true
+        },
+        {
+          "docId": "mpl-2.0#5",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 3,
+        "backed": 3,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "A work combining Covered Software with other non-Covered material; distributable under terms of your choice, provided you comply with this License for the Covered Software.",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m06-context-manager",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3819,
+      "completionTokens": 172,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1625,
+      "modelMs": 98009,
+      "ttftMs": 68033,
+      "wallMs": 108166,
+      "actions": [
+        "search {\"query\":\"llama-server command context size agent engine selects relevant context\"}",
+        "read {\"docId\":\"kovrune-design-r3#18\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about the context size used by the llama-server command in the user guid"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about the context size used by the llama-server command in the user guide, nor do they specify which component of the design's agent engine selects relevant context within the model's measured context length. While document kovrune-design-r3#18 mentions that the 'Memory manager' selects relevant context within the model's measured context length, it does not provide the specific context size value used by the llama-server command.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m07-webllm-github",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3623,
+      "completionTokens": 224,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1573,
+      "modelMs": 98615,
+      "ttftMs": 58795,
+      "wallMs": 109028,
+      "actions": [
+        "search {\"query\":\"WebLLM M1 GitHub repository compiled model libraries privacy section browser path downloads\"}",
+        "read {\"docId\":\"kovrune-design-r3#12\"}",
+        "read {\"docId\":\"kovrune-design-r3#16\"}",
+        "final_answer {\"found\":true,\"answer\":\"WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub. The user guid"
+      ],
+      "final": "{\"found\":true,\"answer\":\"WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub. The user guide's privacy section states that the browser path downloads from GitHub without checking hashes, and pinning to fixed revisions and verifying downloads are part of M2.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#16\",\"quote\":\"WebLLM fetches model weights from the `main` revision on Hugging Face and its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, without checking hashes.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#16",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m08-2b-revision",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5687,
+      "completionTokens": 237,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1978,
+      "modelMs": 118422,
+      "ttftMs": 76181,
+      "wallMs": 190658,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-2B one-time browser download size WebLLM M1 revision model weights\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "search {\"query\":\"WebLLM M1 revision model weights\"}",
+        "read {\"docId\":\"kovrune-design-r3#16\"}",
+        "final_answer {\"found\":true,\"answer\":\"The one-time browser download of Qwen3.5-2B is 1.1 GB. WebLLM on M1 fetches model weights from the main revision.\",\"evidenc"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The one-time browser download of Qwen3.5-2B is 1.1 GB. WebLLM on M1 fetches model weights from the main revision.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B)\"},{\"docId\":\"kovrune-design-r3#16\",\"quote\":\"In M1 this is not yet implemented. WebLLM fetches model weights from the main revision on Hugging Face\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-design-r3#16",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "1.1 GB; main revision",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m09-preview-hosts",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5307,
+      "completionTokens": 226,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1809,
+      "modelMs": 114175,
+      "ttftMs": 74657,
+      "wallMs": 180460,
+      "actions": [
+        "search {\"query\":\"preview page bottom static hosts replace GitHub Pages\"}",
+        "read {\"docId\":\"kovrune-user-guide#1\"}",
+        "search {\"query\":\"static hosts replace GitHub Pages preview kovrune\"}",
+        "read {\"docId\":\"kovrune-design-r3#27\"}",
+        "final_answer {\"found\":true,\"answer\":\"The user guide says the commit it was built from is shown at the bottom of the preview page. The design names Cloudflare Pa"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The user guide says the commit it was built from is shown at the bottom of the preview page. The design names Cloudflare Pages or Netlify as static hosts to replace the GitHub Pages preview.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#1\",\"quote\":\"The preview is published automatically from the latest `main` by GitHub Actions; the commit it was built from is shown at the bottom of the page.\"},{\"docId\":\"kovrune-design-r3#27\",\"quote\":\"GitHub Pages cannot set these headers, so the reference deployment uses a static host that can (for example Cloudflare Pages or Netlify).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#1",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-design-r3#27",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "commit; Cloudflare Pages or Netlify",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m10-reassurance-eval-set",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3599,
+      "completionTokens": 230,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1559,
+      "modelMs": 104148,
+      "ttftMs": 64631,
+      "wallMs": 157541,
+      "actions": [
+        "search {\"query\":\"false reassurance rate fixed tasks evaluation set\"}",
+        "read {\"docId\":\"kovrune-design-r3#7\"}",
+        "read {\"docId\":\"kovrune-design-r3#31\"}",
+        "final_answer {\"found\":true,\"answer\":\"The design's target for the false reassurance rate is under 10% on Qwen3.5-4B. It plans for 20\u201350 fixed tasks in the evalua"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The design's target for the false reassurance rate is under 10% on Qwen3.5-4B. It plans for 20\u201350 fixed tasks in the evaluation set.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#7\",\"quote\":\"False reassurance rate: the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions.\"},{\"docId\":\"kovrune-design-r3#31\",\"quote\":\"20\u201350 fixed tasks across research (answer with citations from a fixed document set) and coding (fix a bug or write a function so that given tests pass).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#7",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-design-r3#31",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "Under 10%; 20\u201350",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m11-class-2-gate",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5031,
+      "completionTokens": 294,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1844,
+      "modelMs": 128533,
+      "ttftMs": 76826,
+      "wallMs": 190560,
+      "actions": [
+        "search {\"query\":\"reference hardware class 2 M0 benchmark gate browser-runnable model\"}",
+        "read {\"docId\":\"kovrune-design-r3#29\"}",
+        "read {\"docId\":\"kovrune-design-r3#2\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "final_answer {\"found\":true,\"answer\":\"The reference hardware class 2 is a laptop with 16 GB unified memory (e.g. Apple Silicon) or a mid-range discrete GPU. To p"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The reference hardware class 2 is a laptop with 16 GB unified memory (e.g. Apple Silicon) or a mid-range discrete GPU. To pass the M0 benchmark gate, a browser-runnable model must complete a defined share of the research tasks on this hardware class 2.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#29\",\"quote\":\"Reference hardware classes for benchmarks: 1. Laptop with integrated GPU and 8 GB RAM. 2. Laptop with 16 GB unified memory (e.g. Apple Silicon) or a mid-range discrete GPU.\"},{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"Acceptance / go\u2013no\u2013go: at least one browser-runnable ",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#29",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-design-r3#32",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 3,
+        "backed": 3,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "Laptop with 16 GB unified memory (e.g. Apple Silicon) or a mid-range discrete GPU; complete a defined share of the research tasks",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m12-fuji-prefectures-site",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3124,
+      "completionTokens": 203,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1282,
+      "modelMs": 90502,
+      "ttftMs": 54592,
+      "wallMs": 102265,
+      "actions": [
+        "search {\"query\":\"\u5bcc\u58eb\u5c71 \u3069\u306e\u770c \u53f2\u8de1 \u6307\u5b9a \u5e74\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"\u5bcc\u58eb\u5c71\u306f\u5c71\u68a8\u770c\u3068\u9759\u5ca1\u770c\u306b\u8de8\u3063\u3066\u3044\u307e\u3059\u3002\u53f2\u8de1\u306b\u6307\u5b9a\u3055\u308c\u305f\u306e\u306f2011\u5e74\u3067\u3059\u3002\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"\u5c71\u68a8\u770c\uff08\u5bcc\u58eb\u5409\u7530\u5e02\u3001\u5357\u90fd\u7559\u90e1\u9cf4\u6ca2\u6751\uff09\u3068\u9759\u5ca1\u770c\uff08\u5bcc\u58eb\u5bae\u5e02\u3001\u5bcc\u58eb\u5e02"
+      ],
+      "final": "{\"found\":true,\"answer\":\"\u5bcc\u58eb\u5c71\u306f\u5c71\u68a8\u770c\u3068\u9759\u5ca1\u770c\u306b\u8de8\u3063\u3066\u3044\u307e\u3059\u3002\u53f2\u8de1\u306b\u6307\u5b9a\u3055\u308c\u305f\u306e\u306f2011\u5e74\u3067\u3059\u3002\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"\u5c71\u68a8\u770c\uff08\u5bcc\u58eb\u5409\u7530\u5e02\u3001\u5357\u90fd\u7559\u90e1\u9cf4\u6ca2\u6751\uff09\u3068\u9759\u5ca1\u770c\uff08\u5bcc\u58eb\u5bae\u5e02\u3001\u5bcc\u58eb\u5e02\u3001\u88fe\u91ce\u5e02\u3001\u5fa1\u6bbf\u5834\u5e02\u3001\u99ff\u6771\u90e1\u5c0f\u5c71\u753a\uff09\u306b\u8de8\u308b\u3002\"},{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"2011\u5e74\uff08\u5e73\u621023\u5e74\uff09\u306b\u53f2\u8de1\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        },
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m13-engine-music",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4616,
+      "completionTokens": 378,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1451,
+      "modelMs": 121043,
+      "ttftMs": 54246,
+      "wallMs": 177493,
+      "actions": [
+        "search {\"query\":\"Babbage's analytical engine recognised Lovelace manipulate information besides numbers\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Babbage's analytical engine has been recognised as a Turing-complete general-purpose computer. Besides numbers, ",
+        "read {\"docId\":\"ada-lovelace-lead#2\"}",
+        "read {\"docId\":\"ada-lovelace-lead#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"Babbage's analytical engine has been recognised as a Turing-complete general-purpose computer. Besides numbers, Lovelace su"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Babbage's analytical engine has been recognised as a Turing-complete general-purpose computer. Besides numbers, Lovelace suggested such a machine could manipulate information such as music.\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#2\",\"quote\":\"Though Babbage's analytical engine was never constructed and did not influence the invention of electronic computers, it has been recognised as a Turing-complete general-purpose computer, which anticipated the essential features of a modern electronic computer.\"},{\"docId\":\"ada-lovelace-lead#3\",\"quote\":\"Lovelace was the first to poi",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#2",
+          "verified": true
+        },
+        {
+          "docId": "ada-lovelace-lead#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "Turing-complete general-purpose computer; music",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x01-4b-sizes",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5649,
+      "completionTokens": 360,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2208,
+      "modelMs": 163869,
+      "ttftMs": 97906,
+      "wallMs": 175284,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-4B download size Q4_K_M local model server\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The one-time browser download size for Qwen3.5-4B is 2.4 GB. The Q4_K_M file for a local model server is 2.6 GB.",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"The one-time browser download size for Qwen3.5-4B is 2.4 GB. The Q4_K_M file for a local model server is 2.6 GB.\",\"evidence"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The one-time browser download size for Qwen3.5-4B is 2.4 GB. The Q4_K_M file for a local model server is 2.6 GB.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B)\"},{\"docId\":\"kovrune-user-guide#3\",\"quote\":\"| Qwen3.5-4B Q4_K_M | 2.6 GB | Better answers.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x02-download-delete",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1972,
+      "completionTokens": 132,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1123,
+      "modelMs": 66565,
+      "ttftMs": 42641,
+      "wallMs": 106239,
+      "actions": [
+        "search {\"query\":\"browser path download model button free space\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"The browser downloads the model from the browser's own storage (as indicated by 'The download happens once and is stored in"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The browser downloads the model from the browser's own storage (as indicated by 'The download happens once and is stored in the browser'). The button that frees the space is 'Delete the download'.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"The download happens once and is stored in the browser; **Delete the download** frees the space again.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "the browser; Delete the download",
+          "agrees": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x03-node-cmake",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1706,
+      "completionTokens": 214,
+      "estimatedTokens": false,
+      "maxPromptTokens": 983,
+      "modelMs": 78853,
+      "ttftMs": 41103,
+      "wallMs": 88979,
+      "actions": [
+        "search {\"query\":\"Kovrune local Node.js version llama.cpp build tool apt\"}",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"The user guide does not specify a required Node.js version for running Kovrune locally. For building llama.cpp on Linux or "
+      ],
+      "final": "{\"found\":true,\"answer\":\"The user guide does not specify a required Node.js version for running Kovrune locally. For building llama.cpp on Linux or WSL, the guide installs build-essential, cmake, git, and libssl-dev via apt; besides git and build-essential, it installs cmake and libssl-dev.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"To build on Linux or WSL:\\nbash\\nsudo apt install build-essential cmake git libssl-dev\\n\"},{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"**Local model server** | Everything else, including laptops with integrated Intel graphics | llama.cpp, set up once ([secti",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x04-server-address-wsl",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1679,
+      "completionTokens": 148,
+      "estimatedTokens": false,
+      "maxPromptTokens": 918,
+      "modelMs": 59942,
+      "ttftMs": 33670,
+      "wallMs": 67367,
+      "actions": [
+        "search {\"query\":\"llama-server address WSL Windows same computer\"}",
+        "read {\"docId\":\"kovrune-user-guide#9\"}",
+        "final_answer {\"found\":true,\"answer\":\"The app uses localhost (or 127.0.0.1) by default for a llama-server on the same computer. When Windows can't reach the serv"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The app uses localhost (or 127.0.0.1) by default for a llama-server on the same computer. When Windows can't reach the server in WSL, use the address from the command `hostname -I` in WSL.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#9\",\"quote\":\"if Windows still can't reach WSL, use the address from `hostname -I` in WSL\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#9",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x05-m0-speed",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 4155,
+      "completionTokens": 364,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1860,
+      "modelMs": 134889,
+      "ttftMs": 70037,
+      "wallMs": 200418,
+      "actions": [
+        "search {\"query\":\"M0 benchmark gate outcome model test speed 8 GB memory Intel graphics user guide\"}",
+        "read {\"docId\":\"kovrune-user-guide#3\"}",
+        "read {\"docId\":\"kovrune-design-r3#32\"}",
+        "final_answer {\"found\":true,\"answer\":\"The M0 benchmark gate outcome was a provisional go, with Qwen3.5-4B passing the quality criteria in native runs and native "
+      ],
+      "final": "{\"found\":true,\"answer\":\"The M0 benchmark gate outcome was a provisional go, with Qwen3.5-4B passing the quality criteria in native runs and native speed passing even on class 1 hardware. On a laptop with 8 GB of memory and integrated Intel graphics (class 1 hardware), the Qwen3.5-2B model test runs at about 8 tokens/s, and the Qwen3.5-4B model test runs at about 5.5 tokens/s.\",\"evidence\":[{\"docId\":\"kovrune-design-r3#32\",\"quote\":\"Outcome (October 2026): provisional go. Qwen3.5-4B passes the quality criteria in native runs, and native speed passes even on class 1 hardware.\"},{\"docId\":\"kovrune-us",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-design-r3#32",
+          "verified": true
+        },
+        {
+          "docId": "kovrune-user-guide#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "provisional go; 3\u20134 minutes",
+          "agrees": false
+        }
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x06-ada-exposition",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5327,
+      "completionTokens": 380,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1863,
+      "modelMs": 147835,
+      "ttftMs": 80072,
+      "wallMs": 159224,
+      "actions": [
+        "search {\"query\":\"Ada Lovelace death year Eiffel Tower Exposition universelle year\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Ada Lovelace died in 1852, and the Exposition universelle for which the Eiffel Tower was built was in 1889. Ther",
+        "read {\"docId\":\"ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ada Lovelace died in 1852, and the Exposition universelle for which the Eiffel Tower was built was in 1889. Therefore, Ada "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ada Lovelace died in 1852, and the Exposition universelle for which the Eiffel Tower was built was in 1889. Therefore, Ada Lovelace's death came first.\",\"evidence\":[{\"docId\":\"ada-lovelace-lead#1\",\"quote\":\"Augusta Ada King, Countess of Lovelace (n\u00e9e Byron; 10 December 1815 \u2013 27 November 1852)\"},{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"Construite en deux ans par Gustave Eiffel et ses collaborateurs pour l'Exposition universelle de Paris de 1889\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ada-lovelace-lead#1",
+          "verified": true
+        },
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x07-heritage-first",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4450,
+      "completionTokens": 342,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1391,
+      "modelMs": 115298,
+      "ttftMs": 55930,
+      "wallMs": 123878,
+      "actions": [
+        "search {\"query\":\"Mount Fuji UNESCO World Heritage Site year Great Wall of China UNESCO World Heritage Site year\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The Great Wall of China became a UNESCO World Heritage Site first in 1987, while Mount Fuji was inscribed in 201",
+        "read {\"docId\":\"great-wall-zh-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Great Wall of China became a UNESCO World Heritage Site first in 1987, while Mount Fuji was inscribed in 2013.\",\"eviden"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The Great Wall of China became a UNESCO World Heritage Site first in 1987, while Mount Fuji was inscribed in 2013.\",\"evidence\":[{\"docId\":\"great-wall-zh-lead#1\",\"quote\":\"1987\u5e74\uff0c\u957f\u57ce\u88ab\u8054\u5408\u56fd\u6559\u79d1\u6587\u7ec4\u7ec7\u5217\u4e3a\u4e16\u754c\u6587\u5316\u9057\u4ea7\"},{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"2013\u5e74\uff08\u5e73\u621025\u5e74\uff096\u670822\u65e5\u306b\u306f\u95a2\u9023\u3059\u308b\u6587\u5316\u8ca1\u7fa4\u3068\u3068\u3082\u306b\u300c\u5bcc\u58eb\u5c71-\u4fe1\u4ef0\u306e\u5bfe\u8c61\u3068\u82b8\u8853\u306e\u6e90\u6cc9\u300d\u306e\u540d\u3067\u4e16\u754c\u6587\u5316\u907a\u7523\u306b\u767b\u9332\u3055\u308c\u305f\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "great-wall-zh-lead#1",
+          "verified": true
+        },
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x08-tower-fuji-height",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5147,
+      "completionTokens": 246,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1800,
+      "modelMs": 111835,
+      "ttftMs": 68405,
+      "wallMs": 128091,
+      "actions": [
+        "search {\"query\":\"Eiffel Tower antennas height metres Mount Fuji highest point metres\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "search {\"query\":\"Eiffel Tower antennas height metres\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Eiffel Tower with its antennas is higher at 330 metres, compared to the highest point of Mount Fuji at 3776.12 metres. "
+      ],
+      "final": "{\"found\":true,\"answer\":\"The Eiffel Tower with its antennas is higher at 330 metres, compared to the highest point of Mount Fuji at 3776.12 metres. Therefore, Mount Fuji's highest point is higher.\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tu\u0281\u025bf\u025bl] est une tour autoportante de fer puddl\u00e9 de 330 m de hauteur (avec antennes) situ\u00e9e \u00e0 Paris...\"},{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"\u6a19\u9ad8\u306f3775.56 m\u3001\u5c71\u4f53\u306e\u6700\u9ad8\u5730\u70b9\u306f3776.12 m\u3067\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        },
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    }
+  ]
+}

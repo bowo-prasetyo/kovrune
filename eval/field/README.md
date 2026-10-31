@@ -457,6 +457,39 @@ Research, unanswerable and pdf are unchanged on both models.
 
 **Not adopted:** the field suite falls on both models, against the condition set before the run. `main` keeps 0.44.0, where a dropped search is removed whole. So the research state keeps the evidence it has read, not the list of what it found: on these suites, at this context, the lines that name what was found cost more room than they are worth.
 
+
+### Questions that need more than one passage (0.46.0)
+
+In the field and held-out suites, 104 of the 126 questions are lookups that one passage answers (audit N2). So two suites of questions whose facts no single passage holds were added, over the same documents (`eval/field/multi.ts`). They span two parts of the user guide, the design or the licence, the guide together with the design, two parts of a lead, and comparisons across two leads, such as the Eiffel Tower's height against Mount Fuji's:
+- **`multi`** (13 questions) may be looked at task by task while a change is developed.
+- **`multiholdout`** (8) is read only as totals, like the [held-out suite](#held-out-suite). A question whose facts the held-out suite already asks for is held out here too.
+
+The questions and their facts were written before any model was run on them, and are not changed to fit a run. A test (`tests/field.test.ts`) checks two things: every fact is in the cited documents, and no passage holds all of a question's facts (one candidate failed this and was dropped). Run them with `--suites multi,multiholdout`.
+
+**First run**, at the app's 4,096-token context, on the build, model files and CPU (Intel Xeon @ 2.80GHz) of the baselines, harness 0.46.0 (`20e049c`): [4B](../results/multi-0.46-qwen3.5-4b-q4km.json), [2B](../results/multi-0.46-qwen3.5-2b-q4km.json).
+
+| | multi | multiholdout | Together | Field (one passage, mostly) | Quotes found, wrong |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 9/13 | 5/8 | 14/21 (67%) | 79/89 (89%) | 2 of 9 |
+| Qwen3.5-2B | 3/13 | 1/8 | 4/21 (19%) | 69/89 (78%) | **7 of 8** |
+
+- **Questions that need two passages are much harder.** 4B passes two thirds, against nine in ten on the field suite, and 2B one in five, against four in five.
+- **Most failures answer one half.** 4B's four failures on `multi`:
+  - `m01` names the fix but not what went wrong with Ollama;
+  - `m03` gets the second half wrong;
+  - `m06` answers "not found";
+  - `m07` gets the second half wrong.
+
+  Most of 2B's ten failures answer one part, or give a wrong fact for the other.
+- **The label does not see a missing half.** 7 of 2B's 8 answers labelled **Quotes found** are wrong, and 2 of 4B's 9. Each of them passed every check:
+  - every judged sentence is backed by a quote, as far as the answer goes;
+  - the review, which is told to answer "partly" when the answer leaves out part of what the question asks, said yes.
+
+  On 4B's `m01`, the cross-check agreed too: the answer the model read in the passages left out the same half. False reassurance here is far above the 10% target, on both models.
+- **Nothing was dropped.** The largest prompt was 2,208 tokens on 4B and 2,283 on 2B, against a budget of 3,456. The models read one to four passages, so at the app's context these questions do not test the research state ([0.44.0](#a-dropped-read-keeps-the-sentences-that-best-match-the-question-0440)).
+
+These are the baselines for later changes on these questions. The clearest next step is a check that an answer covers every part of what the question asks.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
