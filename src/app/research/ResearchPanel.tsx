@@ -28,6 +28,9 @@ import { describeEstimate, describeReportLabels, looksLikeReport, reportModeEnab
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
+/** A report's section heading in the trace (writeReport), shown apart from the steps under it. */
+const REPORT_SECTION_STEP = /^Section \d+ of \d+: /;
+
 type RunState =
   | { phase: "idle" }
   | { phase: "running"; steps: string[]; restored?: number; reportId?: string }
@@ -132,10 +135,10 @@ export function ResearchPanel({
         const step = (text: string, index?: number) => {
           if (index === undefined) {
             sectionSteps.push(text);
-            steps.push(`  ${text}`);
+            steps.push(text);
           } else {
             sectionSteps[index] = text;
-            steps[steps.length - sectionSteps.length + index] = `  ${text}`;
+            steps[steps.length - sectionSteps.length + index] = text;
           }
           shown();
         };
@@ -394,7 +397,9 @@ export function ResearchPanel({
       {state.phase !== "idle" && state.steps.length + (running ? 1 : 0) > 0 && (
         <ol className="trace" aria-live="polite" aria-label="Research steps">
           {state.steps.map((step, i) => (
-            <li key={i}>{step}</li>
+            <li key={i} className={REPORT_SECTION_STEP.test(step) ? "trace-section" : undefined}>
+              {step}
+            </li>
           ))}
           {running && <li className="progress">Waiting for the model…</li>}
         </ol>

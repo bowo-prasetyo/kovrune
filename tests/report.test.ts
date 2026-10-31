@@ -6,6 +6,7 @@ import { makeBackup, parseBackup } from "../src/app/research/backup.ts";
 import {
   describeEstimate,
   describeReportLabels,
+  labelKind,
   looksLikeReport,
   planEdits,
   planReady,
@@ -150,6 +151,12 @@ describe("report mode: writing and saving a report (slice 2)", () => {
     const closed = report([section("a", "no-answer")], { unfinished: true });
     assert.equal(describeReportLabels(closed.report!, label), "1 of 3 sections: No answer. 2 not written: the page was closed or reloaded.");
     assert.equal(describeReportLabels(report([], { stopped: true }).report!, label), "3 stopped before they were written.");
+    // Labels with counts are counted by kind (the end-to-end run's report read "1 of 2 sections: 2 of 13 sentences…").
+    const counted = report([{ ...section("a", "verified") }, { ...section("b", "verified") }]);
+    const byCount = (s: SavedAnswer) => (s.question === "a" ? "2 of 13 sentences backed by a quote" : "0 of 11 sentences backed by a quote");
+    assert.equal(describeReportLabels(counted.report!, byCount), "2 of 3 sections: Some sentences not backed by a quote. 1 not written.");
+    assert.equal(labelKind("Some quotes not found (2 of 3 found)"), "Some quotes not found");
+    assert.equal(labelKind("Quotes found"), "Quotes found");
   });
 
   it("is saved again after each section, in place", () => {

@@ -120,7 +120,10 @@ export function toSavedReport(options: {
  */
 export function describeReportLabels(report: SavedReport, label: (section: SavedAnswer) => string): string {
   const counts = new Map<string, number>();
-  for (const section of report.sections) counts.set(label(section), (counts.get(label(section)) ?? 0) + 1);
+  for (const section of report.sections) {
+    const kind = labelKind(label(section));
+    counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
   const total = report.plan.length;
   const order = [...counts.entries()].sort((a, b) => Number(b[0] === "Quotes found") - Number(a[0] === "Quotes found") || b[1] - a[1]);
   const parts = order.map(([name, n], i) => (i === 0 ? `${n} of ${total} ${total === 1 ? "section" : "sections"}: ${name}.` : `${n}: ${name}.`));
@@ -130,6 +133,16 @@ export function describeReportLabels(report: SavedReport, label: (section: Saved
     parts.push(`${missing} ${why}.`);
   }
   return parts.join(" ") || `0 of ${total} sections written.`;
+}
+
+/**
+ * A label without its counts, so sections with the same kind of label are counted together:
+ * "2 of 13 sentences backed by a quote" is "Some sentences not backed by a quote", and
+ * "Some quotes not found (2 of 3 found)" is "Some quotes not found".
+ */
+export function labelKind(label: string): string {
+  if (/^\d+ of \d+ sentences? backed by a quote$/.test(label)) return "Some sentences not backed by a quote";
+  return label.replace(/ \(\d+ of \d+ found\)$/, "");
 }
 
 /** Puts a record in the list, replacing the one with its ID: a report is saved again after each section. */
