@@ -1,0 +1,1513 @@
+{
+  "report": "eval/results/field-0.42-main-qwen3.5-4b-q4km.json",
+  "checked": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "right": true,
+      "parts": [
+        {
+          "asks": "organization",
+          "answer": "The Tessel Foundation"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r02-lumen-license",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Under which license",
+          "answer": "Mozilla Public License 2.0 (MPL-2.0)"
+        },
+        {
+          "asks": "has LumenDB been released since version 3.0",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r03-advisory-affected",
+      "right": true,
+      "parts": [
+        {
+          "asks": "LumenDB versions",
+          "answer": "LumenDB versions"
+        },
+        {
+          "asks": "affected by advisory LSA-2024-07",
+          "answer": "are affected by advisory LSA-2024-07"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "right": true,
+      "parts": [
+        {
+          "asks": "maximum key size",
+          "answer": "4 KiB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r06-quillstate-rename",
+      "right": true,
+      "parts": [
+        {
+          "asks": "what was createStore() renamed to",
+          "answer": "defineStore()"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r07-cobble-2-5",
+      "right": true,
+      "parts": [
+        {
+          "asks": "security feature",
+          "answer": "encryption at rest using AES-256-GCM"
+        },
+        {
+          "asks": "added",
+          "answer": "added"
+        },
+        {
+          "asks": "Cobble 2.5",
+          "answer": "Cobble 2.5"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r08-lumen-4-date",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When is LumenDB 4.0 planned to be released?",
+          "answer": "LumenDB 4.0 is planned for the second quarter of 2025 (Q2 2025)."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r09-rfc-period",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how long",
+          "answer": "At least two weeks"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r10-reporter-library",
+      "right": true,
+      "parts": [
+        {
+          "asks": "The name of the compression library created by the person who reported LumenDB advisory LSA-2024-07",
+          "answer": "Brisk"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r11-lumen-chair",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Who chairs the steering committee in 2024",
+          "answer": "Ana Lindqvist"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r12-chair-library-node",
+      "right": false,
+      "parts": [
+        {
+          "asks": "minimum Node.js version",
+          "answer": "Node.js 18"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r13-cobble-license-conversion",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which license does each Cobble release convert to?",
+          "answer": "Apache-2.0 license"
+        },
+        {
+          "asks": "after how many years?",
+          "answer": "four years"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r14-talk-city",
+      "right": true,
+      "parts": [
+        {
+          "asks": "city",
+          "answer": "Lisbon"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r15-write-throughput",
+      "right": true,
+      "parts": [
+        {
+          "asks": "which store had higher random-write throughput, LumenDB or Cobble",
+          "answer": "Cobble"
+        },
+        {
+          "asks": "by how much",
+          "answer": "30,000 operations per second"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "right": true,
+      "parts": [
+        {
+          "asks": "default page or block size of LumenDB 3.x",
+          "answer": "default page size of 8 KiB"
+        },
+        {
+          "asks": "default page or block size of Cobble",
+          "answer": "default block size of 4 KiB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "right": true,
+      "parts": [
+        {
+          "asks": "LumenDB 3.1's random-read throughput",
+          "answer": "330,000 operations per second"
+        },
+        {
+          "asks": "in Priya Raman's benchmark",
+          "answer": ""
+        },
+        {
+          "asks": "Account for any later corrections",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "research",
+      "taskId": "r18-brisk-levels",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How many compression levels does the latest release of Brisk support?",
+          "answer": "13"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p01-tessel-income",
+      "right": true,
+      "parts": [
+        {
+          "asks": "total income",
+          "answer": "EUR 412,000"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p02-new-project",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which new project did the Tessel Foundation accept in November 2024",
+          "answer": "Driftwood"
+        },
+        {
+          "asks": "what does it do",
+          "answer": "is a structured logging library for Rust applications"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p03-dictionary-size",
+      "right": true,
+      "parts": [
+        {
+          "asks": "dictionary size",
+          "answer": "112 KiB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p04-audit-cost-and-reporter",
+      "right": true,
+      "parts": [
+        {
+          "asks": "amount spent on security audits",
+          "answer": "EUR 96,000"
+        },
+        {
+          "asks": "who reported the LumenDB security advisory",
+          "answer": "Jonas Feld"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Chrome permission",
+          "answer": "Apps on device"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which similar-sounding browser permission is not needed for a model server on my own computer?",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f03-https-not-supported",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What should I do?",
+          "answer": "download the model using curl as described in section 3, or rebuild llama.cpp after installing libssl-dev using the command `sudo apt install libssl-dev`"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f04-2b-download-size",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How big",
+          "answer": "1.1 GB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f05-model-test-time",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How long",
+          "answer": "about a minute"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f06-context-flag",
+      "right": true,
+      "parts": [
+        {
+          "asks": "context size",
+          "answer": "4096"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f08-download-target",
+      "right": true,
+      "parts": [
+        {
+          "asks": "target",
+          "answer": "Above 90% of started downloads"
+        },
+        {
+          "asks": "model download completion rate",
+          "answer": "Above 90% of started downloads"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f09-hosts",
+      "right": true,
+      "parts": [
+        {
+          "asks": "static hosts",
+          "answer": "Cloudflare Pages or Netlify"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f10-signaling",
+      "right": true,
+      "parts": [
+        {
+          "asks": "signaling library",
+          "answer": "Trystero over public signaling channels, or a minimal self-hostable signaling server"
+        },
+        {
+          "asks": "peer-to-peer prototype",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f11-m0-duration",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How long",
+          "answer": "2–3 weeks"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f12-reassurance-target",
+      "right": true,
+      "parts": [
+        {
+          "asks": "target for the false reassurance rate",
+          "answer": "under 10% on Qwen3.5-4B"
+        },
+        {
+          "asks": "baseline",
+          "answer": "3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f13-class-1",
+      "right": true,
+      "parts": [
+        {
+          "asks": "hardware",
+          "answer": "laptop"
+        },
+        {
+          "asks": "reference hardware class 1",
+          "answer": "with integrated GPU and 8 GB RAM"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f15-cure-period",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how long do I have to become compliant",
+          "answer": "30 days after your receipt of the notice"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f16-litigation",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Where may litigation relating to the MPL-2.0 be brought?",
+          "answer": "Litigation relating to the MPL-2.0 may be brought only in the courts of a jurisdiction where the defendant maintains its principal place of business."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f19-ada-born",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When was Ada Lovelace born?",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f20-ada-parents",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Lord Byron",
+          "answer": "Lord Byron (poet)"
+        },
+        {
+          "asks": "Anne Isabella Milbanke",
+          "answer": "Anne Isabella Milbanke (reformer)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f21-ada-music",
+      "right": true,
+      "parts": [
+        {
+          "asks": "what kind of information",
+          "answer": "Music"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f25-fuji-summit",
+      "right": true,
+      "parts": [
+        {
+          "asks": "最高地点",
+          "answer": "3776.12 m"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f26-fuji-prefectures",
+      "right": true,
+      "parts": [
+        {
+          "asks": "どの県に跨っていますか",
+          "answer": "山梨県と静岡県"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f27-fuji-heritage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "何年",
+          "answer": "2013年"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f29-wall-heritage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "哪一年",
+          "answer": "1987年"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f30-wall-length",
+      "right": true,
+      "parts": [
+        {
+          "asks": "总长度",
+          "answer": "21,196.18千米"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f31-wall-dynasty",
+      "right": true,
+      "parts": [
+        {
+          "asks": "哪个朝代",
+          "answer": "明"
+        },
+        {
+          "asks": "修筑的",
+          "answer": "修筑的"
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f33-eiffel-height",
+      "right": true,
+      "parts": [
+        {
+          "asks": "hauteur",
+          "answer": "330 m"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f34-eiffel-occasion",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Pour quel événement",
+          "answer": "Exposition universelle de Paris de 1889"
+        },
+        {
+          "asks": "a-t-elle été construite",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f35-eiffel-visitors-2016",
+      "right": true,
+      "parts": [
+        {
+          "asks": "nombre de visiteurs",
+          "answer": "5,9 millions"
+        },
+        {
+          "asks": "année 2016",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f37-fuji-summit-en",
+      "right": true,
+      "parts": [
+        {
+          "asks": "highest point of Mount Fuji",
+          "answer": "3776.12"
+        },
+        {
+          "asks": "in metres",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f38-wall-heritage-en",
+      "right": true,
+      "parts": [
+        {
+          "asks": "year",
+          "answer": "1987"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f39-wall-length-en",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how long",
+          "answer": "21,196.18"
+        },
+        {
+          "asks": "in kilometres",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f40-eiffel-address-en",
+      "right": true,
+      "parts": [
+        {
+          "asks": "official address",
+          "answer": "5, avenue Anatole-France"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f48-node-version",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which version of Node.js does the user guide say is needed to run Kovrune locally?",
+          "answer": "Node.js 22 or newer"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f49-dev-address",
+      "right": true,
+      "parts": [
+        {
+          "asks": "At which address",
+          "answer": "http://localhost:5173/"
+        },
+        {
+          "asks": "does npm run dev",
+          "answer": ""
+        },
+        {
+          "asks": "usually serve the app",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f50-2b-memory",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how much memory",
+          "answer": "8 GB of memory or less"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f51-4b-download",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How big",
+          "answer": "2.4 GB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f52-https-package",
+      "right": true,
+      "parts": [
+        {
+          "asks": "HTTPS support",
+          "answer": "libssl-dev"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f54-scanned-pdf",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What does Kovrune show for a PDF made of scanned images?",
+          "answer": "Kovrune shows 'No text found' for a PDF made of scanned images."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f55-bibtex-fields",
+      "right": true,
+      "parts": [
+        {
+          "asks": "details",
+          "answer": "details"
+        },
+        {
+          "asks": "cited",
+          "answer": "cited"
+        },
+        {
+          "asks": "paper",
+          "answer": "paper"
+        },
+        {
+          "asks": "BibTeX",
+          "answer": "BibTeX export includes the authors, year, venue, and DOI of cited OpenAlex papers."
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f56-past-answers-order",
+      "right": true,
+      "parts": [
+        {
+          "asks": "order",
+          "answer": "newest first"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f58-first-audience",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Who is Kovrune's first audience",
+          "answer": "technical researchers who are comfortable with a terminal"
+        },
+        {
+          "asks": "according to the design",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f59-validation-library",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which library does the design use to validate every external message and tool input?",
+          "answer": "Zod"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f60-sandboxes",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which two sandboxes",
+          "answer": "Pyodide (Python) and QuickJS-wasm (JavaScript)"
+        },
+        {
+          "asks": "does the design plan for running code in the browser",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f61-coop-coep",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Why must the host be able to set the Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers?",
+          "answer": "The host must be able to set the Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers to support SharedArrayBuffer for multithreaded WebAssembly."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f62-default-privacy",
+      "right": true,
+      "parts": [
+        {
+          "asks": "default privacy mode",
+          "answer": "Local only"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f63-key-storage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Where does each peer store its keypair?",
+          "answer": "Each peer has a keypair generated locally and stored in IndexedDB as a non-extractable WebCrypto key where supported."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f64-protocol-models",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which two existing protocols does Kovrune's task exchange protocol follow the concepts of?",
+          "answer": "A2A (Agent2Agent) and Nostr NIP-90 (Data Vending Machines)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f65-kovruner",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Kovruner",
+          "answer": "A Kovruner"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f66-file-system-access",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which browsers support the File System Access API, according to the design?",
+          "answer": "Chromium-based browsers only"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f67-m2-rebuild",
+      "right": true,
+      "parts": [
+        {
+          "asks": "rebuildable from its tag",
+          "answer": "rebuildable bit-for-bit from its tag"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f68-delegation-unit",
+      "right": true,
+      "parts": [
+        {
+          "asks": "independent tasks",
+          "answer": "independent tasks"
+        },
+        {
+          "asks": "parts of one model's computation",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f72-effective-date",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When do the licenses become effective?",
+          "answer": "on the date the Contributor first distributes such Contribution"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f75-notice-url",
+      "right": true,
+      "parts": [
+        {
+          "asks": "URL",
+          "answer": "https://mozilla.org/MPL/2.0/"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f76-liability-exception",
+      "right": true,
+      "parts": [
+        {
+          "asks": "death or personal injury",
+          "answer": "death or personal injury"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f78-ada-died",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When did",
+          "answer": "27 November 1852"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f79-ada-married",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Whom did Ada Lovelace marry",
+          "answer": "William King"
+        },
+        {
+          "asks": "in which year",
+          "answer": "1835"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f80-bernoulli",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which numbers did the method in Lovelace's notes calculate?",
+          "answer": "Bernoulli numbers"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f81-ada-tutor",
+      "right": true,
+      "parts": [
+        {
+          "asks": "private tutor",
+          "answer": "Mary Somerville"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f84-guide-laptop-class",
+      "right": false,
+      "parts": [
+        {
+          "asks": "speeds for a laptop with 8 GB of memory and integrated Intel graphics",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f85-fuji-elevation",
+      "right": true,
+      "parts": [
+        {
+          "asks": "標高",
+          "answer": "3775.56"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f86-fuji-meisho",
+      "right": true,
+      "parts": [
+        {
+          "asks": "何年",
+          "answer": "1952年"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f87-ming-wall-west",
+      "right": true,
+      "parts": [
+        {
+          "asks": "西起哪里",
+          "answer": "嘉峪关"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f88-eiffel-visitors-total",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Combien de visiteurs",
+          "answer": "plus de 300 millions de visiteurs"
+        },
+        {
+          "asks": "la tour Eiffel",
+          "answer": "la tour Eiffel"
+        },
+        {
+          "asks": "a-t-elle accueilli",
+          "answer": "a accueilli"
+        },
+        {
+          "asks": "depuis son ouverture",
+          "answer": "Depuis son ouverture"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f89-eiffel-deck-en",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How high above the ground is the Eiffel Tower's highest observation deck open to the public, in metres?",
+          "answer": "279.11"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h01-server-address",
+      "right": true,
+      "parts": [
+        {
+          "asks": "address",
+          "answer": "http://127.0.0.1:8080/v1"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What error",
+          "answer": "HTTPS is not supported"
+        },
+        {
+          "asks": "does llama-server's -hf download option give",
+          "answer": "HTTPS is not supported"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h04-class-3",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What hardware is reference hardware class 3?",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h05-first-result-target",
+      "right": true,
+      "parts": [
+        {
+          "asks": "time from first visit to first useful result",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h06-after-evaluating",
+      "right": true,
+      "parts": [
+        {
+          "asks": "which state follows evaluating",
+          "answer": "completed"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h07-license-steward",
+      "right": true,
+      "parts": [
+        {
+          "asks": "license steward",
+          "answer": "Mozilla Foundation"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h08-exhibit-b",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which exhibit of the MPL-2.0 holds the 'Incompatible With Secondary Licenses' notice?",
+          "answer": "Exhibit B"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h09-met-babbage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "date",
+          "answer": "5 June 1833"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h10-menabrea",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Whose article about the analytical engine did Ada Lovelace translate?",
+          "answer": "Luigi Menabrea"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h11-fuji-national-park",
+      "right": true,
+      "parts": [
+        {
+          "asks": "何年",
+          "answer": "1936年"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h13-eiffel-original-height",
+      "right": true,
+      "parts": [
+        {
+          "asks": "hauteur",
+          "answer": "312"
+        },
+        {
+          "asks": "tour Eiffel",
+          "answer": ""
+        },
+        {
+          "asks": "origine",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h14-license-and-steward",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Under which license is Kovrune's software released?",
+          "answer": "Mozilla Public License 2.0 (MPL-2.0)"
+        },
+        {
+          "asks": "who is that license's steward?",
+          "answer": "the Mozilla Foundation"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h17-stop-ollama",
+      "right": true,
+      "parts": [
+        {
+          "asks": "stop Ollama",
+          "answer": "stop ollama"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h18-server-ready",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which message",
+          "answer": "listening on http://0.0.0.0:8080"
+        },
+        {
+          "asks": "should I wait for",
+          "answer": "listening on http://0.0.0.0:8080"
+        },
+        {
+          "asks": "in the terminal",
+          "answer": ""
+        },
+        {
+          "asks": "after starting llama-server",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h19-2b-pdf-time",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how long",
+          "answer": "1–2 minutes"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h20-file-types",
+      "right": true,
+      "parts": [
+        {
+          "asks": "kinds of files",
+          "answer": "PDF, text, Markdown or HTML"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h21-free-browser-space",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which button frees the space a browser model download takes?",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h22-unit-test-runner",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What runs Kovrune's unit tests today, according to the design?",
+          "answer": "Node's built-in test runner for unit tests"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h23-join-circle",
+      "right": true,
+      "parts": [
+        {
+          "asks": "join a circle",
+          "answer": "join a circle"
+        },
+        {
+          "asks": "invitation",
+          "answer": "invitation"
+        },
+        {
+          "asks": "link",
+          "answer": "link"
+        },
+        {
+          "asks": "QR code",
+          "answer": "QR code"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h24-evicting-browser",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which browser",
+          "answer": "Safari"
+        },
+        {
+          "asks": "evicts unused non-installed apps",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h27-statute-description",
+      "right": true,
+      "parts": [
+        {
+          "asks": "where must I put the description",
+          "answer": "in a text file included with all distributions of the Covered Software under this License"
+        },
+        {
+          "asks": "of the terms I cannot comply with",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h28-old-versions",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Under the MPL-2.0, software made available under which earlier versions of the License, and not also under a Secondary License, is Incompatible With Secondary Licenses?",
+          "answer": "Software made available under version 1.1 or earlier of the MPL-2.0 License, but not also under a Secondary License, is Incompatible With Secondary Licenses."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h30-poetical-science",
+      "right": true,
+      "parts": [
+        {
+          "asks": "her approach",
+          "answer": "'poetical science'"
+        },
+        {
+          "asks": "herself",
+          "answer": "'Analyst (& Metaphysician)'"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h31-earl-year",
+      "right": true,
+      "parts": [
+        {
+          "asks": "year",
+          "answer": "1838"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h32-fuji-heritage-date",
+      "right": true,
+      "parts": [
+        {
+          "asks": "何月",
+          "answer": "6月"
+        },
+        {
+          "asks": "何日",
+          "answer": "22日"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h33-wall-buildings",
+      "right": true,
+      "parts": [
+        {
+          "asks": "国家文物局认定的长城单体建筑有多少座？",
+          "answer": "29,510座"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h34-eiffel-arrondissement",
+      "right": true,
+      "parts": [
+        {
+          "asks": "arrondissement de Paris",
+          "answer": "7e arrondissement"
+        }
+      ],
+      "complete": true
+    }
+  ]
+}

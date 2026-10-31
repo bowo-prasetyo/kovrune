@@ -64,7 +64,7 @@ for (const file of positionals) {
     try {
       final = JSON.parse(result.final);
     } catch {
-      skipped++; // cut at 600 characters
+      skipped++; // cut at FINAL_CHARS characters (600 before harness 0.47.0)
       continue;
     }
     rescored++;
@@ -75,7 +75,12 @@ for (const file of positionals) {
     const support = sentenceSupport(answer, evidence, (id) => library.documentFor(id)?.title, task.question);
     const review = result.support?.review as ReviewVerdict | undefined;
     const crossCheck = result.support?.crossCheck;
-    const labelled = labelledQuotesFound(status, evidence, review ? { ...support, review, ...(crossCheck ? { crossCheck } : {}) } : support);
+    const completeness = result.support?.completeness;
+    const labelled = labelledQuotesFound(
+      status,
+      evidence,
+      review ? { ...support, review, ...(crossCheck ? { crossCheck } : {}), ...(completeness ? { completeness } : {}) } : support,
+    );
     const passed = scoreResearch(task, { status, final: { ...final, answer }, evidence, citations: {}, sourceErrors: [], agent: undefined! }, library).passed;
     for (const [key, value, right] of [["recorded", result.quotesFound ?? false, result.passed], ["now", labelled, passed]] as const) {
       if (value) {

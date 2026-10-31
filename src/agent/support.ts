@@ -6,6 +6,7 @@
 import { words } from "../documents/scripts.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import type { Completeness } from "./completeness.ts";
 import type { CrossCheck } from "./crosscheck.ts";
 import type { ReviewVerdict } from "./review.ts";
 
@@ -38,6 +39,12 @@ export interface SentenceSupport {
    * Absent when not asked.
    */
   crossCheck?: CrossCheck;
+  /**
+   * The completeness check (completeness.ts), asked when the other checks confirm the answer, for models
+   * it is measured for: the parts the question asks for, and whether the answer gives each. Absent when
+   * not asked.
+   */
+  completeness?: Completeness;
 }
 
 /** Sentences with fewer content words than this are not judged. */
@@ -328,13 +335,19 @@ function answerInQuote(
  * Since harness 0.40.0, for Qwen3.5-4B, an answer the check confirms is also cross-checked
  * (crosscheck.ts), and one whose cross-check reads a different answer in the passages is not labelled.
  * Answers saved before have no `crossCheck`, and keep their label.
+ *
+ * Since harness 0.48.0, for Qwen3.5-2B, an answer the checks confirm is also asked whether it gives
+ * every part of what the question asks (completeness.ts), and one that leaves a part out is not
+ * labelled. Answers saved before have no `completeness`, and keep their label.
  */
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck },
+  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
 ): boolean {
-  if (support?.review) return support.review === "yes" && support.crossCheck?.agrees !== false && reviewAsked(status, evidence, support);
+  if (support?.review) {
+    return support.review === "yes" && support.crossCheck?.agrees !== false && support.completeness?.complete !== false && reviewAsked(status, evidence, support);
+  }
   return wordChecksPass(status, evidence, support);
 }
 

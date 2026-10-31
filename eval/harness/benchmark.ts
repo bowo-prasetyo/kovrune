@@ -1,5 +1,6 @@
 // Runs suites against one loaded model and produces a report with the M0 gate result.
 
+import type { Completeness } from "../../src/agent/completeness.ts";
 import type { LanguageModel, Runtime } from "../../src/models/types.ts";
 import { codingTasks } from "../tasks/coding.ts";
 import { pdfTasks } from "../tasks/pdf.ts";
@@ -15,7 +16,15 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.46.0";
+export const HARNESS_VERSION = "0.48.0";
+
+/**
+ * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
+ * which cut off a third of the answers to questions that need more than one passage, so the tools that
+ * ask the checks again about recorded answers (bench:rescore, bench:rereview, bench:crosscheck,
+ * bench:completeness) could not judge them.
+ */
+export const FINAL_CHARS = 8000;
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -89,6 +98,7 @@ export interface TaskResult {
   wallMs: number;
   /** Each call's action, abbreviated, e.g. 'search {"query":"LumenDB"}' or 'invalid: ...'. */
   actions: string[];
+  /** The final answer as JSON, cut at FINAL_CHARS characters (600 before harness 0.47.0). */
   final?: string;
   /** Research tasks: the answer's status (verified, unverified, not-found, no-answer). */
   status?: string;
@@ -101,7 +111,7 @@ export interface TaskResult {
    * after a "yes" for the models it runs for (agent/crosscheck.ts): the answer it read in the passages
    * and whether the answer agrees.
    */
-  support?: { judged: number; backed: number; review?: string; crossCheck?: { extracted?: string; agrees: boolean } };
+  support?: { judged: number; backed: number; review?: string; crossCheck?: { extracted?: string; agrees: boolean }; completeness?: Completeness };
   /** Research tasks: whether the app would label the answer "Quotes found". */
   quotesFound?: boolean;
 }
@@ -192,7 +202,7 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     ttftMs: Math.round(calls.reduce((s, c) => s + c.ttftMs, 0)),
     wallMs: Math.round(wallMs),
     actions: actionTrace(run),
-    final: final ? JSON.stringify(final).slice(0, 600) : undefined,
+    final: final ? JSON.stringify(final).slice(0, FINAL_CHARS) : undefined,
     status: run.research?.status,
     evidence: run.research?.evidence.map(({ docId, verified, reason }) => ({ docId, verified, ...(reason ? { reason } : {}) })),
     ...(run.research
@@ -202,6 +212,7 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
             backed: run.research.support.backed,
             ...(run.research.support.review ? { review: run.research.support.review } : {}),
             ...(run.research.support.crossCheck ? { crossCheck: run.research.support.crossCheck } : {}),
+            ...(run.research.support.completeness ? { completeness: run.research.support.completeness } : {}),
           },
           quotesFound: labelledQuotesFound(run.research.status, run.research.evidence, run.research.support),
         }

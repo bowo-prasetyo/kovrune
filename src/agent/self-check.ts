@@ -15,7 +15,8 @@ import { createResearchTools, RESEARCH_SYSTEM } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, systemPrompt } from "./agent.ts";
 import { RESEARCH_LIMITS } from "./research.ts";
-import { CROSSCHECK_MAX_TOKENS } from "./crosscheck.ts";
+import { checksCompleteness, COMPLETENESS_MAX_TOKENS } from "./completeness.ts";
+import { CROSSCHECK_MAX_TOKENS, crossChecksAnswers } from "./crosscheck.ts";
 import { REVIEW_MAX_TOKENS } from "./review.ts";
 
 export interface SelfCheckResult {
@@ -115,8 +116,14 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
   const decodeMs = Math.max(record.totalMs - record.ttftMs, 1);
   const decodeTokensPerSecond = (record.completionTokens / decodeMs) * 1000;
   const secondsPerCall = record.ttftMs / 1000 + RESEARCH_LIMITS.maxTokensPerCall / Math.max(decodeTokensPerSecond, 0.01);
-  // The model's check of its answer, and for some models its cross-check (review.ts, crosscheck.ts).
-  const reviewSeconds = (2 * record.ttftMs) / 1000 + (REVIEW_MAX_TOKENS + CROSSCHECK_MAX_TOKENS) / Math.max(decodeTokensPerSecond, 0.01);
+  // The model's check of its answer, and for some models its cross-check or its completeness check
+  // (review.ts, crosscheck.ts, completeness.ts).
+  const checks = [
+    REVIEW_MAX_TOKENS,
+    ...(crossChecksAnswers(model.info.id) ? [CROSSCHECK_MAX_TOKENS] : []),
+    ...(checksCompleteness(model.info.id) ? [COMPLETENESS_MAX_TOKENS] : []),
+  ];
+  const reviewSeconds = (checks.length * record.ttftMs) / 1000 + checks.reduce((a, b) => a + b, 0) / Math.max(decodeTokensPerSecond, 0.01);
   return {
     passed: usesResult,
     constrained,

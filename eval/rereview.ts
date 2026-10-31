@@ -9,7 +9,7 @@
 // passing, or, for models whose check is asked about short answers (review.ts reviewsShortAnswers)
 // or with --short, an answer too short for them. The report's own model, build and server settings
 // should be used, so that "--prompt current" gives back the recorded verdicts. Answers cut off in the
-// report (it keeps 600 characters of each final answer) are skipped. Held-out answers are counted
+// report (it keeps FINAL_CHARS characters of each final answer, 600 before harness 0.47.0) are skipped. Held-out answers are counted
 // only in totals (eval/field/holdout.ts).
 
 import { readFile, writeFile } from "node:fs/promises";

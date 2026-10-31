@@ -1,0 +1,793 @@
+{
+  "report": "eval/results/field-0.38-main-qwen3.5-2b-q4km.json",
+  "checked": [
+    {
+      "suite": "research",
+      "taskId": "r02-lumen-license",
+      "right": true,
+      "parts": [
+        {
+          "asks": "license",
+          "answer": "Mozilla Public License 2.0 (MPL-2.0)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "right": true,
+      "parts": [
+        {
+          "asks": "maximum key size",
+          "answer": "4 KiB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r06-quillstate-rename",
+      "right": true,
+      "parts": [
+        {
+          "asks": "what was createStore() renamed to",
+          "answer": "defineStore()"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r07-cobble-2-5",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What security feature did Cobble 2.5 add?",
+          "answer": "encryption at rest using AES-256-GCM"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r08-lumen-4-date",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When is LumenDB 4.0 planned to be released?",
+          "answer": "second quarter of 2025 (Q2 2025)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r09-rfc-period",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how long",
+          "answer": "at least two weeks"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r13-cobble-license-conversion",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which license does each Cobble release convert to?",
+          "answer": "Apache-2.0"
+        },
+        {
+          "asks": "After how many years?",
+          "answer": "four years"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r16-page-size-comparison",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Compare the default page or block size of LumenDB 3.x and Cobble.",
+          "answer": "LumenDB 3.x uses a default page size of 8 KiB, while Cobble uses a default block size of 4 KiB."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "research",
+      "taskId": "r17-corrected-read",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What was LumenDB 3.1's random-read throughput in Priya Raman's benchmark?",
+          "answer": "330,000 operations per second"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p01-tessel-income",
+      "right": true,
+      "parts": [
+        {
+          "asks": "total income in 2024",
+          "answer": "EUR 412,000"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p02-new-project",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which new project did the Tessel Foundation accept in November 2024?",
+          "answer": "Driftwood"
+        },
+        {
+          "asks": "What does it do?",
+          "answer": "It is a structured logging library for Rust applications."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "pdf",
+      "taskId": "p03-dictionary-size",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What dictionary size does the Brisk tuning guide recommend?",
+          "answer": "112 KiB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which Chrome permission lets Kovrune reach a model server on my own computer?",
+          "answer": "Apps on device"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which similar-sounding browser permission is not needed for a model server on my own computer?",
+          "answer": "Local network access"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f05-model-test-time",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How long does the model test take on suitable hardware?",
+          "answer": "about a minute"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f08-download-target",
+      "right": true,
+      "parts": [
+        {
+          "asks": "target for the model download completion rate",
+          "answer": "Above 90% of started downloads"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f09-hosts",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which static hosts does the design suggest instead of GitHub Pages?",
+          "answer": "Cloudflare Pages or Netlify"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f12-reassurance-target",
+      "right": true,
+      "parts": [
+        {
+          "asks": "target for false reassurance rate",
+          "answer": "under 10% on Qwen3.5-4B"
+        },
+        {
+          "asks": "baseline",
+          "answer": "3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f15-cure-period",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how long do I have to become compliant",
+          "answer": "30 days"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f20-ada-parents",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Who were Ada Lovelace's parents?",
+          "answer": "Lord Byron and Anne Isabella Milbanke"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f24-servers",
+      "right": false,
+      "parts": [
+        {
+          "asks": "Which local model server does Kovrune support?",
+          "answer": "llama.cpp local model server"
+        },
+        {
+          "asks": "What status does Ollama have?",
+          "answer": "supported but requires configuration"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f29-wall-heritage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "长城是哪一年被联合国教科文组织列为世界文化遗产的？",
+          "answer": "1987年"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f30-wall-length",
+      "right": true,
+      "parts": [
+        {
+          "asks": "长城墙壕遗存总长度",
+          "answer": "21,196.18千米"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f34-eiffel-occasion",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Pour quel événement",
+          "answer": "L'Exposition universelle de Paris de 1889"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f35-eiffel-visitors-2016",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Combien de visiteurs la tour Eiffel a-t-elle accueillis en 2016 ?",
+          "answer": "5,9 millions de visiteurs"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f46-preview-permission-fr",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Sur le site de prévisualisation, quelle autorisation du navigateur permet d'atteindre un serveur de modèle sur mon propre ordinateur ?",
+          "answer": "Apps on device"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f48-node-version",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which version of Node.js does the user guide say is needed to run Kovrune locally?",
+          "answer": "Node.js version 22 or newer"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f49-dev-address",
+      "right": true,
+      "parts": [
+        {
+          "asks": "address",
+          "answer": "http://localhost:5173/"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f50-2b-memory",
+      "right": true,
+      "parts": [
+        {
+          "asks": "how much memory",
+          "answer": "8 GB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f51-4b-download",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How big is the one-time browser download for Qwen3.5-4B?",
+          "answer": "2.4 GB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f54-scanned-pdf",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What does Kovrune show for a PDF made of scanned images?",
+          "answer": "A PDF shows 'No text found' | The PDF is scanned images | Use a PDF with selectable text"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f55-bibtex-fields",
+      "right": true,
+      "parts": [
+        {
+          "asks": "details of a cited paper",
+          "answer": "authors, year, venue, and DOI"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f56-past-answers-order",
+      "right": true,
+      "parts": [
+        {
+          "asks": "In which order are past answers listed?",
+          "answer": "Newest first"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f57-openalex-busy",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What should I do when the app says OpenAlex is busy?",
+          "answer": "Wait a few minutes."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f63-key-storage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Where does each peer store its keypair?",
+          "answer": "locally in IndexedDB as a non-extractable WebCrypto key where supported."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f64-protocol-models",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which two existing protocols",
+          "answer": "A2A and the job-request/result pattern of Nostr NIP-90"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f65-kovruner",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What is a Kovruner?",
+          "answer": "A person who participates in the Kovrune community."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f68-delegation-unit",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What does Kovrune delegate to peers?",
+          "answer": "independent tasks"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f70-source-charge",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How much may I charge recipients of an Executable Form for a copy of the Source Code Form?",
+          "answer": "You may charge recipients no more than the cost of distribution to the recipient."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f71-control-share",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What share of an entity's outstanding shares counts as control?",
+          "answer": "fifty percent (50%)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f72-effective-date",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When do the MPL-2.0's licenses for a Contribution become effective?",
+          "answer": "on the date the Contributor first distributes such Contribution"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f74-modified-license",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What must I do with the license's name?",
+          "answer": "You must rename the license and remove any references to the name of the license steward."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f75-notice-url",
+      "right": true,
+      "parts": [
+        {
+          "asks": "At which URL can one get a copy of the MPL-2.0, according to its Exhibit A notice?",
+          "answer": "https://mozilla.org/MPL/2.0/"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f76-liability-exception",
+      "right": true,
+      "parts": [
+        {
+          "asks": "For which harms",
+          "answer": "death or personal injury resulting from the Contributor's negligence"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f78-ada-died",
+      "right": true,
+      "parts": [
+        {
+          "asks": "When did Ada Lovelace die?",
+          "answer": "27 November 1852"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f80-bernoulli",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which numbers",
+          "answer": "Bernoulli numbers"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f81-ada-tutor",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Who was Ada Lovelace's private tutor?",
+          "answer": "Mary Somerville"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f82-ada-university",
+      "right": false,
+      "parts": [
+        {
+          "asks": "Which university did Ada Lovelace graduate from?",
+          "answer": "Augusta Ada King, Countess of Lovelace (née Byron)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f84-guide-laptop-class",
+      "right": false,
+      "parts": [
+        {
+          "asks": "reference hardware class",
+          "answer": "'Everything else, including laptops with integrated Intel graphics' (Local model server)"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f88-eiffel-visitors-total",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Combien de visiteurs la tour Eiffel a-t-elle accueillis depuis son ouverture ?",
+          "answer": "Plus de 300 millions de visiteurs"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h01-server-address",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which address",
+          "answer": "http://127.0.0.1:8080/v1"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What error does llama-server's -hf download option give when llama.cpp was built without SSL?",
+          "answer": "'HTTPS is not supported'"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h05-first-result-target",
+      "right": true,
+      "parts": [
+        {
+          "asks": "design's target for the time from first visit to first useful result",
+          "answer": "Under 15 minutes on reference hardware, including model download"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h07-license-steward",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Who is the license steward of the MPL-2.0?",
+          "answer": "Mozilla Foundation"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h09-met-babbage",
+      "right": true,
+      "parts": [
+        {
+          "asks": "On what date did Ada Lovelace first meet Charles Babbage?",
+          "answer": "5 June 1833"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h10-menabrea",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Whose article about the analytical engine did Ada Lovelace translate?",
+          "answer": "Luigi Menabrea"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h17-stop-ollama",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which command does the user guide give to stop Ollama?",
+          "answer": "sudo systemctl stop ollama"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h20-file-types",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which kinds of files",
+          "answer": "PDF, text, Markdown, or HTML files"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h23-join-circle",
+      "right": true,
+      "parts": [
+        {
+          "asks": "What does someone need to join a circle?",
+          "answer": "An invitation (a link or QR code carrying the inviter's public key and a one-time token)."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h24-evicting-browser",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Which browser evicts unused non-installed apps, according to the design?",
+          "answer": "Safari"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h27-statute-description",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Where must I put the description of the terms I cannot comply with?",
+          "answer": "in a text file included with all distributions of the Covered Software"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h29-warranty-behalf",
+      "right": true,
+      "parts": [
+        {
+          "asks": "On whose behalf may I offer a warranty for a fee?",
+          "answer": "On your own behalf"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h34-eiffel-arrondissement",
+      "right": true,
+      "parts": [
+        {
+          "asks": "Dans quel arrondissement de Paris se trouve la tour Eiffel ?",
+          "answer": "Le 7e arrondissement de Paris"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h37-ada-expo-years",
+      "right": true,
+      "parts": [
+        {
+          "asks": "In which year was Ada Lovelace born?",
+          "answer": "1815"
+        },
+        {
+          "asks": "In which year was the Exposition universelle for which the Eiffel Tower was built held?",
+          "answer": "1889"
+        }
+      ],
+      "complete": true
+    }
+  ]
+}

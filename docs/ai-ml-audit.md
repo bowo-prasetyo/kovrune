@@ -296,6 +296,12 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 - **Qwen3.5-4B** passes 14 of 21 (67%), against 89% on the field suite.
 - **Qwen3.5-2B** passes 4 of 21 (19%), against 78%.
 
+**A completeness check, for Qwen3.5-2B (harness 0.48.0).** The model is shown the question and the answer, not the passages. It lists the parts the question asks for, with the answer's words for each, and code checks that every part is there. It is measured on recorded answers, and reports now keep whole answers (0.47.0):
+- **On 2B** it takes the label from 2 of the 7 wrong multi-passage answers labelled Quotes found, and from none of its right answers in any suite. The 3 it misses give a wrong fact rather than leave a part out.
+- **On 4B** it lists the question's qualifiers ("in metres", "according to the design") as parts, and takes the label from 23 right answers to catch 1 wrong one.
+
+So it is adopted for 2B only, as the condition set before the measurement asks, and a run with it in the agent gave the same verdicts ([field README](../eval/field/README.md#a-check-that-the-answer-covers-every-part-of-the-question-0480-for-qwen35-2b)).
+
 Most failures answer one part of the question. The label misses that: 7 of 2B's 8 answers labelled Quotes found are wrong, and 2 of 4B's 9. Every one passed the word checks and the review, and on 4B the cross-check as well. No results were dropped at this context. A check that the answer covers every part of the question is the next step ([field README](../eval/field/README.md#questions-that-need-more-than-one-passage-0460)).
 
 The cost is 4B's `f54`: a shortened table lost the line that answers, and the model's related answer from another passage is labelled Quotes found. Over both models, 4 wrong labelled answers on these tasks instead of 5 ([field README](../eval/field/README.md#a-dropped-read-keeps-the-sentences-that-best-match-the-question-0440)).

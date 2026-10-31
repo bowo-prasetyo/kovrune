@@ -11,6 +11,7 @@ import { createResearchTools, researchSystem, type ResearchFinal, type Translate
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { runAgent, type AgentRun, type CallRecord } from "./agent.ts";
 import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
+import { checkCompleteness, checksCompleteness } from "./completeness.ts";
 import { crossCheckAnswer, crossChecksAnswers } from "./crosscheck.ts";
 import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
 import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
@@ -143,6 +144,18 @@ export async function runResearch(options: {
         answer: final.answer,
         evidence,
         titleFor,
+        constrained: options.constrained,
+        signal,
+      });
+    }
+    // The checks above judge what the answer says, not what it leaves out: an answer to one part of a
+    // two-part question passes them all. For models it is measured for, the model lists the parts the
+    // question asks for, and the answer must give each (completeness.ts).
+    if (support.review === "yes" && support.crossCheck?.agrees !== false && checksCompleteness(options.model.info.id)) {
+      support.completeness = await checkCompleteness({
+        model: options.model,
+        question: options.question,
+        answer: final.answer,
         constrained: options.constrained,
         signal,
       });
