@@ -107,4 +107,10 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
   - **Saving:** a report is saved under **Past answers** as an answer with a `report` field: its title, request, plan and sections, each a saved answer. It is saved again after every section, so a reload keeps the sections written. A report the page closed on says how many sections were not written. Backups validate a report's sections as answers.
   - **The view:** the report shows the title, a label summary ("2 of 3 sections: Quotes found. 1: Quotes found, answer not confirmed."), then each section's question, label, answer and evidence.
   - A report is not yet exported (slice 3), so its export buttons are hidden, and it cannot be continued after an error, only written again.
+  - **Checked end to end** in Chromium against Qwen3.5-2B on the model server, with the user guide as the only document:
+    - planned "Setting Up a Local Model Server for Kovrune" in four sections, cut to two on the plan screen;
+    - wrote both in 4.1 minutes, the trace showing each section's heading and steps;
+    - the report was still under **Past answers** after a reload.
+
+    The run showed that labels with counts ("2 of 13 sentences backed by a quote") were summed up one by one, so they are now counted by kind ("2 of 2 sections: Some sentences not backed by a quote."). 2B's answers to these broad questions were long and mostly unbacked, which is what the label says, and what slice 4's report suite will measure.
 
