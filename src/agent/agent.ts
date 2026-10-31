@@ -64,7 +64,8 @@ export interface AgentConfig {
   /**
    * The limit for a retry after a reply was cut off at maxTokensPerCall. A cut-off reply is
    * unusable however good it was, and asking for a shorter one loses content, so the retry
-   * gets more room instead; older tool results make way for it.
+   * gets more room instead; older tool results make way for it. The model has then shown that it
+   * writes longer answers than maxTokensPerCall allows, so the later calls of the task keep the room.
    */
   cutOffMaxTokens?: number;
   /** Tokens kept free for the reply and chat-template overhead. */
@@ -264,8 +265,12 @@ export async function runAgent(options: {
   ];
   const calls: CallRecord[] = [];
   const executed = new Set<string>();
-  // Raised for the next call after a reply was cut off at the limit.
+  // Raised after a reply was cut off at the limit, and kept for the rest of the task: a user asked for a
+  // 400-word report, the answer fit only with the raised limit, the final_answer guard sent the model
+  // to read what it quoted, and the answer after those reads, back at the default, was cut off on the
+  // last step, leaving no answer at all.
   let maxTokens = config.maxTokensPerCall;
+  let longReplies = false;
 
   while (calls.length < config.maxCalls) {
     // The last-step guard: small models can keep rephrasing searches until the budget runs out,
@@ -327,6 +332,7 @@ export async function runAgent(options: {
       let problem = `Your reply was not a valid action (${record.error}).`;
       if (record.cutOff && config.cutOffMaxTokens && maxTokens < config.cutOffMaxTokens) {
         maxTokens = config.cutOffMaxTokens;
+        longReplies = true;
         problem = `Your reply was cut off at the length limit before it was complete. You have more room now: reply again with the same answer, keeping each quote to one short sentence.`;
       } else if (record.cutOff) {
         problem = `Your reply was cut off at the length limit before it was complete. Reply again, shorter: a brief answer and only the quotes that support it most, each one short sentence.`;
@@ -340,7 +346,7 @@ export async function runAgent(options: {
       continue;
     }
 
-    maxTokens = config.maxTokensPerCall;
+    maxTokens = longReplies ? config.cutOffMaxTokens! : config.maxTokensPerCall;
     const actionText = JSON.stringify(action);
     transcript.push({ role: "assistant", content: actionText });
     if (action.tool === finalTool) {

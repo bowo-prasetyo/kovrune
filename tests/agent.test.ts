@@ -309,6 +309,47 @@ describe("search before read", () => {
     assert.match(run.transcript[7]!.content, /cut off at the length limit[\s\S]*Reply again, shorter/);
   });
 
+  it("keeps the raised limit for the rest of the task once a reply was cut off", async () => {
+    // Preview report: a 400-word report fit only at the raised limit, the guard sent the model to read
+    // what it quoted, and the answer after the reads, back at the default, was cut off on the last step.
+    const report = (done: boolean) => `{"tool":"final_answer","args":{"answer":"a long report${done ? '"}}' : ""}`;
+    const replies = [`{"tool":"search","args":{"query":"x"}}`, report(false), report(true), `{"tool":"read","args":{"id":"a"}}`, report(true)];
+    const requests: GenerationRequest[] = [];
+    const model: LanguageModel = {
+      info: { id: "m", runtime: "scripted", contextLength: 4096 },
+      supportsConstrainedDecoding: () => true,
+      dispose: async () => {},
+      async *generate(request: GenerationRequest) {
+        requests.push(request);
+        const text = replies.shift()!;
+        yield { text, done: false };
+        // The report needs more than 64 tokens: at 64 it is cut off.
+        yield { text: "", done: true, usage: { promptTokens: 100, completionTokens: text.startsWith('{"tool":"final_answer"') ? Math.min(request.maxTokens, 100) : 10 } };
+      },
+    };
+    let objected = false;
+    const run = await runAgent({
+      model,
+      system: "s",
+      task: "t",
+      tools: [
+        { name: "search", usage: "", args: z.object({ query: z.string() }).strict(), execute: async () => "ok" },
+        { name: "read", usage: "", args: z.object({ id: z.string() }).strict(), execute: async () => "text" },
+        {
+          name: "final_answer",
+          usage: "",
+          args: z.object({ answer: z.string() }).strict(),
+          objection: () => (objected ? undefined : ((objected = true), { message: "Read what you quote first.", step: "reading first" })),
+        },
+      ],
+      finalTool: "final_answer",
+      config: { constrained: true, maxCalls: 5, maxTokensPerCall: 64, cutOffMaxTokens: 128 },
+    });
+    assert.equal(run.stopReason, "final", "the answer on the last step fits");
+    assert.deepEqual(requests.map((r) => r.maxTokens), [64, 64, 128, 128, 128]);
+    assert.equal(run.calls[2]!.rejected, "reading first");
+  });
+
   it("knows a reply is cut off from the finish reason when the server reports no usage", async () => {
     const replies = [`{"tool":"final_answer","args":{"answer":"long`, `{"tool":"final_answer","args":{"answer":"done"}}`];
     const requests: GenerationRequest[] = [];

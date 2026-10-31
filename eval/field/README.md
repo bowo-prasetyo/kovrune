@@ -517,6 +517,21 @@ Outputs: [2B field](../results/completeness-field-0.38-qwen3.5-2b-q4km.json), [2
 - **What the user sees:** such an answer reads **Quotes found, answer not confirmed**, and the explanation names the part the model found missing.
 - **Cost:** one more call, of 200 tokens at most, for each answer that 2B's review confirms. The self-check counts it in its time estimate, now for each model only the checks it runs. Answers saved before the check keep their labels.
 
+
+### The raised token limit kept after a cut-off (0.49.0)
+
+A reply cut off at the 512-token limit is retried with 1,024 (`cutOffMaxTokens`, harness 0.36.0). But the limit went back to 512 after the next valid action. A preview user asked Qwen3.5-4B for "a nice report in 400 words or more" about blockchain, with Wikipedia and OpenAlex ticked, so the question had 12 calls:
+1. The first report was cut off.
+2. The retry, at 1,024 tokens, fit. But it quoted five articles seen only as snippets, so `final_answer` sent the model to read them first.
+3. After five reads, the report, back at 512 tokens, was cut off on the last step, and the user got no answer after a long wait.
+
+The model has then shown that it writes longer replies than the default allows. So once a reply has been cut off, the rest of the task keeps the raised limit (`src/agent/agent.ts`). A unit test reproduces the trace: without the fix the task ends without an answer, and with it the last answer fits.
+
+**A defect fix under the [rule](#rule-for-prompt-and-guard-changes).** It acts only after a cut-off reply. In the recorded runs of both models, only one task had any invalid reply, a 2B held-out task in the 0.38.0 run. It was run with `main` (0.48.0) and with the fix, on 2B, and took the same actions with the same answer and result. No other recorded task can change. The rest of the user's trace has its own causes:
+- the model ran at 0.6 tokens/s, against about 5.5 in the user guide;
+- the read-before-answering guard sent it to read five articles;
+- a 400-word report does not fit an answer in which every sentence is backed by a quote.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
