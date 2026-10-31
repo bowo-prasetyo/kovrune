@@ -532,6 +532,23 @@ The model has then shown that it writes longer replies than the default allows. 
 - the read-before-answering guard sent it to read five articles;
 - a 400-word report does not fit an answer in which every sentence is backed by a quote.
 
+
+### The read-first guard fitted to the steps left (0.50.0)
+
+When an answer quotes documents the model saw only as search snippets, `final_answer` sends it to read them first (harness 0.30.0, pdf task `p04`). It asked for every such document, however few calls were left. In the preview report [above](#the-raised-token-limit-kept-after-a-cut-off-0490), it asked for five articles with six calls left, which left no call to spare if the answer was cut off. Now the guard (`src/tools/research.ts`) is told how many calls are left (`AgentTool.objection`'s `callsLeft`):
+- It asks only for as many reads as fit while keeping two calls (`READ_FIRST_RESERVE`), one for the answer and one for a retry if it is cut off.
+- It takes the documents in the order the answer quotes them, and says that it asks for only some.
+- When no read fits, it does not object, and the answer's quotes are still checked against the documents themselves.
+- When every read fits, the request is word for word as before.
+
+A test shows each case.
+
+**A defect fix under the [rule](#rule-for-prompt-and-guard-changes)**: asking for reads that leave no call for the answer is plainly wrong. It can only change a task where the guard fired with four calls or fewer left (`p04`'s case had six). Those recorded tasks were run with `main` (0.49.0) and with the change, each on its own model:
+- 9 on Qwen3.5-4B (research 1, unanswerable 3, field 4, held out 1);
+- 6 on Qwen3.5-2B (research 1, unanswerable 2, pdf 1, field 1, held out 1).
+
+All took the same actions with the same answers. On the suites the guard never asked for more than fits; the change acts when calls run short, as with open sources and long answers.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

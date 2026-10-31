@@ -34,7 +34,7 @@ export interface AgentTool {
    * message is shown to the model, which then continues, and its step describes it in the user's
    * trace. Not asked on the last step, when the model must finish.
    */
-  objection?: (args: any) => { message: string; step: string } | undefined;
+  objection?: (args: any, context: { callsLeft: number }) => { message: string; step: string } | undefined;
   /**
    * Checked before every model call; a tool that is not available is left out of the schema.
    * The final tool is allowed regardless on the last step, after repeats, or when nothing else is.
@@ -350,7 +350,7 @@ export async function runAgent(options: {
     const actionText = JSON.stringify(action);
     transcript.push({ role: "assistant", content: actionText });
     if (action.tool === finalTool) {
-      const objection = forceFinal ? undefined : tools.find((t) => t.name === finalTool)!.objection?.(action.args);
+      const objection = forceFinal ? undefined : tools.find((t) => t.name === finalTool)!.objection?.(action.args, { callsLeft: config.maxCalls - calls.length });
       if (!objection) return { stopReason: "final", final: action.args, calls, transcript };
       record.rejected = objection.step;
       options.onResult?.(record, calls.length);

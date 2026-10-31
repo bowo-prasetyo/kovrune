@@ -28,6 +28,12 @@ export function researchSystem(options: { documents: boolean; sources: string[] 
   return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
 }
 
+/**
+ * The calls the read-before-answering guard keeps in hand when it sends the model to read what it
+ * quotes: one for the answer, and one for a retry if that answer is cut off (agent.ts).
+ */
+export const READ_FIRST_RESERVE = 2;
+
 /** Documents longer than this are truncated when read, to fit small context windows. */
 export const MAX_DOC_CHARS = 2400;
 
@@ -236,7 +242,7 @@ export function createResearchTools(
       // Read before "not found": a search's snippets are one sentence of each document, and both
       // models concluded from them that a document lacked an answer it had (field suite f19, f30).
       // Asked once, so after reading the model can still conclude that the answer is not there.
-      objection: ({ found, answer, evidence }: ResearchFinal) => {
+      objection: ({ found, answer, evidence }: ResearchFinal, { callsLeft }: { callsLeft: number }) => {
         if (!found && unread.size && !askedToRead) {
           askedToRead = true;
           return {
@@ -248,12 +254,17 @@ export function createResearchTools(
         // Read before answering, the same guard for an answer: a snippet is one sentence and can cut a
         // number off. Qwen3.5-4B answered pdf task p04 from two snippets, "spent EUR on security
         // audits", without reading the report that gives the 96,000. Asked once.
+        // Only as many reads as the steps left allow, keeping one for the answer and one for a retry if
+        // the answer is cut off, in the order the answer quotes them: a preview user's report quoted five
+        // articles, and reading them all left no step for an answer that needed a retry.
         const unreadCited = found && !askedToReadCited ? [...new Set(evidence.map((e) => e.docId).filter((id) => !wasRead(id)))] : [];
-        if (unreadCited.length) {
+        const toRead = unreadCited.slice(0, Math.max(callsLeft - READ_FIRST_RESERVE, 0));
+        if (toRead.length) {
           askedToReadCited = true;
-          const what = unreadCited.length === 1 ? unreadCited[0] : unreadCited.join(", ");
+          const what = toRead.length === 1 ? toRead[0] : toRead.join(", ");
+          const some = toRead.length < unreadCited.length ? ` There are steps left for ${toRead.length === 1 ? "one read" : `${toRead.length} reads`}, so read only ${toRead.length === 1 ? "that one" : "those"}.` : "";
           return {
-            message: `Your answer quotes ${what}, which you have seen only as a search snippet. A snippet is one sentence of its document and can leave out a number or a condition. Read ${unreadCited.length === 1 ? "it" : "them"} with read, then answer.`,
+            message: `Your answer quotes ${what}, which you have seen only as a search snippet. A snippet is one sentence of its document and can leave out a number or a condition. Read ${toRead.length === 1 ? "it" : "them"} with read, then answer.${some}`,
             step: "About to answer from search snippets; reading the documents it quotes first",
           };
         }
