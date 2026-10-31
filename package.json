@@ -27,7 +27,8 @@
     "bench:rescore": "node --experimental-strip-types eval/rescore.ts",
     "bench:rereview": "node --experimental-strip-types eval/rereview.ts",
     "bench:crosscheck": "node --experimental-strip-types eval/crosscheck.ts",
-    "bench:completeness": "node --experimental-strip-types eval/completeness.ts"
+    "bench:completeness": "node --experimental-strip-types eval/completeness.ts",
+    "bench:report": "node --experimental-strip-types eval/report.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.85",
