@@ -16,6 +16,7 @@ Kovrune has no tokens, no blockchain and no central AI service. See [`docs/desig
 
 - **M0 (benchmark gate): provisional go.** See [`docs/m0-benchmark.md`](docs/m0-benchmark.md#m0-status). Help confirm it by running the benchmark on a 16 GB laptop: [issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9).
 - **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). The app runs a model in your browser or on a local model server, and answers questions about your own documents with verified quotes. It can also search Wikipedia and OpenAlex (scholarly papers) when you choose to.
+- **Report mode: proposed.** Long reports built from short, checked answers, one per section. See [`docs/report-mode.md`](docs/report-mode.md).
 
 ## Running the app
 
