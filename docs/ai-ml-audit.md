@@ -304,6 +304,8 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 
 **The read-first guard fitted to the steps left (harness 0.50.0).** When an answer quotes documents seen only as snippets, the model is sent to read only as many as fit while keeping a call for the answer and one for a retry, and none when none fits. It is a defect fix. The 15 recorded tasks where the guard fired with four calls or fewer left took the same actions with the same answers, on both models ([field README](../eval/field/README.md#the-read-first-guard-fitted-to-the-steps-left-0500)).
 
+**Report mode and its suite (harness 0.51.0).** Reports are planned as questions and written section by section with the usual checks ([`report-mode.md`](report-mode.md)). A report suite measures them. On its first run, 4B's reports give the facts of 9 of 23 expected sections and 2B's of 3. Plans written without seeing the sources ask about what the sources do not hold, and long section answers rarely earn Quotes found ([field README](../eval/field/README.md#the-report-suite-0510)).
+
 So it is adopted for 2B only, as the condition set before the measurement asks, and a run with it in the agent gave the same verdicts ([field README](../eval/field/README.md#a-check-that-the-answer-covers-every-part-of-the-question-0480-for-qwen35-2b)).
 
 Most failures answer one part of the question. The label misses that: 7 of 2B's 8 answers labelled Quotes found are wrong, and 2 of 4B's 9. Every one passed the word checks and the review, and on 4B the cross-check as well. No results were dropped at this context. A check that the answer covers every part of the question is the next step ([field README](../eval/field/README.md#questions-that-need-more-than-one-passage-0460)).

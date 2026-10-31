@@ -549,6 +549,41 @@ A test shows each case.
 
 All took the same actions with the same answers. On the suites the guard never asked for more than fits; the change acts when calls run short, as with open sources and long answers.
 
+
+### The report suite (0.51.0)
+
+Report mode ([`docs/report-mode.md`](../../docs/report-mode.md)) plans a report as a few questions and answers each as a question is. `eval/field/reports.ts` holds 9 report requests over the field documents, written before any model was run on them:
+- **`reports`** (6): local server setup, privacy, reading answers, the MPL, Ada Lovelace, Kovrune's roadmap;
+- **`reportsholdout`** (3): read only as totals.
+
+Each request comes with the 3–4 sections a good report covers. Each section has keywords that find the plan question asking about it, and the facts its answer must give.
+
+`npm run bench:report` writes each report as the app does: it plans the report and researches each question with the field library. It scores:
+- **plan coverage:** expected sections some plan question asks about;
+- **report coverage:** expected sections whose facts some section's answer gives;
+- **matched sections that give their facts**, and those labelled **Quotes found** without them;
+- **unmatched sections**, counted but not scored;
+- **plan questions that join two things with "and"**;
+- **calls and time.**
+
+**First run**, at the app's 4,096-token context, on the baselines' build, model files and CPU ([4B](../results/reports-0.51-qwen3.5-4b-q4km.json), [2B](../results/reports-0.51-qwen3.5-2b-q4km.json)):
+
+| | Sections planned (4 asked) | Report coverage | Plan coverage | Sections "not found" | Labelled Quotes found | Joining two things | Time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 4B, `reports` (6) | 18 | **9 of 23** | 4 of 23 | 5 (and 2 without an answer) | 2, none wrong | 11 of 18 | 75 min |
+| 4B, `reportsholdout` (3) | 12 | 6 of 9 | 4 of 9 | 6 | 0 | 9 of 12 | 30 min |
+| 2B, `reports` (6) | 22 | **3 of 23** | 2 of 23 | 3 | 3, unmatched | 6 of 22 | 30 min |
+| 2B, `reportsholdout` (3) | 12 | 6 of 9 | 2 of 9 | 5 | 0 | 10 of 12 | 27 min |
+
+- **The plans are written blind, and it shows.** The planner sees the request, not the documents, so it asks what a report on the topic usually covers, not what the sources hold. For Kovrune's roadmap 4B asked about "tokenomics" and a "consensus mechanism and layer-2 architecture". For privacy it asked about "user accounts" and "encryption methods". Those sections end as "not found", honestly: 11 of 30 sections on 4B, 8 of 34 on 2B. Plan coverage is 4 of 23 on 4B and 2 of 23 on 2B.
+- **4B often plans fewer sections than asked:** two instead of four in three of the six reports.
+- **Where the plan fits the source, the report works.** 4B covers all four sections of Ada Lovelace's biography, from a three-part lead. On the other five requests, over Kovrune's own documents and the licence, it covers 5 of 19.
+- **Few sections earn the label.** Long, multi-part section answers rarely have every sentence backed: 2 of 30 sections on 4B and 3 of 34 on 2B read Quotes found. None of 4B's two is wrong. 2B's three answer questions the suite did not foresee, so they are not scored. False reassurance is low because there is little reassurance at all.
+- **Questions that join two things are the rule:** 20 of 30 on 4B and 16 of 34 on 2B. The multi-passage suites showed these are harder.
+- **Time:** about 12 minutes a report on 4B, 6 on 2B, on this CPU.
+
+These are the baselines for changes to report mode. The clearest next step is to show the planner what the sources hold before it plans, for example the titles and headings of the user's documents, or the passages that best match the request. It would be judged on `reports` and confirmed on `reportsholdout`.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
