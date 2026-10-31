@@ -5,6 +5,7 @@ import {
   fallbackPlan,
   MAX_SECTIONS,
   OVERVIEW_CHARS,
+  OVERVIEW_TRANSLATED_COVERAGE,
   overviewQuery,
   overviewSentence,
   overviewSources,
@@ -122,6 +123,13 @@ describe("report mode: the source overview", () => {
     assert.deepEqual(asked, ["Japanese: a on Mount Fuji."]);
     assert.deepEqual(overview?.documents, ["富士山.txt"]);
     assert.match(overview!.text, /富士山は日本の最高峰である。/);
+  });
+
+  it("leaves out a passage in another script that shares only a few characters with the translation", async () => {
+    const partial = "日本の義務と権利";
+    assert.ok(library.index.search(partial).some((h) => h.docId === "fuji"), "search finds it");
+    assert.ok(library.index.coverage("fuji", partial) < OVERVIEW_TRANSLATED_COVERAGE);
+    assert.equal(await overviewSources(library, "Write a report on duties and rights.", async () => partial), undefined);
   });
 
   it("keeps the overview within its size", async () => {

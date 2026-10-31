@@ -123,6 +123,18 @@ export class DocumentIndex {
       .map(({ sentence }) => (sentence.length > maxLength ? `${sentence.slice(0, maxLength)}…` : sentence));
   }
 
+  /**
+   * The share of a query's terms a document or chunk contains, each weighted by its rarity as search
+   * weights it: 1 when it has them all, 0 when it has none or the query has no terms.
+   */
+  coverage(docId: string, query: string): number {
+    const i = this.docs.findIndex((doc) => doc.id === docId);
+    const terms = [...new Set(tokenize(query))];
+    const total = terms.reduce((sum, t) => sum + this.idf(t), 0);
+    if (i < 0 || !total) return 0;
+    return terms.filter((t) => this.termFreqs[i]!.has(t)).reduce((sum, t) => sum + this.idf(t), 0) / total;
+  }
+
   search(query: string, limit = 3): SearchHit[] {
     const terms = [...new Set(tokenize(query))];
     const k1 = 1.2;

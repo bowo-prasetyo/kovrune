@@ -46,6 +46,13 @@ export const OVERVIEW_SENTENCES = 3;
 export const OVERVIEW_CHARS = 2400;
 /** Passages added from each document language written in another script than the request. */
 const OVERVIEW_TRANSLATED_PASSAGES = 2;
+/**
+ * The share of the translated terms (DocumentIndex.coverage) a passage in another script needs to be
+ * shown. Chinese and Japanese are searched by single characters and pairs, so nearly any passage
+ * shares a few with a translation: without this, every overview of the field documents showed the
+ * Great Wall and Mount Fuji, and Qwen3.5-4B planned a section on the Great Wall in a report on the MPL.
+ */
+export const OVERVIEW_TRANSLATED_COVERAGE = 0.5;
 
 /** Fewer words than this tell the planner nothing ("Roadmap", "data."), except in scripts written without spaces. */
 const OVERVIEW_MIN_WORDS = 4;
@@ -93,7 +100,12 @@ export async function overviewSources(library: ResearchLibrary, request: string,
       if (!terms) continue;
       const found = index
         .search(terms, OVERVIEW_PASSAGES)
-        .filter((hit) => mainScript(index.get(hit.docId)!.text)?.script === scriptOfLanguage(language) && !hits.some((h) => h.id === hit.docId))
+        .filter(
+          (hit) =>
+            mainScript(index.get(hit.docId)!.text)?.script === scriptOfLanguage(language) &&
+            !hits.some((h) => h.id === hit.docId) &&
+            index.coverage(hit.docId, terms) >= OVERVIEW_TRANSLATED_COVERAGE,
+        )
         .slice(0, OVERVIEW_TRANSLATED_PASSAGES);
       hits.push(...found.map((hit) => ({ id: hit.docId, query: terms })));
     }
