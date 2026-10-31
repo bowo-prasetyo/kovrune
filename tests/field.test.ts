@@ -9,6 +9,7 @@ import { formatReport } from "../eval/harness/format.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { fieldDocuments, fieldTasks } from "../eval/field/tasks.ts";
 import { holdoutTasks } from "../eval/field/holdout.ts";
+import { multiHoldoutTasks, multiTasks } from "../eval/field/multi.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
 const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
@@ -45,7 +46,7 @@ describe("field suite", () => {
 
   it("asks only for facts its cited documents contain, in the held-out suite too", async () => {
     const suite = await loadFieldSuite();
-    for (const task of [...fieldTasks, ...holdoutTasks].filter((t) => t.answerable)) {
+    for (const task of [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks].filter((t) => t.answerable)) {
       const cited = task.citations.flat();
       for (const id of cited) assert.ok(suite.library.documentFor(id), `${task.id}: unknown document ${id}`);
       const text = normalize(cited.map((id) => suite.library.documentFor(id)!.text).join(" "));
@@ -67,6 +68,33 @@ describe("field suite", () => {
     assert.deepEqual([...cited].sort(), fieldDocuments.map((d) => d.id).sort(), "every field document is asked about");
     assert.ok(holdoutTasks.some((t) => t.kind === "multi-hop"));
     assert.ok(holdoutTasks.filter((t) => !t.answerable).length >= 2);
+  });
+
+  it("asks questions that need more than one passage: no passage holds all their facts", async () => {
+    const suite = await loadFieldSuite();
+    const passages = (id: string) => (suite.library.index.partsOf(id).length ? suite.library.index.partsOf(id) : [id]);
+    for (const task of [...multiTasks, ...multiHoldoutTasks]) {
+      assert.ok(task.facts.length >= 2, `${task.id}: one fact needs one passage`);
+      const holdsAll = task.citations
+        .flat()
+        .flatMap(passages)
+        .filter((id) => {
+          const text = normalize(suite.library.index.get(id)!.text);
+          return task.facts.every((group) => group.some((option) => text.includes(normalize(option))));
+        });
+      assert.deepEqual(holdsAll, [], `${task.id}: one passage holds every fact`);
+    }
+  });
+
+  it("keeps the multi-passage questions apart from the others, with a held-out part", () => {
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks];
+    assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
+    assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
+    for (const tasks of [multiTasks, multiHoldoutTasks]) {
+      assert.ok(tasks.some((t) => t.citations.length >= 2), "some questions need two documents");
+      assert.ok(tasks.some((t) => t.citations.length === 1), "and some need two parts of one");
+    }
+    assert.ok(multiHoldoutTasks.length >= multiTasks.length / 2, "a third or more is held out");
   });
 
   it("adds local documents and tasks, and refuses IDs that are taken", async () => {

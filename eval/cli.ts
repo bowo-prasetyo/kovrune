@@ -8,7 +8,8 @@
 //
 // The field suite (real documents, eval/field/) runs only when named: --suites field. So does the
 // held-out suite over the same documents (--suites field,holdout); its tasks print no result as they
-// run, so a change is not developed against them (eval/field/holdout.ts).
+// run, so a change is not developed against them (eval/field/holdout.ts). The questions that need more
+// than one passage run as --suites multi,multiholdout, the second held out too (eval/field/multi.ts).
 //
 // Press Ctrl+C to stop early; the completed tasks are still reported and written.
 // Browser runtimes (WebLLM, wllama) are benchmarked with the page in eval/browser/.
@@ -25,7 +26,7 @@ import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
 import { corpus } from "./tasks/corpus.ts";
 import { loadNodePdfLibrary } from "./harness/pdf-node.ts";
 import { loadFieldSuite } from "./harness/field.ts";
-import type { SuiteName } from "./harness/suites.ts";
+import { FIELD_SUITES, type SuiteName } from "./harness/suites.ts";
 
 const { values } = parseArgs({
   options: {
@@ -89,7 +90,7 @@ const report = await runBenchmark({
   model,
   runner: new NodeCodeRunner(),
   pdfLibrary: suites.includes("pdf") ? await loadNodePdfLibrary() : undefined,
-  field: suites.includes("field") || suites.includes("holdout") ? await loadFieldSuite() : undefined,
+  field: FIELD_SUITES.some((suite) => suites.includes(suite)) ? await loadFieldSuite() : undefined,
   selfCheck,
   signal: controller.signal,
   environment: {

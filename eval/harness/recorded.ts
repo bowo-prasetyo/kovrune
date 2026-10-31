@@ -10,6 +10,7 @@ import { loadFieldSuite } from "./field.ts";
 import { loadNodePdfLibrary } from "./pdf-node.ts";
 import { baseLibrary } from "./suites.ts";
 import { holdoutTasks } from "../field/holdout.ts";
+import { multiHoldoutTasks, multiTasks } from "../field/multi.ts";
 import { pdfTasks } from "../tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../tasks/research.ts";
 import { unanswerableTasks } from "../tasks/unanswerable.ts";
@@ -23,6 +24,8 @@ export async function loadSuites(): Promise<Record<string, { library: ResearchLi
     pdf: { library: await loadNodePdfLibrary(), tasks: pdfTasks },
     field: { library: field.library, tasks: field.tasks },
     holdout: { library: field.library, tasks: holdoutTasks },
+    multi: { library: field.library, tasks: multiTasks },
+    multiholdout: { library: field.library, tasks: multiHoldoutTasks },
   };
 }
 
