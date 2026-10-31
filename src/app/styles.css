@@ -594,3 +594,17 @@ fieldset.mode label.choice {
   display: flex;
   gap: 0.25em;
 }
+
+.report-labels {
+  font-weight: 600;
+}
+
+.report-section {
+  border-top: 1px solid var(--line);
+  padding-top: 0.5em;
+  margin-top: 1em;
+}
+
+.report-section h4 {
+  margin: 0.25em 0 0.5em;
+}

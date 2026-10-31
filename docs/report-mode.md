@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Agreed (decisions R1–R5 below). Slice 1, the plan, is built behind `?report`; see [Progress](#progress) |
+| Status | Agreed (decisions R1–R5 below). Slices 1 and 2, the plan and writing the report, are built behind `?report`; see [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -97,6 +97,14 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
   - `planReport` (`src/agent/report.ts`) makes one constrained call, with the request and the sources ticked, and reads a title and 2–8 questions. Empty and repeated questions are dropped, and a plan that cannot be read falls back to the request as one section.
   - The plan screen (`ReportPlanView`) edits, reorders, adds and removes sections, and shows the time estimate from the model test. Above 30 minutes it says that the report will ask for confirmation.
   - In question mode, a question that asks for a report ("report", "overview", "400 words") gets a hint offering **Write a report**.
-  - The option is shown only with `?report` in the address until slice 2 can write the report.
+  - The option is shown only with `?report` in the address until reports can be exported (slice 3).
   - Tried live on both models with the preview user's blockchain request, and on "how Kovrune checks the quotes in its answers". Both gave a title and 2–4 focused questions in 17–37 seconds on CPU. Some questions ask two things at once ("its definition and technical architecture"), which the multi-passage suites showed is harder. The plan screen lets the user split them, and slice 4 measures how often it happens before the prompt is changed.
+- **Slice 2, writing the report: built.**
+  - **Write the report** researches each section's question in turn, with `runResearch` as a question is: the same agent, checks and labels. The library is built once for all sections.
+  - Above 30 minutes estimated, it asks for confirmation first (R5).
+  - The trace shows each section's heading and its steps. **Stop** ends the section in progress, and the report keeps the sections already written.
+  - A section that ends without an answer says so, and the next one starts. A model or server error stops the report and says that the sections written before it are saved.
+  - **Saving:** a report is saved under **Past answers** as an answer with a `report` field: its title, request, plan and sections, each a saved answer. It is saved again after every section, so a reload keeps the sections written. A report the page closed on says how many sections were not written. Backups validate a report's sections as answers.
+  - **The view:** the report shows the title, a label summary ("2 of 3 sections: Quotes found. 1: Quotes found, answer not confirmed."), then each section's question, label, answer and evidence.
+  - A report is not yet exported (slice 3), so its export buttons are hidden, and it cannot be continued after an error, only written again.
 

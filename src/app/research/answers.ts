@@ -26,6 +26,24 @@ export interface SavedAnswer {
   noAnswer?: string;
   /** The research steps, as the trace showed them. */
   steps: string[];
+  /**
+   * A report (docs/report-mode.md): its sections, each a saved answer to one question of the plan. The
+   * record's own question is the report's title, and its status sums up the sections (reportStatus).
+   */
+  report?: SavedReport;
+}
+
+export interface SavedReport {
+  title: string;
+  /** What the user asked for. */
+  request: string;
+  /** The questions of the plan, in order; `sections` holds the answers to the first of them. */
+  plan: string[];
+  sections: SavedAnswer[];
+  /** True while the sections are being written, and when the page closed before they were all done. */
+  unfinished?: boolean;
+  /** True when the user stopped it before every section was written. */
+  stopped?: boolean;
 }
 
 export function toSavedAnswer(options: {

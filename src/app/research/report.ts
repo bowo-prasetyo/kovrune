@@ -1,10 +1,12 @@
 // The report plan screen (docs/report-mode.md, slice 1): editing the plan, its time estimate, and
-// noticing a question that asks for a report. Researching the sections arrives in slice 2; until then
-// the option is shown only with ?report in the address, for review on the preview.
+// noticing a question that asks for a report (slice 1); writing it section by section, and how a
+// report is saved and summed up (slice 2). Until its export (slice 3), the option is shown only with
+// ?report in the address, for review on the preview.
 
 import { MAX_SECTIONS, MIN_SECTIONS, type ReportPlan } from "../../agent/report.ts";
+import type { SavedAnswer, SavedReport } from "./answers.ts";
 
-/** Whether the report option is shown: only with ?report in the address until its sections can run. */
+/** Whether the report option is shown: only with ?report in the address until reports can be exported. */
 export function reportModeEnabled(search: string = globalThis.location?.search ?? ""): boolean {
   try {
     return new URLSearchParams(search).has("report");
@@ -65,4 +67,72 @@ export function planReady(plan: ReportPlan): boolean {
   const questions = plan.sections.map((q) => q.trim());
   const count = questions.length >= MIN_SECTIONS || (plan.fallback === true && questions.length === 1);
   return plan.title.trim() !== "" && count && questions.length <= MAX_SECTIONS && questions.every(Boolean);
+}
+
+/**
+ * A report's status, as one answer's: verified when every section that has an answer is backed by a
+ * found quote; no-answer when no section has an answer; otherwise unverified. The view shows the
+ * sections' own labels; this only keeps a report a valid saved answer.
+ */
+export function reportStatus(sections: SavedAnswer[]): SavedAnswer["status"] {
+  const answered = sections.filter((s) => s.status !== "no-answer" && s.status !== "not-found");
+  if (!answered.length) return sections.some((s) => s.status === "not-found") ? "not-found" : "no-answer";
+  return answered.every((s) => s.status === "verified") ? "verified" : "unverified";
+}
+
+/** A report as a saved answer: its title, the sections written so far, and their status. */
+export function toSavedReport(options: {
+  id: string;
+  askedAt: string;
+  model: string;
+  plan: ReportPlan;
+  request: string;
+  sections: SavedAnswer[];
+  unfinished?: boolean;
+  stopped?: boolean;
+}): SavedAnswer {
+  const { sections } = options;
+  return {
+    id: options.id,
+    question: options.plan.title,
+    askedAt: options.askedAt,
+    model: options.model,
+    status: reportStatus(sections),
+    evidence: [],
+    citations: {},
+    titles: {},
+    sourceErrors: [],
+    steps: [],
+    report: {
+      title: options.plan.title,
+      request: options.request,
+      plan: [...options.plan.sections],
+      sections,
+      ...(options.unfinished ? { unfinished: true } : {}),
+      ...(options.stopped ? { stopped: true } : {}),
+    },
+  };
+}
+
+/**
+ * The line above a report: how many sections each label went to, the label the reader trusts most
+ * first, e.g. "4 of 5 sections: Quotes found. 1: Quotes found, answer not confirmed."
+ */
+export function describeReportLabels(report: SavedReport, label: (section: SavedAnswer) => string): string {
+  const counts = new Map<string, number>();
+  for (const section of report.sections) counts.set(label(section), (counts.get(label(section)) ?? 0) + 1);
+  const total = report.plan.length;
+  const order = [...counts.entries()].sort((a, b) => Number(b[0] === "Quotes found") - Number(a[0] === "Quotes found") || b[1] - a[1]);
+  const parts = order.map(([name, n], i) => (i === 0 ? `${n} of ${total} ${total === 1 ? "section" : "sections"}: ${name}.` : `${n}: ${name}.`));
+  const missing = total - report.sections.length;
+  if (missing > 0) {
+    const why = report.stopped ? "stopped before they were written" : report.unfinished ? "not written: the page was closed or reloaded" : "not written";
+    parts.push(`${missing} ${why}.`);
+  }
+  return parts.join(" ") || `0 of ${total} sections written.`;
+}
+
+/** Puts a record in the list, replacing the one with its ID: a report is saved again after each section. */
+export function upsert<T extends { id: string }>(records: T[], record: T): T[] {
+  return records.some((r) => r.id === record.id) ? records.map((r) => (r.id === record.id ? record : r)) : [...records, record];
 }
