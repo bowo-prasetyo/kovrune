@@ -28,6 +28,16 @@ export function researchSystem(options: { documents: boolean; sources: string[] 
   return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
 }
 
+/**
+ * A search result's shorter form, kept when it has to leave the context (AgentTool.shorten): the ID
+ * and title of each result, without its snippet, so the model still knows what it found and can read
+ * it. A search that found nothing has none, and is removed.
+ */
+export function searchShortForm(observation: string): { kept: string; what: string } | undefined {
+  const found = observation.split("\n").filter((line) => /^\[[^\]\s]+\] /.test(line));
+  return found.length ? { kept: found.join("\n"), what: "the IDs and titles it found" } : undefined;
+}
+
 /** Documents longer than this are truncated when read, to fit small context windows. */
 export const MAX_DOC_CHARS = 2400;
 
@@ -117,6 +127,7 @@ export function createResearchTools(
       }
     },
     onRepeat: () => ({ hint: `Searching ${source.label} is no longer available: read one of the results with read.` }),
+    shorten: (_args: { query: string }, observation: string) => searchShortForm(observation),
     // The user's documents come first: small models otherwise skip them for the open sources.
     // On the class 1 laptop a question about the user's PDF was answered from Wikipedia, first
     // without searching the PDF and then, with a search required, without reading it. So the
@@ -179,6 +190,7 @@ export function createResearchTools(
         return { text, resultCount: new Set([...hits, ...translated.map((t) => t.hit)].map((h) => parentId(h.docId))).size };
       },
       onRepeat: () => ({ hint: "Searching is no longer available: read one of the documents it found with read." }),
+      shorten: (_args: { query: string }, observation: string) => searchShortForm(observation),
       available: () => !unread.has("search"),
     },
     {
@@ -210,7 +222,7 @@ export function createResearchTools(
         if (!question || !observation.startsWith("[")) return undefined;
         const [header, ...rest] = observation.split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
-        return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
+        return sentences.length ? { kept: `${header}\n${sentences.join(" … ")}`, what: "the sentences that best match the question" } : undefined;
       },
       onRepeat: ({ docId }: { docId: string }) => {
         const parts = session?.sourceFor(docId) ? session.partsOf(docId) : index.partsOf(parentId(docId));
