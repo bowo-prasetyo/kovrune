@@ -25,7 +25,7 @@ const documentSchema = z.object({
 });
 
 // Answers are shown again exactly as saved; the checks cover what the result view reads.
-const answerSchema = z.looseObject({
+const answerFields = {
   id: z.string().min(1),
   question: z.string(),
   askedAt: z.string(),
@@ -39,6 +39,20 @@ const answerSchema = z.looseObject({
   sourceErrors: z.array(z.string()),
   noAnswer: z.string().optional(),
   steps: z.array(z.string()),
+};
+// A report's sections are answers too (docs/report-mode.md).
+const answerSchema = z.looseObject({
+  ...answerFields,
+  report: z
+    .looseObject({
+      title: z.string(),
+      request: z.string(),
+      plan: z.array(z.string()),
+      sections: z.array(z.looseObject(answerFields)),
+      unfinished: z.boolean().optional(),
+      stopped: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 /** Reads a backup file's text. Throws an error whose message can be shown to the user. */

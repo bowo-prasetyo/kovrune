@@ -588,9 +588,39 @@ fieldset.mode label.choice {
 .plan-sections input {
   flex: 1;
   min-width: 0;
+  padding: 8px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.plan-sections {
+  padding-left: 1.5em;
+}
+
+.trace li.trace-section {
+  color: var(--fg);
+  font-weight: 600;
+  margin-top: 0.4em;
 }
 
 .plan-buttons {
   display: flex;
   gap: 0.25em;
+}
+
+.report-labels {
+  font-weight: 600;
+}
+
+.report-section {
+  border-top: 1px solid var(--line);
+  padding-top: 0.5em;
+  margin-top: 1em;
+}
+
+.report-section h4 {
+  margin: 0.25em 0 0.5em;
 }

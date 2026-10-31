@@ -16,6 +16,7 @@ import {
   sourceTitle,
   toSavedAnswer,
   type SavedAnswer,
+  type SavedReport,
 } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
@@ -23,13 +24,16 @@ import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
-import { looksLikeReport, reportModeEnabled } from "./report.ts";
+import { describeEstimate, describeReportLabels, looksLikeReport, reportModeEnabled, toSavedReport, upsert } from "./report.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
+/** A report's section heading in the trace (writeReport), shown apart from the steps under it. */
+const REPORT_SECTION_STEP = /^Section \d+ of \d+: /;
+
 type RunState =
   | { phase: "idle" }
-  | { phase: "running"; steps: string[]; restored?: number }
+  | { phase: "running"; steps: string[]; restored?: number; reportId?: string }
   | { phase: "done"; steps: string[]; answer: SavedAnswer; restored?: number }
   | { phase: "stopped"; steps: string[] }
   | { phase: "error"; steps: string[]; message: string };
@@ -89,6 +93,76 @@ export function ResearchPanel({
       setPlanning(undefined);
     } catch (error) {
       setPlanning(describeModelError(error, settings));
+    }
+  }
+
+  /**
+   * Writes a planned report (docs/report-mode.md, slice 2): each section's question is researched in
+   * turn, as a question is, and the report is saved after every section, so Stop or a reload keeps the
+   * sections already written. A section that ends without an answer says so and the next one starts;
+   * a model or server error stops the report there.
+   */
+  async function writeReport(edited: ReportPlan) {
+    const reportPlan = { ...edited, title: edited.title.trim(), sections: edited.sections.map((q) => q.trim()) };
+    const estimate = describeEstimate(reportPlan.sections.length, settings.lastTest?.maxTaskMinutes);
+    if (estimate.confirm && !confirm(`This report has ${estimate.text}. Write it?`)) return;
+    const abort = new AbortController();
+    controller.current = abort;
+    const request = question.trim();
+    const askedAt = new Date().toISOString();
+    const id = `${Date.parse(askedAt).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const library = new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts })));
+    const titleFor = (docId: string) => library.documentFor(docId)?.title;
+    const sources = openSourcesFor(prefs);
+    const sections: SavedAnswer[] = [];
+    const save = (extra: { unfinished?: boolean; stopped?: boolean }) => {
+      const record = toSavedReport({ id, askedAt, model: setup, plan: reportPlan, request, sections: [...sections], ...extra });
+      history.setRecords((answers) => upsert(answers, record));
+      return record;
+    };
+    const steps: string[] = [];
+    setPlan(undefined);
+    setState({ phase: "running", steps, reportId: id });
+    save({ unfinished: true });
+    try {
+      const model = await openModel(settings);
+      for (const [i, sectionQuestion] of reportPlan.sections.entries()) {
+        if (abort.signal.aborted) break;
+        steps.push(`Section ${i + 1} of ${reportPlan.sections.length}: ${sectionQuestion}`);
+        const sectionSteps: string[] = [];
+        const shown = () => setState({ phase: "running", steps: [...steps], reportId: id });
+        shown();
+        const step = (text: string, index?: number) => {
+          if (index === undefined) {
+            sectionSteps.push(text);
+            steps.push(text);
+          } else {
+            sectionSteps[index] = text;
+            steps[steps.length - sectionSteps.length + index] = text;
+          }
+          shown();
+        };
+        const result = await runResearch({
+          question: sectionQuestion,
+          library,
+          model,
+          sources,
+          signal: abort.signal,
+          onCall: (call: CallRecord) => step(describeCall(call, titleFor)),
+          onResult: (call: CallRecord, index: number) => step(describeCall(call, titleFor), index - 1),
+          onReview: () => step(REVIEW_STEP),
+        });
+        if (abort.signal.aborted) break;
+        if (result.agent.stopReason === "error") throw new Error(result.agent.error);
+        sections.push(toSavedAnswer({ question: sectionQuestion, result, steps: sectionSteps, library, model: setup }));
+        save({ unfinished: true });
+      }
+      const record = save(abort.signal.aborted ? { stopped: true } : {});
+      setState({ phase: "done", steps, answer: record });
+    } catch (error) {
+      const record = save(abort.signal.aborted ? { stopped: true } : {});
+      if (abort.signal.aborted) setState({ phase: "done", steps, answer: record });
+      else setState({ phase: "error", steps, message: `${describeModelError(error, settings)} The sections written before it are saved under Past answers.` });
     }
   }
 
@@ -315,13 +389,17 @@ export function ResearchPanel({
           plan={plan}
           maxTaskMinutes={settings.lastTest?.maxTaskMinutes}
           onChange={setPlan}
+          onWrite={() => void writeReport(plan)}
+          writable={modelReady && !running}
           onCancel={() => setPlan(undefined)}
         />
       )}
       {state.phase !== "idle" && state.steps.length + (running ? 1 : 0) > 0 && (
         <ol className="trace" aria-live="polite" aria-label="Research steps">
           {state.steps.map((step, i) => (
-            <li key={i}>{step}</li>
+            <li key={i} className={REPORT_SECTION_STEP.test(step) ? "trace-section" : undefined}>
+              {step}
+            </li>
           ))}
           {running && <li className="progress">Waiting for the model…</li>}
         </ol>
@@ -352,14 +430,16 @@ export function ResearchPanel({
       {state.phase === "done" && (
         <>
           <ResultView answer={state.answer} live />
-          <div className="actions">
-            <ExportButtons answer={state.answer} />
-          </div>
+          {!state.answer.report && (
+            <div className="actions">
+              <ExportButtons answer={state.answer} />
+            </div>
+          )}
         </>
       )}
       <PastAnswers
         history={history}
-        shownId={state.phase === "done" ? state.answer.id : undefined}
+        shownId={state.phase === "done" ? state.answer.id : state.phase === "running" ? state.reportId : undefined}
         openId={openAnswerId}
         onOpen={onOpenAnswer}
       />
@@ -446,7 +526,7 @@ function PastAnswers({
                     </details>
                   )}
                   <div className="actions">
-                    <ExportButtons answer={answer} />
+                    {!answer.report && <ExportButtons answer={answer} />}
                     <button onClick={() => history.setRecords((answers) => answers.filter((a) => a.id !== answer.id))}>
                       Delete
                     </button>
@@ -474,7 +554,8 @@ function PastAnswers({
 }
 
 /** An answer with its label and evidence; `live` for the answer just given, so screen readers announce it. */
-function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: boolean }) {
+function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: boolean }): React.JSX.Element {
+  if (answer.report) return <ReportView report={answer.report} live={live} />;
   const sourceErrors = answer.sourceErrors.map((message) => (
     <p key={message} className="warning">
       {message} The answer is based on the other sources only.
@@ -600,3 +681,34 @@ function ClosestPassage({ parts }: { parts: DiffPart[] }) {
     </div>
   );
 }
+
+/** A section's label, as its answer would read on its own. */
+function sectionLabel(section: SavedAnswer): string {
+  return section.status === "no-answer" ? "No answer" : describeStatus(section.status, section.evidence, shownSupport(section)).label;
+}
+
+/**
+ * A report (docs/report-mode.md): the label summary, then each section's question and answer, with its
+ * own label and evidence, in the order of the plan.
+ */
+function ReportView({ report, live }: { report: SavedReport; live: boolean }) {
+  return (
+    <div className="report" role={live ? "status" : undefined}>
+      <h3>{report.title}</h3>
+      <p className="report-labels">{describeReportLabels(report, sectionLabel)}</p>
+      <p className="hint">
+        Each section answers one question with its own quotes, checked as any answer is. Check each section against its sources:
+        a section's label covers that section only.
+      </p>
+      {report.sections.map((section, i) => (
+        <section key={i} className="report-section">
+          <h4>
+            {i + 1}. {section.question}
+          </h4>
+          <ResultView answer={section} />
+        </section>
+      ))}
+    </div>
+  );
+}
+

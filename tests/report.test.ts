@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DEFAULT_SECTIONS, fallbackPlan, MAX_SECTIONS, parsePlan, planPrompt, planReport } from "../src/agent/report.ts";
-import { describeEstimate, looksLikeReport, planEdits, planReady, reportModeEnabled } from "../src/app/research/report.ts";
+import type { SavedAnswer } from "../src/app/research/answers.ts";
+import { makeBackup, parseBackup } from "../src/app/research/backup.ts";
+import {
+  describeEstimate,
+  describeReportLabels,
+  labelKind,
+  looksLikeReport,
+  planEdits,
+  planReady,
+  reportModeEnabled,
+  reportStatus,
+  toSavedReport,
+  upsert,
+} from "../src/app/research/report.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
 class ScriptedModel implements LanguageModel {
@@ -97,5 +110,67 @@ describe("report mode: the plan screen", () => {
     assert.equal(planReady(planEdits.remove(start, 0)), false, "one section is not a plan");
     assert.equal(planReady(fallbackPlan(REQUEST)), true, "except the request itself, when no plan could be read");
     assert.equal(planReady(planEdits.setTitle(start, " ")), false);
+  });
+});
+
+describe("report mode: writing and saving a report (slice 2)", () => {
+  const section = (question: string, status: SavedAnswer["status"]): SavedAnswer => ({
+    id: question,
+    question,
+    askedAt: "2026-10-31T12:00:00Z",
+    model: "m",
+    status,
+    ...(status === "no-answer" ? { noAnswer: "The model used all its steps." } : { answer: "An answer." }),
+    evidence: [],
+    citations: {},
+    titles: {},
+    sourceErrors: [],
+    steps: [],
+  });
+  const plan = { title: "Blockchain", sections: ["What is it?", "How are blocks linked?", "What is it used for?"] };
+  const report = (sections: SavedAnswer[], extra: { unfinished?: boolean; stopped?: boolean } = {}) =>
+    toSavedReport({ id: "r", askedAt: "2026-10-31T12:00:00Z", model: "m", plan, request: "blockchain", sections, ...extra });
+
+  it("saves a report as an answer whose sections are answers, with a status that sums them up", () => {
+    const saved = report([section("What is it?", "verified"), section("How are blocks linked?", "verified")]);
+    assert.equal(saved.question, "Blockchain");
+    assert.equal(saved.status, "verified");
+    assert.deepEqual(saved.report!.plan, plan.sections);
+    assert.equal(reportStatus([section("a", "verified"), section("b", "unverified")]), "unverified");
+    assert.equal(reportStatus([section("a", "verified"), section("b", "no-answer")]), "verified", "a section without an answer does not make the others unverified");
+    assert.equal(reportStatus([section("a", "no-answer")]), "no-answer");
+    assert.equal(reportStatus([]), "no-answer");
+  });
+
+  it("sums up the sections' labels, the trusted one first, and says which were not written", () => {
+    const label = (s: SavedAnswer) => (s.status === "verified" ? "Quotes found" : s.status === "no-answer" ? "No answer" : "Quotes found, answer not confirmed");
+    const done = report([section("a", "unverified"), section("b", "verified"), section("c", "verified")]);
+    assert.equal(describeReportLabels(done.report!, label), "2 of 3 sections: Quotes found. 1: Quotes found, answer not confirmed.");
+    const stopped = report([section("a", "verified")], { stopped: true });
+    assert.equal(describeReportLabels(stopped.report!, label), "1 of 3 sections: Quotes found. 2 stopped before they were written.");
+    const closed = report([section("a", "no-answer")], { unfinished: true });
+    assert.equal(describeReportLabels(closed.report!, label), "1 of 3 sections: No answer. 2 not written: the page was closed or reloaded.");
+    assert.equal(describeReportLabels(report([], { stopped: true }).report!, label), "3 stopped before they were written.");
+    // Labels with counts are counted by kind (the end-to-end run's report read "1 of 2 sections: 2 of 13 sentences…").
+    const counted = report([{ ...section("a", "verified") }, { ...section("b", "verified") }]);
+    const byCount = (s: SavedAnswer) => (s.question === "a" ? "2 of 13 sentences backed by a quote" : "0 of 11 sentences backed by a quote");
+    assert.equal(describeReportLabels(counted.report!, byCount), "2 of 3 sections: Some sentences not backed by a quote. 1 not written.");
+    assert.equal(labelKind("Some quotes not found (2 of 3 found)"), "Some quotes not found");
+    assert.equal(labelKind("Quotes found"), "Quotes found");
+  });
+
+  it("is saved again after each section, in place", () => {
+    const first = report([section("a", "verified")], { unfinished: true });
+    const second = report([section("a", "verified"), section("b", "verified")], { unfinished: true });
+    const other = { ...section("x", "verified"), id: "x" };
+    assert.deepEqual(upsert(upsert([other], first), second).map((r) => [r.id, r.report?.sections.length]), [["x", undefined], ["r", 2]]);
+  });
+
+  it("goes into a backup and comes back whole", () => {
+    const saved = report([section("What is it?", "verified")], { stopped: true });
+    const back = parseBackup(JSON.stringify(makeBackup([], [saved], new Date("2026-10-31T12:00:00Z"))));
+    assert.deepEqual(back.answers[0], saved);
+    const broken = { ...saved, report: { ...saved.report!, sections: [{ question: 1 }] } };
+    assert.throws(() => parseBackup(JSON.stringify(makeBackup([], [broken as unknown as SavedAnswer]))), /damaged/);
   });
 });
