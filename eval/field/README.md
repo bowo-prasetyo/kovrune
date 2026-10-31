@@ -436,6 +436,27 @@ Research, unanswerable and pdf are unchanged on both models.
 
 **Adopted:** the condition set before the run is met. 2B's field suite gains 10 tasks (p = 0.006, the first decision here below 0.25), 4B's is unchanged, nothing else falls, and both held-out totals rise or hold. 4B's `f54` is the cost: a shortened passage can leave out the line that answers, and the model may then answer from what is left. This change is the first step of a research state kept apart from the conversation. Search results, the questions still open and what has been ruled out are not kept yet, and would be judged the same way.
 
+
+### A dropped search keeping its IDs and titles (measured, not adopted)
+
+The next part of the research state: a search result that has to leave the context keeps one line per result, its ID and title, without the snippet, so the model still knows what it found and can read it. A search that found nothing is still removed. It was judged as the shortened reads [above](#a-dropped-read-keeps-the-sentences-that-best-match-the-question-0440) were: at 2,048 tokens on both models, on the tasks that lose results and the same 11 controls, against the 0.44.0 runs, with the same condition set before the run. The runs used harness 0.45.0, on a branch (`83c4326`) that was not merged ([2B](../results/field-0.45-ctx2048-search-qwen3.5-2b-q4km.json), [4B](../results/field-0.45-ctx2048-search-qwen3.5-4b-q4km.json)). All 22 controls took the same actions, with the same answers.
+
+| At 2,048 tokens, on these tasks | 0.44.0 | IDs and titles kept | Gained | Lost | p |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-2B, field (57 tasks) | 35 | 28 | 2 | 9 | 0.065 |
+| Qwen3.5-2B, held out (22) | 14 | 13 | 1 | 2 | 1 |
+| Qwen3.5-4B, field (23) | 20 | 18 | 1 | 3 | 0.63 |
+| Qwen3.5-4B, held out (9) | 9 | 9 | 0 | 0 | 1 |
+
+Research, unanswerable and pdf are unchanged on both models.
+
+- **Both models lose field tasks.** 2B loses 9 and gains 2, and 4B loses 3 and gains 1.
+  - On 2B, four of those lost now answer "not found" (`f04`, `f08`, `f51`, `f55`), where they had answered right. Wrong answers labelled **Quotes found** rise from 1 to 4.
+  - On 4B, wrong labelled answers fall from 2 to 1 (`f24` loses its label, `f54` passes again).
+- **Why is not established.** As many results leave the context as before (2B: 132 against 133), but the prompts are larger: a 2B task's largest prompt is 1,256 tokens on average, against 1,203. A likely reading is that the kept lines take room that the shortened reads, which hold the evidence, needed. The reports cannot show that, as they count results removed and shortened together.
+
+**Not adopted:** the field suite falls on both models, against the condition set before the run. `main` keeps 0.44.0, where a dropped search is removed whole. So the research state keeps the evidence it has read, not the list of what it found: on these suites, at this context, the lines that name what was found cost more room than they are worth.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

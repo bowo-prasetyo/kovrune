@@ -290,6 +290,8 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 - **Qwen3.5-2B** wins back 10 of the 18 field tasks it lost to the smaller context (51 → 61 of 89, 11 gained and 1 lost, p = 0.006), and held out 2 (22 → 24).
 - **Qwen3.5-4B** is unchanged (80 of 89, 1 gained and 1 lost).
 
+**Research state: search results kept as IDs and titles (measured, not adopted).** A dropped search result kept the ID and title of each result, without snippets. At 2,048 tokens on the same tasks, field falls on both models against 0.44.0: 2B 35 → 28 (2 gained, 9 lost) and 4B 20 → 18 (1 gained, 3 lost). So `main` keeps removing old search results whole. The likely cause is that the kept lines take room the shortened reads needed: prompts grow, while as many results leave the context ([field README](../eval/field/README.md#a-dropped-search-keeping-its-ids-and-titles-measured-not-adopted)).
+
 The cost is 4B's `f54`: a shortened table lost the line that answers, and the model's related answer from another passage is labelled Quotes found. Over both models, 4 wrong labelled answers on these tasks instead of 5 ([field README](../eval/field/README.md#a-dropped-read-keeps-the-sentences-that-best-match-the-question-0440)).
 
 So research state kept outside the conversation, such as the best-matching passages of a dropped result, has a test bed: 2B at 2,048 tokens. At the app's 4,096 tokens, results are almost never dropped ([field README](../eval/field/README.md#a-dropped-result-can-be-read-again-0430-and-a-stress-test-of-context-fitting)).
