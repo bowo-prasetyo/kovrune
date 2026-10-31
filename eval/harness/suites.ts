@@ -14,9 +14,14 @@ import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
  * research: the 22 M0 research tasks; unanswerable: 8 more questions the corpus
  * cannot answer; pdf: 4 tasks over PDF documents; coding: 12 coding tasks;
  * field: questions over real documents (eval/field/), run only when asked for; holdout: more
- * questions over the same documents that changes are not tuned on (eval/field/holdout.ts).
+ * questions over the same documents that changes are not tuned on (eval/field/holdout.ts);
+ * multi and multiholdout: questions over the same documents that need more than one passage,
+ * the second read only as totals (eval/field/multi.ts).
  */
-export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout";
+export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout";
+
+/** The suites over the field documents, which need them loaded (loadFieldSuite). */
+export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout"];
 
 /** The evaluation set the gate needs. The field suite is reported separately, so M0 comparisons stay valid. */
 export const ALL_SUITES: SuiteName[] = ["research", "unanswerable", "pdf", "coding"];

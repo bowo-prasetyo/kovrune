@@ -9,7 +9,7 @@ import { mcnemar } from "./stats.ts";
 export const isPortable = (build: string) => /GGML_NATIVE=OFF/i.test(build);
 
 /** Suites whose tasks are named only as counts, so a change is not tuned on them (eval/field/README.md). */
-export const HELD_OUT_SUITES = new Set(["holdout"]);
+export const HELD_OUT_SUITES = new Set(["holdout", "multiholdout"]);
 
 export interface SuiteComparison {
   suite: string;
