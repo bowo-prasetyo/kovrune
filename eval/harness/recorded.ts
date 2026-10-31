@@ -47,7 +47,7 @@ export interface RecordedAnswer {
 /**
  * The answers of a report the app asks its check about: every quote found, and the word checks passing,
  * or, for models whose check is asked about short answers (review.ts reviewsShortAnswers) or with
- * `short`, an answer too short for them. Answers cut off in the report (it keeps 600 characters of each
+ * `short`, an answer too short for them. Answers cut off in the report (it keeps FINAL_CHARS characters of each
  * final answer) are left out and counted.
  */
 export function checkedAnswers(

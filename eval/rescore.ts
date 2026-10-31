@@ -64,7 +64,7 @@ for (const file of positionals) {
     try {
       final = JSON.parse(result.final);
     } catch {
-      skipped++; // cut at 600 characters
+      skipped++; // cut at FINAL_CHARS characters (600 before harness 0.47.0)
       continue;
     }
     rescored++;

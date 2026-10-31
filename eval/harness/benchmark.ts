@@ -15,7 +15,15 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.46.0";
+export const HARNESS_VERSION = "0.47.0";
+
+/**
+ * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
+ * which cut off a third of the answers to questions that need more than one passage, so the tools that
+ * ask the checks again about recorded answers (bench:rescore, bench:rereview, bench:crosscheck,
+ * bench:completeness) could not judge them.
+ */
+export const FINAL_CHARS = 8000;
 
 export type Mode = "constrained" | "unconstrained";
 
@@ -89,6 +97,7 @@ export interface TaskResult {
   wallMs: number;
   /** Each call's action, abbreviated, e.g. 'search {"query":"LumenDB"}' or 'invalid: ...'. */
   actions: string[];
+  /** The final answer as JSON, cut at FINAL_CHARS characters (600 before harness 0.47.0). */
   final?: string;
   /** Research tasks: the answer's status (verified, unverified, not-found, no-answer). */
   status?: string;
@@ -192,7 +201,7 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     ttftMs: Math.round(calls.reduce((s, c) => s + c.ttftMs, 0)),
     wallMs: Math.round(wallMs),
     actions: actionTrace(run),
-    final: final ? JSON.stringify(final).slice(0, 600) : undefined,
+    final: final ? JSON.stringify(final).slice(0, FINAL_CHARS) : undefined,
     status: run.research?.status,
     evidence: run.research?.evidence.map(({ docId, verified, reason }) => ({ docId, verified, ...(reason ? { reason } : {}) })),
     ...(run.research
