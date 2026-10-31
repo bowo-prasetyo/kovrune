@@ -89,7 +89,7 @@ This audience can use Kovrune on every supported machine today: in the browser w
 
 People who won't use a terminal are **not** the first audience. They could use only the browser path, which needs a capable GPU and is not yet measured on class 2 hardware ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). They become a target once the browser path is confirmed and setup needs no terminal on the machines they use. "Ordinary users" on low-memory devices and phones are not the first audience either. Realistic minimum hardware for the browser runtime is roughly 8 GB of RAM and a WebGPU-capable browser; the exact floor is set by the M0 benchmark (§12).
 
-**Primary job to be done:** "Help me answer a question from my own documents and open scholarly sources, using a model I control, with quotes I can check."
+**Primary job to be done:** "Help me answer a question, or write a short report, from my own documents and open scholarly sources, using a model I control, with quotes I can check." A report is built from checked answers, one per section ([`report-mode.md`](report-mode.md)).
 
 A second job, "help me work on a codebase", is the target of the coding agent (M2.5) and is not part of the current product.
 

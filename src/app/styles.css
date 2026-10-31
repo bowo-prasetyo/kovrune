@@ -564,3 +564,33 @@ label.file-button.disabled {
   opacity: 0.5;
   cursor: default;
 }
+
+/* Report mode: the plan of a report, one question per section (docs/report-mode.md). */
+fieldset.mode label.choice {
+  display: inline-block;
+  margin: 4px 16px 4px 0;
+}
+
+.report-plan {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 1em 0.5em;
+  margin: 1em 0;
+}
+
+.plan-sections li {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  margin-bottom: 0.4em;
+}
+
+.plan-sections input {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-buttons {
+  display: flex;
+  gap: 0.25em;
+}

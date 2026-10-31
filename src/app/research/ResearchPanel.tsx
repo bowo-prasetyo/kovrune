@@ -4,6 +4,7 @@ import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
 import { ReplayingModel, type RecordedCall } from "../../agent/replay.ts";
 import { ResearchLibrary, runResearch } from "../../agent/research.ts";
+import { planReport, type ReportPlan } from "../../agent/report.ts";
 import { describeModelError, describeSetup, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import {
@@ -22,6 +23,8 @@ import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
+import { looksLikeReport, reportModeEnabled } from "./report.ts";
+import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
 type RunState =
@@ -51,12 +54,17 @@ export function ResearchPanel({
 }) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<RunState>({ phase: "idle" });
+  // Report mode (docs/report-mode.md): shown with ?report until its sections can be researched.
+  const reportMode = useMemo(() => reportModeEnabled(), []);
+  const [mode, setMode] = useState<"question" | "report">("question");
+  const [plan, setPlan] = useState<ReportPlan>();
+  const [planning, setPlanning] = useState<string>();
   const controller = useRef<AbortController>(undefined);
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
   const anyOpenSource = prefs.wikipedia || prefs.openalex;
-  const canAsk = modelReady && !running && (usable.length > 0 || anyOpenSource) && question.trim().length > 0;
+  const canAsk = modelReady && !running && !planning && (usable.length > 0 || anyOpenSource) && question.trim().length > 0;
   // The question in progress, saved after every step so that it can continue after a reload or an error.
   const pending = usePendingTask();
   const setup = describeSetup(settings);
@@ -66,6 +74,22 @@ export function ResearchPanel({
     const next = { ...prefs, ...change };
     setPrefs(next);
     saveSourcePrefs(next);
+  }
+
+  /** Plans a report on the request in the box: one question per section, for the user to edit. */
+  async function planTheReport() {
+    const request = question.trim();
+    setPlan(undefined);
+    setPlanning(undefined);
+    setState({ phase: "idle" });
+    setPlanning("Planning the report…");
+    try {
+      const sources = [...(usable.length ? ["your documents"] : []), ...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : [])];
+      setPlan(await planReport({ model: await openModel(settings), request, sources }));
+      setPlanning(undefined);
+    } catch (error) {
+      setPlanning(describeModelError(error, settings));
+    }
   }
 
   /** Asks the question in the box, or continues a saved task where it stopped. */
@@ -195,7 +219,7 @@ export function ResearchPanel({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (canAsk) void ask();
+          if (canAsk) void (mode === "report" ? planTheReport() : ask());
         }}
       >
         <fieldset className="sources">
@@ -235,16 +259,38 @@ export function ResearchPanel({
             </p>
           )}
         </fieldset>
+        {reportMode && (
+          <fieldset className="mode">
+            <legend>Answer</legend>
+            <label className="choice">
+              <input type="radio" name="mode" checked={mode === "question"} disabled={running} onChange={() => setMode("question")} />
+              Ask a question
+            </label>
+            <label className="choice">
+              <input type="radio" name="mode" checked={mode === "report"} disabled={running} onChange={() => setMode("report")} />
+              Write a report
+            </label>
+          </fieldset>
+        )}
         <label>
-          Question
+          {mode === "report" ? "Report topic" : "Question"}
           <textarea
             rows={3}
             value={question}
             disabled={running}
-            placeholder="For example: What was the total income in 2024?"
+            placeholder={mode === "report" ? "For example: blockchain technology, how it works and where it is used" : "For example: What was the total income in 2024?"}
             onChange={(event) => setQuestion(event.target.value)}
           />
         </label>
+        {reportMode && mode === "question" && looksLikeReport(question) && (
+          <p className="hint">
+            This asks for a report. A short answer can't hold one:{" "}
+            <button type="button" className="link" onClick={() => setMode("report")}>
+              Write a report
+            </button>{" "}
+            plans it as a few questions, each answered with checked quotes.
+          </p>
+        )}
         {usable.length === 0 && !anyOpenSource && (
           <p className="hint">Add a document above, or tick Wikipedia or OpenAlex, to ask a question.</p>
         )}
@@ -257,12 +303,21 @@ export function ResearchPanel({
             </button>
           ) : (
             <button key="ask" type="submit" className="primary" disabled={!canAsk}>
-              Ask
+              {mode === "report" ? "Plan the report" : "Ask"}
             </button>
           )}
         </div>
       </form>
 
+      {planning && <p className={planning.endsWith("…") ? "progress" : "error"}>{planning}</p>}
+      {plan && (
+        <ReportPlanView
+          plan={plan}
+          maxTaskMinutes={settings.lastTest?.maxTaskMinutes}
+          onChange={setPlan}
+          onCancel={() => setPlan(undefined)}
+        />
+      )}
       {state.phase !== "idle" && state.steps.length + (running ? 1 : 0) > 0 && (
         <ol className="trace" aria-live="polite" aria-label="Research steps">
           {state.steps.map((step, i) => (

@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Proposed, for the project owner's review. Nothing is built yet |
+| Status | Agreed (decisions R1–R5 below). Slice 1, the plan, is built behind `?report`; see [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -79,12 +79,24 @@ Each slice is its own pull request, reviewed and tested on the class 1 laptop.
 4. **Report suite and harness.** The suite, a baseline on both models, and the plan-only measurement.
 5. **Introduction and conclusion.** The synthesis call and its sentence check, measured on the report suite before it is shown by default.
 
-## Decisions for the project owner
+## Decisions
 
-| # | Question | Proposal |
+| # | Question | Decided |
 | --- | --- | --- |
 | R1 | Is a report part of the primary job in the design (§1.4)? | Yes: "…answer a question **or write a short report**…, with quotes I can check". |
 | R2 | How does a user start a report? | An explicit **Write a report** option. A request detected from its wording ("report", "400 words") only suggests it. |
 | R3 | Sections by default, and the most allowed | 4 by default, 2–8 allowed |
 | R4 | Introduction and conclusion | Off until slice 5's measurement, then on by default if their sentences are mostly backed |
 | R5 | Slow setups | Above 30 minutes estimated, ask for confirmation, and suggest fewer sections or Qwen3.5-2B for a first draft |
+
+All five were agreed by the project owner as proposed. R1 is in the design's primary job (§1.4).
+
+## Progress
+
+- **Slice 1, the plan: built.**
+  - `planReport` (`src/agent/report.ts`) makes one constrained call, with the request and the sources ticked, and reads a title and 2–8 questions. Empty and repeated questions are dropped, and a plan that cannot be read falls back to the request as one section.
+  - The plan screen (`ReportPlanView`) edits, reorders, adds and removes sections, and shows the time estimate from the model test. Above 30 minutes it says that the report will ask for confirmation.
+  - In question mode, a question that asks for a report ("report", "overview", "400 words") gets a hint offering **Write a report**.
+  - The option is shown only with `?report` in the address until slice 2 can write the report.
+  - Tried live on both models with the preview user's blockchain request, and on "how Kovrune checks the quotes in its answers". Both gave a title and 2–4 focused questions in 17–37 seconds on CPU. Some questions ask two things at once ("its definition and technical architecture"), which the multi-passage suites showed is harder. The plan screen lets the user split them, and slice 4 measures how often it happens before the prompt is changed.
+
