@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DEFAULT_SECTIONS, fallbackPlan, MAX_SECTIONS, parsePlan, planPrompt, planReport } from "../src/agent/report.ts";
-import type { SavedAnswer } from "../src/app/research/answers.ts";
+import { answerToBibtex, answerToMarkdown, exportFileName, type SavedAnswer } from "../src/app/research/answers.ts";
 import { makeBackup, parseBackup } from "../src/app/research/backup.ts";
 import {
   describeEstimate,
@@ -10,7 +10,6 @@ import {
   looksLikeReport,
   planEdits,
   planReady,
-  reportModeEnabled,
   reportStatus,
   toSavedReport,
   upsert,
@@ -76,12 +75,6 @@ describe("report mode: the plan (docs/report-mode.md, slice 1)", () => {
 });
 
 describe("report mode: the plan screen", () => {
-  it("is shown only with ?report in the address until its sections can be researched", () => {
-    assert.equal(reportModeEnabled("?report"), true);
-    assert.equal(reportModeEnabled("?x=1&report"), true);
-    assert.equal(reportModeEnabled(""), false);
-  });
-
   it("estimates the time from the model test, and asks for confirmation above 30 minutes", () => {
     assert.deepEqual(describeEstimate(4, 7), { text: "4 sections, up to 28 min", confirm: false });
     assert.deepEqual(describeEstimate(5, 7), { text: "5 sections, up to 35 min", confirm: true });
@@ -172,5 +165,80 @@ describe("report mode: writing and saving a report (slice 2)", () => {
     assert.deepEqual(back.answers[0], saved);
     const broken = { ...saved, report: { ...saved.report!, sections: [{ question: 1 }] } };
     assert.throws(() => parseBackup(JSON.stringify(makeBackup([], [broken as unknown as SavedAnswer]))), /damaged/);
+  });
+});
+
+describe("report mode: exporting a report (slice 3)", () => {
+  const paper = {
+    title: "Blockchain consensus",
+    url: "https://openalex.org/W1",
+    source: "OpenAlex",
+    retrievedAt: "2026-10-31T12:00:00Z",
+    work: { authors: ["A. Author"], year: 2020, venue: "Journal of Ledgers", doi: "10.1/x" },
+  };
+  const sectionWith = (question: string, fields: Partial<SavedAnswer>): SavedAnswer => ({
+    id: question,
+    question,
+    askedAt: "2026-10-31T12:00:00Z",
+    model: "m",
+    status: "verified",
+    answer: "An answer.",
+    evidence: [],
+    citations: {},
+    titles: {},
+    sourceErrors: [],
+    steps: [],
+    ...fields,
+  });
+  const quote = (docId: string, text: string, verified = true) => ({ docId, quote: text, verified, verdict: verified ? "found" : "not-found" }) as unknown as SavedAnswer["evidence"][number];
+  const sections = [
+    sectionWith("What is it?", {
+      answer: "A blockchain is a ledger. It flies.",
+      evidence: [quote("guide#2", "A blockchain is a ledger"), quote("openalex:W1", "Consensus orders blocks")],
+      titles: { "guide#2": "guide.md (part 2 of 5)" },
+      citations: { "openalex:W1": paper },
+      support: { judged: 2, backed: 1, sentences: [{ text: "A blockchain is a ledger. ", backed: true }, { text: "It flies.", backed: false }] } as unknown as SavedAnswer["support"],
+      steps: ["Searching your documents for “blockchain”: 1 document"],
+    }),
+    sectionWith("How are blocks linked?", {
+      answer: "By hashes.",
+      evidence: [quote("guide#3", "each block holds the hash of the one before")],
+      titles: { "guide#3": "guide.md (part 3 of 5)" },
+      citations: { "openalex:W1": paper },
+    }),
+  ];
+  const record = toSavedReport({
+    id: "r",
+    askedAt: "2026-10-31T12:00:00Z",
+    model: "Qwen3.5-4B on llama.cpp server",
+    plan: { title: "Blockchain", sections: ["What is it?", "How are blocks linked?", "What is it used for?"] },
+    request: "Write a report on blockchain.",
+    sections,
+    stopped: true,
+  });
+
+  it("writes the report as Markdown: sections with labels, answers and numbered references, one list of sources", () => {
+    const md = answerToMarkdown(record);
+    assert.match(md, /^# Blockchain\n/);
+    assert.match(md, /\n> Write a report on blockchain\.\n/, "the request");
+    assert.match(md, /\*\*1 of 3 sections: Quotes found\. 1: Some sentences not backed by a quote\. 1 stopped before they were written\.\*\*/);
+    assert.match(md, /## 1\. What is it\?\n\n\*\*1 of 2 sentences backed by a quote\.\*\*\n\nA blockchain is a ledger\. ⚠ It flies\./);
+    assert.match(md, /## 2\. How are blocks linked\?\n\n\*\*Quotes found\.\*\*\n\nBy hashes\./);
+    assert.match(md, /- ✓ \[1\]: > A blockchain is a ledger/);
+    assert.match(md, /- ✓ \[2\]: > Consensus orders blocks/);
+    assert.match(md, /- ✓ \[1\]: > each block holds the hash/, "two parts of one document are one reference");
+    assert.match(md, /## Sections not written\n\n3\. What is it used for\?/);
+    assert.match(md, /## References\n\n1\. guide\.md\n2\. \[Blockchain consensus\]\(https:\/\/openalex\.org\/W1\) \(OpenAlex, retrieved 2026-10-31\)\n/);
+    assert.match(md, /## Steps\n\n1\. What is it\?\n   - Searching your documents/);
+    assert.match(md, /⚠ marks sentences/);
+    assert.match(md, /Exported from Kovrune/);
+  });
+
+  it("puts every section's papers in one BibTeX file, each once, and names the files after the title", () => {
+    const bibtex = answerToBibtex(record)!;
+    assert.equal(bibtex.match(/@article\{/g)?.length, 1);
+    assert.match(bibtex, /title = \{Blockchain consensus\}/);
+    assert.equal(answerToBibtex(toSavedReport({ ...record, id: "s", plan: { title: "T", sections: ["a?", "b?"] }, request: "r", sections: [sections[1]!].map((s) => ({ ...s, citations: {} })) })), undefined);
+    assert.equal(exportFileName(record, "md"), "kovrune-blockchain-2026-10-31.md");
   });
 });

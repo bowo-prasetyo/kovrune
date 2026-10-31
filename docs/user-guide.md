@@ -6,6 +6,7 @@ Kovrune answers questions about your documents, and optionally Wikipedia and sch
 - [2. Choose where the model runs](#2-choose-where-the-model-runs)
 - [3. Set up a local model server](#3-set-up-a-local-model-server)
 - [4. Ask questions](#4-ask-questions)
+  - [Write a report](#write-a-report)
 - [5. Reading the answer](#5-reading-the-answer)
 - [6. Privacy](#6-privacy)
 - [7. Troubleshooting](#7-troubleshooting)
@@ -166,6 +167,22 @@ Tips:
 - If a document the question searched has been removed, or you changed the model setup, it can only be asked again.
 
 If the model server stops answering in the middle of a question, start it again and press **Continue from step N** under the error. **Stop** discards the question's progress.
+
+### Write a report
+
+An answer is a few sentences, each checked against a quote. For a longer report, choose **Write a report** above the question box. Kovrune builds it from several checked answers, one per section.
+
+1. **Type the topic** (for example "blockchain technology, how it works and where it is used") and press **Plan the report**. The model proposes a title and a few questions, one per section, each answerable from a passage or two.
+2. **Edit the plan.** Change the title or any question, reorder them (↑ ↓), and add or remove sections, from 2 to 8. Questions that ask one thing each work best: split a question that asks two. Below the plan is how long the report can take, from your model test. Each section takes about as long as a question.
+3. **Press Write the report.** Above 30 minutes, it asks you to confirm first. Each section's question is researched in turn, as a question is: you see its heading and its steps. **Stop** keeps the sections already written.
+
+The report shows a summary of the sections' labels, for example "3 of 4 sections: Quotes found. 1: Quotes found, answer not confirmed.", then each section with its own label, answer and evidence. A section's label covers that section only, so check each one, as you would an answer.
+
+A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written.
+
+**Export as Markdown** writes the report with each section's quotes numbered against one list of references, and the steps. **Export papers as BibTeX** collects the OpenAlex papers of every section.
+
+Reports work best with Qwen3.5-4B. With Qwen3.5-2B, sections are often long and mostly unbacked by quotes: the labels say so.
 
 ## 5. Reading the answer
 
