@@ -224,6 +224,34 @@ describe("read before answering", () => {
     assert.deepEqual(steps(lastStep.calls), ["search", "final_answer"]);
   });
 
+  it("asks only for the reads the steps left allow, keeping two for the answer and a retry", async () => {
+    // A preview report quoted five articles seen as snippets; reading them all left no step to spare.
+    const ids = library.index.search("LumenDB").map((h) => h.docId);
+    assert.ok(ids.length >= 3);
+    const many = JSON.stringify({ tool: "final_answer", args: { found: true, answer: "LumenDB is a key-value store.", evidence: ids.map((docId) => ({ docId, quote: "LumenDB" })) } });
+    const run = (maxCalls: number) =>
+      runAgent({
+        model: new ScriptedModel([search("LumenDB"), many, read(ids[0]!), many]),
+        system: RESEARCH_SYSTEM,
+        task: "What is LumenDB?",
+        tools: createResearchTools(library.index),
+        finalTool: "final_answer",
+        config: { constrained: true, maxCalls, maxTokensPerCall: 512 },
+      });
+    // Six calls in all: four left after the answer, so two reads fit.
+    const two = await run(6);
+    assert.match(two.transcript[5]!.content, new RegExp(`quotes ${ids[0]}, ${ids[1]}, which you have seen only[\\s\\S]*steps left for 2 reads, so read only those`));
+    // Three left: one read.
+    const one = await run(5);
+    assert.match(one.transcript[5]!.content, new RegExp(`quotes ${ids[0]}, which you have seen only[\\s\\S]*steps left for one read, so read only that one`));
+    // Two left: no read fits, so the answer stands (its quotes are still checked against the documents).
+    const none = await run(4);
+    assert.deepEqual(steps(none.calls), ["search", "final_answer"]);
+    // Enough steps for every read: the request is as before.
+    const all = await run(8);
+    assert.doesNotMatch(all.transcript[5]!.content, /steps left/);
+  });
+
   it("counts a part as read only when that part was, and a whole document when any part was", async () => {
     const long = { id: "manual", title: "Manual", text: Array.from({ length: 4 }, (_, i) => `Chapter ${i + 1}. ${"The manual explains the backup schedule in detail. ".repeat(12)}`).join("\n\n") };
     const parts = new ResearchLibrary([long]);
