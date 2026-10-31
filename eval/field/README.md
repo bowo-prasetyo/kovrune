@@ -407,6 +407,35 @@ Each tool result stays in the conversation, and when the next call would not fit
 
 **What the test says about keeping research state outside the conversation.** It depends on the model. 4B loses no task at half the context, and 2B loses 18 of 89 field tasks, all of them tasks that lost results. Letting a dropped result be read again does not win them back. So 2B at 2,048 tokens is a test bed for a separate state, such as the passages of a dropped result that best match the question kept in its place. It would be judged by the [rule](#rule-for-prompt-and-guard-changes) on both models. The app gives both models 4,096 tokens, where results are almost never dropped, so its use would be for smaller contexts and for longer tasks: more documents, or the open sources.
 
+
+### A dropped read keeps the sentences that best match the question (0.44.0)
+
+The stress test [above](#a-dropped-result-can-be-read-again-0430-and-a-stress-test-of-context-fitting) showed that at 2,048 tokens, Qwen3.5-2B loses 18 field tasks to dropped results. So the research state the agent keeps no longer depends entirely on what fits: a read result that has to leave the context keeps its document's ID and title, and the two sentences of it that best match the question, chosen as search snippets are (`DocumentIndex.bestSentences`), in the place of the whole text (`AgentTool.shorten`, `src/tools/research.ts`). The sentences are copied word for word, so a quote taken from them is still found in the document. If even the shorter forms do not fit, they are removed, oldest first, as before. Search results are still removed whole. Code chooses the sentences, so the change costs no model call.
+
+It changes what the model reads, so it was judged by the [rule](#rule-for-prompt-and-guard-changes), where it acts: at 2,048 tokens, on both models. The condition was set before the run: the field suite must improve on at least one model and fall on neither; research, unanswerable and pdf must not fall; the held-out suite must not fall in total. Each model ran harness 0.44.0 (`e5c9f0b`) on the tasks of its 0.43.0 re-read run: those that lost results, and 11 controls ([2B](../results/field-0.44-ctx2048-shorten-qwen3.5-2b-q4km.json), [4B](../results/field-0.44-ctx2048-shorten-qwen3.5-4b-q4km.json)). A task that loses no result cannot change. All 22 controls took the same actions, with the same answers.
+
+| At 2,048 tokens | 0.43.0 | 0.44.0 | Gained | Lost | p | 4,096 tokens |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-2B, field | 51/89 | **61/89** | 11 | 1 | 0.006 | 69/89 |
+| Qwen3.5-2B, held out | 22/37 | 24/37 | 3 | 1 | 0.63 | 24/37 |
+| Qwen3.5-4B, field | 80/89 | 80/89 | 1 | 1 | 1 | 79/89 |
+| Qwen3.5-4B, held out | 35/37 | 35/37 | 0 | 0 | 1 | 35/37 |
+
+Research, unanswerable and pdf are unchanged on both models.
+
+- **2B wins back 10 of the 18 field tasks it lost to the smaller context.** The held-out suite recovers its 2 in total.
+  - Of the 11 field tasks gained, 6 had answered "not found" (`f02`, `f04`, `f51`, `f55`, `f62`, `f71`). The others had quoted the wrong passage, or a passage it could no longer see (`f06`, `f46`, `f48`, `f54`, `f65`).
+  - "Not found" answers on these tasks fall from 14 to 5 on field, and from 3 to 0 held out.
+  - It loses `f64`, whose quote is no longer found in the document.
+- **4B is unchanged in score, with field 1 gained and 1 lost.**
+  - It gains `f17`: it lists the GPL, LGPL and AGPL, where it had answered "not found".
+  - It loses `f54`. The guide's troubleshooting table, shortened, no longer held its "No text found" row, and the model did not read it again. It answered from another passage, "Scanned PDFs (images without a text layer) can't be read", which is real and related but not the message the task asks for. The review said yes and the cross-check agreed, so this wrong answer is labelled **Quotes found**.
+- **Labels on these tasks.** Wrong answers labelled **Quotes found** fall on 2B's field suite from 3 to 1, and rise on 4B's from 1 to 2 (`f54`). Held out: 1 wrong on 2B and none on 4B, both before and after. Over both models, 4 wrong labelled answers instead of 5.
+- **Cost:** 450 calls instead of 445 on 2B's tasks, and 162 instead of 168 on 4B's.
+- **At 4,096 tokens** it changes nothing on the 4B suites, where no task loses a result. On 2B it can change at most the one task of the 0.38.0 run that lost a result.
+
+**Adopted:** the condition set before the run is met. 2B's field suite gains 10 tasks (p = 0.006, the first decision here below 0.25), 4B's is unchanged, nothing else falls, and both held-out totals rise or hold. 4B's `f54` is the cost: a shortened passage can leave out the line that answers, and the model may then answer from what is left. This change is the first step of a research state kept apart from the conversation. Search results, the questions still open and what has been ruled out are not kept yet, and would be judged the same way.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

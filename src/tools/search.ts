@@ -104,6 +104,25 @@ export class DocumentIndex {
     return Math.log(1 + (this.docs.length - df + 0.5) / (df + 0.5));
   }
 
+  /**
+   * The `count` sentences of a text that best match a query, weighted as snippets are, in the order
+   * the text has them, each cut to `maxLength` characters. Sentences that share no term with the
+   * query are left out, so there may be fewer, or none.
+   */
+  bestSentences(text: string, query: string, count: number, maxLength = 220): string[] {
+    const terms = [...new Set(tokenize(query))];
+    return sentencesOf(text)
+      .map((sentence, order) => {
+        const tokens = new Set(tokenize(sentence));
+        return { sentence: sentence.trim(), order, score: terms.filter((t) => tokens.has(t)).reduce((sum, t) => sum + this.idf(t), 0) };
+      })
+      .filter((s) => s.score > 0)
+      .sort((x, y) => y.score - x.score || x.order - y.order)
+      .slice(0, count)
+      .sort((x, y) => x.order - y.order)
+      .map(({ sentence }) => (sentence.length > maxLength ? `${sentence.slice(0, maxLength)}…` : sentence));
+  }
+
   search(query: string, limit = 3): SearchHit[] {
     const terms = [...new Set(tokenize(query))];
     const k1 = 1.2;
@@ -125,9 +144,14 @@ export class DocumentIndex {
   }
 }
 
-function bestSnippet(text: string, terms: string[], weight: (term: string) => number, maxLength = 220): string {
+/** A document's sentences, as snippets are chosen from them. */
+function sentencesOf(text: string): string[] {
   // "。", "！", "？" and the Devanagari danda "।" end sentences without a space after them.
-  const sentences = text.split(/(?<=[.!?:])\s+|(?<=[。！？।])\s*|\n+/).filter((s) => s.trim());
+  return text.split(/(?<=[.!?:])\s+|(?<=[。！？।])\s*|\n+/).filter((s) => s.trim());
+}
+
+function bestSnippet(text: string, terms: string[], weight: (term: string) => number, maxLength = 220): string {
+  const sentences = sentencesOf(text);
   let best = sentences[0] ?? "";
   let bestScore = -1;
   for (const sentence of sentences) {

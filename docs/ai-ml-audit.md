@@ -286,5 +286,11 @@ On the recorded runs, the review caught 2 of the 8 wrong answers it was asked ab
 - **Qwen3.5-4B** loses no task: 27 of 160 tasks lost results. The fix changes the path of 9 of them and no result, and backs one right answer (`f54`) with a better quote.
 - **Qwen3.5-2B** loses 18 of 89 field tasks (69 → 51), all of them tasks that lost results. The fix changes the path of 8 and the score not at all (1 gained, 1 lost).
 
+**Research state outside the conversation, a first step (harness 0.44.0).** A read result that has to leave the context now keeps its document's ID, title and the two sentences that best match the question, word for word. The condition was set before the run (field up on one model and down on neither, other suites not down). At 2,048 tokens it is met:
+- **Qwen3.5-2B** wins back 10 of the 18 field tasks it lost to the smaller context (51 → 61 of 89, 11 gained and 1 lost, p = 0.006), and held out 2 (22 → 24).
+- **Qwen3.5-4B** is unchanged (80 of 89, 1 gained and 1 lost).
+
+The cost is 4B's `f54`: a shortened table lost the line that answers, and the model's related answer from another passage is labelled Quotes found. Over both models, 4 wrong labelled answers on these tasks instead of 5 ([field README](../eval/field/README.md#a-dropped-read-keeps-the-sentences-that-best-match-the-question-0440)).
+
 So research state kept outside the conversation, such as the best-matching passages of a dropped result, has a test bed: 2B at 2,048 tokens. At the app's 4,096 tokens, results are almost never dropped ([field README](../eval/field/README.md#a-dropped-result-can-be-read-again-0430-and-a-stress-test-of-context-fitting)).
 | 7 | Length limits in the answer schema (N8) | Small | Yes |
