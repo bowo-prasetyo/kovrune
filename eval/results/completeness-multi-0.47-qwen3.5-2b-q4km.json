@@ -1,0 +1,133 @@
+{
+  "report": "eval/results/multi-0.47-qwen3.5-2b-q4km.json",
+  "checked": [
+    {
+      "suite": "multi",
+      "taskId": "m01-ollama-steps",
+      "right": false,
+      "parts": [
+        {
+          "asks": "What went wrong with it in testing",
+          "answer": "not acting on tool results"
+        },
+        {
+          "asks": "What to use instead",
+          "answer": "llama.cpp server"
+        },
+        {
+          "asks": "With which model file",
+          "answer": "the same model file"
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m02-wsl-setup",
+      "right": false,
+      "parts": [
+        {
+          "asks": "Where should I run the commands that start the app locally on Windows with WSL?",
+          "answer": "Start the llama-server with the option `--host 0.0.0.0`."
+        },
+        {
+          "asks": "Which llama-server option lets the Windows browser reach a server running in WSL?",
+          "answer": "Use the address from the command line output (e.g., `hostname -I` in WSL) or start the server on a different port (e.g., `--port 8080`) and use that address in the browser."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m05-larger-work",
+      "right": false,
+      "parts": [
+        {
+          "asks": "What is a 'Larger Work'?",
+          "answer": "A combination of Covered Software with a work governed by Secondary Licenses, where the Covered Software is not Incompatible with Secondary Licenses."
+        },
+        {
+          "asks": "Under which terms may I distribute a Larger Work?",
+          "answer": "Under terms of your choice, provided that you also comply with the requirements of the MPL-2.0 License for the Covered Software."
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "multi",
+      "taskId": "m09-preview-hosts",
+      "right": false,
+      "parts": [
+        {
+          "asks": "What does the user guide say is shown at the bottom of the preview page?",
+          "answer": "The commit hash of the latest main branch"
+        },
+        {
+          "asks": "Which static hosts does the design name to replace the GitHub Pages preview?",
+          "answer": ""
+        }
+      ],
+      "complete": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m11-class-2-gate",
+      "right": false,
+      "parts": [
+        {
+          "asks": "Which hardware is the design's reference hardware class 2?",
+          "answer": "browser-sized models"
+        },
+        {
+          "asks": "What must a browser-runnable model do on the reference hardware to pass the M0 benchmark gate?",
+          "answer": "complete the M0 benchmark gate before any product build"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x01-4b-sizes",
+      "right": true,
+      "parts": [
+        {
+          "asks": "How big is the one-time browser download of Qwen3.5-4B?",
+          "answer": "2.4 GB"
+        },
+        {
+          "asks": "How big is its Q4_K_M file for a local model server?",
+          "answer": "2.6 GB"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x02-download-delete",
+      "right": false,
+      "parts": [
+        {
+          "asks": "From where does the browser path download its model",
+          "answer": "The browser"
+        },
+        {
+          "asks": "which button frees the space that download takes",
+          "answer": "deleting the download"
+        }
+      ],
+      "complete": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x04-server-address-wsl",
+      "right": false,
+      "parts": [
+        {
+          "asks": "Which address does the app use for a llama-server on the same computer, and which command gives the address to use instead when Windows can't reach the server in WSL?",
+          "answer": "The app uses the address from `hostname -I` in WSL. The command to get this address is `hostname -I`."
+        }
+      ],
+      "complete": true
+    }
+  ]
+}
