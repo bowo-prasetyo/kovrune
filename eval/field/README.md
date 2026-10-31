@@ -490,6 +490,33 @@ The questions and their facts were written before any model was run on them, and
 
 These are the baselines for later changes on these questions. The clearest next step is a check that an answer covers every part of what the question asks.
 
+
+### A check that the answer covers every part of the question (0.48.0, for Qwen3.5-2B)
+
+On the [multi-passage questions](#questions-that-need-more-than-one-passage-0460), most wrong answers labelled **Quotes found** answer one part of the question and leave out the other. The word checks, the review and the cross-check each judge what an answer says, not what it leaves out. So the completeness check (`src/agent/completeness.ts`) shows the model the question and the answer, without the passages. The model lists the separate things the question asks for and copies, for each, the words of the answer that give it, or "" when the answer does not. Code then checks that every part has words the answer really contains, compared as the cross-check compares. It is asked only about answers the other checks confirm, so it can only take a label away. An unreadable reply takes the label away too.
+
+**Measured on recorded answers** with `npm run bench:completeness`, on each model's build and server, before it was put in the app. Reports kept only 600 characters of each final answer, which cut off a third of the multi-passage answers. From harness 0.47.0 they keep 8,000 (`FINAL_CHARS`), and the multi-passage suites were run again: the same actions and results on all 21 tasks, now whole ([4B](../results/multi-0.47-qwen3.5-4b-q4km.json), [2B](../results/multi-0.47-qwen3.5-2b-q4km.json)). The condition, set before the run: for each model, the check must take the label from more wrong answers than right ones, over all its suites, held-out ones read as totals.
+
+| Answers labelled Quotes found | Before | With the check | Right answers that lose the label |
+| --- | --- | --- | --- |
+| Qwen3.5-2B, field, held out, research, pdf (64, 8 cut off before 0.47.0) | 64, 3 wrong | 64, 3 wrong | 0 |
+| Qwen3.5-2B, multi and multiholdout | 8, 7 wrong | **6, 5 wrong** | 0 |
+| Qwen3.5-4B, field, held out, research, pdf | 110, 2 wrong | 87, 1 wrong | 22 |
+| Qwen3.5-4B, multi and multiholdout | 9, 2 wrong | 8, 2 wrong | 1 |
+
+Outputs: [2B field](../results/completeness-field-0.38-qwen3.5-2b-q4km.json), [2B multi](../results/completeness-multi-0.47-qwen3.5-2b-q4km.json), [4B field](../results/completeness-field-0.42-qwen3.5-4b-q4km.json), [4B multi](../results/completeness-multi-0.47-qwen3.5-4b-q4km.json). With `--recheck`, the saved parts are compared again without the model.
+
+- **On 2B it catches two answers that leave a part out, and costs no right one.**
+  - `m01` answers what to use instead of Ollama, not what went wrong with it.
+  - `m09` names what the preview page shows, not the hosts that replace it.
+
+  The three wrong labelled answers it lets through on `multi` give a wrong fact for a part rather than leaving it out (`m02`, `m05`, `m11`). Checking for completeness cannot see that.
+- **On 4B it takes the label from 23 right answers to catch 1 wrong one.** 4B lists the qualifiers of a question as parts the answer must give, and the answer has no reason to repeat them. Examples: "in metres" for `f37`, "according to the design" for `f58`, "in Priya Raman's benchmark" for `r17`.
+- **Adopted for Qwen3.5-2B only** (`checksCompleteness`, matched like `reviewsShortAnswers`), as the condition asks: 2 wrong answers against 0 right ones. 4B fails it (1 against 23). For 4B, a prompt that asks only for what the question wants answered, judged on questions written after it, is the next step.
+- **Confirmed in the agent.** 2B ran the multi-passage suites again with the check, at harness 0.48.0 ([json](../results/multi-0.48-qwen3.5-2b-q4km.json)). It took the same actions and gave the same final answers on all 21 tasks, and the check gave the same 8 verdicts as on the recorded answers. On `multi`, wrong labelled answers fall from 5 of 5 to 3 of 3.
+- **What the user sees:** such an answer reads **Quotes found, answer not confirmed**, and the explanation names the part the model found missing.
+- **Cost:** one more call, of 200 tokens at most, for each answer that 2B's review confirms. The self-check counts it in its time estimate, now for each model only the checks it runs. Answers saved before the check keep their labels.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
