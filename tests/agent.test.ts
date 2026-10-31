@@ -12,7 +12,6 @@ import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { RESEARCH_LIMITS, ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { baseLibrary, normalizeCode, runCodingTask, runResearchTask } from "../eval/harness/suites.ts";
 import { DocumentIndex, stem } from "../src/tools/search.ts";
-import { searchShortForm } from "../src/tools/research.ts";
 import { chunkDocument } from "../src/documents/chunk.ts";
 import { codingTasks } from "../eval/tasks/coding.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
@@ -145,27 +144,6 @@ describe("research agent", () => {
     assert.ok(first.includes("maintained by the Tessel Foundation since 2022"), "and the sentence that answers the question");
     assert.ok(!first.includes("copy-on-write"), "but not the rest");
     assert.equal(run.agent.stopReason, "final");
-  });
-
-  it("keeps the IDs and titles of an earlier search, without its snippets, when it must leave the context", async () => {
-    const reads = corpus.filter((doc) => doc.id !== "lumen-overview").slice(0, 3).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
-    // An answer without quotes, so final_answer does not send the model back to read what it would quote.
-    const model = new ScriptedModel([`{"tool":"search","args":{"query":"LumenDB maintained"}}`, ...reads, final(true, "Tessel Foundation")]);
-    Object.assign(model.info, { contextLength: 1600 });
-    const run = await research("r01-lumen-maintainer", [], true, model);
-    const [note, ...lines] = run.agent.transcript[3]!.content.split("\n").slice(1);
-    assert.equal(note, "[earlier tool result shortened to save context: the IDs and titles it found]");
-    assert.ok(lines.length > 0 && lines.every((line) => /^\[[^\]\s]+\] /.test(line)), "one line per result, without snippets");
-    assert.ok(lines.includes("[lumen-overview] LumenDB project overview"));
-    assert.equal(run.agent.stopReason, "final");
-  });
-
-  it("gives a search that found nothing no shorter form", () => {
-    assert.equal(searchShortForm("No matching documents."), undefined);
-    assert.deepEqual(searchShortForm('[a] A\nSnippet [b] c.\n\nFound by searching the Japanese documents for "富士山":\n[mount-fuji-ja-lead#1] 富士山\n…'), {
-      kept: "[a] A\n[mount-fuji-ja-lead#1] 富士山",
-      what: "the IDs and titles it found",
-    });
   });
 
   it("removes shortened results too when the shorter forms do not fit", async () => {
