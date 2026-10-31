@@ -5,6 +5,7 @@ import type { CheckedEvidence } from "../../agent/evidence.ts";
 import type { ResearchLibrary, ResearchResult } from "../../agent/research.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
 import type { Citation } from "../../sources/session.ts";
+import { describeReportLabels } from "./report.ts";
 import { describeNoAnswer, describePages, describeStatus } from "./trace.ts";
 
 export interface SavedAnswer {
@@ -91,8 +92,9 @@ export const formatTime = (iso: string) => new Date(iso).toLocaleString(undefine
 
 const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
 
-/** The answer as a Markdown document: question, label, answer, evidence and steps. */
+/** The answer as a Markdown document: question, label, answer, evidence and steps. A report has its own (reportToMarkdown). */
 export function answerToMarkdown(answer: SavedAnswer): string {
+  if (answer.report) return reportToMarkdown(answer, answer.report);
   const lines = [`# ${oneLine(answer.question)}`, "", `Asked ${formatTime(answer.askedAt)} with ${answer.model}.`, ""];
   for (const error of answer.sourceErrors) lines.push(`> ${error} The answer is based on the other sources only.`, "");
   if (answer.status === "no-answer") {
@@ -103,10 +105,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
     lines.push(`**${status.label}.** ${status.detail}`, "");
     if (answer.answer) {
       const unbacked = support?.sentences.some((s) => s.backed === false);
-      lines.push(
-        unbacked ? support!.sentences.map((s) => (s.backed === false ? `⚠ ${s.text}` : s.text)).join("") : answer.answer,
-        "",
-      );
+      lines.push(markedAnswer(answer), "");
       if (unbacked) lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or \"not\" that the quotes don't back.", "");
     }
     if (answer.evidence.length) {
@@ -122,21 +121,100 @@ export function answerToMarkdown(answer: SavedAnswer): string {
     }
   }
   if (answer.steps.length) lines.push("## Steps", "", ...answer.steps.map((step) => `- ${step}`), "");
-  lines.push(
-    "---",
+  lines.push("---", "", EXPORT_NOTE, "");
+  return lines.join("\n");
+}
+
+const EXPORT_NOTE =
+  "Exported from Kovrune. ✓ means the quote was found word for word in its source: the quotes are real, which does not prove the answer is right.";
+
+/** The answer's text, with ⚠ before each sentence no found quote backs. */
+function markedAnswer(answer: SavedAnswer): string {
+  const support = shownSupport(answer);
+  if (!answer.answer || !support?.sentences.some((s) => s.backed === false)) return answer.answer ?? "";
+  return support.sentences.map((s) => (s.backed === false ? `⚠ ${s.text}` : s.text)).join("");
+}
+
+/** A section's label, as its answer would read on its own. */
+export function sectionLabel(section: SavedAnswer): string {
+  return section.status === "no-answer" ? "No answer" : describeStatus(section.status, section.evidence, shownSupport(section)).label;
+}
+
+/**
+ * A report as a Markdown document (docs/report-mode.md, slice 3): its title, request and label
+ * summary; each section's question, label, answer with ⚠ marks, and quotes, each pointing to a
+ * numbered reference; one list of references for the whole report, each source once; then the steps.
+ */
+export function reportToMarkdown(record: SavedAnswer, report: SavedReport): string {
+  const lines = [
+    `# ${oneLine(report.title)}`,
     "",
-    "Exported from Kovrune. ✓ means the quote was found word for word in its source: the quotes are real, which does not prove the answer is right.",
+    `Report written ${formatTime(record.askedAt)} with ${record.model}.`,
     "",
-  );
+    `> ${oneLine(report.request)}`,
+    "",
+    `**${describeReportLabels(report, sectionLabel)}** Each section answers one question with its own quotes, and its label covers that section only.`,
+    "",
+  ];
+  // References are numbered in the order they are first quoted; a source is one document or page.
+  const references: string[] = [];
+  const numbers = new Map<string, number>();
+  const reference = (section: SavedAnswer, docId: string, pages?: string) => {
+    const citation = section.citations[docId];
+    const key = citation ? citation.url : `doc:${sourceTitle(section, docId).replace(/ \(part \d+ of \d+\)$/, "")}`;
+    if (!numbers.has(key)) {
+      numbers.set(key, references.length + 1);
+      references.push(
+        citation
+          ? `[${citation.title}](${citation.url}) (${citation.source}, retrieved ${citation.retrievedAt.slice(0, 10)})`
+          : sourceTitle(section, docId).replace(/ \(part \d+ of \d+\)$/, ""),
+      );
+    }
+    return `[${numbers.get(key)}]${pages ? `, ${pages}` : ""}`;
+  };
+  report.sections.forEach((section, i) => {
+    lines.push(`## ${i + 1}. ${oneLine(section.question)}`, "");
+    for (const error of section.sourceErrors) lines.push(`> ${error} This section is based on the other sources only.`, "");
+    if (section.status === "no-answer") {
+      lines.push(section.noAnswer ?? "The model did not give an answer.", "");
+      return;
+    }
+    lines.push(`**${sectionLabel(section)}.**`, "");
+    if (section.answer) lines.push(markedAnswer(section), "");
+    for (const item of section.evidence) {
+      const where = reference(section, item.docId, item.context?.pages ? describePages(item.context.pages) : undefined);
+      lines.push(`- ${item.verified ? "✓" : "✗"} ${where}: > ${oneLine(item.quote)}${!item.verified && item.reason ? ` (not found: ${item.reason})` : ""}`);
+    }
+    if (section.evidence.length) lines.push("");
+  });
+  const missing = report.plan.slice(report.sections.length);
+  if (missing.length) {
+    lines.push("## Sections not written", "", ...missing.map((q, i) => `${report.sections.length + i + 1}. ${oneLine(q)}`), "");
+  }
+  if (references.length) lines.push("## References", "", ...references.map((r, i) => `${i + 1}. ${r}`), "");
+  if (report.sections.some((s) => s.steps.length)) {
+    lines.push("## Steps", "");
+    report.sections.forEach((section, i) => lines.push(`${i + 1}. ${oneLine(section.question)}`, ...section.steps.map((step) => `   - ${step}`)));
+    lines.push("");
+  }
+  if (report.sections.some((s) => shownSupport(s)?.sentences.some((t) => t.backed === false))) {
+    lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or \"not\" that the quotes don't back.", "");
+  }
+  lines.push("---", "", EXPORT_NOTE, "");
   return lines.join("\n");
 }
 
 /** BibTeX values are braced; braces and backslashes inside them would break the entry. */
 const bib = (value: string) => value.replace(/[{}\\]/g, "");
 
-/** BibTeX entries for the scholarly works the answer cites, or undefined when it cites none. */
+/** BibTeX entries for the scholarly works the answer cites, or a report's sections cite, each once; undefined when there are none. */
 export function answerToBibtex(answer: SavedAnswer): string | undefined {
   const entries = new Map<string, string>();
+  for (const section of answer.report ? answer.report.sections : [answer]) addBibtex(section, entries);
+  return entries.size ? `${[...entries.values()].join("\n\n")}\n` : undefined;
+}
+
+function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
   for (const { docId } of answer.evidence) {
     const citation = answer.citations[docId];
     if (!citation?.work) continue;
@@ -157,7 +235,6 @@ export function answerToBibtex(answer: SavedAnswer): string | undefined {
       .join(",\n");
     entries.set(key, `@${venue ? "article" : "misc"}{${key},\n${body}\n}`);
   }
-  return entries.size ? `${[...entries.values()].join("\n\n")}\n` : undefined;
 }
 
 /** A file name for an exported answer, e.g. "kovrune-how-to-create-an-activity-diagram-2026-10-25.md". */

@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Agreed (decisions R1–R5 below). Slices 1 and 2, the plan and writing the report, are built behind `?report`; see [Progress](#progress) |
+| Status | Agreed (decisions R1–R5 below). Slices 1–3 are built and the option is shown to everyone; slices 4–5, measurement and the introduction and conclusion, remain. See [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -97,7 +97,7 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
   - `planReport` (`src/agent/report.ts`) makes one constrained call, with the request and the sources ticked, and reads a title and 2–8 questions. Empty and repeated questions are dropped, and a plan that cannot be read falls back to the request as one section.
   - The plan screen (`ReportPlanView`) edits, reorders, adds and removes sections, and shows the time estimate from the model test. Above 30 minutes it says that the report will ask for confirmation.
   - In question mode, a question that asks for a report ("report", "overview", "400 words") gets a hint offering **Write a report**.
-  - The option is shown only with `?report` in the address until reports can be exported (slice 3).
+  - The option was shown only with `?report` in the address until reports could be exported (slice 3).
   - Tried live on both models with the preview user's blockchain request, and on "how Kovrune checks the quotes in its answers". Both gave a title and 2–4 focused questions in 17–37 seconds on CPU. Some questions ask two things at once ("its definition and technical architecture"), which the multi-passage suites showed is harder. The plan screen lets the user split them, and slice 4 measures how often it happens before the prompt is changed.
 - **Slice 2, writing the report: built.**
   - **Write the report** researches each section's question in turn, with `runResearch` as a question is: the same agent, checks and labels. The library is built once for all sections.
@@ -113,4 +113,13 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
     - the report was still under **Past answers** after a reload.
 
     The run showed that labels with counts ("2 of 13 sentences backed by a quote") were summed up one by one, so they are now counted by kind ("2 of 2 sections: Some sentences not backed by a quote."). 2B's answers to these broad questions were long and mostly unbacked, which is what the label says, and what slice 4's report suite will measure.
+- **Slice 3, export: built.**
+  - **Export as Markdown** (`reportToMarkdown` in `answers.ts`) writes:
+    - the title, the date and model, the request and the label summary;
+    - each section's question, label, answer with ⚠ marks, and quotes, each pointing to a numbered reference ("✓ [1], p. 4: > …");
+    - the questions not written, when the report was stopped;
+    - one list of references for the whole report, numbered in the order they are first quoted, with a document's parts counted as one source and open sources linked with their retrieval date;
+    - the steps, by section.
+  - **Export papers as BibTeX** collects the OpenAlex papers of every section, each once. Files are named after the report's title.
+  - With export in place, the `?report` gate is removed: **Write a report** is shown to everyone. The user guide has a section on it ([Write a report](user-guide.md#write-a-report)).
 

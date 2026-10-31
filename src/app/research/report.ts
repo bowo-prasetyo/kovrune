@@ -1,19 +1,9 @@
-// The report plan screen (docs/report-mode.md, slice 1): editing the plan, its time estimate, and
-// noticing a question that asks for a report (slice 1); writing it section by section, and how a
-// report is saved and summed up (slice 2). Until its export (slice 3), the option is shown only with
-// ?report in the address, for review on the preview.
+// Report mode in the app (docs/report-mode.md): editing the plan, its time estimate, and noticing a
+// question that asks for a report (slice 1); how a report is saved and summed up (slice 2). Its export
+// is in answers.ts (slice 3).
 
 import { MAX_SECTIONS, MIN_SECTIONS, type ReportPlan } from "../../agent/report.ts";
 import type { SavedAnswer, SavedReport } from "./answers.ts";
-
-/** Whether the report option is shown: only with ?report in the address until reports can be exported. */
-export function reportModeEnabled(search: string = globalThis.location?.search ?? ""): boolean {
-  try {
-    return new URLSearchParams(search).has("report");
-  } catch {
-    return false;
-  }
-}
 
 /** Above this many minutes, a report asks for confirmation before it starts (decision R5). */
 export const CONFIRM_REPORT_MINUTES = 30;

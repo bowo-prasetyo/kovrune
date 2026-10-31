@@ -16,6 +16,7 @@ import {
   sourceTitle,
   toSavedAnswer,
   type SavedAnswer,
+  sectionLabel,
   type SavedReport,
 } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
@@ -24,7 +25,7 @@ import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
-import { describeEstimate, describeReportLabels, looksLikeReport, reportModeEnabled, toSavedReport, upsert } from "./report.ts";
+import { describeEstimate, describeReportLabels, looksLikeReport, toSavedReport, upsert } from "./report.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
@@ -58,8 +59,7 @@ export function ResearchPanel({
 }) {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<RunState>({ phase: "idle" });
-  // Report mode (docs/report-mode.md): shown with ?report until its sections can be researched.
-  const reportMode = useMemo(() => reportModeEnabled(), []);
+  // Report mode (docs/report-mode.md): a report is planned as questions, one per section, each answered as a question is.
   const [mode, setMode] = useState<"question" | "report">("question");
   const [plan, setPlan] = useState<ReportPlan>();
   const [planning, setPlanning] = useState<string>();
@@ -333,19 +333,17 @@ export function ResearchPanel({
             </p>
           )}
         </fieldset>
-        {reportMode && (
-          <fieldset className="mode">
-            <legend>Answer</legend>
-            <label className="choice">
-              <input type="radio" name="mode" checked={mode === "question"} disabled={running} onChange={() => setMode("question")} />
-              Ask a question
-            </label>
-            <label className="choice">
-              <input type="radio" name="mode" checked={mode === "report"} disabled={running} onChange={() => setMode("report")} />
-              Write a report
-            </label>
-          </fieldset>
-        )}
+        <fieldset className="mode">
+          <legend>Answer</legend>
+          <label className="choice">
+            <input type="radio" name="mode" checked={mode === "question"} disabled={running} onChange={() => setMode("question")} />
+            Ask a question
+          </label>
+          <label className="choice">
+            <input type="radio" name="mode" checked={mode === "report"} disabled={running} onChange={() => setMode("report")} />
+            Write a report
+          </label>
+        </fieldset>
         <label>
           {mode === "report" ? "Report topic" : "Question"}
           <textarea
@@ -356,7 +354,7 @@ export function ResearchPanel({
             onChange={(event) => setQuestion(event.target.value)}
           />
         </label>
-        {reportMode && mode === "question" && looksLikeReport(question) && (
+        {mode === "question" && looksLikeReport(question) && (
           <p className="hint">
             This asks for a report. A short answer can't hold one:{" "}
             <button type="button" className="link" onClick={() => setMode("report")}>
@@ -430,11 +428,9 @@ export function ResearchPanel({
       {state.phase === "done" && (
         <>
           <ResultView answer={state.answer} live />
-          {!state.answer.report && (
-            <div className="actions">
-              <ExportButtons answer={state.answer} />
-            </div>
-          )}
+          <div className="actions">
+            <ExportButtons answer={state.answer} />
+          </div>
         </>
       )}
       <PastAnswers
@@ -526,7 +522,7 @@ function PastAnswers({
                     </details>
                   )}
                   <div className="actions">
-                    {!answer.report && <ExportButtons answer={answer} />}
+                    <ExportButtons answer={answer} />
                     <button onClick={() => history.setRecords((answers) => answers.filter((a) => a.id !== answer.id))}>
                       Delete
                     </button>
@@ -682,10 +678,6 @@ function ClosestPassage({ parts }: { parts: DiffPart[] }) {
   );
 }
 
-/** A section's label, as its answer would read on its own. */
-function sectionLabel(section: SavedAnswer): string {
-  return section.status === "no-answer" ? "No answer" : describeStatus(section.status, section.evidence, shownSupport(section)).label;
-}
 
 /**
  * A report (docs/report-mode.md): the label summary, then each section's question and answer, with its
