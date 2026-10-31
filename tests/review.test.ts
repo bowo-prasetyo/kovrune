@@ -1,3 +1,4 @@
+import { checksCompleteness } from "../src/agent/completeness.ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
@@ -168,11 +169,37 @@ describe("the model's own check of an answer", () => {
     assert.equal(shown.label, "Quotes found, answer not confirmed");
     assert.match(shown.detail, /without seeing this one, the model read "30 days"/);
     // Other models are not cross-checked, and answers saved before the cross-check keep their label.
-    const other = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`], "qwen3.5-2b-q4km");
+    const other = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`], "scripted");
     const before = await runResearch({ question: QUESTION, library, model: other });
     assert.equal(other.requests.length, 4);
     assert.equal(before.support!.crossCheck, undefined);
     assert.equal(labelledQuotesFound(before.status, before.evidence, before.support), true);
+  });
+
+  it("asks Qwen3.5-2B whether the answer gives every part of the question, and labels it only if it does", async () => {
+    const parts = (given: string) => JSON.stringify({ parts: [{ asks: "how many days to cure", answer: given }] });
+    // The answer gives the part: it keeps its label, after the review and the completeness check.
+    const keeps = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`, parts("60 days")], "qwen3.5-2b-q4km");
+    const kept = await runResearch({ question: QUESTION, library, model: keeps });
+    assert.equal(keeps.requests.length, 5, "no cross-check for 2B, then the completeness check");
+    assert.doesNotMatch(keeps.requests[4]!.messages[1]!.content, /Quoted passages/, "the check is shown the question and the answer, not the passages");
+    assert.equal(kept.support!.completeness!.complete, true);
+    assert.equal(labelledQuotesFound(kept.status, kept.evidence, kept.support), true);
+    // A part the answer does not give: the label goes, and the explanation names the part.
+    const drops = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`, parts("")], "qwen3.5-2b-q4km");
+    const dropped = await runResearch({ question: QUESTION, library, model: drops });
+    assert.deepEqual(dropped.support!.completeness!.missing, ["how many days to cure"]);
+    assert.equal(labelledQuotesFound(dropped.status, dropped.evidence, dropped.support), false);
+    const shown = describeStatus(dropped.status as "verified", dropped.evidence, dropped.support);
+    assert.equal(shown.label, "Quotes found, answer not confirmed");
+    assert.match(shown.detail, /found one it leaves out: "how many days to cure"/);
+    // Not asked after a review that does not say yes, nor for other models; saved answers keep their label.
+    const partly = new ScriptedModel([search, read, wrong, `{"verdict":"partly"}`], "qwen3.5-2b-q4km");
+    assert.equal((await runResearch({ question: QUESTION, library, model: partly })).support!.completeness, undefined);
+    for (const id of ["qwen3.5-4b-q4km", "scripted"]) assert.equal(checksCompleteness(id), false, id);
+    for (const id of ["qwen3.5-2b-q4km", "Qwen3.5-2B-q4f16_1-MLC", "Qwen3.5-2B-Q4_K_M.gguf", "qwen3.5:2b"]) assert.equal(checksCompleteness(id), true, id);
+    const { completeness: _dropped, ...saved } = dropped.support!;
+    assert.equal(labelledQuotesFound(dropped.status, dropped.evidence, saved), true);
   });
 
   it("does not ask other models about short answers, which stay too short to check (Qwen3.5-2B)", async () => {

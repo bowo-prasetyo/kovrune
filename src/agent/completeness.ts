@@ -9,6 +9,18 @@
 import { stripThinking, type LanguageModel } from "../models/types.ts";
 import { answersAgree } from "./crosscheck.ts";
 
+/**
+ * Whether the completeness check is asked about answers the other checks confirm, by the model's ID:
+ * only Qwen3.5-2B (eval/field/README.md). On its recorded answers it took the label from 2 of the 7
+ * wrong multi-passage answers labelled Quotes found, and from none of its right answers in any suite.
+ * Qwen3.5-4B lists qualifiers of the question ("in metres", "according to the design") as parts the
+ * answer leaves out, and took the label from 23 right answers to catch 1 wrong one. The IDs are
+ * matched as for the review of short answers (review.ts reviewsShortAnswers).
+ */
+export function checksCompleteness(modelId: string): boolean {
+  return /qwen3\.5[-_:]2b(?![\p{L}\p{N}])/iu.test(modelId);
+}
+
 export const COMPLETENESS_SYSTEM = "You compare an answer with the question it answers. Judge only what the answer says, not whether it is true.";
 
 /** The prompt: the question and the answer, without the passages. */
@@ -22,7 +34,7 @@ export function completenessPrompt(question: string, answer: string): string {
   ].join("\n");
 }
 
-/** A question asks for a few things at most; the reply lists them briefly. */
+/** A question asks for a few things at most; the reply lists them briefly. The self-check counts this call in its time estimate. */
 export const COMPLETENESS_MAX_TOKENS = 200;
 
 const RESPONSE_SCHEMA = {
@@ -79,6 +91,8 @@ export interface Completeness {
   parts?: AnswerPart[];
   /** Whether the answer covers every part (coversEveryPart); false when nothing could be read. */
   complete: boolean;
+  /** What the question asks for that the answer does not give, in the model's words. */
+  missing?: string[];
 }
 
 /** Asks the model which parts of the question the answer gives, and checks that it gives them all. */
@@ -109,5 +123,7 @@ export async function checkCompleteness(options: {
     return { complete: false };
   }
   const parts = parseParts(text);
-  return parts ? { parts, complete: coversEveryPart(parts, options.answer) } : { complete: false };
+  if (!parts) return { complete: false };
+  const missing = parts.filter((p) => !coversEveryPart([p], options.answer)).map((p) => p.asks);
+  return { parts, complete: missing.length === 0, ...(missing.length ? { missing } : {}) };
 }

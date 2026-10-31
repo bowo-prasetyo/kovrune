@@ -2,6 +2,7 @@
 
 import type { CallRecord } from "../../agent/agent.ts";
 import type { AnswerStatus } from "../../agent/evidence.ts";
+import type { Completeness } from "../../agent/completeness.ts";
 import type { CrossCheck } from "../../agent/crosscheck.ts";
 import type { ReviewVerdict } from "../../agent/review.ts";
 import { labelledQuotesFound, reviewAsked } from "../../agent/support.ts";
@@ -65,7 +66,7 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck },
+  support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
 ): { label: string; detail: string; tone: AnswerStatus } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
@@ -92,6 +93,18 @@ export function describeStatus(
         return {
           label: "Quotes found, answer not confirmed",
           detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, the model ${read ? `read "${read}"` : "found no answer in them"}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
+          tone: "unverified",
+        };
+      }
+      // Every quote is found, and the other checks confirm what the answer says, but asked which parts of
+      // the question it answers, the model found one it leaves out (completeness.ts).
+      if (support?.review === "yes" && support.crossCheck?.agrees !== false && support.completeness?.complete === false && reviewAsked(status, evidence, support)) {
+        const missing = support.completeness.missing?.[0];
+        return {
+          label: "Quotes found, answer not confirmed",
+          detail: `Every quote below is word for word in the source it cites, but asked which parts of your question the answer gives, the model ${
+            support.completeness.parts ? `found one it leaves out${missing ? `: "${missing}"` : ""}` : "gave no clear reply"
+          }. Check that the answer covers everything you asked.`,
           tone: "unverified",
         };
       }
