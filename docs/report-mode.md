@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Agreed (decisions R1–R5 below). Slices 1–3 are built and the option is shown to everyone; slices 4–5, measurement and the introduction and conclusion, remain. See [Progress](#progress) |
+| Status | Agreed (decisions R1–R5 below). Slices 1–4 are built and the option is shown to everyone; slice 5, the introduction and conclusion, remains. See [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -122,4 +122,10 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
     - the steps, by section.
   - **Export papers as BibTeX** collects the OpenAlex papers of every section, each once. Files are named after the report's title.
   - With export in place, the `?report` gate is removed: **Write a report** is shown to everyone. The user guide has a section on it ([Write a report](user-guide.md#write-a-report)).
+- **Slice 4, the report suite: built and run** ([field README](../eval/field/README.md#the-report-suite-0510)).
+  - Nine report requests over the field documents (`eval/field/reports.ts`), three held out, each with the sections a good report covers: keywords and facts.
+  - `npm run bench:report` writes each report as the app does and scores plan coverage, report coverage, matched sections that give their facts, false reassurance, unmatched sections, joined questions and time.
+  - **First run at 4,096 tokens.** On the six `reports`, Qwen3.5-4B's reports give the facts of 9 of the 23 expected sections, and Qwen3.5-2B's of 3. The cause is mostly the plan: written without seeing the sources, it asks what such a report usually covers ("tokenomics", "encryption methods"), and those sections end as "not found". 4B also often plans two sections instead of four.
+  - Few sections are labelled Quotes found (2 of 30 on 4B, none wrong), because long section answers are rarely backed sentence by sentence.
+  - **Next:** show the planner what the sources hold before it plans, judged on this suite. Then the introduction and conclusion (slice 5) can be measured on it too.
 

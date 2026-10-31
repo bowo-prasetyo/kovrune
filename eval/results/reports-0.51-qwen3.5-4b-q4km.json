@@ -1,0 +1,602 @@
+{
+  "harnessVersion": "0.51.0",
+  "createdAt": "2026-10-31T16:32:41.725Z",
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "notes": "Harness 0.51.0 (d6ddd45): the report suite's first run (bench:report), at the app's 4,096-token context, each report planned and its questions researched as in the app, over the field documents. One run on one machine. Native llama.cpp fae9ac5 built with -DGGML_NATIVE=OFF and AVX2, on CPU (4-core cloud container, Intel(R) Xeon(R) Processor @ 2.80GHz, no GPU), 4 threads, file Qwen3.5-4B-Q4_K_M.gguf (unsloth revision e87f176, SHA-256 00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4). Speeds are not representative of any hardware class."
+  },
+  "results": [
+    {
+      "suite": "reports",
+      "taskId": "rp01-local-server",
+      "plan": {
+        "title": "Setting Up Kovrune with a Local Model Server",
+        "sections": [
+          "How do I configure the Kovrune client to connect to a local model server?",
+          "What are the specific steps to install and launch a local model server for Kovrune?"
+        ]
+      },
+      "planMs": 20366,
+      "sections": [
+        {
+          "question": "How do I configure the Kovrune client to connect to a local model server?",
+          "answer": "To configure the Kovrune client to connect to a local model server, users can use the Local endpoint adapter. This adapter allows connection to local servers like Ollama, LM Studio, or a llama.cpp server through an OpenAI-compatible adapter. The endpoint is configured by the user on their machine or LAN. Setup guidance covers cross-origin configuration (e.g., OLLAMA_ORIGINS) and the browser's local-network-access permission prompt. The adapter reports the model's context length and whether structured output is supported. Hosted third-party APIs are not a supported runtime, but users can technically point the adapter at any compatible URL if it is local.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 148724,
+          "evidence": 2,
+          "verified": 1
+        },
+        {
+          "question": "What are the specific steps to install and launch a local model server for Kovrune?",
+          "answer": "To install and launch a local model server for Kovrune:\n\n1. Install llama.cpp on Linux or WSL:\n   bash\n   sudo apt install build-essential cmake git libssl-dev\n   git clone https://github.com/ggml-org/llama.cpp.git\n   cd llama.cpp\n   cmake -B build\n   cmake --build build --config Release -j\n   \n\n2. Download a model file (e.g., Qwen3.5-2B):\n   bash\n   mkdir -p ~/models\n   curl -L -o ~/models/Qwen3.5-2B-Q4_K_M.gguf \\\n     https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf\n   \n\n3. Start the server:\n   bash\n   cd ~/llama.cpp/build/bin\n   ./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080\n   \n\nEvidence:\n- From kovrune-user-guide#2: \"llama.cpp server is the supported local server. Ollama works but is experimental\"\n- From kovrune-user-guide#2: \"sudo apt install build-essential cmake git libssl-dev; git clone https://github.com/ggml-org/llama.cpp.git; cd llama.cpp; cmake -B build; cmake --build build --config Release -j\"\n- From kovrune-user-guide#3: \"curl -L -o ~/models/Qwen3.5-2B-Q4_K_M.gguf https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf\"\n- From kovrune-user-guide#3: \"./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080\"",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 546801,
+          "evidence": 4,
+          "verified": 2
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 2,
+        "covered": 1,
+        "expected": 4,
+        "matched": 2,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 0,
+        "unmatchedLabelled": 0,
+        "calls": 11,
+        "ms": 695525
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp02-privacy",
+      "plan": {
+        "title": "Kovrune Data Handling and Network Transmission Report",
+        "sections": [
+          "What specific data does Kovrune collect and store regarding user accounts and device information?",
+          "How does Kovrune process and utilize the collected data for its services and analytics?",
+          "What types of data are transmitted over the network between the user's device and Kovrune's servers?",
+          "What protocols and encryption methods does Kovrune use to secure data in transit and at rest?"
+        ]
+      },
+      "planMs": 31523,
+      "sections": [
+        {
+          "question": "What specific data does Kovrune collect and store regarding user accounts and device information?",
+          "answer": "Kovrune does not collect or store user account or device information in the way described. Instead, it uses locally generated keypairs stored in IndexedDB for identity, requires no real-world identity or personal information, and ensures private data stays on the user's device unless explicitly authorized. Settings and downloaded browser models are stored per site, not globally collected.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 254131,
+          "evidence": 4,
+          "verified": 4
+        },
+        {
+          "question": "How does Kovrune process and utilize the collected data for its services and analytics?",
+          "answer": "Kovrune processes and utilizes collected data by running the AI model locally on the user's computer without sending anything to an online AI service. Documents are read in the browser and never uploaded. Only the browser path downloads the model from Hugging Face and WebLLM's runtime library from GitHub, or the local-server path talks only to a server address the user entered. Saved data (setup, source choices, extracted text, and finished answers with quotes and steps) remains on the user's computer in the browser only. The model runs on the user's computer, and nothing is sent to an online AI service.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 147906,
+          "evidence": 2,
+          "verified": 1
+        },
+        {
+          "question": "What types of data are transmitted over the network between the user's device and Kovrune's servers?",
+          "answer": "The provided documents do not contain information about the specific types of data transmitted over the network between the user's device and Kovrune's servers. The documents only mention that the browser needs permission to reach the server on the user's computer (specifically for 'Apps on device' permission) and that the server listens on port 8080, but they do not list the data types being transmitted.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 124716,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "What protocols and encryption methods does Kovrune use to secure data in transit and at rest?",
+          "answer": "The provided documents do not contain specific information about the encryption methods Kovrune uses to secure data in transit or at rest. While the documents mention that peers use WebCrypto keys stored in IndexedDB for local identity and that messages carry signatures, they do not specify the exact encryption algorithms (e.g., AES, RSA, TLS versions) used for securing data in transit or at rest.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 5,
+          "ms": 148092,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 21,
+        "ms": 674845
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp03-reading-answers",
+      "plan": {
+        "title": "Verifying Kovrune's Responses",
+        "sections": [
+          "How can a user determine if Kovrune is providing accurate information based on its source documents?",
+          "What specific steps should a user take to cross-reference Kovrune's answers with the original source material?"
+        ]
+      },
+      "planMs": 25640,
+      "sections": [
+        {
+          "question": "How can a user determine if Kovrune is providing accurate information based on its source documents?",
+          "answer": "A user can determine if Kovrune is providing accurate information by checking the 'Reading the answer' section of its user guide. The guide states that every quote in an answer must be word for word in its source document, and every sentence of the answer should share most of its words with a quote. If quotes are not found in the cited sources, or if no quotes are present, the answer may be wrong. Additionally, if sentences are marked with a warning symbol (\u26a0), they share few words with any quote, indicating the model may have added details from memory rather than the sources.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 153601,
+          "evidence": 3,
+          "verified": 3
+        },
+        {
+          "question": "What specific steps should a user take to cross-reference Kovrune's answers with the original source material?",
+          "answer": "The provided documents do not contain specific steps for a user to cross-reference Kovrune's answers with the original source material. The documents mention that Kovrune saves 'quotes and steps' from answers locally in the browser, but do not describe the process for a user to independently verify or cross-reference those answers with the original source files.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 6,
+          "ms": 111849,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 0,
+        "planCovered": 0,
+        "covered": 0,
+        "expected": 3,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 10,
+        "ms": 265450
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp04-mpl",
+      "plan": {
+        "title": "Obligations and Rights Under the Mozilla Public License 2.0",
+        "sections": [
+          "What are the primary obligations a licensee must fulfill when distributing or using MPL 2.0 covered works?",
+          "What specific rights does a licensee have regarding the use, modification, and distribution of MPL 2.0 covered works?"
+        ]
+      },
+      "planMs": 26763,
+      "sections": [
+        {
+          "question": "What are the primary obligations a licensee must fulfill when distributing or using MPL 2.0 covered works?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "no-answer",
+          "calls": 8,
+          "ms": 387434,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "What specific rights does a licensee have regarding the use, modification, and distribution of MPL 2.0 covered works?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "no-answer",
+          "calls": 8,
+          "ms": 365778,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 0,
+        "covered": 0,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 16,
+        "ms": 753212
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp05-ada",
+      "plan": {
+        "title": "Ada Lovelace: The Visionary Behind the First Computer Program",
+        "sections": [
+          "Who was Ada Lovelace and what was her background before working with Charles Babbage?",
+          "What was the significance of her work on Babbage's Analytical Engine?",
+          "Why is Ada Lovelace considered the first computer programmer?",
+          "How did Ada Lovelace's vision for computing extend beyond simple calculation?"
+        ]
+      },
+      "planMs": 25432,
+      "sections": [
+        {
+          "question": "Who was Ada Lovelace and what was her background before working with Charles Babbage?",
+          "answer": "Ada Lovelace (n\u00e9e Augusta Ada Byron; 10 December 1815 \u2013 27 November 1852) was an English mathematician and writer. She was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke. Her father separated from her mother a month after she was born and died when she was eight. Although often ill in childhood, she pursued her studies assiduously. She married William King in 1835, who became the 1st Earl of Lovelace. This title made her the Countess of Lovelace. Her educational contacts included scientists like Charles Babbage, Andrew Crosse, and Michael Faraday. She described her approach as 'poetical science' and herself as an 'Analyst (& Metaphysician).'",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 289864,
+          "evidence": 9,
+          "verified": 8
+        },
+        {
+          "question": "What was the significance of her work on Babbage's Analytical Engine?",
+          "answer": "Ada Lovelace's work on Babbage's Analytical Engine was significant because she was the first to recognize the machine had applications beyond pure calculation, she is often considered the first computer programmer, she translated an article by Luigi Menabrea about the engine and supplemented it with seven long explanatory notes, and she described a method of using the machine to calculate Bernoulli numbers which is often called the first published computer program.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 4,
+          "ms": 176021,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "Why is Ada Lovelace considered the first computer programmer?",
+          "answer": "Ada Lovelace is considered the first computer programmer because she was the first to recognize that Charles Babbage's analytical engine could do more than just perform calculations; she identified its potential to encode and manipulate information beyond mere arithmetical figures, such as music. Additionally, she is credited with several computing 'firsts' for her collaboration with Babbage.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 98459,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "How did Ada Lovelace's vision for computing extend beyond simple calculation?",
+          "answer": "Ada Lovelace's vision extended beyond simple calculation by recognizing that computers could go beyond mere calculating or number-crunching. She was the first to point out the possibility of encoding information besides mere arithmetical figures, such as music, and manipulating it with such a machine. Her mindset of 'poetical science' led her to ask questions about the analytical engine, examining how individuals and society relate to technology as a collaborative tool.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 138324,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 2,
+        "covered": 4,
+        "expected": 4,
+        "matched": 3,
+        "right": 2,
+        "labelledWrong": 0,
+        "labelled": 2,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 14,
+        "ms": 702668
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp06-roadmap",
+      "plan": {
+        "title": "Kovrune Roadmap Analysis",
+        "sections": [
+          "What are the specific milestones and phases outlined in Kovrune's official roadmap for network expansion and protocol upgrades?",
+          "What strategic decisions regarding tokenomics and governance structure were made to align with the project's long-term sustainability goals?",
+          "How does the technical design of Kovrune's consensus mechanism and layer-2 architecture support its planned scalability and security enhancements?",
+          "What community-driven initiatives and partnership strategies are integrated into the roadmap to foster ecosystem growth and adoption?"
+        ]
+      },
+      "planMs": 30477,
+      "sections": [
+        {
+          "question": "What are the specific milestones and phases outlined in Kovrune's official roadmap for network expansion and protocol upgrades?",
+          "answer": "Kovrune's official roadmap outlines milestones M0 through M6 for network expansion and protocol upgrades. M0 is the Benchmark gate (2-3 weeks) to evaluate models on reference hardware. M1 introduces Local agent with UI, model library, and bounded agent loop. M2 adds Persistence and release hardening with IndexedDB and signed builds. M2.5 implements Sandboxed execution using Pyodide and QuickJS. M3 is the Trusted-circle prototype with peer identities and WebRTC. M4 enables Delegation within circles for task offers and verification. M5 covers Collaborative workflows with multi-step task graphs. M6 is the Community preview with documentation and self-hosting guides. Deferred until evidence supports them is Open participation by unknown peers.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 503687,
+          "evidence": 8,
+          "verified": 8
+        },
+        {
+          "question": "What strategic decisions regarding tokenomics and governance structure were made to align with the project's long-term sustainability goals?",
+          "answer": "The documents do not contain information about strategic decisions regarding tokenomics or governance structure aligned with long-term sustainability goals. The project explicitly states 'Cryptocurrency, tokens, or blockchain identity' are 'Out of scope' (kovrune-design-r3#35). The governance section describes open-source practices like public repositories, contribution guidelines, and community discussion but does not mention tokenomics or specific strategic decisions for long-term sustainability in the context of tokens.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 124790,
+          "evidence": 3,
+          "verified": 3
+        },
+        {
+          "question": "How does the technical design of Kovrune's consensus mechanism and layer-2 architecture support its planned scalability and security enhancements?",
+          "answer": "The provided documents do not contain information about Kovrune's consensus mechanism or layer-2 architecture. The documents describe Kovrune as a local-first research app that runs AI agents locally on the user's machine, with features like WebLLM, Transformers.js, and P2P networking for task exchange within trusted circles. However, there is no mention of a consensus mechanism or layer-2 architecture in the context of scalability and security enhancements as described in the question.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 8,
+          "ms": 203777,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "What community-driven initiatives and partnership strategies are integrated into the roadmap to foster ecosystem growth and adoption?",
+          "answer": "The roadmap integrates community-driven initiatives and partnership strategies through:\n\n1. **Governance**: Public repository, issue tracker, contribution guidelines, security reporting, transparent breaking change decisions, community discussion for major changes, and documented operators/funding for community-run infrastructure.\n\n2. **Open Participation**: Anyone can be a Kovruner without sharing compute, running a relay, or contributing code.\n\n3. **Milestone 6 Community Preview**: Documentation, security assumptions, hardware/browser support matrix, model compatibility list, self-hosting guide, and contribution guidelines to allow new users to join a documented test circle.\n\n4. **Deferred Open Participation**: Open participation by unknown peers is deferred until evidence supports them.\n\nEvidence:\n- From kovrune-design-r3#34: \"Anyone can be a Kovruner without sharing compute, running a relay, or contributing code.\"\n- From kovrune-design-r3#34: \"### M6 \u2014 Community Preview Documentation, security assumptions, hardware/browser support matrix, model compatibility list, self-hosting guide for the app and relays, and contribution guidelines.\"\n- From kovrune-design-r3#34: \"Deferred until evidence supports them - Open participation by unknown peers.\"\n- From kovrune-design-r3#36: \"Governance - Public repository and issue tracker. - Contribution and review guidelines. - A documented security reporting process. - Transparent decisions about breaking protocol changes, with versioned releases and migration notes. - Community discussion for major architectural changes. - Documented operators and funding for any community-run signaling or relay infrastructure.\"\n- From kovrune-design-r3#36: \"Kovrune's software is licensed under the Mozilla Public License 2.0. MPL-2.0 is file-level copyleft: modifications to Kovrune's own files must be shared under the same license, while Kovrune can be combined with code under other licenses. This balances adoption with keeping improvements to the core open.\"",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 396874,
+          "evidence": 5,
+          "verified": 5
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 26,
+        "ms": 1229128
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx01-eiffel",
+      "plan": {
+        "title": "The Eiffel Tower: A Brief Overview",
+        "sections": [
+          "What is the official name, location, and primary function of the Eiffel Tower?",
+          "When was the Eiffel Tower built, who designed it, and what was the original purpose of its construction?",
+          "How tall is the Eiffel Tower, and what are its main structural components and height records?",
+          "What are the primary tourist attractions, operating hours, and admission policies for visitors today?"
+        ]
+      },
+      "planMs": 31264,
+      "sections": [
+        {
+          "question": "What is the official name, location, and primary function of the Eiffel Tower?",
+          "answer": "Official name: Tour Eiffel. Location: Paris, at the north-west end of the Champ-de-Mars park, on the banks of the Seine in the 7th arrondissement (official address: 5, avenue Anatole-France). Primary function: Originally built for the 1889 World's Fair, it is now a major tourist attraction and serves as a radio and television broadcasting transmitter.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 119851,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "When was the Eiffel Tower built, who designed it, and what was the original purpose of its construction?",
+          "answer": "The Eiffel Tower was built in two years by Gustave Eiffel and his collaborators for the 1889 Paris World's Fair (Exposition universelle de Paris de 1889), which celebrated the centenary of the French Revolution. Its original purpose was to serve as a temporary structure for this exposition, initially named 'tour de 300 m\u00e8tres'.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 95282,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How tall is the Eiffel Tower, and what are its main structural components and height records?",
+          "answer": "The Eiffel Tower is 330 meters tall (with antennas). Its main structural components include puddled iron, and it was originally named the '300-meter tower'. It was the world's tallest monument for forty years. The second level of the third floor, called the fourth floor, is at 279.11 meters, making it the highest public observation platform in the European Union. The tower's height has been increased multiple times by adding flags and antennas, including in 1957 (320.75 m), 1991, 1994, 2000, and 2022.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 103762,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What are the primary tourist attractions, operating hours, and admission policies for visitors today?",
+          "answer": "The provided documents do not contain specific information about the operating hours or admission policies for the Great Wall of China or other tourist attractions. The document only provides historical context, geographical extent, and UNESCO heritage status.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 80618,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 3,
+        "covered": 2,
+        "expected": 3,
+        "matched": 3,
+        "right": 2,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 13,
+        "ms": 399513
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx02-fuji",
+      "plan": {
+        "title": "Mount Fuji: A Comprehensive Overview",
+        "sections": [
+          "What are the physical characteristics and geological history of Mount Fuji?",
+          "How has Mount Fuji influenced Japanese culture, art, and religion throughout history?",
+          "What are the current challenges regarding tourism, conservation, and climate change affecting Mount Fuji?",
+          "What are the safety protocols and visitor guidelines for climbing Mount Fuji?"
+        ]
+      },
+      "planMs": 23087,
+      "sections": [
+        {
+          "question": "What are the physical characteristics and geological history of Mount Fuji?",
+          "answer": "Physical characteristics: Mount Fuji is an active volcano in Japan with a height of 3,775.56 m (summit point at 3,776.12 m). It is an independent peak known as Japan's highest point (Kensho-ke). It has a conical shape described as having a 'suspension curve' (\u61f8\u5782\u66f2\u7dda) and is composed of basaltic stratovolcano. It spans Shizuoka Prefecture and Yamanashi Prefecture. Its slopes extend to the coast of Suruga Bay. It is a UNESCO World Heritage site and designated as a National Special Scenic Spot, Historic Site, and part of a National Park. Geological history: It is an active volcano that has influenced climate and geological layers. It has been revered since ancient times as a sacred mountain (Reiho), with the Shint\u014d deity Asama \u014ckami believed to reside at the summit. Worship and pilgrimage practices, including the establishment of Asama Shrine and the development of Shugend\u014d by Fuji-jin, have been central to its cultural and religious history.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 191106,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How has Mount Fuji influenced Japanese culture, art, and religion throughout history?",
+          "answer": "Mount Fuji has influenced Japanese culture, art, and religion significantly. It is recognized as one of the 'Three Famous Mountains of Japan' (Nihon San-meizan), selected for Japan's 100 Famous Mountains, and included in Japan's 100 Geological Sites. In 1936, it was designated as part of the Fuji-Hakone-Izu National Park. Its cultural and religious importance was further recognized when, on June 22, 2013, it was inscribed as a UNESCO World Heritage Site under the name 'Mount Fuji: Symbol of Faith and Source of Art' along with related cultural properties. Additionally, it was designated as a Special Scenic Spot in 1952 and a Historic Site in 2011.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 110010,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What are the current challenges regarding tourism, conservation, and climate change affecting Mount Fuji?",
+          "answer": "The provided documents do not contain information about current challenges regarding tourism, conservation, and climate change affecting Mount Fuji. The documents only provide general historical and geographical information about Mount Fuji, such as its status as a living volcano, its height, its location, its cultural significance, and its designation as a World Heritage Site.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 5,
+          "ms": 86481,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "What are the safety protocols and visitor guidelines for climbing Mount Fuji?",
+          "answer": "The provided documents do not contain information about safety protocols and visitor guidelines for climbing Mount Fuji. They only provide general background information about Mount Fuji, such as its height, location, historical significance, and status as a UNESCO World Heritage site.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 79257,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 3,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 17,
+        "ms": 466854
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx03-troubleshooting",
+      "plan": {
+        "title": "Kovrune and llama.cpp Integration Troubleshooting",
+        "sections": [
+          "What are the specific build configuration steps required to compile Kovrune with llama.cpp support?",
+          "How can I resolve common runtime errors related to missing shared libraries or incompatible CUDA versions when running Kovrune?",
+          "What are the known compatibility issues between Kovrune's default settings and specific llama.cpp model architectures?",
+          "How do I troubleshoot memory allocation failures or OOM errors when loading large models in the Kovrune interface?"
+        ]
+      },
+      "planMs": 31549,
+      "sections": [
+        {
+          "question": "What are the specific build configuration steps required to compile Kovrune with llama.cpp support?",
+          "answer": "To compile Kovrune with llama.cpp support, you must first build llama.cpp. The specific build configuration steps for Linux or WSL are:\n1. Install prerequisites: `sudo apt install build-essential cmake git libssl-dev`\n2. Clone the repository: `git clone https://github.com/ggml-org/llama.cpp.git`\n3. Navigate to the directory: `cd llama.cpp`\n4. Configure the build: `cmake -B build`\n5. Build the project: `cmake --build build --config Release -j`\n\nThe resulting server binary is located at `build/bin/llama-server`. The `libssl-dev` package is required for HTTPS support.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 108051,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How can I resolve common runtime errors related to missing shared libraries or incompatible CUDA versions when running Kovrune?",
+          "answer": "The provided documents do not contain information about resolving common runtime errors related to missing shared libraries or incompatible CUDA versions when running Kovrune. The documents discuss Kovrune's architecture, model loading workflows, runtime adapters (WebLLM, Transformers.js, etc.), and security features, but do not address specific runtime error troubleshooting for shared libraries or CUDA compatibility.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 8,
+          "ms": 325909,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "What are the known compatibility issues between Kovrune's default settings and specific llama.cpp model architectures?",
+          "answer": "The provided documents do not contain information about specific compatibility issues between Kovrune's default settings and specific llama.cpp model architectures. The documents mention general troubleshooting for model test failures (e.g., 'not acting on tool results', 'garbled output', 'slow performance') and recommend using a local model server (llama.cpp) instead of the browser path for certain issues, but they do not list specific model architecture incompatibilities.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 8,
+          "ms": 203849,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "How do I troubleshoot memory allocation failures or OOM errors when loading large models in the Kovrune interface?",
+          "answer": "The provided documents do not contain specific troubleshooting steps for memory allocation failures or OOM errors when loading large models in the Kovrune interface. The documents mention general constraints around memory and storage eviction, and a sandbox level that includes memory limits, but do not provide specific troubleshooting procedures for OOM errors.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 8,
+          "ms": 217542,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 1,
+        "covered": 2,
+        "expected": 3,
+        "matched": 1,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 3,
+        "unmatchedLabelled": 0,
+        "calls": 27,
+        "ms": 855351
+      }
+    }
+  ]
+}
