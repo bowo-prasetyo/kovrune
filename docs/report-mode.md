@@ -129,3 +129,10 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
   - Few sections are labelled Quotes found (2 of 30 on 4B, none wrong), because long section answers are rarely backed sentence by sentence.
   - **Next:** show the planner what the sources hold before it plans, judged on this suite. Then the introduction and conclusion (slice 5) can be measured on it too.
 
+- **The source overview: the planner sees what the documents hold (harness 0.52.0).**
+  - Before planning, `planReport` searches the user's documents for the request as the research agent would, without the words that only ask for a report ("write", "report", "400 words"), and with the terms translated into each document language written in another script. From each passage found (6, plus 2 per such language) it keeps the 3 sentences that best match, at most 2,400 characters in all, grouped by document.
+  - The planner is shown them and asked to base the sections on what the sources hold, not on what a report on the subject usually covers. The plan screen names the documents it was shown. Open sources are not searched before planning: a plan from Wikipedia or OpenAlex alone is still written blind.
+  - **Adoption condition, declared before the run.** At 4,096 tokens, on the report suite, the overview is kept when:
+    1. report coverage on `reports` rises on at least one of Qwen3.5-4B and 2B, and falls on neither;
+    2. the `reportsholdout` coverage total falls on neither model;
+    3. no more matched sections are labelled Quotes found without their facts than in the baseline.
