@@ -1,0 +1,90 @@
+# Report Mode: Long Answers Built from Checked Ones
+
+| | |
+| --- | --- |
+| Status | Proposed, for the project owner's review. Nothing is built yet |
+| Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
+| Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
+
+## Goal
+
+> A user asks for a report on a topic and gets a long answer that is still checkable: every section quotes its sources, each quote is verified, and each section carries its own label.
+
+Research usually ends in a report, often a long one. Today Kovrune gives one short answer per question: the model's final reply is capped at 512 tokens (1,024 after a cut-off), and the checks are built for a few sentences against a few passages.
+
+## Why not just allow longer answers
+
+- **The checks would stop meaning anything.** Every sentence must share most of its words with a verified quote. The review, the cross-check and the completeness check each judge a short answer against a few passages. A 400-word answer has more sentences than its quotes can back, so it would mostly read as "partly backed" or go unchecked.
+- **The models do worse the more passages an answer needs.** On questions that need two passages, Qwen3.5-4B passes 14 of 21 and Qwen3.5-2B 4 of 21. On the field suite, which is mostly one-passage questions, they pass 89% and 78% ([multi-passage suites](../eval/field/README.md#questions-that-need-more-than-one-passage-0460)).
+- **The limits are physical.** A 4,096-token context holds about four read documents. On a class 1 laptop, one long reply takes minutes, and if it is cut off, the whole answer is lost.
+
+## The flow
+
+1. **Ask.** A **Write a report** option next to **Ask**. The question box takes the topic, for example "blockchain technology", or a request like the preview user's.
+2. **Plan.** The model turns the request into 3–6 focused questions, one per section, each answerable from a few passages:
+   - for blockchain: what a blockchain is; how blocks are linked; how consensus is reached; what it is used for; its known limitations.
+
+   The plan is shown before anything runs. The user can edit, reorder, add or remove questions (2–8), and sees an estimated time from the model test's speed: about 3–7 minutes per section on class 1 with Qwen3.5-4B.
+3. **Research each section.** Each question runs through the research agent as it is today, one after another:
+   - with its own call budget, the user's chosen sources, the quote check and the label;
+   - with progress shown per section, and **Stop** keeping the sections already done.
+
+   A section that ends without an answer, or with one that is not confirmed, says so and does not stop the others.
+4. **Assemble.** The report is the sections in plan order, each with its heading (the question), answer, label, evidence and **Show in the source**. Above them is a one-line summary of the labels, for example "4 of 5 sections: Quotes found".
+5. **Introduction and conclusion (optional).** These are written by the model from the section answers only, without new searching or reading, in one short call.
+   - Each sentence is checked like an answer sentence, against the verified quotes of the sections it draws on.
+   - Sentences no quote backs are marked ⚠, as in an answer today.
+   - They never change a section's label.
+6. **Save and export.** The report is saved under **Past answers** like an answer. **Export as Markdown** writes the sections, labels, quotes, pages and steps, with a references list. **Export papers as BibTeX** covers every section.
+
+## Planning
+
+- **One short constrained call.** The model is shown the request and the sources ticked, not the documents, and replies with JSON `{"title": "...", "sections": [{"question": "..."}]}`, with 2–8 sections. It is asked for questions that one or two passages can answer, in the request's language, without overlap.
+- **A plan that cannot be read falls back** to the request as a single section, which is today's behaviour.
+- **The request itself is not researched.** Only the sections are, so a section never asks for 400 words.
+
+## Running the sections
+
+- **Fresh conversations.** Each section starts a new conversation, so context fitting, guards and limits apply as they do now, and one section's reads do not crowd out the next. Documents read in one section are to be cached, so a second section reading the same document costs no extraction or network request. The model still reads it again in its own context.
+- **Sources.** The user's documents and the ticked open sources are searched in every section, as for a question.
+- **Time.** The estimate is shown before the run, and a report on a slow setup asks for confirmation. On the preview user's 0.6 tokens/s, five sections would take hours.
+- **Models.** Qwen3.5-4B is recommended. With Qwen3.5-2B the plan screen says that answers combining several sources are weaker, as the user guide already does for questions.
+
+## What stays the same
+
+- **Each section is a question as today:** same agent, prompts, checks, labels and benchmark behaviour. Nothing in the question path changes.
+- **The promise holds per section.** The report is long, but every claim in it is either backed by a verified quote, with a label saying how far, or marked.
+- **Nothing new leaves the device:** the same requests to the same sources.
+
+## Measuring it
+
+A **report suite** over the field documents (`eval/field/`): 8–10 report requests, a third held out. Each comes with the sections a good report should cover, written as facts, like the multi-passage questions, before any model is run. The harness runs the planner and the sections and scores:
+- **Coverage:** the share of expected sections whose facts appear in some section of the report.
+- **Section accuracy:** the share of sections that pass their facts, where they match an expected section.
+- **False reassurance per section:** sections labelled Quotes found that are wrong, against the design's 10% target.
+- **The introduction and conclusion:** how many of their sentences the quotes back.
+- **Time:** calls and minutes per report.
+
+The plan step can also be judged alone, cheaply, on the expected sections: does the plan cover them?
+
+**Adopted when**, on Qwen3.5-4B, coverage and section accuracy reach agreed targets and false reassurance per section stays under 10%. The targets are to be set by the owner after a first baseline run. 2B is reported, not gated.
+
+## Slices
+
+Each slice is its own pull request, reviewed and tested on the class 1 laptop.
+
+1. **Plan.** The planning call, the plan screen with editing and the time estimate, and the fallback. Unit tests with scripted models.
+2. **Sections and assembly.** Running the sections one after another, progress, stop, partial reports, the label summary, saving.
+3. **Export.** The Markdown report with references, and BibTeX across sections.
+4. **Report suite and harness.** The suite, a baseline on both models, and the plan-only measurement.
+5. **Introduction and conclusion.** The synthesis call and its sentence check, measured on the report suite before it is shown by default.
+
+## Decisions for the project owner
+
+| # | Question | Proposal |
+| --- | --- | --- |
+| R1 | Is a report part of the primary job in the design (§1.4)? | Yes: "…answer a question **or write a short report**…, with quotes I can check". |
+| R2 | How does a user start a report? | An explicit **Write a report** option. A request detected from its wording ("report", "400 words") only suggests it. |
+| R3 | Sections by default, and the most allowed | 4 by default, 2–8 allowed |
+| R4 | Introduction and conclusion | Off until slice 5's measurement, then on by default if their sentences are mostly backed |
+| R5 | Slow setups | Above 30 minutes estimated, ask for confirmation, and suggest fewer sections or Qwen3.5-2B for a first draft |
