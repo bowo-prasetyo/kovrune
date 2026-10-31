@@ -172,7 +172,7 @@ If the model server stops answering in the middle of a question, start it again 
 
 An answer is a few sentences, each checked against a quote. For a longer report, choose **Write a report** above the question box. Kovrune builds it from several checked answers, one per section.
 
-1. **Type the topic** (for example "blockchain technology, how it works and where it is used") and press **Plan the report**. The model proposes a title and a few questions, one per section, each answerable from a passage or two.
+1. **Type the topic** (for example "blockchain technology, how it works and where it is used") and press **Plan the report**. The model proposes a title and a few questions, one per section, each answerable from a passage or two. Before it plans, Kovrune searches your documents for the topic and shows the model what they say about it, so that it asks what your documents can answer. The plan names the documents it was made from. Wikipedia and OpenAlex are searched only when the report is written, so a plan from them alone is the model's own idea of what such a report covers.
 2. **Edit the plan.** Change the title or any question, reorder them (↑ ↓), and add or remove sections, from 2 to 8. Questions that ask one thing each work best: split a question that asks two. Below the plan is how long the report can take, from your model test. Each section takes about as long as a question.
 3. **Press Write the report.** Above 30 minutes, it asks you to confirm first. Each section's question is researched in turn, as a question is: you see its heading and its steps. **Stop** keeps the sections already written.
 

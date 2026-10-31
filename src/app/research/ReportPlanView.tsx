@@ -1,5 +1,5 @@
 import { MAX_SECTIONS, type ReportPlan } from "../../agent/report.ts";
-import { describeEstimate, planEdits, planReady } from "./report.ts";
+import { describeConsulted, describeEstimate, planEdits, planReady } from "./report.ts";
 
 /**
  * The plan of a report, before anything is researched (docs/report-mode.md): its title and one
@@ -36,6 +36,13 @@ export function ReportPlanView({
         <p className="hint">
           Each section answers one question, with quotes checked like any answer. Edit the questions, reorder them, or add and
           remove sections before the report is written.
+        </p>
+      )}
+      {!plan.fallback && plan.consulted && (
+        <p className="hint">
+          {plan.consulted.length
+            ? `Planned from what a search for the request found in ${describeConsulted(plan.consulted)}.`
+            : "Nothing in your documents matched the request, so the plan is the model's own idea of what such a report covers."}
         </p>
       )}
       <label>

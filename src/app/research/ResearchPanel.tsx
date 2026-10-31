@@ -89,7 +89,10 @@ export function ResearchPanel({
     setPlanning("Planning the report…");
     try {
       const sources = [...(usable.length ? ["your documents"] : []), ...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : [])];
-      setPlan(await planReport({ model: await openModel(settings), request, sources }));
+      // The planner is shown what the documents say about the request (the source overview), so that
+      // it plans sections the documents can answer.
+      const library = usable.length ? new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts }))) : undefined;
+      setPlan(await planReport({ model: await openModel(settings), request, sources, library }));
       setPlanning(undefined);
     } catch (error) {
       setPlanning(describeModelError(error, settings));

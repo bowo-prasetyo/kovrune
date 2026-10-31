@@ -26,7 +26,7 @@ export interface ReportPlan {
   sections: string[];
   /** True when the model's plan could not be read, and the request is the only section. */
   fallback?: boolean;
-  /** The documents the source overview showed the planner, by title; absent when it was shown none. */
+  /** The documents the source overview showed the planner, by title: empty when none matched, absent without documents. */
   consulted?: string[];
 }
 
@@ -218,5 +218,5 @@ export async function planReport(options: {
   }
   const plan = parsePlan(text);
   if (!plan) return fallbackPlan(options.request);
-  return overview ? { ...plan, consulted: overview.documents } : plan;
+  return options.library?.documents.length ? { ...plan, consulted: overview?.documents ?? [] } : plan;
 }
