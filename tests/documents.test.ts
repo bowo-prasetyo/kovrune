@@ -20,6 +20,17 @@ describe("evidence check", () => {
     assert.equal(curly!.verified, true);
   });
 
+  it("takes single and double quote marks as the same, since models write a passage's double quotes as single ones", () => {
+    // A preview user's report: Wikipedia's "a system for electronic transactions without relying on
+    // trust" was quoted with single quotes inside the JSON reply and marked not found.
+    const history = 'This paper detailed methods of using a peer-to-peer network to generate what was described as "a system for electronic transactions without relying on trust".';
+    const check = (quote: string) => checkEvidence([{ docId: "d", quote }], () => history)[0]!.verified;
+    assert.equal(check("to generate what was described as 'a system for electronic transactions without relying on trust'."), true);
+    assert.equal(check("to generate what was described as ‘a system for electronic transactions without relying on trust’."), true);
+    assert.equal(check("to generate what was described as 'a system for electronic payments without relying on trust'."), false, "words must still match");
+    assert.equal(normalizeForMatch(`“a” "b" ‘c’ 'd'`), "'a' 'b' 'c' 'd'");
+  });
+
   it("ignores list markers, which models swap or drop when quoting slides", () => {
     // Class 1 preview check: the Papyrus PDF has "– Using", the model quoted "• Using", and the
     // quote failed although every word is in the slide. Another quote dropped the "•" bullets.
