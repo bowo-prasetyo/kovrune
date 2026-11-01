@@ -12,6 +12,8 @@ export function ReportPlanView({
   onWrite,
   writable,
   onCancel,
+  synthesis,
+  onSynthesisChange,
 }: {
   plan: ReportPlan;
   /** The model test's longest question time; undefined before a test. */
@@ -22,6 +24,9 @@ export function ReportPlanView({
   /** Whether a report can start now: the model is ready and nothing is running. */
   writable: boolean;
   onCancel: () => void;
+  /** Whether to write an introduction and conclusion after the sections (slice 5). */
+  synthesis: boolean;
+  onSynthesisChange: (on: boolean) => void;
 }) {
   const estimate = describeEstimate(plan.sections.length, maxTaskMinutes);
   return (
@@ -77,6 +82,11 @@ export function ReportPlanView({
           </li>
         ))}
       </ol>
+      <label className="choice">
+        <input type="checkbox" checked={synthesis} onChange={(e) => onSynthesisChange(e.target.checked)} />
+        Write an introduction and conclusion from the sections (one more step). Their sentences are checked against the sections'
+        quotes, and they don't change any section's label.
+      </label>
       <p className={estimate.confirm ? "warning" : "hint"}>
         {estimate.text}.
         {estimate.confirm &&

@@ -5,6 +5,7 @@ import type { SentenceSupport } from "../../agent/support.ts";
 import { ReplayingModel, type RecordedCall } from "../../agent/replay.ts";
 import { ResearchLibrary, runResearch } from "../../agent/research.ts";
 import { planReport, plansFromSources, type ReportPlan } from "../../agent/report.ts";
+import { answeredSections, MIN_SYNTHESIS_SECTIONS, writeSynthesis, writesSynthesis, type Synthesis, type SynthesisPart } from "../../agent/synthesis.ts";
 import { describeModelError, describeSetup, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import {
@@ -17,6 +18,7 @@ import {
   toSavedAnswer,
   type SavedAnswer,
   sectionLabel,
+  SYNTHESIS_NOTE,
   type SavedReport,
 } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
@@ -25,12 +27,13 @@ import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
-import { describeEstimate, describeReportLabels, looksLikeReport, toSavedReport, upsert } from "./report.ts";
+import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, toSavedReport, upsert } from "./report.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
 /** A report's section heading in the trace (writeReport), shown apart from the steps under it. */
-const REPORT_SECTION_STEP = /^Section \d+ of \d+: /;
+const SYNTHESIS_STEP = "Introduction and conclusion: writing them from the sections";
+const REPORT_SECTION_STEP = /^Section \d+ of \d+: |^Introduction and conclusion: /;
 
 type RunState =
   | { phase: "idle" }
@@ -62,6 +65,8 @@ export function ResearchPanel({
   // Report mode (docs/report-mode.md): a report is planned as questions, one per section, each answered as a question is.
   const [mode, setMode] = useState<"question" | "report">("question");
   const [plan, setPlan] = useState<ReportPlan>();
+  // Whether the report gets an introduction and conclusion (slice 5): the model's default, then the user's choice.
+  const [synthesis, setSynthesis] = useState(false);
   const [planning, setPlanning] = useState<string>();
   const controller = useRef<AbortController>(undefined);
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
@@ -96,6 +101,7 @@ export function ResearchPanel({
         usable.length && plansFromSources(model.info.id)
           ? new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts })))
           : undefined;
+      setSynthesis(writesSynthesis(model.info.id));
       setPlan(await planReport({ model, request, sources, library }));
       setPlanning(undefined);
     } catch (error) {
@@ -109,7 +115,7 @@ export function ResearchPanel({
    * sections already written. A section that ends without an answer says so and the next one starts;
    * a model or server error stops the report there.
    */
-  async function writeReport(edited: ReportPlan) {
+  async function writeReport(edited: ReportPlan, withSynthesis: boolean) {
     const reportPlan = { ...edited, title: edited.title.trim(), sections: edited.sections.map((q) => q.trim()) };
     const estimate = describeEstimate(reportPlan.sections.length, settings.lastTest?.maxTaskMinutes);
     if (estimate.confirm && !confirm(`This report has ${estimate.text}. Write it?`)) return;
@@ -122,8 +128,9 @@ export function ResearchPanel({
     const titleFor = (docId: string) => library.documentFor(docId)?.title;
     const sources = openSourcesFor(prefs);
     const sections: SavedAnswer[] = [];
+    let written: Synthesis | undefined;
     const save = (extra: { unfinished?: boolean; stopped?: boolean }) => {
-      const record = toSavedReport({ id, askedAt, model: setup, plan: reportPlan, request, sections: [...sections], ...extra });
+      const record = toSavedReport({ id, askedAt, model: setup, plan: reportPlan, request, sections: [...sections], synthesis: written, ...extra });
       history.setRecords((answers) => upsert(answers, record));
       return record;
     };
@@ -163,6 +170,13 @@ export function ResearchPanel({
         if (result.agent.stopReason === "error") throw new Error(result.agent.error);
         sections.push(toSavedAnswer({ question: sectionQuestion, result, steps: sectionSteps, library, model: setup }));
         save({ unfinished: true });
+      }
+      // The introduction and conclusion, from the sections written; a report is complete without them.
+      if (withSynthesis && !abort.signal.aborted && answeredSections(sections).length >= MIN_SYNTHESIS_SECTIONS) {
+        steps.push(SYNTHESIS_STEP);
+        setState({ phase: "running", steps: [...steps], reportId: id });
+        written = await writeSynthesis({ model, title: reportPlan.title, request, sections, titleFor, signal: abort.signal });
+        if (!written && !abort.signal.aborted) steps.push("The model's introduction and conclusion could not be read, so the report has none.");
       }
       const record = save(abort.signal.aborted ? { stopped: true } : {});
       setState({ phase: "done", steps, answer: record });
@@ -394,7 +408,9 @@ export function ResearchPanel({
           plan={plan}
           maxTaskMinutes={settings.lastTest?.maxTaskMinutes}
           onChange={setPlan}
-          onWrite={() => void writeReport(plan)}
+          onWrite={() => void writeReport(plan, synthesis)}
+          synthesis={synthesis}
+          onSynthesisChange={setSynthesis}
           writable={modelReady && !running}
           onCancel={() => setPlan(undefined)}
         />
@@ -699,6 +715,12 @@ function ReportView({ report, live }: { report: SavedReport; live: boolean }) {
         Each section answers one question with its own quotes, checked as any answer is. Check each section against its sources:
         a section's label covers that section only.
       </p>
+      {report.synthesis && (
+        <section className="report-section report-synthesis">
+          <h4>Introduction</h4>
+          <SynthesisText part={report.synthesis.introduction} />
+        </section>
+      )}
       {report.sections.map((section, i) => (
         <section key={i} className="report-section">
           <h4>
@@ -707,7 +729,34 @@ function ReportView({ report, live }: { report: SavedReport; live: boolean }) {
           <ResultView answer={section} />
         </section>
       ))}
+      {report.synthesis && (
+        <section className="report-section report-synthesis">
+          <h4>Conclusion</h4>
+          <SynthesisText part={report.synthesis.conclusion} />
+          <p className="hint">
+            {SYNTHESIS_NOTE} {describeSynthesisBacking(report.synthesis)}
+          </p>
+        </section>
+      )}
     </div>
+  );
+}
+
+/** An introduction or conclusion, with the sentences no section's quote backs marked as in an answer. */
+function SynthesisText({ part }: { part: SynthesisPart }) {
+  return (
+    <p className="answer">
+      {part.support.sentences.map((sentence, i) =>
+        sentence.backed === false ? (
+          <mark key={i} className="unbacked" title="No section's found quote shares most of this sentence's words">
+            <span aria-label="Not backed by a quote">⚠ </span>
+            {sentence.text}
+          </mark>
+        ) : (
+          <span key={i}>{sentence.text}</span>
+        ),
+      )}
+    </p>
   );
 }
 

@@ -24,6 +24,10 @@ const documentSchema = z.object({
   warning: z.string().optional(),
 });
 
+const supportSchema = z.looseObject({ sentences: z.array(z.looseObject({ text: z.string() })), judged: z.number(), backed: z.number() });
+// A report's introduction or conclusion: its text and checked sentences.
+const synthesisPart = z.looseObject({ text: z.string(), support: supportSchema });
+
 // Answers are shown again exactly as saved; the checks cover what the result view reads.
 const answerFields = {
   id: z.string().min(1),
@@ -33,7 +37,7 @@ const answerFields = {
   status: z.enum(["verified", "unverified", "not-found", "no-answer"]),
   answer: z.string().optional(),
   evidence: z.array(z.looseObject({ docId: z.string(), quote: z.string(), verified: z.boolean() })),
-  support: z.looseObject({ sentences: z.array(z.looseObject({ text: z.string() })), judged: z.number(), backed: z.number() }).optional(),
+  support: supportSchema.optional(),
   citations: z.record(z.string(), z.looseObject({})),
   titles: z.record(z.string(), z.string()),
   sourceErrors: z.array(z.string()),
@@ -51,6 +55,7 @@ const answerSchema = z.looseObject({
       sections: z.array(z.looseObject(answerFields)),
       unfinished: z.boolean().optional(),
       stopped: z.boolean().optional(),
+      synthesis: z.looseObject({ introduction: synthesisPart, conclusion: synthesisPart }).optional(),
     })
     .optional(),
 });

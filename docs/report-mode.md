@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Agreed (decisions R1–R5 below). Slices 1–4 are built and the option is shown to everyone; slice 5, the introduction and conclusion, remains. See [Progress](#progress) |
+| Status | Agreed (decisions R1–R5 below). Slices 1–5 are built and the option is shown to everyone; the introduction and conclusion are measured and off by default (R4). See [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -142,3 +142,20 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
     - 4B's stays at 9 and 6, but two of its sections are labelled Quotes found without their facts, against none before. They describe roadmap features from the design document as what Kovrune does.
 
     Part 3 fails, so `plansFromSources` is off for both models and the planner still sees the request alone. Switching it on for 2B alone, as the completeness check is, is the project owner's decision.
+- **Slice 5, the introduction and conclusion (harness 0.53.0).**
+  - **Writing them.** After the last section, `writeSynthesis` (`src/agent/synthesis.ts`) makes one short constrained call. It shows the model the report's title, the request, and each answered section's question and answer, cut to 1,200 characters. It asks for an introduction and a conclusion of two or three sentences each, using only what the sections say. There is no searching or reading. Sections that ended "not found" or without an answer are left out, and with fewer than two answered sections nothing is written.
+  - **Checking them.** Each sentence is checked like an answer sentence (`sentenceSupport`), against the verified quotes of all the sections, and the ones no quote backs are marked ⚠. They never change a section's label or the report's label summary. A reply that cannot be read leaves the report without them.
+  - **In the app.** The plan screen has a checkbox: **Write an introduction and conclusion from the sections**. Its default is `writesSynthesis(model ID)`, off for every model until the measurement below. The report shows the introduction before the sections and the conclusion after them, with how many of their sentences are backed. They are saved with the report, kept by backups, and exported to Markdown around the sections.
+  - **Measured by `bench:report`**, which writes them after the sections of every report and counts the judged sentences the quotes back.
+  - **Decision R4's condition, declared before the run.** At 4,096 tokens, on the report suite as the app plans it, the introduction and conclusion are on by default for a model when:
+    1. more than half of their judged sentences are backed on `reports`;
+    2. more than half are backed on `reportsholdout`, as a total;
+    3. they are written, from a readable reply, for all but at most one of the reports with two or more answered sections.
+
+    Otherwise they stay available, unticked, on the plan screen.
+  - **Result: off by default for both models** ([field README](../eval/field/README.md#the-introduction-and-conclusion-0530-measured-off-by-default)). Every reply was readable. Backed sentences:
+    - 4B: 7 of 17 on `reports`, 0 of 6 held out. Ada Lovelace, where the sections answered the plan, is 5 of 5.
+    - 2B: 0 of 14 and 0 of 6.
+
+    The introductions restate the plan rather than the findings, the conclusions pack several claims into a sentence, and 2B adds claims no section made, which the check marks. The option stays on the plan screen, unticked.
+  - **Checked end to end** in Chromium against Qwen3.5-2B. With the Ada Lovelace lead as the document and the option ticked, the trace shows the step, and the report shows the introduction before the sections and the conclusion after them, with "2 of their 2 sentences are backed". It is exported to Markdown, and still there after a reload.

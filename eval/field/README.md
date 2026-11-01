@@ -608,10 +608,35 @@ Before planning, `planReport` can search the documents for the request, as the r
 
 - **The plans now fit the sources.** Plan coverage rises on both models and both suites. 4B's sections that ended "not found" or without an answer fall from 7 to none on `reports`, and it plans all four sections asked for in every report, where it planned two in three of them before.
 - **2B passes all three parts, 4B does not.** 2B's coverage rises from 3 to 7 of 23, and its held-out total from 6 to 7, with no section labelled wrongly. 4B's coverage stays at 9 and 6, so it neither gains nor loses. But two of its privacy sections are labelled Quotes found without the facts the suite expects. Searched for "data" and "network", the design document ranked above the user guide's privacy section. The plan then asked how Kovrune "delegates tasks to peers" and "manages the sharing of files and conversations". The answers are faithful to the design, but they describe roadmap features as what Kovrune does, so the suite is right to count them. Part 3 fails, so the overview is **not adopted**.
-- **The runs are noisy at this size.** The first and fixed versions differ only by the Chinese and Japanese passages, yet 2B's coverage on `reports` went 3, then 7, and its plan coverage 9, then 6. A few sections either way on six reports is within what one run varies by.
+- **Small changes move the plans a lot.** The first and fixed versions differ only by the Chinese and Japanese passages, yet 2B's coverage on `reports` went 3, then 7, and its plan coverage 9, then 6. This is not run-to-run noise: the slice 5 run (0.53.0) repeated the blind baseline and got every plan and answer the same. It is how strongly a small change in what the planner sees moves the plans and everything after them. Six reports cannot tell a real gain from that sensitivity. (Corrected in 0.53.0; this read "noisy" before.)
 - **Planning takes longer**, about 60 s on 4B and 25 s on 2B instead of 27 and 17 s, for the translation calls and the longer prompt. Reports take less time overall, since fewer sections search until they give up.
 
 `main` keeps planning blind for both models (`plansFromSources` in `src/agent/report.ts` is off for every model). The code stays, so the overview can be switched on for a model by the project owner's decision, or measured again with `--overview`. If it is pursued, the clearest problem is ranking: a request about what Kovrune does now should prefer the user guide over the design's roadmap. A larger suite would also tell gains from noise better than six reports can.
+
+### The introduction and conclusion (0.53.0, measured: off by default)
+
+Slice 5 of [report mode](../../docs/report-mode.md). After the last section, `writeSynthesis` (`src/agent/synthesis.ts`) shows the model the report's title, the request, and each answered section's question and answer, and asks for a two- or three-sentence introduction and conclusion using only what the sections say. Each sentence is checked like an answer sentence, against all the sections' verified quotes. `bench:report` writes them for every report with two or more answered sections.
+
+**Decision R4's condition, declared before the run.** At 4,096 tokens, on the report suite as the app plans it, they are on by default for a model when:
+1. more than half of their judged sentences are backed on `reports`;
+2. more than half are backed on `reportsholdout`, as a total;
+3. they are written, from a readable reply, for all but at most one of the reports with two or more answered sections.
+
+**Result** ([4B](../results/reports-0.53-synthesis-qwen3.5-4b-q4km.json), [2B](../results/reports-0.53-synthesis-qwen3.5-2b-q4km.json)). The run planned blind, as the app does. Every plan and section answer is the same as in the 0.51 baseline, so only the introduction and conclusion are new.
+
+| | Written (of reports with two or more answered sections) | Sentences backed, `reports` | Sentences backed, `reportsholdout` | Time |
+| --- | --- | --- | --- | --- |
+| 4B | 4 of 4, 2 of 2 | **7 of 17** | 0 of 6 | 49 s a report |
+| 2B | 6 of 6, 3 of 3 | **0 of 14** | 0 of 6 | 18 s a report |
+
+- **Neither model passes.** Every reply was readable (part 3), but under half of the sentences are backed on either model or suite. They stay off by default (`writesSynthesis`), and the plan screen offers them unticked.
+- **Where the sections answered what the plan asked, 4B's are fully backed.** Ada Lovelace: 5 of 5 sentences, each restating a section's fact.
+- **Elsewhere, the introduction restates the plan, not the findings.** For privacy, 4B's introduction says the report "details what Kovrune collects and stores regarding user accounts and device information". The sections found that it collects nothing of the kind, and its own conclusion says so. The plan was written blind (see the report suite above).
+- **Conclusions pack several claims into one sentence,** which rarely shares half its words with the quotes even when each claim is in a section.
+- **2B embellishes.** "Her 'poetical science' approach fundamentally shaped the trajectory of modern computing, influencing the development of programming languages" is in no section. The check marks every such sentence.
+- **The check does what it is for.** No sentence is backed that adds a claim the sections lack. The marks are the honest result, and with the option ticked, the reader sees them.
+
+A synthesis that quotes, or one that only lists what the sections found, sentence by sentence, would be easier to back. Plans that fit the sources would help too, since the introduction follows the plan.
 
 ## Results
 

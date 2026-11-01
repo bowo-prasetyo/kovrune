@@ -3,6 +3,7 @@
 // is in answers.ts (slice 3).
 
 import { MAX_SECTIONS, MIN_SECTIONS, type ReportPlan } from "../../agent/report.ts";
+import type { Synthesis } from "../../agent/synthesis.ts";
 import type { SavedAnswer, SavedReport } from "./answers.ts";
 
 /** Above this many minutes, a report asks for confirmation before it starts (decision R5). */
@@ -22,6 +23,16 @@ export function describeConsulted(titles: string[]): string {
   if (quoted.length <= 2) return quoted.join(" and ");
   if (quoted.length === 3) return `${quoted[0]}, ${quoted[1]} and ${quoted[2]}`;
   return `${quoted[0]}, ${quoted[1]} and ${quoted.length - 2} more`;
+}
+
+/** How far the sections' quotes back an introduction and conclusion: "5 of their 6 sentences are backed by a section's quote." */
+export function describeSynthesisBacking(synthesis: Synthesis): string {
+  const parts = [synthesis.introduction, synthesis.conclusion];
+  const judged = parts.reduce((n, p) => n + p.support.judged, 0);
+  const backed = parts.reduce((n, p) => n + p.support.backed, 0);
+  if (!judged) return "None of their sentences is long enough to check.";
+  const all = `${backed} of their ${judged} ${judged === 1 ? "sentence is" : "sentences are"} backed by a section's quote`;
+  return backed < judged ? `${all}; ⚠ marks the others.` : `${all}.`;
 }
 
 /** "5 sections, up to 35 min", and whether to ask for confirmation first. */
@@ -88,6 +99,7 @@ export function toSavedReport(options: {
   sections: SavedAnswer[];
   unfinished?: boolean;
   stopped?: boolean;
+  synthesis?: Synthesis;
 }): SavedAnswer {
   const { sections } = options;
   return {
@@ -108,6 +120,7 @@ export function toSavedReport(options: {
       sections,
       ...(options.unfinished ? { unfinished: true } : {}),
       ...(options.stopped ? { stopped: true } : {}),
+      ...(options.synthesis ? { synthesis: options.synthesis } : {}),
     },
   };
 }
