@@ -36,9 +36,11 @@ export interface Synthesis {
 }
 
 /**
- * Whether reports offer the introduction and conclusion by default, by the model's ID: no model yet.
- * Decision R4: off until measured on the report suite, then on by default for a model if their
- * sentences are mostly backed (the condition is in docs/report-mode.md).
+ * Whether reports offer the introduction and conclusion by default, by the model's ID: no model.
+ * Decision R4: on by default for a model if their sentences are mostly backed on the report suite
+ * (the condition is in docs/report-mode.md). Measured at 4,096 tokens (harness 0.53.0), the sections'
+ * quotes back 7 of Qwen3.5-4B's 17 sentences and none of Qwen3.5-2B's 14, and none of either model's 6
+ * held out. The plan screen still offers them, unticked.
  */
 export function writesSynthesis(_modelId: string): boolean {
   return false;

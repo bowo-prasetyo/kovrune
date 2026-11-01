@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Agreed (decisions R1–R5 below). Slices 1–4 are built and the option is shown to everyone; slice 5, the introduction and conclusion, remains. See [Progress](#progress) |
+| Status | Agreed (decisions R1–R5 below). Slices 1–5 are built and the option is shown to everyone; the introduction and conclusion are measured and off by default (R4). See [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -153,3 +153,9 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
     3. they are written, from a readable reply, for all but at most one of the reports with two or more answered sections.
 
     Otherwise they stay available, unticked, on the plan screen.
+  - **Result: off by default for both models** ([field README](../eval/field/README.md#the-introduction-and-conclusion-0530-measured-off-by-default)). Every reply was readable. Backed sentences:
+    - 4B: 7 of 17 on `reports`, 0 of 6 held out. Ada Lovelace, where the sections answered the plan, is 5 of 5.
+    - 2B: 0 of 14 and 0 of 6.
+
+    The introductions restate the plan rather than the findings, the conclusions pack several claims into a sentence, and 2B adds claims no section made, which the check marks. The option stays on the plan screen, unticked.
+  - **Checked end to end** in Chromium against Qwen3.5-2B. With the Ada Lovelace lead as the document and the option ticked, the trace shows the step, and the report shows the introduction before the sections and the conclusion after them, with "2 of their 2 sentences are backed". It is exported to Markdown, and still there after a reload.
