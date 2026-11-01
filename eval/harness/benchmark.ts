@@ -16,7 +16,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.54.0";
+export const HARNESS_VERSION = "0.55.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -54,6 +54,8 @@ export interface BenchmarkConfig {
   taskIds?: string[];
   /** AgentConfig.fitHeadroom for research tasks, when measuring a value other than the app's. */
   fitHeadroom?: number;
+  /** AgentConfig.longReplyRoom for research tasks, when measuring a value other than the app's. */
+  longReplyRoom?: "always" | "when-answering";
 }
 
 export interface Environment {
@@ -398,7 +400,7 @@ export async function runBenchmark(options: {
     ...researchSuites.flatMap(({ suite, tasks, library }) =>
       tasks.map((task) => ({
         mode,
-        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, signal, onCall }),
+        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, longReplyRoom: config.longReplyRoom, signal, onCall }),
       })),
     ),
     ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),

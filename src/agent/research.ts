@@ -22,7 +22,15 @@ import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } fr
 // fitHeadroom: the share of the budget freed beyond what fitting needs (AgentConfig.fitHeadroom). 0: at
 // 0.25, 4B's stress test at 2,048 tokens processed 17% fewer prompt tokens but lost two tasks
 // (eval/field/README.md, harness 0.54.0).
-export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512, cutOffMaxTokens: 1024, callsPerSource: 2, fitHeadroom: 0 };
+// longReplyRoom: where the raised limit is kept free after a cut-off (AgentConfig.longReplyRoom).
+export const RESEARCH_LIMITS = {
+  maxCalls: 8,
+  maxTokensPerCall: 512,
+  cutOffMaxTokens: 1024,
+  callsPerSource: 2,
+  fitHeadroom: 0,
+  longReplyRoom: "always" as "always" | "when-answering",
+};
 
 export interface ResearchResult {
   status: AnswerStatus | "no-answer";
@@ -82,6 +90,8 @@ export async function runResearch(options: {
   constrained?: boolean;
   /** Overrides RESEARCH_LIMITS.fitHeadroom, for measuring it (eval/cli.ts --fit-headroom). */
   fitHeadroom?: number;
+  /** Overrides RESEARCH_LIMITS.longReplyRoom, for measuring it (--long-reply-room). */
+  longReplyRoom?: "always" | "when-answering";
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
   /** Called when a search has run, with its result count. */
@@ -104,6 +114,7 @@ export async function runResearch(options: {
       maxTokensPerCall: RESEARCH_LIMITS.maxTokensPerCall,
       cutOffMaxTokens: RESEARCH_LIMITS.cutOffMaxTokens,
       fitHeadroom: options.fitHeadroom ?? RESEARCH_LIMITS.fitHeadroom,
+      longReplyRoom: options.longReplyRoom ?? RESEARCH_LIMITS.longReplyRoom,
     },
     signal,
     onCall: options.onCall,

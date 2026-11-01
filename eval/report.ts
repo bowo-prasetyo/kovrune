@@ -42,6 +42,7 @@ const { values } = parseArgs({
     notes: { type: "string" },
     out: { type: "string" },
     overview: { type: "boolean" },
+    "long-reply-room": { type: "string" },
   },
 });
 if (!values.model) {
@@ -54,7 +55,18 @@ interface ReportResult {
   taskId: string;
   plan: { title: string; sections: string[]; fallback?: boolean; consulted?: string[] };
   planMs: number;
-  sections: Array<WrittenSection & { evidence: number; verified: number }>;
+  sections: Array<
+    WrittenSection & {
+      evidence: number;
+      verified: number;
+      /** Replies cut off at their limit, the most tool results removed or shortened to fit, and cache use (harness 0.55.0). */
+      cutOffs: number;
+      droppedResults: number;
+      promptTokens: number;
+      cachedTokens?: number;
+      promptMs?: number;
+    }
+  >;
   score: ReportScore;
   /** The introduction and conclusion, with their sentences checked; absent when fewer than two sections were answered or the reply could not be read. */
   synthesis?: Synthesis & { judged: number; backed: number; ms: number };
@@ -112,7 +124,8 @@ for (const [suite, task] of queue) {
   const checked: SynthesisSection[] = [];
   for (const question of plan.sections) {
     const began = Date.now();
-    const result = await runResearch({ question, library: field.library, model });
+    const result = await runResearch({ question, library: field.library, model, longReplyRoom: values["long-reply-room"] as "always" | "when-answering" | undefined });
+    const calls = result.agent.calls;
     checked.push({ question, answer: result.final?.answer, status: result.status, evidence: result.evidence });
     sections.push({
       question,
@@ -123,6 +136,11 @@ for (const [suite, task] of queue) {
       ms: Date.now() - began,
       evidence: result.evidence.length,
       verified: result.evidence.filter((e) => e.verified).length,
+      cutOffs: calls.filter((c) => c.cutOff).length,
+      droppedResults: Math.max(0, ...calls.map((c) => c.droppedResults ?? 0)),
+      promptTokens: calls.reduce((n, c) => n + c.promptTokens, 0),
+      ...(calls.length && calls.every((c) => c.cachedTokens !== undefined) ? { cachedTokens: calls.reduce((n, c) => n + c.cachedTokens!, 0) } : {}),
+      ...(calls.length && calls.every((c) => c.promptMs !== undefined) ? { promptMs: calls.reduce((n, c) => n + c.promptMs!, 0) } : {}),
     });
   }
   const score = scoreReport(task, plan, sections);
@@ -145,12 +163,16 @@ for (const suite of ["reports", "reportsholdout"] as const) {
   const t = sumScores(results.map((r) => r.score));
   const synth = results.flatMap((r) => (r.synthesis ? [r.synthesis] : []));
   const sumSynth = (key: "judged" | "backed" | "ms") => synth.reduce((n, x) => n + x[key], 0);
+  const all = results.flatMap((r) => r.sections);
+  const processed = all.reduce((n, s) => n + s.promptTokens - (s.cachedTokens ?? 0), 0);
   console.log(
     `\n${suite}: ${t.reports} reports, ${t.planned} sections planned (${t.fallbacks} fallbacks, ${t.joined} joining two things).` +
       `\n  Plan covers ${t.planCovered} of ${t.expected} expected sections; the report gives the facts of ${t.covered}.` +
       `\n  Matched sections: ${t.right} of ${t.matched} right; labelled Quotes found ${t.labelled}, ${t.labelledWrong} of them wrong.` +
       `\n  Unmatched sections: ${t.unmatched} (${t.unmatchedLabelled} labelled Quotes found).` +
       `\n  Introduction and conclusion: written for ${synth.length} of ${results.length} reports; ${sumSynth("backed")} of ${sumSynth("judged")} judged sentences backed by the sections' quotes (${Math.round(sumSynth("ms") / 1000)} s).` +
+      `\n  Sections with a cut-off reply: ${all.filter((s) => s.cutOffs).length}; that had to fit: ${all.filter((s) => s.droppedResults).length}.` +
+      `\n  Prompt tokens processed: ${processed} of ${all.reduce((n, s) => n + s.promptTokens, 0)} sent, in ${Math.round(all.reduce((n, s) => n + (s.promptMs ?? 0), 0) / 1000)} s.` +
       `\n  ${t.calls} calls, ${Math.round(t.ms / 60000)} min of sections.`,
   );
 }

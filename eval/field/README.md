@@ -682,6 +682,19 @@ So the offline suites do not reach the state the preview user's laptop was in. T
 
 What would help most is not reaching this state on a 4,096-token context. On the preview user's laptop, the state followed a cut-off reply, after which every later call kept 1,024 tokens free for its reply (0.50.0), searches and reads included, which need fewer than 100. Keeping the raised limit for final answers only would leave the conversation that much more room.
 
+### Room for the raised reply limit only where a long answer is due (0.55.0)
+
+After a reply is cut off at 512 tokens, the retry gets 1,024 (0.31.0), and since 0.50.0 every later call of the question keeps that limit. So every later call also keeps 1,024 tokens free, searches and reads included, which need under 100. On a 4,096-token context, with long reads, that left the conversation fitted, and processed again by the server, at every step. That is the state of the preview user's slow laptop (see the fit-headroom section above).
+
+**The change.** With `longReplyRoom: "when-answering"`, the context keeps room for the raised limit only on the retry right after a cut-off and on the last step, where a long answer is due. Other calls ask for as much of the raised limit as the room left allows, at least 512. A reply cut off by that room is retried with the full raised limit. Before any cut-off, nothing changes. The default stays `"always"` until measured. `bench:report` now records each section's cut-off replies, the results it had to fit away, and its cache use (`--long-reply-room` sets the value).
+
+**Measuring it.** No offline field task has a cut-off reply (none in the 0.54.0 4B baseline), so it is measured on the report suite at 4,096 tokens, whose broad section questions get long answers, planned as the app plans. The baseline runs every report. The variant runs only the reports with a section whose reply was cut off, plus one that had none as a control. A report without a cut-off cannot differ.
+
+**Adoption condition, declared before the run.** `"when-answering"` is adopted when at least one model has sections with a cut-off reply, and every such model meets all of these:
+1. report coverage on `reports` does not fall, and the `reportsholdout` total does not fall;
+2. matched sections labelled Quotes found without their facts do not rise, and sections that end without an answer do not rise;
+3. on the sections with a cut-off reply, the prompt tokens the server processed fall by at least 20%.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
