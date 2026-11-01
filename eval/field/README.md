@@ -664,6 +664,15 @@ But once the conversation no longer fits, `fitToContext` shortens or removes the
 2. answers labelled Quotes found that fail their task do not rise, over the four suites;
 3. on the tasks that had to fit, the prompt tokens the server processed fall by at least 20%.
 
+**At 4,096 tokens, no 4B task had to fit**, so the change cannot act there, and part 3 has no tasks to be met on. The baseline ([json](../results/field-0.54-cache-qwen3.5-4b-q4km.json)) is also a fresh 4B run on `main`: `field` 80 of 89, `multi` 9 of 13, `holdout` 35 of 37, `multiholdout` 5 of 8, and 4 of 103 answers labelled Quotes found failed. The largest prompt was 3,035 tokens. The server processed 178,554 of the 466,678 prompt tokens sent, and took the rest from its cache. That is 0.84 times the least possible (each task's largest prompt plus its replies, processed once), since the system prompt is cached between tasks too. A conversation that only grows wastes nothing. The three control tasks, run again with headroom, repeated exactly. The 2B run at 4,096 tokens was not started: in the 0.48.0 multi run, none of 2B's 21 tasks had to fit either.
+
+So the offline suites do not reach the state the preview user's laptop was in. There, after a reply was cut off at 512 tokens, the limit was raised to 1,024 for the rest of the question (0.50.0), which leaves less room for the conversation. Long PDF reads and Wikipedia and OpenAlex results then had to be fitted at every step.
+
+**The stress test, declared before its run.** At 2,048 tokens, as in the earlier fitting changes (0.43.0–0.45.0), on their task lists: 38 tasks for 4B and 82 for 2B (the tasks that lost results at 2,048 tokens, plus 11 controls), from `pdf`, `research`, `unanswerable`, `field` and `holdout`. The baseline runs them all with headroom 0. Headroom 0.25 then runs the ones whose baseline had to fit, plus three that did not. Headroom 0.25 is adopted when, for both models:
+1. passed tasks, over the suites other than `holdout`, do not fall, and the `holdout` total does not fall;
+2. answers labelled Quotes found that fail their task do not rise;
+3. on the tasks that had to fit, the prompt tokens the server processed fall by at least 20%.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
