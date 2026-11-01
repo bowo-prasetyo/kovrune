@@ -91,8 +91,11 @@ export function normalizeForMatch(text: string): string {
     // with a plain "|" (field suite, harness 0.32.0 baselines).
     .replace(MARKDOWN_LINK, "$1")
     .replace(/\\([!-/:-@[-`{-~])/g, "$1")
-    .replace(/[‘’‚‛]/g, "'")
-    .replace(/[“”„‟]/g, '"')
+    // Quote marks of any kind are one mark: models quoting a passage write its double quotes as single
+    // ones, since a double quote inside their JSON reply needs escaping. A preview user's report marked
+    // a real Wikipedia quote "not found" for 'a system for electronic transactions without relying on
+    // trust', which the article gives in double quotes.
+    .replace(/[‘’‚‛“”„‟"]/g, "'")
     .replace(/[‐-―−]/g, "-")
     // A hyphen between letters is ignored, with any line break after it, so "financial" matches a
     // PDF's "finan-\ncial" or "finan-cial", and "JSON- schema" (a quote of a line break) matches "JSON-schema".
