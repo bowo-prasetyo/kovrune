@@ -70,6 +70,13 @@ export interface AgentConfig {
   cutOffMaxTokens?: number;
   /** Tokens kept free for the reply and chat-template overhead. */
   contextReserve?: number;
+  /**
+   * When the conversation no longer fits, the share of the budget to free beyond what fitting needs
+   * (0 by default: just enough). Every change to an earlier tool result makes the server process the
+   * conversation again from there, which on a slow machine takes minutes; fitting with room to spare
+   * lets the next steps only add to the end, so the server reuses what it processed (fitToContext).
+   */
+  fitHeadroom?: number;
 }
 
 export interface CallRecord {
@@ -79,6 +86,10 @@ export interface CallRecord {
   error?: string;
   promptTokens: number;
   completionTokens: number;
+  /** Prompt tokens the server took from its cache, when it reports them; the rest it processed again. */
+  cachedTokens?: number;
+  /** Time the server spent processing the prompt, in ms, when it reports it. */
+  promptMs?: number;
   /** True when the runtime did not report usage and tokens were estimated from text length. */
   estimatedTokens: boolean;
   /**
@@ -154,20 +165,28 @@ export function extractJson(text: string): unknown {
  * shorter form when its tool gives one (`shorten`), and removed otherwise; if that is not enough,
  * the shortened ones are removed too, oldest first. The system prompt, the task and the latest
  * result are kept. Returns whether it fits, and how many tool results are shortened or removed in all.
+ *
+ * With `headroom`, a conversation that does not fit is fitted to that much less than the budget:
+ * every change to an earlier result makes the server process the conversation again from there, so
+ * fitting with room to spare lets the next steps only add to the end.
  */
 function fitToContext(
   messages: ChatMessage[],
   budget: number,
   shorten: (index: number) => string | undefined = () => undefined,
+  headroom = 0,
 ): { fits: boolean; removed: number } {
   const size = () => messages.reduce((sum, m) => sum + estimateTokens(m.content) + 4, 0);
   const isResult = (m: ChatMessage) => m.role === "user" && m.content.startsWith(OBSERVATION_PREFIX);
-  for (let i = 2; size() > budget && i < messages.length - 1; i++) {
+  const target = size() > budget && headroom > 0 ? Math.floor(budget * (1 - headroom)) : budget;
+  for (let i = 2; size() > target && i < messages.length - 1; i++) {
     const message = messages[i]!;
     if (!isResult(message) || message.content === REMOVED_OBSERVATION || message.content.startsWith(SHORTENED_PREFIX)) continue;
     const short = shorten(i);
     message.content = short && estimateTokens(short) < estimateTokens(message.content) ? `${SHORTENED_PREFIX}${short}` : REMOVED_OBSERVATION;
   }
+  // Shortened results are removed only as far as the budget itself needs: the headroom is not worth
+  // losing what a result's shorter form still shows.
   for (let i = 2; size() > budget && i < messages.length - 1; i++) {
     if (messages[i]!.content.startsWith(SHORTENED_PREFIX)) messages[i]!.content = REMOVED_OBSERVATION;
   }
@@ -192,7 +211,7 @@ export async function callForAction(options: {
   const started = performance.now();
   let ttftMs = 0;
   let text = "";
-  let usage: { promptTokens: number; completionTokens: number } | undefined;
+  let usage: { promptTokens: number; completionTokens: number; cachedTokens?: number; promptMs?: number } | undefined;
   let finishReason: string | undefined;
   for await (const chunk of model.generate({
     messages,
@@ -212,6 +231,8 @@ export async function callForAction(options: {
     promptTokens: usage?.promptTokens ?? messages.reduce((sum, m) => sum + estimateTokens(m.content), 0),
     completionTokens: usage?.completionTokens ?? estimateTokens(text),
     estimatedTokens: !usage,
+    ...(usage?.cachedTokens !== undefined ? { cachedTokens: usage.cachedTokens } : {}),
+    ...(usage?.promptMs !== undefined ? { promptMs: Math.round(usage.promptMs) } : {}),
     ttftMs: ttftMs || totalMs,
     totalMs,
   };
@@ -282,14 +303,20 @@ export async function runAgent(options: {
     }
     const budget = model.info.contextLength - maxTokens - (config.contextReserve ?? 128);
     // A result's shorter form comes from the tool that gave it, named by the action before it.
-    const fitted = fitToContext(transcript, budget, (i) => {
-      try {
-        const action = JSON.parse(transcript[i - 1]?.role === "assistant" ? transcript[i - 1]!.content : "") as { tool: string; args: unknown };
-        return tools.find((t) => t.name === action.tool)?.shorten?.(action.args, transcript[i]!.content.slice(OBSERVATION_PREFIX.length));
-      } catch {
-        return undefined;
-      }
-    });
+    const fitted = fitToContext(
+      transcript,
+      budget,
+      (i) => {
+        try {
+          const action = JSON.parse(transcript[i - 1]?.role === "assistant" ? transcript[i - 1]!.content : "") as { tool: string; args: unknown };
+          return tools.find((t) => t.name === action.tool)?.shorten?.(action.args, transcript[i]!.content.slice(OBSERVATION_PREFIX.length));
+        } catch {
+          return undefined;
+        }
+      },
+      // Room is worth freeing only for steps still to come: on the last one it would only lose text.
+      forceFinal ? 0 : (config.fitHeadroom ?? 0),
+    );
     if (!fitted.fits) {
       return { stopReason: "context-overflow", calls, transcript };
     }

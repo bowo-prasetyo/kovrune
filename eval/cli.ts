@@ -38,6 +38,7 @@ const { values } = parseArgs({
     suites: { type: "string", default: "research,unanswerable,pdf,coding" },
     modes: { type: "string", default: "constrained,unconstrained" },
     preset: { type: "string", default: "full" },
+    "fit-headroom": { type: "string" },
     tasks: { type: "string" },
     "ignore-self-check": { type: "boolean", default: false },
     "hardware-class": { type: "string", default: "other" },
@@ -114,6 +115,7 @@ const report = await runBenchmark({
     modes: values.modes.split(",") as Mode[],
     preset: values.preset as Preset,
     taskIds: values.tasks?.split(","),
+    ...(values["fit-headroom"] !== undefined ? { fitHeadroom: Number(values["fit-headroom"]) } : {}),
   },
   onCall: (call, index) => console.log(formatCall(call, index)),
   onResult: (result, done, total) => {

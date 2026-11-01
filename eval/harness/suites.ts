@@ -28,6 +28,8 @@ export const ALL_SUITES: SuiteName[] = ["research", "unanswerable", "pdf", "codi
 
 export interface TaskOptions {
   constrained: boolean;
+  /** AgentConfig.fitHeadroom for research tasks; the app's value when absent. */
+  fitHeadroom?: number;
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
 }
@@ -50,9 +52,9 @@ export async function runResearchTask(
   suite: Exclude<SuiteName, "coding">,
   library: ResearchLibrary,
   model: LanguageModel,
-  { constrained, signal, onCall }: TaskOptions,
+  { constrained, fitHeadroom, signal, onCall }: TaskOptions,
 ): Promise<TaskRun> {
-  const research = await runResearch({ question: task.question, library, model, constrained, signal, onCall });
+  const research = await runResearch({ question: task.question, library, model, constrained, fitHeadroom, signal, onCall });
   const score = scoreResearch(task, research, library);
   return { suite, taskId: task.id, kind: task.kind, score, agent: research.agent, research };
 }

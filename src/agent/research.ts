@@ -19,7 +19,8 @@ import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } fr
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
 // A reply cut off at 512 tokens is retried with 1,024; at 8 tokens/s that is about two minutes.
-export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512, cutOffMaxTokens: 1024, callsPerSource: 2 };
+// fitHeadroom: the share of the budget freed beyond what fitting needs (AgentConfig.fitHeadroom).
+export const RESEARCH_LIMITS = { maxCalls: 8, maxTokensPerCall: 512, cutOffMaxTokens: 1024, callsPerSource: 2, fitHeadroom: 0 };
 
 export interface ResearchResult {
   status: AnswerStatus | "no-answer";
@@ -77,6 +78,8 @@ export async function runResearch(options: {
   /** Open sources the agent may search besides the library (none by default). */
   sources?: OpenSource[];
   constrained?: boolean;
+  /** Overrides RESEARCH_LIMITS.fitHeadroom, for measuring it (eval/cli.ts --fit-headroom). */
+  fitHeadroom?: number;
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
   /** Called when a search has run, with its result count. */
@@ -98,6 +101,7 @@ export async function runResearch(options: {
       maxCalls: RESEARCH_LIMITS.maxCalls + RESEARCH_LIMITS.callsPerSource * sources.length,
       maxTokensPerCall: RESEARCH_LIMITS.maxTokensPerCall,
       cutOffMaxTokens: RESEARCH_LIMITS.cutOffMaxTokens,
+      fitHeadroom: options.fitHeadroom ?? RESEARCH_LIMITS.fitHeadroom,
     },
     signal,
     onCall: options.onCall,

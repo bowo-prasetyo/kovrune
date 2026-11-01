@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import { z } from "zod";
-import { extractJson, runAgent } from "../src/agent/agent.ts";
+import { estimateTokens, extractJson, runAgent } from "../src/agent/agent.ts";
 import { evaluateGate, falseReassurance, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
 import { formatCall, formatReport } from "../eval/harness/format.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
@@ -155,6 +155,46 @@ describe("research agent", () => {
     assert.match(run.agent.transcript[3]!.content, /removed to save context/);
     assert.match(run.agent.transcript.at(-2)!.content, /^Tool result[^\n]*\n\[/, "the latest result stays whole");
     assert.equal(run.agent.stopReason, "final");
+  });
+
+  it("with headroom, frees room once so the next steps only add to the end, which the server can reuse", async () => {
+    // Each change to an earlier message makes the server process the conversation again from there.
+    // The agent edits its transcript in place, so each request's messages are copied as it is made.
+    class Snapshotting extends ScriptedModel {
+      readonly seen: string[][] = [];
+      override async *generate(request: GenerationRequest) {
+        this.seen.push(request.messages.map((m) => m.content));
+        yield* super.generate(request);
+      }
+    }
+    const rewrites = (model: Snapshotting) =>
+      model.seen.slice(1).filter((messages, i) => model.seen[i]!.some((content, j) => j < model.seen[i]!.length - 1 && messages[j] !== content)).length;
+    const reads = corpus.slice(0, 7).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
+    const run = async (fitHeadroom: number) => {
+      const model = new Snapshotting([...reads, final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
+      Object.assign(model.info, { contextLength: 2000 });
+      const result = await runResearchTask(task("r01-lumen-maintainer"), "research", baseLibrary, model, { constrained: true, fitHeadroom });
+      return { model, result };
+    };
+    const tight = await run(0);
+    const roomy = await run(0.25);
+    assert.equal(tight.result.agent.stopReason, "final");
+    assert.equal(roomy.result.agent.stopReason, "final");
+    assert.ok(rewrites(tight.model) >= 3, `fitting just enough rewrites the start at nearly every step (${rewrites(tight.model)})`);
+    assert.ok(rewrites(roomy.model) < rewrites(tight.model), `${rewrites(roomy.model)} < ${rewrites(tight.model)}`);
+    // On the last step no step follows, so no room is freed: it fits just enough, as without headroom.
+    const last = (r: typeof tight) => r.result.agent.calls.at(-1)!.droppedResults ?? 0;
+    const late = async (fitHeadroom: number) => {
+      const model = new Snapshotting([...reads, final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
+      Object.assign(model.info, { contextLength: 2400 });
+      return { model, result: await runResearchTask(task("r01-lumen-maintainer"), "research", baseLibrary, model, { constrained: true, fitHeadroom }) };
+    };
+    assert.equal(last(await late(0.25)), last(await late(0)), "the first fit came on the last step");
+    const budget = 2000 - 512 - 128;
+    assert.ok(
+      roomy.model.seen.every((messages) => messages.reduce((n, content) => n + estimateTokens(content) + 4, 0) <= budget),
+      "it still fits the budget",
+    );
   });
 
   it("reads a document again when its result was removed, instead of calling it a repeat", async () => {
