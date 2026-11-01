@@ -638,6 +638,17 @@ Slice 5 of [report mode](../../docs/report-mode.md). After the last section, `wr
 
 A synthesis that quotes, or one that only lists what the sections found, sentence by sentence, would be easier to back. Plans that fit the sources would help too, since the introduction follows the plan.
 
+### Single and double quote marks matched as one (re-scored)
+
+Models write a passage's double quotes as single ones, since a double quote inside their JSON reply needs escaping. A preview user's report marked a real Wikipedia quote "not found" for that alone: 'a system for electronic transactions without relying on trust', which the article gives in double quotes. The quote check already treated curly and straight marks as the same. It now treats single and double marks as one too (`normalizeForMatch`).
+
+Re-scored with `bench:rescore --labels` on the 79 recorded result files that can be re-scored, it changes 9 of 4,275 answers:
+- **`f57` on 4B, in 5 reports:** wrong becomes right, labelled Quotes found. The quote had failed for its quote marks alone.
+- **`f03` on 2B, in 3 reports:** wrong becomes right, unlabelled.
+- **`f17` on 2B, in one harness 0.17.0 report:** a wrong answer, which says Secondary Licenses are those "incompatible" with the MPL, gains the label. Its quote of Exhibit B is real, and both sentences share most of its words. That report predates the model's own review (0.28.0), which is now asked of every answer the word checks would label, so a current run would check it once more.
+
+In every report since 0.28.0, the change only makes wrong answers right.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
