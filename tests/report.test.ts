@@ -1,9 +1,24 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { DEFAULT_SECTIONS, fallbackPlan, MAX_SECTIONS, parsePlan, planPrompt, planReport } from "../src/agent/report.ts";
+import {
+  DEFAULT_SECTIONS,
+  fallbackPlan,
+  MAX_SECTIONS,
+  OVERVIEW_CHARS,
+  OVERVIEW_TRANSLATED_COVERAGE,
+  overviewQuery,
+  overviewSentence,
+  overviewSources,
+  parsePlan,
+  planPrompt,
+  planReport,
+  plansFromSources,
+} from "../src/agent/report.ts";
+import { ResearchLibrary } from "../src/agent/research.ts";
 import { answerToBibtex, answerToMarkdown, exportFileName, type SavedAnswer } from "../src/app/research/answers.ts";
 import { makeBackup, parseBackup } from "../src/app/research/backup.ts";
 import {
+  describeConsulted,
   describeEstimate,
   describeReportLabels,
   labelKind,
@@ -74,7 +89,97 @@ describe("report mode: the plan (docs/report-mode.md, slice 1)", () => {
   });
 });
 
+describe("report mode: the source overview", () => {
+  const library = new ResearchLibrary([
+    {
+      id: "ada",
+      title: "Ada Lovelace.txt",
+      text: "Ada Lovelace was the only legitimate child of Lord Byron. Lovelace worked with Charles Babbage on the Analytical Engine. Her notes describe an algorithm.",
+    },
+    { id: "bread", title: "Bread.txt", text: "Bread is made from flour, water and yeast. It is baked in an oven." },
+    { id: "fuji", title: "富士山.txt", text: "富士山は日本の最高峰である。標高は3776メートルである。" },
+  ]);
+
+  it("searches for what a request is about, not for the words that ask for a report", async () => {
+    assert.equal(overviewQuery("Write a short report of 400 words on Ada Lovelace."), "a of on Ada Lovelace.");
+    assert.equal(await overviewSources(library, "Write a report"), undefined, "a request of nothing else finds nothing");
+    assert.equal(overviewSentence("| **Local model server** | llama.cpp ([section 3](#3-set-up)) |"), "Local model server; llama.cpp (section 3)");
+    assert.equal(overviewSentence("## Reading the answer"), "Reading the answer");
+  });
+
+  it("shows the best-matching sentences, by document, and only documents that match", async () => {
+    const overview = await overviewSources(library, "Write a biography of Ada Lovelace and her work with Babbage.");
+    assert.deepEqual(overview?.documents, ["Ada Lovelace.txt"]);
+    assert.match(overview!.text, /^From "Ada Lovelace.txt":\n- Ada Lovelace was the only legitimate child of Lord Byron\./);
+    assert.match(overview!.text, /- Lovelace worked with Charles Babbage/);
+    assert.equal(await overviewSources(library, "Write a report on volcanoes in Iceland."), undefined);
+  });
+
+  it("finds documents in another script by translating the terms, as search does", async () => {
+    const asked: string[] = [];
+    const overview = await overviewSources(library, "Write a report on Mount Fuji.", async (query, language) => {
+      asked.push(`${language}: ${query}`);
+      return language === "Japanese" ? "富士山" : undefined;
+    });
+    assert.deepEqual(asked, ["Japanese: a on Mount Fuji."]);
+    assert.deepEqual(overview?.documents, ["富士山.txt"]);
+    assert.match(overview!.text, /富士山は日本の最高峰である。/);
+  });
+
+  it("leaves out a passage in another script that shares only a few characters with the translation", async () => {
+    const partial = "日本の義務と権利";
+    assert.ok(library.index.search(partial).some((h) => h.docId === "fuji"), "search finds it");
+    assert.ok(library.index.coverage("fuji", partial) < OVERVIEW_TRANSLATED_COVERAGE);
+    assert.equal(await overviewSources(library, "Write a report on duties and rights.", async () => partial), undefined);
+  });
+
+  it("keeps the overview within its size", async () => {
+    const long = Array.from({ length: 200 }, (_, i) => `Topic sentence number ${i} about engines and gears.`).join(" ");
+    const big = new ResearchLibrary([{ id: "big", title: "Engines.txt", text: long }]);
+    const overview = await overviewSources(big, "Write a report on engines and gears.");
+    assert.ok(overview && overview.text.length <= OVERVIEW_CHARS + 40, `${overview?.text.length}`);
+  });
+
+  it("shows the planner the overview, asks it to plan from what the sources hold, and names the documents shown", async () => {
+    const english = new ResearchLibrary(library.documents.filter((d) => d.id !== "fuji"));
+    const model = new ScriptedModel(plan("Ada Lovelace", ["Who were her parents?", "What did she write about the engine?"]));
+    const result = await planReport({ model, request: "Write a biography of Ada Lovelace.", sources: ["your documents"], library: english, overview: true });
+    assert.deepEqual(result, { title: "Ada Lovelace", sections: ["Who were her parents?", "What did she write about the engine?"], consulted: ["Ada Lovelace.txt"] });
+    const prompt = model.requests.at(-1)!.messages[1]!.content;
+    assert.match(prompt, /What a search of your documents for the request found[^\n]*\nFrom "Ada Lovelace.txt":\n- Ada Lovelace was/);
+    assert.match(prompt, /Base the sections on what the sources hold/);
+    assert.equal(model.requests.length, 1, "no translation for documents in the request's script");
+  });
+
+  it("is off for every model until the project owner decides, so the planner sees the request alone", async () => {
+    for (const id of ["qwen3.5-2b-q4km", "qwen3.5-4b-q4km", "Qwen3.5-2B-q4f16_1-MLC"]) assert.equal(plansFromSources(id), false, id);
+    const model = new ScriptedModel(plan("Ada Lovelace", ["Who were her parents?", "What did she write?"]));
+    const result = await planReport({ model, request: "Write a biography of Ada Lovelace.", sources: ["your documents"], library });
+    assert.equal(result.consulted, undefined);
+    assert.equal(model.requests.at(-1)!.messages[1]!.content, planPrompt("Write a biography of Ada Lovelace.", ["your documents"]));
+  });
+
+  it("plans as before when nothing in the documents matches, or there are none", async () => {
+    for (const [docs, consulted] of [
+      [library.documents.filter((d) => d.id === "bread"), []],
+      [[], undefined],
+    ] as const) {
+      const model = new ScriptedModel(plan("T", ["A?", "B?"]));
+      const result = await planReport({ model, request: REQUEST, sources: ["your documents"], library: new ResearchLibrary([...docs]), overview: true });
+      assert.deepEqual(result.consulted, consulted, "an empty list says the documents were searched and nothing matched");
+      assert.equal(model.requests.at(-1)!.messages[1]!.content, planPrompt(REQUEST, ["your documents"]));
+    }
+  });
+});
+
 describe("report mode: the plan screen", () => {
+  it("names the documents a plan was made from", () => {
+    assert.equal(describeConsulted(["Guide.md"]), "“Guide.md”");
+    assert.equal(describeConsulted(["A.txt", "B.pdf"]), "“A.txt” and “B.pdf”");
+    assert.equal(describeConsulted(["A", "B", "C"]), "“A”, “B” and “C”");
+    assert.equal(describeConsulted(["A", "B", "C", "D"]), "“A”, “B” and 2 more");
+  });
+
   it("estimates the time from the model test, and asks for confirmation above 30 minutes", () => {
     assert.deepEqual(describeEstimate(4, 7), { text: "4 sections, up to 28 min", confirm: false });
     assert.deepEqual(describeEstimate(5, 7), { text: "5 sections, up to 35 min", confirm: true });

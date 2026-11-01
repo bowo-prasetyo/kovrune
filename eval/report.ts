@@ -8,6 +8,10 @@
 // --suites reports,reportsholdout (the default) runs both; the held-out reports print no result as
 // they run and are summed up only in totals, as the held-out suites are. A report already in --out is
 // skipped, so a run can resume after an interruption.
+//
+// The planner is given the field documents, as the app gives it the user's documents, and plans from
+// the request alone unless the source overview is on for the model (plansFromSources). --overview
+// shows it the overview whatever the model (harness 0.52.0).
 
 import { readFile, writeFile } from "node:fs/promises";
 import { arch, cpus, platform, totalmem } from "node:os";
@@ -32,6 +36,7 @@ const { values } = parseArgs({
     build: { type: "string" },
     notes: { type: "string" },
     out: { type: "string" },
+    overview: { type: "boolean" },
   },
 });
 if (!values.model) {
@@ -42,7 +47,7 @@ if (!values.model) {
 interface ReportResult {
   suite: "reports" | "reportsholdout";
   taskId: string;
-  plan: { title: string; sections: string[]; fallback?: boolean };
+  plan: { title: string; sections: string[]; fallback?: boolean; consulted?: string[] };
   planMs: number;
   sections: Array<WrittenSection & { evidence: number; verified: number }>;
   score: ReportScore;
@@ -78,6 +83,7 @@ let run: ReportRun = {
     hardware: { platform: platform(), arch: arch(), cpu: cpus()[0]?.model, cpuCores: cpus().length, memoryGb: Math.round(totalmem() / 2 ** 30) },
     build: values.build,
     notes: values.notes,
+    planner: values.overview ? "source overview" : "as the app plans",
   },
   results: [],
 };
@@ -93,7 +99,7 @@ for (const [suite, task] of queue) {
   if (run.results.some((r) => r.taskId === task.id)) continue;
   const held = suite === "reportsholdout";
   const started = Date.now();
-  const plan = await planReport({ model, request: task.request, sources: ["your documents"] });
+  const plan = await planReport({ model, request: task.request, sources: ["your documents"], library: field.library, overview: values.overview });
   const planMs = Date.now() - started;
   const sections: ReportResult["sections"] = [];
   for (const question of plan.sections) {

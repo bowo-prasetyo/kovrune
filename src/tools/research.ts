@@ -62,7 +62,7 @@ export function languageMismatch(question: string, answer: string): { asked: str
 }
 
 /** The writing system a document language from documentLanguage() is written in, as mainScript() names it. */
-function scriptOfLanguage(language: string): string {
+export function scriptOfLanguage(language: string): string {
   if (language === "Japanese" || language === "Chinese") return "Chinese or Japanese";
   if (language === "Korean") return "Korean";
   return language.endsWith(" script") ? language.slice(0, -" script".length) : "Latin";

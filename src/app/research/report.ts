@@ -16,6 +16,14 @@ export function reportMinutes(sections: number, maxTaskMinutes?: number): number
   return maxTaskMinutes === undefined ? undefined : sections * maxTaskMinutes;
 }
 
+/** The documents a plan was made from, as the plan screen names them: "Guide.md", "A.txt and B.pdf", "A.txt, B.pdf and 2 more". */
+export function describeConsulted(titles: string[]): string {
+  const quoted = titles.map((t) => `“${t}”`);
+  if (quoted.length <= 2) return quoted.join(" and ");
+  if (quoted.length === 3) return `${quoted[0]}, ${quoted[1]} and ${quoted[2]}`;
+  return `${quoted[0]}, ${quoted[1]} and ${quoted.length - 2} more`;
+}
+
 /** "5 sections, up to 35 min", and whether to ask for confirmation first. */
 export function describeEstimate(sections: number, maxTaskMinutes?: number): { text: string; confirm: boolean } {
   const count = `${sections} ${sections === 1 ? "section" : "sections"}`;

@@ -1,0 +1,678 @@
+{
+  "harnessVersion": "0.52.0",
+  "createdAt": "2026-11-01T01:56:17.919Z",
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "planner": "source overview",
+    "notes": "The source overview (--overview), code 32f2b3c. Compare with reports-0.51-qwen3.5-4b-q4km.json, the blind planner. Same build and CPU type."
+  },
+  "results": [
+    {
+      "suite": "reports",
+      "taskId": "rp01-local-server",
+      "plan": {
+        "title": "Setting Up Kovrune with a Local Model Server",
+        "sections": [
+          "What are the requirements and setup steps for configuring a local model server, including specific command-line arguments for llama.cpp and handling cross-system connectivity?",
+          "How does the system handle model testing, and what specific troubleshooting steps should be taken if the test fails due to garbled output, server issues, or slow performance?",
+          "What are the supported local server options, and how does the device advisor determine the optimal browser path based on hardware capabilities like GPU support?",
+          "How does the local server configuration impact authentication, trust decisions, and the availability of capabilities such as permitted task types and model libraries?"
+        ],
+        "consulted": [
+          "kovrune-user-guide.md",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 81159,
+      "sections": [
+        {
+          "question": "What are the requirements and setup steps for configuring a local model server, including specific command-line arguments for llama.cpp and handling cross-system connectivity?",
+          "answer": "Requirements and setup steps for configuring a local model server (llama.cpp) and handling cross-system connectivity:\n\n1. **Server Setup Commands**:\n   - Use the real path to your model file after `-m`.\n   - `--host 0.0.0.0` is needed when the browser and server run on different systems.\n   - Wait for `listening on http://0.0.0.0:8080` and leave the terminal open.\n\n2. **Cross-System Connectivity**:\n   - The browser needs permission for the site to reach the local server.\n   - Chrome/Edge require the \"Apps on device\" permission to be set to \"Allow\".\n   - llama.cpp server accepts requests from any site by default.\n   - For Ollama, add the site to `OLLAMA_ORIGINS` (e.g., `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).\n\nEvidence:\n- [\"kovrune-user-guide#4\"] \"Use the real path to your model file after `-m`.\"\n- [\"kovrune-user-guide#4\"] \"`--host 0.0.0.0` is needed when the browser and the server run on different systems, such as Windows and WSL.\"\n- [\"kovrune-user-guide#4\"] \"Wait for `listening on http://0.0.0.0:8080`, and leave the terminal open while you use Kovrune.\"\n- [\"kovrune-user-guide#4\"] \"On the preview site, the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it.\"\n- [\"kovrune-user-guide#4\"] \"llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://bowo-prasetyo.github.io`).\"",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 361547,
+          "evidence": 5,
+          "verified": 5
+        },
+        {
+          "question": "How does the system handle model testing, and what specific troubleshooting steps should be taken if the test fails due to garbled output, server issues, or slow performance?",
+          "answer": "The system handles model testing by using a local model server (e.g., llama-server or Ollama) accessible at `http://127.0.0.1:8080/v1`. Troubleshooting steps for specific failures include:\n\n1. **Garbled output**: Use a different browser path on a GPU that runs models incorrectly, or use a local model server.\n2. **Server issues**: If the server fails to start, ensure `--host 0.0.0.0` is set if the browser and server are on different systems. If the server fails to start or the computer becomes very slow with a bigger model, close other programs, especially browser tabs, and try again.\n3. **Slow performance**: If an answer takes many minutes, use a smaller model like Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 165609,
+          "evidence": 2,
+          "verified": 1
+        },
+        {
+          "question": "What are the supported local server options, and how does the device advisor determine the optimal browser path based on hardware capabilities like GPU support?",
+          "answer": "Supported local server options are **llama.cpp server** (primary) and **Ollama** (experimental). The device advisor determines the optimal browser path by checking if the device has a **capable GPU**; if it does, it chooses the browser path, otherwise it routes through a local server.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 157569,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "How does the local server configuration impact authentication, trust decisions, and the availability of capabilities such as permitted task types and model libraries?",
+          "answer": "Local server configuration impacts authentication, trust decisions, and capabilities as follows:\n\n1. **Authentication**: Each peer generates a keypair locally and stores it in IndexedDB as a non-extractable WebCrypto key. These keys authenticate messages by proving who sent them, but do not verify content correctness. No real-world identity or cryptocurrency is required.\n\n2. **Trust decisions**: There is no global reputation system. Instead, Kovrune records local history per peer (tasks completed, verified results, user feedback). Users explicitly choose which circle members to trust for which task types.\n\n3. **Capabilities**: The `CAPABILITIES` message in the task exchange protocol conveys permitted task types, available models (including MLC-compiled model libraries and weights), and current availability. Model selections and configuration are persisted locally, and model files are stored separately from task data to ensure they survive conversation clearing.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 160706,
+          "evidence": 2,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 2,
+        "covered": 2,
+        "expected": 4,
+        "matched": 2,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 18,
+        "ms": 845431
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp02-privacy",
+      "plan": {
+        "title": "Kovrune Data Handling and Network Transmission",
+        "sections": [
+          "What specific factors does Kovrune consider when deciding which independent tasks to delegate to peers?",
+          "How does Kovrune ensure that private data and tasks remain on the user's machine without being sent to a hosted provider?",
+          "What network technologies and mechanisms does Kovrune use to establish connections between peers?",
+          "How does Kovrune manage the sharing of files and conversations to ensure explicit user permissions are respected?"
+        ],
+        "consulted": [
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 58219,
+      "sections": [
+        {
+          "question": "What specific factors does Kovrune consider when deciding which independent tasks to delegate to peers?",
+          "answer": "Kovrune considers the following factors when deciding whether to delegate independent tasks to peers: required capability, data size, peer availability, the user's sharing permissions, and expected benefit over local execution.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 114152,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How does Kovrune ensure that private data and tasks remain on the user's machine without being sent to a hosted provider?",
+          "answer": "Kovrune ensures that private data and tasks remain on the user's machine by adhering to the principle of 'Local control and privacy', where private data and tasks stay on the user's device unless the user explicitly authorizes sharing. Additionally, it operates without a central AI inference service or a mandatory company-operated task broker, instead using community-operated discovery and relay infrastructure to help peers connect.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 146862,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "What network technologies and mechanisms does Kovrune use to establish connections between peers?",
+          "answer": "Kovrune uses js-libp2p with WebRTC for browser-to-browser connections, WebTransport/WebSockets to relays, and circuit relay v2 for signaling. It also employs community-operated, self-hostable, and replaceable signaling infrastructure, and TURN relays for network configurations that require them. Task messages are small text and are end-to-end encrypted between peers.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 90357,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How does Kovrune manage the sharing of files and conversations to ensure explicit user permissions are respected?",
+          "answer": "Kovrune manages file and conversation sharing by asking for explicit permission before sending files, conversation history, code, or task context to any peer, and by showing exactly what will be sent.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 111452,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 2,
+        "covered": 0,
+        "expected": 4,
+        "matched": 2,
+        "right": 0,
+        "labelledWrong": 2,
+        "labelled": 2,
+        "unmatched": 2,
+        "unmatchedLabelled": 1,
+        "calls": 12,
+        "ms": 462823
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp03-reading-answers",
+      "plan": {
+        "title": "Verifying Kovrune's Answers",
+        "sections": [
+          "How does Kovrune ensure that every quote in its answer is actually present in the source document?",
+          "What is the relationship between the words in Kovrune's answer and the specific quotes it extracts from its sources?",
+          "Why does checking the quotes and their supporting evidence not necessarily prove that the overall answer is correct?",
+          "What specific steps must a user take to verify that the quotes fully support the entire answer provided by Kovrune?"
+        ],
+        "consulted": [
+          "kovrune-user-guide.md",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 57290,
+      "sections": [
+        {
+          "question": "How does Kovrune ensure that every quote in its answer is actually present in the source document?",
+          "answer": "Kovrune ensures that every quote is present in the source document by showing a checkmark (✓) for found quotes and an X (✗) for not found quotes. For quotes that are mostly real but not word-for-word (at least 70% of words appear in order), it shows the closest passage with differences marked (highlighted words in source, struck-out words only in quote). It also displays the document name, page number for PDFs, and links to Wikipedia/OpenAlex sources with retrieval times.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 104445,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What is the relationship between the words in Kovrune's answer and the specific quotes it extracts from its sources?",
+          "answer": "Every quote in Kovrune's answer is word for word in its source, and every sentence of the answer shares most of its words with a quote. This proves the quotes are real, not that the answer is right: check that they support the whole answer.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 119977,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "Why does checking the quotes and their supporting evidence not necessarily prove that the overall answer is correct?",
+          "answer": "Checking quotes and their supporting evidence proves that the quotes are real and sourced correctly, but it does not necessarily prove that the overall answer is correct because the content of the quotes themselves might be factually incorrect, misleading, or irrelevant to the question. As stated in the documents: 'This proves the quotes are real, **not** that the answer is right' and 'A valid key proves who sent a message, not that its content is correct.'",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 152616,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "What specific steps must a user take to verify that the quotes fully support the entire answer provided by Kovrune?",
+          "answer": "To verify that quotes fully support the entire answer provided by Kovrune, a user must check that every sentence of the answer shares most of its words with a quote. The 'Quotes found' indicator confirms that every quote is word-for-word in its source and that every sentence of the answer shares most of its words with a quote, but this only proves the quotes are real, not that the answer is right. Users must manually check that the quotes support the whole answer, particularly if sentences are marked with ⚠ (indicating they share few words with any quote) or if some quotes are marked ✗ (not found).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 162065,
+          "evidence": 3,
+          "verified": 3
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 2,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 3,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 16,
+        "ms": 539103
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp04-mpl",
+      "plan": {
+        "title": "Obligations and Rights Under MPL 2.0",
+        "sections": [
+          "What are the specific requirements regarding the attachment of notices and the prohibition of secondary licenses under MPL 2.0?",
+          "What are the legal limitations on litigation, modification rights, and the role of the license steward regarding the MPL 2.0?",
+          "What warranty, support, indemnity, and liability obligations apply to recipients of Covered Software under this license?",
+          "Which specific software projects, such as Kovrune, are licensed under the Mozilla Public License 2.0?"
+        ],
+        "consulted": [
+          "mpl-2.0.txt",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 57171,
+      "sections": [
+        {
+          "question": "What are the specific requirements regarding the attachment of notices and the prohibition of secondary licenses under MPL 2.0?",
+          "answer": "Under MPL 2.0, if you distribute Source Code Form that is Incompatible With Secondary Licenses, you must attach the notice described in Exhibit B. The notice states: 'This Source Code Form is Incompatible With Secondary Licenses, as defined by the Mozilla Public License, v. 2.0.' Additionally, you may not remove or alter the substance of any license notices (including copyright notices, patent notices, disclaimers of warranty, or limitations of liability) contained within the Source Code Form of the Covered Software, except to remedy known factual inaccuracies.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 158203,
+          "evidence": 2,
+          "verified": 1
+        },
+        {
+          "question": "What are the legal limitations on litigation, modification rights, and the role of the license steward regarding the MPL 2.0?",
+          "answer": "Legal limitations on litigation: Any litigation relating to the MPL 2.0 License may be brought only in the courts of a jurisdiction where the defendant maintains its principal place of business, and such litigation shall be governed by the laws of that jurisdiction without reference to conflict-of-law provisions. Modification rights: Except as provided in Section 10.3, no one other than the license steward has the right to modify or publish new versions of the License. Role of the license steward: The Mozilla Foundation is the license steward, and they have the exclusive right to modify or publish new versions of the License (except for creating modified versions for software not governed by the License, which requires renaming and removing references to the license steward).",
+          "quotesFound": false,
+          "status": "unverified",
+          "calls": 3,
+          "ms": 110477,
+          "evidence": 1,
+          "verified": 0
+        },
+        {
+          "question": "What warranty, support, indemnity, and liability obligations apply to recipients of Covered Software under this license?",
+          "answer": "Under the MPL 2.0 license, recipients of Covered Software receive no warranty, support, indemnity, or liability obligations from Contributors. The software is provided 'as is' without any warranty. However, a recipient may choose to offer their own warranty, support, indemnity, or liability obligations to one or more recipients of Covered Software. If they do so, they must make it clear that such obligations are offered by them alone, not on behalf of any Contributor, and they must indemnify every Contributor for any liability incurred by such Contributor as a result of those terms they offer.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 207895,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "Which specific software projects, such as Kovrune, are licensed under the Mozilla Public License 2.0?",
+          "answer": "Kovrune is licensed under the Mozilla Public License 2.0.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 5,
+          "ms": 147751,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 2,
+        "covered": 1,
+        "expected": 4,
+        "matched": 2,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 1,
+        "calls": 17,
+        "ms": 624326
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp05-ada",
+      "plan": {
+        "title": "Ada Lovelace: Life and Legacy",
+        "sections": [
+          "Who was Ada Lovelace and what was her family background?",
+          "How did Ada Lovelace meet Charles Babbage and begin her collaboration with him?",
+          "What were Ada Lovelace's key contributions to computing, specifically regarding information encoding?",
+          "How is Ada Lovelace commemorated today?"
+        ],
+        "consulted": [
+          "Ada Lovelace (Wikipedia, lead section).txt"
+        ]
+      },
+      "planMs": 54063,
+      "sections": [
+        {
+          "question": "Who was Ada Lovelace and what was her family background?",
+          "answer": "Ada Lovelace (née Augusta Ada Byron; 10 December 1815 – 27 November 1852) was an English mathematician and writer, often considered the first computer programmer. She was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke. Lord Byron separated from his wife a month after Ada was born and died when she was eight. She married William King in 1835, who was created Viscount Ockham and 1st Earl of Lovelace in 1838. The name Lovelace was chosen because Ada was descended from the extinct Baron Lovelaces, making her the Countess of Lovelace.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 184827,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How did Ada Lovelace meet Charles Babbage and begin her collaboration with him?",
+          "answer": "Ada Lovelace first met Charles Babbage on 5 June 1833, when she and her mother attended one of Charles Babbage's Saturday night soirées with their mutual friend, and Lovelace's private tutor, Mary Somerville. Her mathematical talents led to a long working relationship and friendship with him, particularly regarding his work on the analytical engine.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 86276,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What were Ada Lovelace's key contributions to computing, specifically regarding information encoding?",
+          "answer": "Ada Lovelace's key contribution to computing regarding information encoding was being the first to point out the possibility of encoding information besides mere arithmetical figures, such as music, and manipulating it with a machine. She developed a vision of the capability of computers to go beyond mere calculating or number-crunching.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 125308,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "How is Ada Lovelace commemorated today?",
+          "answer": "Ada Lovelace is commemorated today through the naming of a programming language, roads, buildings, and institutes, as well as through programmes, lectures, and courses. There are also plaques, statues, paintings, and literary and non-fiction works about her.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 4,
+          "ms": 129635,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 2,
+        "planCovered": 2,
+        "covered": 3,
+        "expected": 4,
+        "matched": 2,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 1,
+        "unmatched": 2,
+        "unmatchedLabelled": 2,
+        "calls": 13,
+        "ms": 526046
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp06-roadmap",
+      "plan": {
+        "title": "Kovrune Roadmap and Design Decisions",
+        "sections": [
+          "How does the project owner's decision to position Kovrune for lighter tasks influence the roadmap regarding trusted circles and community participation?",
+          "What are the specific design decisions regarding the evaluation set and the licensing model that define the project's quality instruments and legal framework?",
+          "How do the decisions to keep the endpoint on the user's machine or LAN and use an OpenAI-compatible adapter shape the roadmap for local trust and protocol changes?",
+          "In what way do the decisions about versioned releases and transparent breaking changes relate to the roadmap for keys, authentication, and invitation mechanisms?"
+        ],
+        "consulted": [
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 61338,
+      "sections": [
+        {
+          "question": "How does the project owner's decision to position Kovrune for lighter tasks influence the roadmap regarding trusted circles and community participation?",
+          "answer": "The project owner's decision to position Kovrune for lighter tasks (local research with checked quotes) in Revision 3 narrows the product scope to what M1 ships. Consequently, the coding agent and trusted circles are presented as roadmap milestones (M2 through M6) rather than current features. This positioning explicitly defers 'Open participation by unknown peers' until evidence supports it, while the current roadmap focuses on trusted circles where users invite specific peers. The decision to focus on lighter tasks means the complex features of trusted circles and community participation are planned for later, with the current product limited to local research operations.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 131083,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "What are the specific design decisions regarding the evaluation set and the licensing model that define the project's quality instruments and legal framework?",
+          "answer": "The evaluation set is the project's main quality instrument and is built in M0. It consists of 20–50 fixed tasks across research and coding, with objective scoring criteria. Results are published per model, runtime, and hardware class, and run in CI on every release candidate. The licensing model is the Mozilla Public License 2.0 (MPL-2.0), which grants a world-wide, royalty-free, non-exclusive license for contributions.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 4,
+          "ms": 168656,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "How do the decisions to keep the endpoint on the user's machine or LAN and use an OpenAI-compatible adapter shape the roadmap for local trust and protocol changes?",
+          "answer": "The decision to keep the endpoint on the user's machine or LAN and use an OpenAI-compatible adapter shapes the roadmap by making it part of the initial release (M1) rather than a later extension. This approach allows 8–70B-parameter models to be available to users with suitable hardware, which is expected to be the main path for demanding agent work. It also requires setup guidance for cross-origin configuration and browser local-network-access permissions, while explicitly excluding hosted third-party APIs from supported runtimes to ensure local trust.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 131563,
+          "evidence": 2,
+          "verified": 1
+        },
+        {
+          "question": "In what way do the decisions about versioned releases and transparent breaking changes relate to the roadmap for keys, authentication, and invitation mechanisms?",
+          "answer": "The decisions about versioned releases and transparent breaking changes relate to the roadmap for keys, authentication, and invitation mechanisms by ensuring that protocol changes affecting these components are managed with versioned releases and migration notes. Specifically, the governance section states 'Transparent decisions about breaking protocol changes, with versioned releases and migration notes,' while the identity and circles section details that keys authenticate messages, circles require invitations (links or QR codes with public keys and tokens), and the task exchange protocol is versioned. This ensures that changes to keys, authentication, and invitation mechanisms are communicated transparently and can be migrated by users across versions.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 166788,
+          "evidence": 4,
+          "verified": 4
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 2,
+        "covered": 1,
+        "expected": 4,
+        "matched": 2,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 1,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 16,
+        "ms": 598090
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx01-eiffel",
+      "plan": {
+        "title": "Eiffel Tower Report",
+        "sections": [
+          "What is the Eiffel Tower, where is it located, and what materials is it made of?",
+          "Who built the tower, for what purpose, and when was it constructed?",
+          "What was the tower's original height, and how long did it hold the title of the world's tallest structure?"
+        ],
+        "consulted": [
+          "Tour Eiffel (Wikipedia, lead section).txt"
+        ]
+      },
+      "planMs": 38932,
+      "sections": [
+        {
+          "question": "What is the Eiffel Tower, where is it located, and what materials is it made of?",
+          "answer": "The Eiffel Tower is a self-supporting iron lattice tower 330 meters tall (with antennas). It is located in Paris, at the north-west end of the Champ de Mars park, on the banks of the Seine in the 7th arrondissement. It is made of puddled iron (fer puddlé).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 92209,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "Who built the tower, for what purpose, and when was it constructed?",
+          "answer": "The Great Wall (长城) was built by various dynasties in North China (华北一带) as a large-scale military isolation wall (军用隔离墙) to resist invasions from nomadic tribes of the Eurasian steppe (抵御来自欧亚草原的游牧民族入侵). The existing remnants are primarily the Ming Great Wall, which was started in the 14th century (始建于14世纪).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 93107,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What was the tower's original height, and how long did it hold the title of the world's tallest structure?",
+          "answer": "The document about the Great Wall of China does not mention a specific tower, its original height, or the duration it held the title of the world's tallest structure. The Great Wall is described as a series of walls and fortifications, not a single tower.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 83811,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 3,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 2,
+        "covered": 1,
+        "expected": 3,
+        "matched": 2,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 11,
+        "ms": 269127
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx02-fuji",
+      "plan": {
+        "title": "Mount Fuji: Geography, Designation, and Heritage",
+        "sections": [
+          "What is Mount Fuji, where is it located, and what are its geological and artistic significance?",
+          "When was Mount Fuji designated as a national park, and what specific legal statuses has it held from 1936 to 2013?",
+          "In what year was Mount Fuji inscribed as a World Heritage Site, and what is the official name of this designation?"
+        ],
+        "consulted": [
+          "富士山 (Wikipedia, lead section).txt"
+        ]
+      },
+      "planMs": 49118,
+      "sections": [
+        {
+          "question": "What is Mount Fuji, where is it located, and what are its geological and artistic significance?",
+          "answer": "Mount Fuji is an active volcano in Japan, standing at 3,775.56 m (with its highest point at 3,776.12 m). It is an independent peak located across the borders of Yamanashi Prefecture (Fuji City, Naoetsu District, Narazura Village) and Shizuoka Prefecture (Fuji City, Fuji City, Susono City, Midenaka City, Koyama Town). Its geological significance includes being a stratovolcano composed of basaltic material with a profile of a suspension curve, extending from the coast of Suruga Bay. It has influenced climate and geological layers significantly. Artistically, it has been a subject for numerous works of art. It was registered as a World Heritage Site in 2013 under the name 'Mount Fuji: Symbol of Faith and Source of Art'.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 145832,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "When was Mount Fuji designated as a national park, and what specific legal statuses has it held from 1936 to 2013?",
+          "answer": "Mount Fuji was designated as part of the Fuji-Hakone-Izu National Park in 1936. From 1936 to 2013, its specific legal statuses were: 1) Designated as part of Fuji-Hakone-Izu National Park in 1936; 2) Designated as a Special Scenic Spot (特別名勝) in 1952; 3) Designated as a Historic Site (史跡) in 2011; and 4) Inscribed as a World Heritage Site ('Mount Fuji: Source of Faith and Art') in June 2013.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 92454,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "In what year was Mount Fuji inscribed as a World Heritage Site, and what is the official name of this designation?",
+          "answer": "Mount Fuji was inscribed as a World Heritage Site in 2013. The official name of the designation is 'Mount Fuji: Source of Faith and Art'.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 64952,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 3,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 2,
+        "covered": 2,
+        "expected": 3,
+        "matched": 2,
+        "right": 2,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 10,
+        "ms": 303238
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx03-troubleshooting",
+      "plan": {
+        "title": "Kovrune and llama.cpp Troubleshooting Report",
+        "sections": [
+          "How do I set up the required local model server using llama.cpp, including options for building from source or downloading releases?",
+          "What are the specific steps to resolve common port conflicts on port 8080 and how can I verify if another server is interfering?",
+          "Why does the model test fail with 'not acting on tool results' and how can I fix this by ensuring the server uses the same model file?",
+          "What causes the 'HTTPS is not supported' error when using the -hf flag and how do I resolve it by installing SSL libraries or rebuilding?"
+        ],
+        "consulted": [
+          "kovrune-user-guide.md",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 63573,
+      "sections": [
+        {
+          "question": "How do I set up the required local model server using llama.cpp, including options for building from source or downloading releases?",
+          "answer": "To set up the required local model server using llama.cpp, you can either download a release or build from source. To build on Linux or WSL, run: sudo apt install build-essential cmake git libssl-dev, then git clone https://github.com/ggml-org/llama.cpp.git, cd llama.cpp, cmake -B build, and cmake --build build --config Release -j. The server is located at build/bin/llama-server. libssl-dev provides HTTPS support, which is required for the -hf download option.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 110989,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What are the specific steps to resolve common port conflicts on port 8080 and how can I verify if another server is interfering?",
+          "answer": "To resolve port 8080 conflicts and verify interference:\n1. Use the command `ss -ltnp | grep 8080` to check which server is using port 8080.\n2. If another server (often an earlier llama-server) is using the port, stop it with `pkill -x llama-server`.\n3. Alternatively, start the server on a different port (e.g., `--port 8081`) and use that address in the app.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 85056,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "Why does the model test fail with 'not acting on tool results' and how can I fix this by ensuring the server uses the same model file?",
+          "answer": "The model test fails with 'not acting on tool results' due to a server problem with multi-step conversations, specifically seen with Ollama. To fix this, you should use a llama.cpp server with the same model file.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 113438,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What causes the 'HTTPS is not supported' error when using the -hf flag and how do I resolve it by installing SSL libraries or rebuilding?",
+          "answer": "The 'HTTPS is not supported' error with the -hf flag occurs because llama.cpp was built without SSL support. To resolve it, you can either download the model using curl as described in section 3, or rebuild llama.cpp after installing the SSL development libraries using the command: sudo apt install libssl-dev.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 128088,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 3,
+        "covered": 3,
+        "expected": 3,
+        "matched": 3,
+        "right": 3,
+        "labelledWrong": 0,
+        "labelled": 2,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 12,
+        "ms": 437571
+      }
+    }
+  ]
+}

@@ -169,7 +169,7 @@ export async function runResearch(options: {
  * across languages (tools/research.ts). Each query and language is translated once per question.
  * A failed translation gives no translation, so the search goes on with the terms as they are.
  */
-function translator(model: LanguageModel, signal?: AbortSignal): Translate {
+export function translator(model: LanguageModel, signal?: AbortSignal): Translate {
   const cache = new Map<string, Promise<string | undefined>>();
   return (query, language) => {
     const key = `${language}\n${query}`;
