@@ -4,6 +4,7 @@
 import type { CheckedEvidence } from "../../agent/evidence.ts";
 import type { ResearchLibrary, ResearchResult } from "../../agent/research.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
+import type { Synthesis, SynthesisPart } from "../../agent/synthesis.ts";
 import type { Citation } from "../../sources/session.ts";
 import { describeReportLabels } from "./report.ts";
 import { describeNoAnswer, describePages, describeStatus } from "./trace.ts";
@@ -45,6 +46,11 @@ export interface SavedReport {
   unfinished?: boolean;
   /** True when the user stopped it before every section was written. */
   stopped?: boolean;
+  /**
+   * The introduction and conclusion, written by the model from the sections (slice 5), with their
+   * sentences checked against the sections' quotes; absent when not asked for or not written.
+   */
+  synthesis?: Synthesis;
 }
 
 export function toSavedAnswer(options: {
@@ -135,6 +141,15 @@ function markedAnswer(answer: SavedAnswer): string {
   return support.sentences.map((s) => (s.backed === false ? `⚠ ${s.text}` : s.text)).join("");
 }
 
+/** An introduction or conclusion, with ⚠ before the sentences no section's quote backs. */
+function markedPart(part: SynthesisPart): string {
+  return part.support.sentences.map((s) => (s.backed === false ? `⚠ ${s.text}` : s.text)).join("");
+}
+
+/** What the introduction and conclusion are, as the report view and the export say. */
+export const SYNTHESIS_NOTE =
+  "The introduction and conclusion are written by the model from the sections' answers, without new reading. Their sentences are checked against the sections' quotes like an answer's, and they do not change any section's label.";
+
 /** A section's label, as its answer would read on its own. */
 export function sectionLabel(section: SavedAnswer): string {
   return section.status === "no-answer" ? "No answer" : describeStatus(section.status, section.evidence, shownSupport(section)).label;
@@ -172,6 +187,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
     }
     return `[${numbers.get(key)}]${pages ? `, ${pages}` : ""}`;
   };
+  if (report.synthesis) lines.push("## Introduction", "", markedPart(report.synthesis.introduction), "");
   report.sections.forEach((section, i) => {
     lines.push(`## ${i + 1}. ${oneLine(section.question)}`, "");
     for (const error of section.sourceErrors) lines.push(`> ${error} This section is based on the other sources only.`, "");
@@ -187,6 +203,9 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
     }
     if (section.evidence.length) lines.push("");
   });
+  if (report.synthesis) {
+    lines.push("## Conclusion", "", markedPart(report.synthesis.conclusion), "", `_${SYNTHESIS_NOTE}_`, "");
+  }
   const missing = report.plan.slice(report.sections.length);
   if (missing.length) {
     lines.push("## Sections not written", "", ...missing.map((q, i) => `${report.sections.length + i + 1}. ${oneLine(q)}`), "");
@@ -197,7 +216,8 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
     report.sections.forEach((section, i) => lines.push(`${i + 1}. ${oneLine(section.question)}`, ...section.steps.map((step) => `   - ${step}`)));
     lines.push("");
   }
-  if (report.sections.some((s) => shownSupport(s)?.sentences.some((t) => t.backed === false))) {
+  const synthesisMarked = report.synthesis && [report.synthesis.introduction, report.synthesis.conclusion].some((p) => p.support.sentences.some((t) => t.backed === false));
+  if (synthesisMarked || report.sections.some((s) => shownSupport(s)?.sentences.some((t) => t.backed === false))) {
     lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or \"not\" that the quotes don't back.", "");
   }
   lines.push("---", "", EXPORT_NOTE, "");

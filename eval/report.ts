@@ -9,6 +9,10 @@
 // they run and are summed up only in totals, as the held-out suites are. A report already in --out is
 // skipped, so a run can resume after an interruption.
 //
+// After the sections, the introduction and conclusion are written from them (src/agent/synthesis.ts,
+// harness 0.53.0), and the share of their sentences the sections' verified quotes back is reported:
+// the measurement decision R4 waits on. They do not change a section or its score.
+//
 // The planner is given the field documents, as the app gives it the user's documents, and plans from
 // the request alone unless the source overview is on for the model (plansFromSources). --overview
 // shows it the overview whatever the model (harness 0.52.0).
@@ -18,6 +22,7 @@ import { arch, cpus, platform, totalmem } from "node:os";
 import { parseArgs } from "node:util";
 import { planReport } from "../src/agent/report.ts";
 import { runResearch } from "../src/agent/research.ts";
+import { synthesisBacking, writeSynthesis, type Synthesis, type SynthesisSection } from "../src/agent/synthesis.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import { HARNESS_VERSION } from "./harness/benchmark.ts";
@@ -51,6 +56,8 @@ interface ReportResult {
   planMs: number;
   sections: Array<WrittenSection & { evidence: number; verified: number }>;
   score: ReportScore;
+  /** The introduction and conclusion, with their sentences checked; absent when fewer than two sections were answered or the reply could not be read. */
+  synthesis?: Synthesis & { judged: number; backed: number; ms: number };
 }
 interface ReportRun {
   harnessVersion: string;
@@ -102,9 +109,11 @@ for (const [suite, task] of queue) {
   const plan = await planReport({ model, request: task.request, sources: ["your documents"], library: field.library, overview: values.overview });
   const planMs = Date.now() - started;
   const sections: ReportResult["sections"] = [];
+  const checked: SynthesisSection[] = [];
   for (const question of plan.sections) {
     const began = Date.now();
     const result = await runResearch({ question, library: field.library, model });
+    checked.push({ question, answer: result.final?.answer, status: result.status, evidence: result.evidence });
     sections.push({
       question,
       answer: result.final?.answer ?? "",
@@ -117,13 +126,16 @@ for (const [suite, task] of queue) {
     });
   }
   const score = scoreReport(task, plan, sections);
-  run.results.push({ suite, taskId: task.id, plan, planMs, sections, score });
+  const synthesisStarted = Date.now();
+  const written = await writeSynthesis({ model, title: plan.title, request: task.request, sections: checked, titleFor: (id) => field.library.documentFor(id)?.title });
+  const synthesis = written && { ...written, ...synthesisBacking(written), ms: Date.now() - synthesisStarted };
+  run.results.push({ suite, taskId: task.id, plan, planMs, sections, score, ...(synthesis ? { synthesis } : {}) });
   run.createdAt = new Date().toISOString();
   if (values.out) await writeFile(values.out, `${JSON.stringify(run, null, 2)}\n`);
   console.log(
     held
       ? `${task.id}: held out (${Math.round((Date.now() - started) / 60000)} min)`
-      : `${task.id}: ${score.covered}/${score.expected} covered, ${score.right}/${score.matched} matched sections right, ${score.labelledWrong} labelled wrong, ${score.unmatched} unmatched (${Math.round((Date.now() - started) / 60000)} min)`,
+      : `${task.id}: ${score.covered}/${score.expected} covered, ${score.right}/${score.matched} matched sections right, ${score.labelledWrong} labelled wrong, ${score.unmatched} unmatched, ${synthesis ? `introduction and conclusion ${synthesis.backed}/${synthesis.judged} sentences backed` : "no introduction or conclusion"} (${Math.round((Date.now() - started) / 60000)} min)`,
   );
 }
 
@@ -131,11 +143,14 @@ for (const suite of ["reports", "reportsholdout"] as const) {
   const results = run.results.filter((r) => r.suite === suite);
   if (!results.length) continue;
   const t = sumScores(results.map((r) => r.score));
+  const synth = results.flatMap((r) => (r.synthesis ? [r.synthesis] : []));
+  const sumSynth = (key: "judged" | "backed" | "ms") => synth.reduce((n, x) => n + x[key], 0);
   console.log(
     `\n${suite}: ${t.reports} reports, ${t.planned} sections planned (${t.fallbacks} fallbacks, ${t.joined} joining two things).` +
       `\n  Plan covers ${t.planCovered} of ${t.expected} expected sections; the report gives the facts of ${t.covered}.` +
       `\n  Matched sections: ${t.right} of ${t.matched} right; labelled Quotes found ${t.labelled}, ${t.labelledWrong} of them wrong.` +
       `\n  Unmatched sections: ${t.unmatched} (${t.unmatchedLabelled} labelled Quotes found).` +
+      `\n  Introduction and conclusion: written for ${synth.length} of ${results.length} reports; ${sumSynth("backed")} of ${sumSynth("judged")} judged sentences backed by the sections' quotes (${Math.round(sumSynth("ms") / 1000)} s).` +
       `\n  ${t.calls} calls, ${Math.round(t.ms / 60000)} min of sections.`,
   );
 }
