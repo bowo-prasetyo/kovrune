@@ -673,6 +673,15 @@ So the offline suites do not reach the state the preview user's laptop was in. T
 2. answers labelled Quotes found that fail their task do not rise;
 3. on the tasks that had to fit, the prompt tokens the server processed fall by at least 20%.
 
+**Result: not adopted** ([baseline](../results/field-0.54-ctx2048-qwen3.5-4b-q4km.json), [headroom 0.25](../results/field-0.54-ctx2048-headroom-qwen3.5-4b-q4km.json)).
+- **The waste is real at 2,048 tokens.** 27 of 4B's 38 tasks had to fit, as in 0.42.0. On them, the server processed 73,394 prompt tokens, 1.92 times the least possible, and reading prompts took 3,410 of their 5,615 s. The 11 tasks that did not fit stayed at 0.74 times the least.
+- **Headroom cut it by less than asked, and cost two tasks.** On the tasks that had to fit, the server processed 17.4% fewer tokens (60,631), under the 20% asked for. Prompt time fell by 20% (2,728 s) and wall time from 94 to 81 minutes. But `pdf` fell from 2 to 1 and `field` from 20 to 19 of 23. `p04` lost the annual report's "EUR 96,000" when that read was shortened sooner, and answered without the amount. `f24` answered after two reads instead of three, missing what the third gave. `holdout` stayed at 9 of 9, answers labelled Quotes found that failed stayed at 2, and the three controls repeated exactly.
+- **2B was not run to the end.** The condition needs both models, so 4B's result decides it. The 2B baseline was stopped after it started.
+
+`main` keeps `fitHeadroom` at 0. The recording of cache use stays: any change meant to make steps faster can now be judged by the prompt tokens the server processes.
+
+What would help most is not reaching this state on a 4,096-token context. On the preview user's laptop, the state followed a cut-off reply, after which every later call kept 1,024 tokens free for its reply (0.50.0), searches and reads included, which need fewer than 100. Keeping the raised limit for final answers only would leave the conversation that much more room.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
