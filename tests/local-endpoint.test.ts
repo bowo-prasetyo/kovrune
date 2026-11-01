@@ -83,6 +83,36 @@ describe("LocalEndpointModel", () => {
     await assert.rejects(stopped, (error: Error) => !/sent nothing/.test(error.message));
   });
 
+  it("counts keep-alive comments and prompt progress as the server working, not only tokens", async () => {
+    // llama.cpp server reading a long prompt: headers at once, then ":" pings and progress events
+    // (return_progress), each well within the idle time, the first token only after all of them.
+    let sent: any;
+    const encoder = new TextEncoder();
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      sent = JSON.parse(String(init.body));
+      const body = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          for (let i = 0; i < 4; i++) {
+            await wait(15);
+            controller.enqueue(encoder.encode(":\n\n"));
+          }
+          await wait(15);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: {} }], prompt_progress: { total: 2189, cache: 0, processed: 1673, time_ms: 189480 } })}\n\n`));
+          await wait(15);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "ok" } }] })}\n\ndata: [DONE]\n\n`));
+          controller.close();
+        },
+      });
+      return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+    }) as typeof fetch;
+    const model = new LocalEndpointModel({ baseUrl: "http://localhost:8080/v1", model: "m", contextLength: 4096, idleTimeoutMs: 40, fetchImpl });
+    let text = "";
+    for await (const chunk of model.generate({ messages: [], maxTokens: 4 })) text += chunk.text;
+    assert.equal(text, "ok", "90 ms without a token, but never 40 ms without anything");
+    assert.equal(sent.return_progress, true);
+  });
+
   it("surfaces HTTP errors", async () => {
     const model = new LocalEndpointModel({
       baseUrl: "http://localhost:1/v1",

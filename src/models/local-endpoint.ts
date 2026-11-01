@@ -20,6 +20,12 @@ export interface LocalEndpointOptions {
  * How long a model server may send nothing, while it reads the prompt or between tokens, before a
  * request fails. Generous, as a slow laptop can take a minute or more to read a long prompt, but
  * finite, so a server that hangs ends the question with an error instead of leaving it waiting.
+ *
+ * Anything the server sends counts, including the keep-alive comments (":") llama.cpp server sends
+ * every 30 seconds while a stream is silent, and the prompt-progress events it sends when asked
+ * (`return_progress`: one as it starts reading, then one after each batch of up to 2,048 tokens). Counting only tokens stopped a server that was still reading a prompt: on a
+ * laptop reading 8.7 tokens a second, a 2,200-token prompt took 255 s after a 42 s wait, and the
+ * request was stopped at 300 s, seconds before its first token.
  */
 export const IDLE_TIMEOUT_MS = 5 * 60_000;
 
@@ -50,6 +56,9 @@ export class LocalEndpointModel implements LanguageModel {
       temperature: request.temperature ?? 0,
       stream: true,
       stream_options: { include_usage: true },
+      // llama.cpp server: report progress while reading the prompt, so a long prompt on a slow
+      // machine shows the server is working. Other servers ignore the field.
+      return_progress: true,
       ...extraBody,
     };
     if (request.responseSchema) {
@@ -83,8 +92,7 @@ export class LocalEndpointModel implements LanguageModel {
 
       let usage: GenerationChunk["usage"];
       let finishReason: string | undefined;
-      for await (const data of readServerSentEvents(response.body)) {
-        stillSending();
+      for await (const data of readServerSentEvents(response.body, stillSending)) {
         if (data === "[DONE]") break;
         const chunk = JSON.parse(data) as StreamChunk;
         const text = chunk.choices?.[0]?.delta?.content ?? "";
@@ -108,13 +116,18 @@ export class LocalEndpointModel implements LanguageModel {
   async dispose(): Promise<void> {}
 }
 
-export async function* readServerSentEvents(stream: ReadableStream<Uint8Array>): AsyncIterable<string> {
+/**
+ * The data of each event in a server-sent event stream. `onReceive` is called for every part of the
+ * stream received, comments such as keep-alive pings included, which yield no data.
+ */
+export async function* readServerSentEvents(stream: ReadableStream<Uint8Array>, onReceive?: () => void): AsyncIterable<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
+    onReceive?.();
     buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
     let boundary: number;
     while ((boundary = buffer.indexOf("\n\n")) !== -1) {
