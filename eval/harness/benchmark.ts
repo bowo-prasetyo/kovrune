@@ -16,7 +16,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.53.0";
+export const HARNESS_VERSION = "0.54.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -52,6 +52,8 @@ export interface BenchmarkConfig {
   preset?: Preset;
   /** Run only these task IDs. */
   taskIds?: string[];
+  /** AgentConfig.fitHeadroom for research tasks, when measuring a value other than the app's. */
+  fitHeadroom?: number;
 }
 
 export interface Environment {
@@ -91,6 +93,13 @@ export interface TaskResult {
   maxPromptTokens?: number;
   /** Tool results removed to fit the context window by the last call (CallRecord.droppedResults); absent when none were. */
   droppedResults?: number;
+  /**
+   * Prompt tokens the server took from its cache, over the task's agent calls, when it reports them:
+   * promptTokens − cachedTokens is what it processed, the slow part on a laptop's CPU.
+   */
+  cachedTokens?: number;
+  /** Time the server spent processing prompts, over the task's agent calls, when it reports it. */
+  promptMs?: number;
   /** Wall time spent in model calls. */
   modelMs: number;
   /** Time to first token, summed over calls. */
@@ -134,6 +143,10 @@ export interface Summary {
   maxPromptTokens?: number;
   /** Tasks in which tool results were removed to fit the context window, so the model answered without them. */
   tasksWithDroppedResults?: number;
+  /** Prompt tokens the server processed rather than took from its cache, over the agent calls, when it reports cache use. */
+  processedPromptTokens?: number;
+  /** Time the server spent processing those prompts, when it reports it. */
+  promptSeconds?: number;
   /**
    * Research suites: answers the app would label "Quotes found", and how many of those failed
    * their task. Their ratio is the false reassurance rate (docs/design.md §1.6).
@@ -198,6 +211,8 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     estimatedTokens: calls.some((c) => c.estimatedTokens),
     ...(calls.length ? { maxPromptTokens: Math.max(...calls.map((c) => c.promptTokens)) } : {}),
     ...(calls.some((c) => c.droppedResults) ? { droppedResults: Math.max(...calls.map((c) => c.droppedResults ?? 0)) } : {}),
+    ...(calls.length && calls.every((c) => c.cachedTokens !== undefined) ? { cachedTokens: calls.reduce((s, c) => s + c.cachedTokens!, 0) } : {}),
+    ...(calls.length && calls.every((c) => c.promptMs !== undefined) ? { promptMs: calls.reduce((s, c) => s + c.promptMs!, 0) } : {}),
     modelMs: Math.round(calls.reduce((s, c) => s + c.totalMs, 0)),
     ttftMs: Math.round(calls.reduce((s, c) => s + c.ttftMs, 0)),
     wallMs: Math.round(wallMs),
@@ -260,6 +275,10 @@ export function summarize(results: TaskResult[]): Summary[] {
       medianTaskSeconds: round(median(group.map((r) => r.wallMs / 1000)), 1),
       ...(group.some((r) => r.maxPromptTokens !== undefined) ? { maxPromptTokens: Math.max(...group.map((r) => r.maxPromptTokens ?? 0)) } : {}),
       tasksWithDroppedResults: group.filter((r) => r.droppedResults).length,
+      ...(group.every((r) => r.cachedTokens !== undefined)
+        ? { processedPromptTokens: group.reduce((s, r) => s + r.promptTokens - r.cachedTokens!, 0) }
+        : {}),
+      ...(group.every((r) => r.promptMs !== undefined) ? { promptSeconds: round(group.reduce((s, r) => s + r.promptMs!, 0) / 1000, 1) } : {}),
       ...(group.some((r) => r.quotesFound !== undefined)
         ? { falseReassurance: { labelled: labelled.length, wrong: labelled.filter((r) => !r.passed).length } }
         : {}),
@@ -379,7 +398,7 @@ export async function runBenchmark(options: {
     ...researchSuites.flatMap(({ suite, tasks, library }) =>
       tasks.map((task) => ({
         mode,
-        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, signal, onCall }),
+        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, signal, onCall }),
       })),
     ),
     ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),

@@ -31,7 +31,9 @@ export const IDLE_TIMEOUT_MS = 5 * 60_000;
 
 interface StreamChunk {
   choices?: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
-  usage?: { prompt_tokens: number; completion_tokens: number } | null;
+  usage?: { prompt_tokens: number; completion_tokens: number; prompt_tokens_details?: { cached_tokens?: number } } | null;
+  /** llama.cpp server: how the prompt was processed. */
+  timings?: { prompt_ms?: number } | null;
 }
 
 export class LocalEndpointModel implements LanguageModel {
@@ -91,6 +93,8 @@ export class LocalEndpointModel implements LanguageModel {
       }
 
       let usage: GenerationChunk["usage"];
+      // llama.cpp may send its timings in a chunk before the one carrying usage.
+      let pendingPromptMs: number | undefined;
       let finishReason: string | undefined;
       for await (const data of readServerSentEvents(response.body, stillSending)) {
         if (data === "[DONE]") break;
@@ -98,10 +102,20 @@ export class LocalEndpointModel implements LanguageModel {
         const text = chunk.choices?.[0]?.delta?.content ?? "";
         finishReason = chunk.choices?.[0]?.finish_reason ?? finishReason;
         if (chunk.usage) {
-          usage = { promptTokens: chunk.usage.prompt_tokens, completionTokens: chunk.usage.completion_tokens };
+          const cached = chunk.usage.prompt_tokens_details?.cached_tokens;
+          usage = {
+            promptTokens: chunk.usage.prompt_tokens,
+            completionTokens: chunk.usage.completion_tokens,
+            ...(typeof cached === "number" ? { cachedTokens: cached } : {}),
+            ...(usage?.promptMs !== undefined ? { promptMs: usage.promptMs } : {}),
+          };
         }
+        const promptMs = chunk.timings?.prompt_ms;
+        if (typeof promptMs === "number" && usage) usage = { ...usage, promptMs };
+        else if (typeof promptMs === "number") pendingPromptMs = promptMs;
         if (text) yield { text, done: false };
       }
+      if (usage && pendingPromptMs !== undefined && usage.promptMs === undefined) usage = { ...usage, promptMs: pendingPromptMs };
       yield { text: "", done: true, usage, ...(finishReason ? { finishReason } : {}) };
     } catch (error) {
       if (idle.signal.aborted && !request.signal?.aborted) {

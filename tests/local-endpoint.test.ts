@@ -52,6 +52,20 @@ describe("LocalEndpointModel", () => {
     assert.deepEqual(usage, { promptTokens: 42, completionTokens: 7 });
   });
 
+  it("reports the prompt tokens the server took from its cache, and its prompt time", async () => {
+    const fetchImpl = (async () =>
+      sseResponse([
+        JSON.stringify({ choices: [{ delta: { content: "ok" } }] }),
+        JSON.stringify({ choices: [{ delta: {}, finish_reason: "stop" }], timings: { cache_n: 17, prompt_n: 4, prompt_ms: 180.1 } }),
+        JSON.stringify({ choices: [], usage: { prompt_tokens: 21, completion_tokens: 1, prompt_tokens_details: { cached_tokens: 17 } } }),
+        "[DONE]",
+      ])) as typeof fetch;
+    const model = new LocalEndpointModel({ baseUrl: "http://localhost:8080/v1", model: "m", contextLength: 4096, fetchImpl });
+    const chunks = [];
+    for await (const chunk of model.generate({ messages: [], maxTokens: 4 })) chunks.push(chunk);
+    assert.deepEqual(chunks.at(-1)!.usage, { promptTokens: 21, completionTokens: 1, cachedTokens: 17, promptMs: 180.1 });
+  });
+
   it("reports why generation stopped", async () => {
     const fetchImpl = (async () =>
       sseResponse([

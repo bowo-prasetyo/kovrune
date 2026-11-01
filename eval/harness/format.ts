@@ -43,8 +43,14 @@ function contextLine(report: Report): string[] {
   const largest = Math.max(0, ...report.summary.map((s) => s.maxPromptTokens ?? 0));
   if (!largest) return [];
   const dropped = report.summary.reduce((sum, s) => sum + (s.tasksWithDroppedResults ?? 0), 0);
+  const prompt = report.summary.reduce((sum, s) => sum + s.processedPromptTokens!, 0);
+  const total = report.results.reduce((sum, r) => sum + r.promptTokens, 0);
+  const seconds = report.summary.reduce((sum, s) => sum + (s.promptSeconds ?? 0), 0);
   return [
     `Context: the largest prompt was ${largest} of ${report.environment.contextLength} tokens; ${dropped} of ${report.results.length} task runs had earlier tool results removed to fit.`,
+    ...(report.summary.every((s) => s.processedPromptTokens !== undefined)
+      ? [`Prompt processing: the server processed ${prompt} of ${total} prompt tokens and took the rest from its cache${seconds ? `, in ${Math.round(seconds)} s` : ""}.`]
+      : []),
     "",
   ];
 }

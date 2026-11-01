@@ -28,6 +28,14 @@ export interface GenerationRequest {
 export interface GenerationUsage {
   promptTokens: number;
   completionTokens: number;
+  /**
+   * Prompt tokens the server took from its cache instead of processing, when it reports them
+   * (OpenAI's usage.prompt_tokens_details.cached_tokens). On a slow machine, reading the prompt is
+   * most of a step's time, so the tokens processed (promptTokens − cachedTokens) are what it costs.
+   */
+  cachedTokens?: number;
+  /** Time the server spent processing the prompt, in ms, when it reports it (llama.cpp's timings.prompt_ms). */
+  promptMs?: number;
 }
 
 export interface GenerationChunk {
