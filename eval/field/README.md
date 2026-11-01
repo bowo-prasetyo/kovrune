@@ -584,6 +584,35 @@ Each request comes with the 3–4 sections a good report covers. Each section ha
 
 These are the baselines for changes to report mode. The clearest next step is to show the planner what the sources hold before it plans, for example the titles and headings of the user's documents, or the passages that best match the request. It would be judged on `reports` and confirmed on `reportsholdout`.
 
+### The source overview: the planner sees what the documents hold (0.52.0, measured, not adopted)
+
+Before planning, `planReport` can search the documents for the request, as the research agent would, and show the planner the sentences that best match. The search leaves out the words that only ask for a report ("write", "report", "400 words"). It also translates the terms into each document language written in another script. From each passage found (six, plus two per such language) it keeps the three sentences that best match, at most 2,400 characters in all, grouped by document. The planner is asked to base the sections on what the sources hold. `npm run bench:report -- --overview` shows it the overview; without it, the harness plans as the app does.
+
+**Adoption condition, declared before the run** ([report-mode.md](../../docs/report-mode.md#progress)). At 4,096 tokens, the overview is kept when:
+1. report coverage on `reports` rises on at least one model and falls on neither;
+2. the `reportsholdout` total falls on neither;
+3. no more matched sections are labelled Quotes found without their facts than in the baseline.
+
+**First version: a defect.** Chinese and Japanese are searched by single characters and pairs, so nearly any passage shares a few with a translation. Every overview of the field documents showed the Great Wall and Mount Fuji, even for Ada Lovelace. 4B planned a section on "the rights and historical significance of the Great Wall of China" in a report on the MPL. Its coverage was 8 of 23 on `reports` and 6 of 9 held out; 2B's was 3 and 5. A passage in another script is now shown only when it holds at least half of the translated terms, weighted by rarity (`DocumentIndex.coverage`). This was set from those failures and the field documents' wrong matches, which reached at most 0.40.
+
+**With that fixed** ([4B](../results/reports-0.52-overview-qwen3.5-4b-q4km.json), [2B](../results/reports-0.52-overview-qwen3.5-2b-q4km.json); same build, model files and CPU type as the baseline):
+
+| | Sections planned | Report coverage | Plan coverage | "Not found" | Labelled Quotes found | Matched, labelled without their facts | Time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 4B, `reports`, blind | 18 | 9 of 23 | 4 of 23 | 5 (and 2 without an answer) | 2 | 0 | 75 min |
+| 4B, `reports`, overview | 24 | **9 of 23** | 10 of 23 | 0 | 8 | **2** | 66 min |
+| 4B, `reportsholdout`, blind → overview | 12 → 10 | 6 → 6 of 9 | 4 → 7 of 9 | 6 → 1 | 0 → 2 | 0 → 0 | 30 → 19 min |
+| 2B, `reports`, blind | 22 | 3 of 23 | 2 of 23 | 3 | 3 | 0 | 30 min |
+| 2B, `reports`, overview | 20 | **7 of 23** | 6 of 23 | 3 | 2 | 0 | 24 min |
+| 2B, `reportsholdout`, blind → overview | 12 → 11 | 6 → 7 of 9 | 2 → 7 of 9 | 5 → 0 (and 1 without an answer) | 0 → 0 | 0 → 0 | 27 → 13 min |
+
+- **The plans now fit the sources.** Plan coverage rises on both models and both suites. 4B's sections that ended "not found" or without an answer fall from 7 to none on `reports`, and it plans all four sections asked for in every report, where it planned two in three of them before.
+- **2B passes all three parts, 4B does not.** 2B's coverage rises from 3 to 7 of 23, and its held-out total from 6 to 7, with no section labelled wrongly. 4B's coverage stays at 9 and 6, so it neither gains nor loses. But two of its privacy sections are labelled Quotes found without the facts the suite expects. Searched for "data" and "network", the design document ranked above the user guide's privacy section. The plan then asked how Kovrune "delegates tasks to peers" and "manages the sharing of files and conversations". The answers are faithful to the design, but they describe roadmap features as what Kovrune does, so the suite is right to count them. Part 3 fails, so the overview is **not adopted**.
+- **The runs are noisy at this size.** The first and fixed versions differ only by the Chinese and Japanese passages, yet 2B's coverage on `reports` went 3, then 7, and its plan coverage 9, then 6. A few sections either way on six reports is within what one run varies by.
+- **Planning takes longer**, about 60 s on 4B and 25 s on 2B instead of 27 and 17 s, for the translation calls and the longer prompt. Reports take less time overall, since fewer sections search until they give up.
+
+`main` keeps planning blind for both models (`plansFromSources` in `src/agent/report.ts` is off for every model). The code stays, so the overview can be switched on for a model by the project owner's decision, or measured again with `--overview`. If it is pursued, the clearest problem is ranking: a request about what Kovrune does now should prefer the user guide over the design's roadmap. A larger suite would also tell gains from noise better than six reports can.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

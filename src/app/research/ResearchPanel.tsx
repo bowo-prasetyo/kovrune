@@ -4,7 +4,7 @@ import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
 import { ReplayingModel, type RecordedCall } from "../../agent/replay.ts";
 import { ResearchLibrary, runResearch } from "../../agent/research.ts";
-import { planReport, type ReportPlan } from "../../agent/report.ts";
+import { planReport, plansFromSources, type ReportPlan } from "../../agent/report.ts";
 import { describeModelError, describeSetup, openModel } from "../models.ts";
 import type { Settings } from "../settings.ts";
 import {
@@ -89,10 +89,14 @@ export function ResearchPanel({
     setPlanning("Planning the report…");
     try {
       const sources = [...(usable.length ? ["your documents"] : []), ...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : [])];
-      // The planner is shown what the documents say about the request (the source overview), so that
-      // it plans sections the documents can answer.
-      const library = usable.length ? new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts }))) : undefined;
-      setPlan(await planReport({ model: await openModel(settings), request, sources, library }));
+      // For models it is on for (plansFromSources), the planner is shown what the documents say about
+      // the request, so that it plans sections the documents can answer.
+      const model = await openModel(settings);
+      const library =
+        usable.length && plansFromSources(model.info.id)
+          ? new ResearchLibrary(usable.map(({ id, title, text, pageStarts }) => ({ id, title, text, pageStarts })))
+          : undefined;
+      setPlan(await planReport({ model, request, sources, library }));
       setPlanning(undefined);
     } catch (error) {
       setPlanning(describeModelError(error, settings));

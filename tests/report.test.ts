@@ -12,6 +12,7 @@ import {
   parsePlan,
   planPrompt,
   planReport,
+  plansFromSources,
 } from "../src/agent/report.ts";
 import { ResearchLibrary } from "../src/agent/research.ts";
 import { answerToBibtex, answerToMarkdown, exportFileName, type SavedAnswer } from "../src/app/research/answers.ts";
@@ -142,12 +143,20 @@ describe("report mode: the source overview", () => {
   it("shows the planner the overview, asks it to plan from what the sources hold, and names the documents shown", async () => {
     const english = new ResearchLibrary(library.documents.filter((d) => d.id !== "fuji"));
     const model = new ScriptedModel(plan("Ada Lovelace", ["Who were her parents?", "What did she write about the engine?"]));
-    const result = await planReport({ model, request: "Write a biography of Ada Lovelace.", sources: ["your documents"], library: english });
+    const result = await planReport({ model, request: "Write a biography of Ada Lovelace.", sources: ["your documents"], library: english, overview: true });
     assert.deepEqual(result, { title: "Ada Lovelace", sections: ["Who were her parents?", "What did she write about the engine?"], consulted: ["Ada Lovelace.txt"] });
     const prompt = model.requests.at(-1)!.messages[1]!.content;
     assert.match(prompt, /What a search of your documents for the request found[^\n]*\nFrom "Ada Lovelace.txt":\n- Ada Lovelace was/);
     assert.match(prompt, /Base the sections on what the sources hold/);
     assert.equal(model.requests.length, 1, "no translation for documents in the request's script");
+  });
+
+  it("is off for every model until the project owner decides, so the planner sees the request alone", async () => {
+    for (const id of ["qwen3.5-2b-q4km", "qwen3.5-4b-q4km", "Qwen3.5-2B-q4f16_1-MLC"]) assert.equal(plansFromSources(id), false, id);
+    const model = new ScriptedModel(plan("Ada Lovelace", ["Who were her parents?", "What did she write?"]));
+    const result = await planReport({ model, request: "Write a biography of Ada Lovelace.", sources: ["your documents"], library });
+    assert.equal(result.consulted, undefined);
+    assert.equal(model.requests.at(-1)!.messages[1]!.content, planPrompt("Write a biography of Ada Lovelace.", ["your documents"]));
   });
 
   it("plans as before when nothing in the documents matches, or there are none", async () => {
@@ -156,7 +165,7 @@ describe("report mode: the source overview", () => {
       [[], undefined],
     ] as const) {
       const model = new ScriptedModel(plan("T", ["A?", "B?"]));
-      const result = await planReport({ model, request: REQUEST, sources: ["your documents"], library: new ResearchLibrary([...docs]) });
+      const result = await planReport({ model, request: REQUEST, sources: ["your documents"], library: new ResearchLibrary([...docs]), overview: true });
       assert.deepEqual(result.consulted, consulted, "an empty list says the documents were searched and nothing matched");
       assert.equal(model.requests.at(-1)!.messages[1]!.content, planPrompt(REQUEST, ["your documents"]));
     }

@@ -136,6 +136,19 @@ export async function overviewSources(library: ResearchLibrary, request: string,
   };
 }
 
+/**
+ * Whether the planner is shown the source overview, by the model's ID: no model yet. Measured on the
+ * report suite at 4,096 tokens (eval/field/README.md), it lifted Qwen3.5-2B's report coverage from 3
+ * to 7 of 23 sections, and its held-out total from 6 to 7 of 9. Qwen3.5-4B's stayed at 9 and 6, and
+ * two of its sections were labelled Quotes found without their facts, against none before: following
+ * the design document's sentences, it described roadmap features as what Kovrune does. That fails
+ * the condition declared before the run (docs/report-mode.md), so neither model plans from it until
+ * the project owner decides.
+ */
+export function plansFromSources(_modelId: string): boolean {
+  return false;
+}
+
 /** The planning prompt: the request, the sources to be searched and, when there is one, the source overview. */
 export function planPrompt(request: string, sources: string[], sections = DEFAULT_SECTIONS, overview?: string): string {
   return [
@@ -194,8 +207,8 @@ export function parsePlan(text: string): ReportPlan | undefined {
 }
 
 /**
- * Asks the model for a plan, showing it the source overview of `library` when one is given and
- * something in it matches; falls back to the request as one section when the reply cannot be read.
+ * Asks the model for a plan, showing it the source overview of `library` when one is given, the
+ * overview is on for the model (plansFromSources) and something in it matches; falls back to the request as one section when the reply cannot be read.
  */
 export async function planReport(options: {
   model: LanguageModel;
@@ -204,12 +217,15 @@ export async function planReport(options: {
   sources: string[];
   /** The user's documents, for the source overview. */
   library?: ResearchLibrary;
+  /** Whether to show the planner the source overview; plansFromSources(model ID) by default. */
+  overview?: boolean;
   sections?: number;
   constrained?: boolean;
   signal?: AbortSignal;
 }): Promise<ReportPlan> {
   const { model, signal } = options;
-  const overview = options.library?.documents.length ? await overviewSources(options.library, options.request, translator(model, signal)) : undefined;
+  const shown = (options.overview ?? plansFromSources(model.info.id)) && options.library?.documents.length ? options.library : undefined;
+  const overview = shown ? await overviewSources(shown, options.request, translator(model, signal)) : undefined;
   let text = "";
   try {
     for await (const chunk of model.generate({
@@ -230,5 +246,5 @@ export async function planReport(options: {
   }
   const plan = parsePlan(text);
   if (!plan) return fallbackPlan(options.request);
-  return options.library?.documents.length ? { ...plan, consulted: overview?.documents ?? [] } : plan;
+  return shown ? { ...plan, consulted: overview?.documents ?? [] } : plan;
 }

@@ -1,0 +1,645 @@
+{
+  "harnessVersion": "0.52.0",
+  "createdAt": "2026-11-01T02:32:56.154Z",
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "planner": "source overview",
+    "notes": "The source overview (--overview), code 32f2b3c. Compare with reports-0.51-qwen3.5-2b-q4km.json, the blind planner. Same build and CPU type."
+  },
+  "results": [
+    {
+      "suite": "reports",
+      "taskId": "rp01-local-server",
+      "plan": {
+        "title": "Setting up Kovrune with a Local Model Server",
+        "sections": [
+          "How do I configure Kovrune to run a local model server using llama.cpp on a system with integrated Intel graphics?",
+          "What are the specific command-line arguments and port settings required to start a local llama.cpp server in Kovrune?",
+          "How does Kovrune handle model selection and testing when the local server is running?",
+          "What are the critical hardware and memory requirements for running a local model server in Kovrune?"
+        ],
+        "consulted": [
+          "kovrune-user-guide.md",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 30878,
+      "sections": [
+        {
+          "question": "How do I configure Kovrune to run a local model server using llama.cpp on a system with integrated Intel graphics?",
+          "answer": "To configure Kovrune to run a local model server using llama.cpp on a system with integrated Intel graphics, follow these steps:\n\n1. Install llama.cpp using the provided commands (e.g., `sudo apt install build-essential cmake git libssl-dev`, clone the repository, build it, and place the server at `build/bin/llama-server`).\n2. Download a model file (e.g., `Qwen3.5-2B-Q4_K_M.gguf`) into a folder like `~/models`.\n3. Start the server using the command: `cd ~/llama.cpp/build/bin && ./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080`.\n\nThis setup works on laptops with integrated Intel graphics, as confirmed by the documentation.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 78322,
+          "evidence": 3,
+          "verified": 3
+        },
+        {
+          "question": "What are the specific command-line arguments and port settings required to start a local llama.cpp server in Kovrune?",
+          "answer": "To start a local llama.cpp server in Kovrune, you need to set the port and host address. The specific command-line arguments and port settings are: `--port 8080` and `--host 0.0.0.0`. If the server cannot bind to port 8080, you can change the port using `--port 8081` and update the address in the application, or start the server on a different port.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 41491,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How does Kovrune handle model selection and testing when the local server is running?",
+          "answer": "Kovrune handles model selection and testing when the local server is running by using a local model server to serve the model files. The user guide explicitly states that if the model test fails with garbled output, the browser path on a GPU that runs models incorrectly, or if the model test says the model is 'not acting on tool results', the solution is to 'Use a local model server'. This implies that the local server is responsible for serving the model files to the browser for testing purposes.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 39949,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What are the critical hardware and memory requirements for running a local model server in Kovrune?",
+          "answer": ":",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 25818,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 1,
+        "covered": 1,
+        "expected": 4,
+        "matched": 1,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 3,
+        "unmatchedLabelled": 0,
+        "calls": 20,
+        "ms": 185580
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp02-privacy",
+      "plan": {
+        "title": "Kovrune's Data Handling and Network Transmission",
+        "sections": [
+          "How does Kovrune handle data and tasks during execution?",
+          "What data is transmitted over the network by Kovrune?"
+        ],
+        "consulted": [
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 18416,
+      "sections": [
+        {
+          "question": "How does Kovrune handle data and tasks during execution?",
+          "answer": "Kovrune handles data and tasks during execution by delegating independent tasks to a local scheduler, which decides whether to delegate based on capability, data size, peer availability, user permissions, and expected benefit. It uses Web Workers for background processing to keep the UI responsive during inference. For code execution, it runs generated tests locally in a sandboxed worker using Pyodide (Python) or QuickJS-wasm (JavaScript). The protocol defines payload size limits, timeouts, retry behavior, duplicate handling, and version negotiation. Security measures include validating every message with schema, size, rate, and signature checks; enforcing explicit sharing permissions; treating untrusted content as data that cannot grant permissions or cause code execution outside the sandbox; keeping secrets local; and bounding resources like tokens and concurrent tasks.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 55275,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What data is transmitted over the network by Kovrune?",
+          "answer": ":",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 23245,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 0,
+        "covered": 0,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 9,
+        "ms": 78520
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp03-reading-answers",
+      "plan": {
+        "title": "How to Verify Kovrune's Answers",
+        "sections": [
+          "What is the mechanism Kovrune uses to verify the authenticity of its answers and the accuracy of its quotes against the user's documents and external sources?",
+          "How does Kovrune ensure that the sources it cites are actually present in the user's local files before generating an answer?",
+          "What is the role of the preview site in the Kovrune workflow and how does it contribute to the verification process?",
+          "How are the final answers and their supporting quotes saved and stored after the user finishes the verification process?"
+        ],
+        "consulted": [
+          "kovrune-user-guide.md",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 25897,
+      "sections": [
+        {
+          "question": "What is the mechanism Kovrune uses to verify the authenticity of its answers and the accuracy of its quotes against the user's documents and external sources?",
+          "answer": "Kovrune verifies the authenticity of its answers and the accuracy of its quotes by checking if each quote is word-for-word found in the user's documents and external sources. It also checks if the sentences containing the quotes share enough words with the source material to prove the answer is supported by the sources. If a quote is not found in the sources, the answer may be incorrect. If a quote is found but the sentences marked with ⚠ share few words with any quote, it indicates the model added details from memory next to real quotes, which should be checked against the sources.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 84264,
+          "evidence": 5,
+          "verified": 5
+        },
+        {
+          "question": "How does Kovrune ensure that the sources it cites are actually present in the user's local files before generating an answer?",
+          "answer": ":",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 5,
+          "ms": 35737,
+          "evidence": 0,
+          "verified": 0
+        },
+        {
+          "question": "What is the role of the preview site in the Kovrune workflow and how does it contribute to the verification process?",
+          "answer": "The preview site in the Kovrune workflow is used to test the model locally on the user's computer. It contributes to the verification process by allowing users to interact with the model through a browser, which requires permission from the browser to access the local server running on the user's machine. This setup ensures that the model runs on the user's own computer, enabling verification of the model's behavior and performance before deployment to a production environment.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 57381,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How are the final answers and their supporting quotes saved and stored after the user finishes the verification process?",
+          "answer": "The final answers and their supporting quotes are saved and stored in the 'Store' component, which is a local storage system. The document states: 'Store[Local Storage<br/>Models · Conversations · Tasks · Checkpoints]' and 'Tasks, settings, model files in WebLLM's browser cache; documents' extracted text and past answers in IndexedDB.'",
+          "quotesFound": false,
+          "status": "unverified",
+          "calls": 6,
+          "ms": 56103,
+          "evidence": 2,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 1,
+        "covered": 0,
+        "expected": 3,
+        "matched": 1,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 3,
+        "unmatchedLabelled": 0,
+        "calls": 24,
+        "ms": 233485
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp04-mpl",
+      "plan": {
+        "title": "Mozilla Public License 2.0: Main Obligations and Rights",
+        "sections": [
+          "What specific notice and secondary license requirements must be attached when distributing Covered Software under the MPL 2.0?",
+          "Who holds the authority to modify or indemnify recipients of the Covered Software under the MPL 2.0?"
+        ],
+        "consulted": [
+          "mpl-2.0.txt",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 21056,
+      "sections": [
+        {
+          "question": "What specific notice and secondary license requirements must be attached when distributing Covered Software under the MPL 2.0?",
+          "answer": "When distributing Covered Software under MPL 2.0, if the software is 'Incompatible With Secondary Licenses' (i.e., the initial contributor attached the notice in Exhibit B or the software was originally under version 1.1 or earlier without a Secondary License), the following notice and secondary license requirements must be attached:\n\n1. **Notice**: The notice described in Exhibit B of the MPL 2.0 must be attached to the Covered Software.\n2. **Secondary License**: The Covered Software must be distributed under the terms of a Secondary License (as defined in the MPL 2.0).\n\nIf the software is NOT Incompatible With Secondary Licenses, no notice or secondary license is required for that specific software, though the software may still be distributed under the terms of this License or a Secondary License if the user chooses.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 95053,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "Who holds the authority to modify or indemnify recipients of the Covered Software under the MPL 2.0?",
+          "answer": "Mozilla Foundation",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 60708,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 1,
+        "covered": 0,
+        "expected": 4,
+        "matched": 1,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 16,
+        "ms": 155761
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp05-ada",
+      "plan": {
+        "title": "Ada Lovelace: A Mathematician and Early Computer Pioneer",
+        "sections": [
+          "Who was Ada Lovelace and what was her family background?",
+          "How did Ada Lovelace's mathematical talent lead to her collaboration with Charles Babbage?",
+          "What specific computing 'firsts' did Ada Lovelace credit to her collaboration with Babbage?",
+          "How did Ada Lovelace contribute to the history of computing through her work on Charles Babbage's machines?"
+        ],
+        "consulted": [
+          "Ada Lovelace (Wikipedia, lead section).txt"
+        ]
+      },
+      "planMs": 28439,
+      "sections": [
+        {
+          "question": "Who was Ada Lovelace and what was her family background?",
+          "answer": "Ada Lovelace was an English mathematician and writer, born Augusta Ada King, Countess of Lovelace (née Byron) on 10 December 1815. Her family background was that she was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke. Lord Byron separated from his wife a month after Ada was born and died when she was eight years old. She married William King in 1835, who was created Viscount Ockham and 1st Earl of Lovelace in 1838, making her the Countess of Lovelace. Ada was descended from the extinct Baron Lovelaces, which is why her husband's title was chosen for her.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 6,
+          "ms": 121500,
+          "evidence": 7,
+          "verified": 7
+        },
+        {
+          "question": "How did Ada Lovelace's mathematical talent lead to her collaboration with Charles Babbage?",
+          "answer": "Ada Lovelace's mathematical talent led to her collaboration with Charles Babbage because she was an English mathematician who recognized the analytical engine's potential beyond mere calculation. She met Babbage on June 5, 1833, and they developed a long working relationship and friendship. Lovelace translated Luigi Menabrea's article about the analytical engine and added seven explanatory notes, describing a method to calculate Bernoulli numbers, which she called the first published computer program.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 63846,
+          "evidence": 3,
+          "verified": 2
+        },
+        {
+          "question": "What specific computing 'firsts' did Ada Lovelace credit to her collaboration with Babbage?",
+          "answer": "Ada Lovelace credited several computing 'firsts' to her collaboration with Charles Babbage, including: 1) being the first to point out the possibility of encoding information besides mere arithmetical figures (such as music) and manipulating it with the machine; 2) being the first to recognize the analytical engine as a general-purpose computer capable of performing complex calculations beyond simple arithmetic; and 3) being the first to write a program (the first published computer program) to calculate Bernoulli numbers using the machine.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 53651,
+          "evidence": 3,
+          "verified": 2
+        },
+        {
+          "question": "How did Ada Lovelace contribute to the history of computing through her work on Charles Babbage's machines?",
+          "answer": "Ada Lovelace contributed to the history of computing by working on Charles Babbage's analytical engine. She was the first to recognize that the machine had applications beyond pure calculation, specifically by envisioning its ability to process information other than numbers, such as music. She is credited with several 'firsts' for her collaboration with Babbage, including the first published computer program (a translation of Luigi Menabrea's article supplemented with seven explanatory notes) and the first recognition of the machine's potential for general-purpose computation, a vision she termed 'poetical science'.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 50376,
+          "evidence": 3,
+          "verified": 3
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 2,
+        "covered": 4,
+        "expected": 4,
+        "matched": 4,
+        "right": 3,
+        "labelledWrong": 0,
+        "labelled": 1,
+        "unmatched": 0,
+        "unmatchedLabelled": 0,
+        "calls": 23,
+        "ms": 289373
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp06-roadmap",
+      "plan": {
+        "title": "Kovrune's Roadmap and Design Decisions",
+        "sections": [
+          "How does Kovrune's roadmap structure its features and decisions based on the project owner's role and the intended use case?",
+          "What specific design choices and security mechanisms are prioritized in Kovrune's architecture to support local trust and lightweight operations?",
+          "How does Kovrune handle versioning, transparency, and the integration of external tools like OpenAI?",
+          "What are the licensing terms and the primary quality instrument used to evaluate Kovrune's functionality?"
+        ],
+        "consulted": [
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 24995,
+      "sections": [
+        {
+          "question": "How does Kovrune's roadmap structure its features and decisions based on the project owner's role and the intended use case?",
+          "answer": "Kovrune's roadmap structure organizes features and decisions based on the project owner's role and the intended use case by defining specific milestones (M0–M4) that align with these factors. The roadmap explicitly separates the project owner's responsibilities (decisions, reviews, testing on reference hardware) from the implementation team's (Claude, tests, benchmark runs, documentation). It uses a phased approach where each milestone delivers a usable result with explicit acceptance criteria, ensuring that the project owner can validate decisions and the team can execute implementation based on the intended use case (benchmarking, research, etc.).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 76125,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What specific design choices and security mechanisms are prioritized in Kovrune's architecture to support local trust and lightweight operations?",
+          "answer": "Kovrune prioritizes local trust and lightweight operations through several specific design choices and security mechanisms identified in its architecture design documents:\n\n1. **Local-first Architecture**: The core product is built as a local-first research app where users run their own AI agents locally over their own documents and open sources, without depending on a centralized AI provider.\n\n2. **Lightweight WebRTC Transport**: The architecture utilizes lightweight WebRTC transport for peer-to-peer communication, enabling efficient and secure data exchange between users.\n\n3. **Peer Identity and Circle Invitations**: The system supports peer identities and circle invitations, allowing users to form trusted groups (circles) to collaborate.\n\n4. **Versioned Protocol Messages**: A versioned protocol is implemented to ensure secure and reliable communication between peers.\n\n5. **Sandboxed Execution Environment**: The architecture includes sandboxes (pyodide, quickjs) for executing code, ensuring that tasks are isolated and secure.\n\n6. **Security Validation and Permissions**: The security layer includes validation, permissions management, and identity handling mechanisms to enforce trust within the local network.\n\n7. **Local Endpoint Support**: The architecture supports local endpoints, allowing users to host their own model servers and run tasks locally.\n\n8. **Self-hosting and Configuration**: Users can self-host the app, configure supported models, and understand privacy controls, ensuring full control over the local environment.\n\nThese mechanisms collectively support the goal of enabling local trust and lightweight operations for users to run their own AI agents and collaborate securely.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 97508,
+          "evidence": 3,
+          "verified": 3
+        },
+        {
+          "question": "How does Kovrune handle versioning, transparency, and the integration of external tools like OpenAI?",
+          "answer": "Kovrune handles versioning through strict metadata inspection, model integration via OpenAI-compatible adapters, and comprehensive testing including unit, model integration, and end-to-end checks. Transparency is ensured by validating trusted circles, verifying external messages, and publishing evaluation results per model, runtime, and hardware class. Integration with external tools like OpenAI is supported through an OpenAI-compatible adapter that allows users to connect to local Ollama, LM Studio, or llama.cpp servers, with guidance on cross-origin configuration and browser permissions.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 76126,
+          "evidence": 3,
+          "verified": 2
+        },
+        {
+          "question": "What are the licensing terms and the primary quality instrument used to evaluate Kovrune's functionality?",
+          "answer": "The licensing terms are the Mozilla Public License 2.0 (MPL-2.0), and the primary quality instrument is the evaluation set built in M0.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 6,
+          "ms": 76279,
+          "evidence": 2,
+          "verified": 2
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 1,
+        "covered": 2,
+        "expected": 4,
+        "matched": 1,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 1,
+        "unmatched": 3,
+        "unmatchedLabelled": 0,
+        "calls": 27,
+        "ms": 326038
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx01-eiffel",
+      "plan": {
+        "title": "Description of the Eiffel Tower",
+        "sections": [
+          "What is the physical structure and location of the Eiffel Tower?",
+          "When was the Eiffel Tower constructed and what was its original name?",
+          "What is the current height of the Eiffel Tower and how long did it hold the record for the tallest building in the world?",
+          "Who was responsible for building the Eiffel Tower and what was the purpose of its construction?"
+        ],
+        "consulted": [
+          "Tour Eiffel (Wikipedia, lead section).txt"
+        ]
+      },
+      "planMs": 19936,
+      "sections": [
+        {
+          "question": "What is the physical structure and location of the Eiffel Tower?",
+          "answer": "The Eiffel Tower is a self-supporting iron tower with a height of 330 meters (including antennas), located at the northern-western edge of the Champ-de-Mars park, on the banks of the Seine in the 7th arrondissement of Paris. Its official address is 5, avenue Anatole-France.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 43954,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "When was the Eiffel Tower constructed and what was its original name?",
+          "answer": "The Eiffel Tower was constructed in 1889 and its original name was 'Tour de 300 mètres' (Tower of 300 meters).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 49358,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "What is the current height of the Eiffel Tower and how long did it hold the record for the tallest building in the world?",
+          "answer": "330 meters, 40 years",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 33033,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "Who was responsible for building the Eiffel Tower and what was the purpose of its construction?",
+          "answer": "The Eiffel Tower was built by Gustave Eiffel and his team, and its purpose was to serve as a temporary structure for the 1889 World's Fair in Paris, celebrating the centenary of the French Revolution and showcasing French industrial strength.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 46237,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 2,
+        "covered": 2,
+        "expected": 3,
+        "matched": 3,
+        "right": 3,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 16,
+        "ms": 172582
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx02-fuji",
+      "plan": {
+        "title": "Mount Fuji: Geology, Location, and World Heritage Status",
+        "sections": [
+          "What is Mount Fuji's geological classification and its status as a world cultural heritage site?",
+          "Which prefectures does Mount Fuji span, and what are its designated national parks and historical sites?",
+          "What are the key cultural and artistic influences on Mount Fuji?"
+        ],
+        "consulted": [
+          "富士山 (Wikipedia, lead section).txt"
+        ]
+      },
+      "planMs": 17665,
+      "sections": [
+        {
+          "question": "What is Mount Fuji's geological classification and its status as a world cultural heritage site?",
+          "answer": "Mount Fuji is classified as a stratovolcano (玄武岩質成層火山) and is a World Heritage Site. Its geological classification is a stratovolcano made of basalt, and its status as a World Heritage Site was granted in 2013 (平成25年) 6月22日 under the name 'Mount Fuji - A Source of Faith and the Source of Art' (富士山-信仰の対象と芸術の源泉).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 53963,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "Which prefectures does Mount Fuji span, and what are its designated national parks and historical sites?",
+          "answer": "Mount Fuji spans two prefectures: Yamanashi and Shizuoka. Its designated national parks include Fuji-Kakunagawa-Ido National Park (1936), and its designated historical sites include the Historical Site of Fuji (1952) and the Cultural Heritage Site 'Mount Fuji - A Sacred Object and the Source of Art' (2013).",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 58197,
+          "evidence": 3,
+          "verified": 3
+        },
+        {
+          "question": "What are the key cultural and artistic influences on Mount Fuji?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "no-answer",
+          "calls": 8,
+          "ms": 253245,
+          "evidence": 0,
+          "verified": 0
+        }
+      ],
+      "score": {
+        "planned": 3,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 2,
+        "covered": 2,
+        "expected": 3,
+        "matched": 2,
+        "right": 2,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 20,
+        "ms": 365405
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx03-troubleshooting",
+      "plan": {
+        "title": "Troubleshooting Kovrune with llama.cpp",
+        "sections": [
+          "How to configure a local llama.cpp server on a laptop with integrated Intel graphics to resolve the 'HTTPS is not supported' error when using the -hf flag?",
+          "How to resolve the 'model is not acting on tool results' error in Kovrune by ensuring the llama.cpp server is properly configured and the model file is compatible?",
+          "How to troubleshoot multi-step conversation issues in Kovrune caused by the llama.cpp server?",
+          "How to identify and stop conflicting llama.cpp servers or other services occupying the default 8080 port?"
+        ],
+        "consulted": [
+          "kovrune-user-guide.md",
+          "kovrune-design-r3.pdf"
+        ]
+      },
+      "planMs": 29038,
+      "sections": [
+        {
+          "question": "How to configure a local llama.cpp server on a laptop with integrated Intel graphics to resolve the 'HTTPS is not supported' error when using the -hf flag?",
+          "answer": "To resolve the 'HTTPS is not supported' error when using the -hf flag with a local llama.cpp server on a laptop with integrated Intel graphics, you must rebuild llama.cpp with SSL support. The error indicates that the installed version of llama.cpp was built without SSL support. To fix this, download the model using `curl` (as per the guide) or rebuild llama.cpp by installing the required development libraries with `sudo apt install libssl-dev`.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 49682,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How to resolve the 'model is not acting on tool results' error in Kovrune by ensuring the llama.cpp server is properly configured and the model file is compatible?",
+          "answer": "To resolve the 'model is not acting on tool results' error in Kovrune, ensure the llama.cpp server is properly configured and the model file is compatible by following these steps: 1) Set up a local model server using llama.cpp on the user's machine or LAN (as per the user guide). 2) Verify that the llama.cpp server is supported and that the model file is compatible with the server. 3) Ensure the model file is pinned to a specific revision on the Hugging Face Hub to avoid issues with version mismatches. 4) Use the MCP-compatible tool definitions in Kovrune to ensure the model is correctly configured to process tool results.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 47263,
+          "evidence": 2,
+          "verified": 2
+        },
+        {
+          "question": "How to troubleshoot multi-step conversation issues in Kovrune caused by the llama.cpp server?",
+          "answer": "To troubleshoot multi-step conversation issues in Kovrune caused by the llama.cpp server, use the llama.cpp server with the same model file as the one used in the local model server setup. If the issue persists, check the connection, stop Ollama if it is running, and ensure the server is properly configured.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 35664,
+          "evidence": 1,
+          "verified": 1
+        },
+        {
+          "question": "How to identify and stop conflicting llama.cpp servers or other services occupying the default 8080 port?",
+          "answer": "To identify and stop conflicting llama.cpp servers or other services occupying the default 8080 port, use the command `ss -ltnp | grep 8080` to check for the port in use. If a conflicting server is found, stop it using `pkill -x llama-server` or start the server on a different port (e.g., `--port 8081`) and specify that address in the application.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 34521,
+          "evidence": 1,
+          "verified": 1
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 2,
+        "planCovered": 3,
+        "covered": 3,
+        "expected": 3,
+        "matched": 3,
+        "right": 3,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 18,
+        "ms": 167130
+      }
+    }
+  ]
+}

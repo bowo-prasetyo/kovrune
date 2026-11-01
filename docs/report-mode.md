@@ -129,10 +129,16 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
   - Few sections are labelled Quotes found (2 of 30 on 4B, none wrong), because long section answers are rarely backed sentence by sentence.
   - **Next:** show the planner what the sources hold before it plans, judged on this suite. Then the introduction and conclusion (slice 5) can be measured on it too.
 
-- **The source overview: the planner sees what the documents hold (harness 0.52.0).**
-  - Before planning, `planReport` searches the user's documents for the request as the research agent would, without the words that only ask for a report ("write", "report", "400 words"), and with the terms translated into each document language written in another script. From each passage found (6, plus 2 per such language) it keeps the 3 sentences that best match, at most 2,400 characters in all, grouped by document.
-  - The planner is shown them and asked to base the sections on what the sources hold, not on what a report on the subject usually covers. The plan screen names the documents it was shown. Open sources are not searched before planning: a plan from Wikipedia or OpenAlex alone is still written blind.
+- **The source overview: the planner sees what the documents hold (harness 0.52.0): measured, not adopted.**
+  - Before planning, `planReport` can search the user's documents for the request as the research agent would, without the words that only ask for a report ("write", "report", "400 words"), and with the terms translated into each document language written in another script. From each passage found (6, plus 2 per such language) it keeps the 3 sentences that best match, at most 2,400 characters in all, grouped by document.
+  - The planner is shown them and asked to base the sections on what the sources hold, not on what a report on the subject usually covers. The plan screen then names the documents it was shown. Open sources are not searched before planning.
   - **Adoption condition, declared before the run.** At 4,096 tokens, on the report suite, the overview is kept when:
     1. report coverage on `reports` rises on at least one of Qwen3.5-4B and 2B, and falls on neither;
     2. the `reportsholdout` coverage total falls on neither model;
     3. no more matched sections are labelled Quotes found without their facts than in the baseline.
+  - **Result** ([field README](../eval/field/README.md#the-source-overview-the-planner-sees-what-the-documents-hold-0520-measured-not-adopted)). A first version showed Chinese and Japanese passages that shared only a few characters with a translation, and was fixed. With the fix:
+    - plan coverage rises on both models;
+    - 2B's report coverage rises from 3 to 7 of 23, and its held-out total from 6 to 7;
+    - 4B's stays at 9 and 6, but two of its sections are labelled Quotes found without their facts, against none before. They describe roadmap features from the design document as what Kovrune does.
+
+    Part 3 fails, so `plansFromSources` is off for both models and the planner still sees the request alone. Switching it on for 2B alone, as the completeness check is, is the project owner's decision.
