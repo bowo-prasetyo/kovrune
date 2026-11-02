@@ -18,6 +18,15 @@ So a published release carries two independent checks: GitHub Actions built it, 
 
 The app at <https://kovrune.pages.dev/> is the preview, built from `main` on every push ([`cloudflare.yml`](../.github/workflows/cloudflare.yml)); releases are for anyone who wants to host or check a fixed version.
 
+## Before tagging
+
+- [ ] [`release-signers`](../release-signers) has the owner's public key, merged to `main` ([below](#sign-a-release-owner)). Without it, the signature check unpublishes the release.
+- [ ] `version` in `package.json` matches the tag, without the `v`.
+- [ ] `docs/release-notes/<tag>.md` exists. The release workflow puts it at the top of the draft's notes; its links should point at the tag, not at `main`.
+- [ ] CI is green on the commit to tag.
+
+Then push the tag from that commit: `git tag v0.1.0 && git push origin v0.1.0`.
+
 ## Check a release yourself
 
 You need git and the Node.js version in [`.nvmrc`](../.nvmrc).

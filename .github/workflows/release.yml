@@ -35,8 +35,14 @@ jobs:
       - name: Create a draft release
         env:
           GH_TOKEN: ${{ github.token }}
+        # The notes start with docs/release-notes/<tag>.md when the tag has one.
         run: |
+          notes="docs/release-notes/$GITHUB_REF_NAME.md"
+          {
+            if [ -f "$notes" ]; then cat "$notes"; printf '\n---\n\n'; fi
+            echo "Built by GitHub Actions from $GITHUB_REF_NAME ($GITHUB_SHA) with Node $(node --version). To publish: rebuild the tag, run npm run release:sign, attach SHA256SUMS.sig, then publish (docs/releases.md). To check it: npm run release:verify, or rebuild the tag and compare with SHA256SUMS."
+          } > dist/RELEASE_NOTES.md
           gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
             --title "Kovrune $GITHUB_REF_NAME" \
-            --notes "Built by GitHub Actions from $GITHUB_REF_NAME ($GITHUB_SHA) with Node $(node --version). To publish: rebuild the tag, run npm run release:sign, attach SHA256SUMS.sig, then publish (docs/releases.md). To check it: npm run release:verify, or rebuild the tag and compare with SHA256SUMS." \
+            --notes-file dist/RELEASE_NOTES.md \
             "dist/kovrune-$GITHUB_REF_NAME.tar.gz" dist/SHA256SUMS
