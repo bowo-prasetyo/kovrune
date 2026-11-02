@@ -23,6 +23,8 @@ import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } fr
 // 0.25, 4B's stress test at 2,048 tokens processed 17% fewer prompt tokens but lost two tasks
 // (eval/field/README.md, harness 0.54.0).
 // longReplyRoom: where the raised limit is kept free after a cut-off (AgentConfig.longReplyRoom).
+// "always": on the report suite, "when-answering" changed nothing, as no cut-off was followed by reads
+// (eval/field/README.md, harness 0.55.0).
 export const RESEARCH_LIMITS = {
   maxCalls: 8,
   maxTokensPerCall: 512,
