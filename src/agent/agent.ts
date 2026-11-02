@@ -68,6 +68,15 @@ export interface AgentConfig {
    * writes longer answers than maxTokensPerCall allows, so the later calls of the task keep the room.
    */
   cutOffMaxTokens?: number;
+  /**
+   * Where the context keeps room for the raised limit once a reply was cut off. "always" (the
+   * default): every later call, so the conversation must fit in that much less. "when-answering": only
+   * the retry right after a cut-off and the last step, where a long answer is due; other calls ask for
+   * as much of the raised limit as the room left allows. Searches and reads need under 100 tokens,
+   * and keeping 1,024 free for them made the conversation be fitted, and processed again by the server,
+   * at every step (eval/field/README.md).
+   */
+  longReplyRoom?: "always" | "when-answering";
   /** Tokens kept free for the reply and chat-template overhead. */
   contextReserve?: number;
   /**
@@ -290,8 +299,11 @@ export async function runAgent(options: {
   // 400-word report, the answer fit only with the raised limit, the final_answer guard sent the model
   // to read what it quoted, and the answer after those reads, back at the default, was cut off on the
   // last step, leaving no answer at all.
-  let maxTokens = config.maxTokensPerCall;
   let longReplies = false;
+  // True for the call right after a cut-off reply, which is the long answer asked for again.
+  let retrying = false;
+  const reserve = config.contextReserve ?? 128;
+  const raisedLimit = config.cutOffMaxTokens ?? config.maxTokensPerCall;
 
   while (calls.length < config.maxCalls) {
     // The last-step guard: small models can keep rephrasing searches until the budget runs out,
@@ -301,7 +313,8 @@ export async function runAgent(options: {
       allow(finalOnly);
       transcript.at(-1)!.content += `\n\nThis is your last step. Finish now with ${finalTool}, using what you have found so far.`;
     }
-    const budget = model.info.contextLength - maxTokens - (config.contextReserve ?? 128);
+    const keepRaisedRoom = longReplies && (config.longReplyRoom !== "when-answering" || retrying || forceFinal);
+    const budget = model.info.contextLength - (keepRaisedRoom ? raisedLimit : config.maxTokensPerCall) - reserve;
     // A result's shorter form comes from the tool that gave it, named by the action before it.
     const fitted = fitToContext(
       transcript,
@@ -320,6 +333,11 @@ export async function runAgent(options: {
     if (!fitted.fits) {
       return { stopReason: "context-overflow", calls, transcript };
     }
+    // After a cut-off, a call asks for the raised limit, or as much of it as the room left allows.
+    const promptSize = transcript.reduce((sum, m) => sum + estimateTokens(m.content) + 4, 0);
+    const maxTokens = longReplies
+      ? Math.max(config.maxTokensPerCall, Math.min(raisedLimit, model.info.contextLength - promptSize - reserve))
+      : config.maxTokensPerCall;
     // An action whose result was removed or shortened is no longer a repeat: running it again brings
     // the whole result back, where the repeat guard would answer that it "has not changed".
     transcript.forEach((m, i) => {
@@ -346,6 +364,7 @@ export async function runAgent(options: {
       return { stopReason: "error", error: error instanceof Error ? error.message : String(error), calls, transcript };
     }
     const { record, text, action } = result;
+    retrying = false;
     if (fitted.removed) record.droppedResults = fitted.removed;
     calls.push(record);
     options.onCall?.(record, calls.length);
@@ -357,9 +376,10 @@ export async function runAgent(options: {
       // Wikipedia and OpenAlex: six cut-off replies in a row). The long answer may well be right,
       // so the retry gets more room, and only if that is cut off too is a shorter answer asked for.
       let problem = `Your reply was not a valid action (${record.error}).`;
+      // A reply cut off with less than the raised limit, by its first limit or by the room left, gets the raised one.
       if (record.cutOff && config.cutOffMaxTokens && maxTokens < config.cutOffMaxTokens) {
-        maxTokens = config.cutOffMaxTokens;
         longReplies = true;
+        retrying = true;
         problem = `Your reply was cut off at the length limit before it was complete. You have more room now: reply again with the same answer, keeping each quote to one short sentence.`;
       } else if (record.cutOff) {
         problem = `Your reply was cut off at the length limit before it was complete. Reply again, shorter: a brief answer and only the quotes that support it most, each one short sentence.`;
@@ -373,7 +393,6 @@ export async function runAgent(options: {
       continue;
     }
 
-    maxTokens = longReplies ? config.cutOffMaxTokens! : config.maxTokensPerCall;
     const actionText = JSON.stringify(action);
     transcript.push({ role: "assistant", content: actionText });
     if (action.tool === finalTool) {

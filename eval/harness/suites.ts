@@ -30,6 +30,8 @@ export interface TaskOptions {
   constrained: boolean;
   /** AgentConfig.fitHeadroom for research tasks; the app's value when absent. */
   fitHeadroom?: number;
+  /** AgentConfig.longReplyRoom for research tasks; the app's value when absent. */
+  longReplyRoom?: "always" | "when-answering";
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
 }
@@ -52,9 +54,9 @@ export async function runResearchTask(
   suite: Exclude<SuiteName, "coding">,
   library: ResearchLibrary,
   model: LanguageModel,
-  { constrained, fitHeadroom, signal, onCall }: TaskOptions,
+  { constrained, fitHeadroom, longReplyRoom, signal, onCall }: TaskOptions,
 ): Promise<TaskRun> {
-  const research = await runResearch({ question: task.question, library, model, constrained, fitHeadroom, signal, onCall });
+  const research = await runResearch({ question: task.question, library, model, constrained, fitHeadroom, longReplyRoom, signal, onCall });
   const score = scoreResearch(task, research, library);
   return { suite, taskId: task.id, kind: task.kind, score, agent: research.agent, research };
 }

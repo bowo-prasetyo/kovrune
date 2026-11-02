@@ -197,6 +197,43 @@ describe("research agent", () => {
     );
   });
 
+  it("after a cut-off, keeps room for the raised limit only where a long answer is due, when asked to", async () => {
+    // A model whose second reply is cut off at its limit, then reads more before answering.
+    class CutOnce extends ScriptedModel {
+      readonly limits: number[] = [];
+      override async *generate(request: GenerationRequest) {
+        this.limits.push(request.maxTokens);
+        if (this.limits.length === 2) {
+          this.requests.push(request);
+          yield { text: '{"tool":"final_answer","args":{"found":true,"answer":"The Tessel', done: false };
+          yield { text: "", done: true, finishReason: "length", usage: { promptTokens: 100, completionTokens: request.maxTokens } };
+          return;
+        }
+        yield* super.generate(request);
+      }
+    }
+    const reads = corpus.slice(0, 6).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
+    const run = async (longReplyRoom: "always" | "when-answering") => {
+      const model = new CutOnce([reads[0]!, "", ...reads.slice(1, 5), final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
+      Object.assign(model.info, { contextLength: 2400 });
+      const result = await runResearchTask(task("r01-lumen-maintainer"), "research", baseLibrary, model, { constrained: true, longReplyRoom });
+      return { model, result };
+    };
+    const always = await run("always");
+    const answering = await run("when-answering");
+    assert.equal(always.result.agent.stopReason, "final");
+    assert.equal(answering.result.agent.stopReason, "final");
+    assert.deepEqual(always.model.limits.slice(0, 3), [512, 512, 1024], "the retry after the cut-off gets the raised limit");
+    assert.ok(always.model.limits.slice(2).every((n) => n === 1024), "and so does every later call, by default");
+    assert.equal(answering.model.limits[2], 1024, "the retry gets the raised limit either way");
+    const dropped = (r: typeof always) => r.result.agent.calls.reduce((n, c) => n + (c.droppedResults ?? 0), 0);
+    assert.ok(dropped(answering) < dropped(always), `fewer results leave the context: ${dropped(answering)} < ${dropped(always)}`);
+    assert.ok(
+      answering.model.limits.every((n) => n >= 512 && n <= 1024),
+      "a later call asks for as much of the raised limit as the room left allows",
+    );
+  });
+
   it("reads a document again when its result was removed, instead of calling it a repeat", async () => {
     const reads = corpus.slice(0, 4).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
     const model = new ScriptedModel([...reads, reads[0]!, final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);

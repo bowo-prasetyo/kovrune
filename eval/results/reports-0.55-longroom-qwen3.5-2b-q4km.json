@@ -1,0 +1,763 @@
+{
+  "harnessVersion": "0.55.0",
+  "createdAt": "2026-11-02T01:21:49.223Z",
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "planner": "as the app plans",
+    "notes": "--long-reply-room when-answering on the reports with a cut-off section plus one control, code dd0f72d."
+  },
+  "results": [
+    {
+      "suite": "reports",
+      "taskId": "rp01-local-server",
+      "plan": {
+        "title": "Setting Up Kovrune with a Local Model Server",
+        "sections": [
+          "What are the specific prerequisites and hardware requirements needed to install Kovrune on a local machine?",
+          "How do I configure the local model server to connect to the Kovrune interface and manage model loading?",
+          "What are the steps to initialize the local server and verify that the model is accessible via the Kovrune API?",
+          "How do I troubleshoot common issues such as connection failures or model loading errors in the local setup?"
+        ]
+      },
+      "planMs": 15989,
+      "sections": [
+        {
+          "question": "What are the specific prerequisites and hardware requirements needed to install Kovrune on a local machine?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 28032,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 2657,
+          "cachedTokens": 1510,
+          "promptMs": 17951
+        },
+        {
+          "question": "How do I configure the local model server to connect to the Kovrune interface and manage model loading?",
+          "answer": "To configure the local model server to connect to the Kovrune interface and manage model loading, follow these steps based on the provided documents:\n\n1. **Connect to the Kovrune Interface**: The local server must be configured to connect to the Kovrune interface. The specific configuration details for the interface connection are not explicitly detailed in the provided documents, but the server is designed to handle model loading.\n\n2. **Load the Model**: The model should be loaded in a worker. The documents mention running a short smoke test after loading the model in a worker to verify functionality.\n\n3. **Manage Model Loading**: The process involves:\n   - Resolving the pinned revision and its file manifest.\n   - Downloading model weights from Hugging Face and `mlc-ai/binary-mlc-llm-libs`.\n   - Verifying every file against its SHA-256 hash to ensure integrity.\n   - Loading the model in a worker and running a short smoke test.\n\nThe documents do not provide specific configuration commands or parameters for connecting to the Kovrune interface, but they outline the model loading and verification workflow.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 73658,
+          "evidence": 3,
+          "verified": 3,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 6897,
+          "cachedTokens": 5257,
+          "promptMs": 27471
+        },
+        {
+          "question": "What are the steps to initialize the local server and verify that the model is accessible via the Kovrune API?",
+          "answer": "None",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 25512,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 2505,
+          "cachedTokens": 1701,
+          "promptMs": 13496
+        },
+        {
+          "question": "How do I troubleshoot common issues such as connection failures or model loading errors in the local setup?",
+          "answer": "To troubleshoot common issues like connection failures or model loading errors in the local setup, follow these steps based on the user guide:\n\n1. **Check the model server setup**: Ensure the local model server is running correctly. The guide mentions setting up a local model server (Section 3).\n2. **Run a smoke test**: Load the model in a worker and run a short smoke test to verify it works (Section 16).\n3. **Check browser settings**: Ensure that Wikipedia and OpenAlex are not ticked if you want to avoid network requests, as this can affect local setup issues (Section 8).\n4. **Verify local environment**: Ensure Node.js 22 or newer and git are installed (Section 1).\n\nThese steps are detailed in the provided documents, specifically in the troubleshooting section of the user guide and the acceptance criteria for the design review.",
+          "quotesFound": false,
+          "status": "unverified",
+          "calls": 6,
+          "ms": 55084,
+          "evidence": 1,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 5776,
+          "cachedTokens": 4373,
+          "promptMs": 23875
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 3,
+        "planCovered": 1,
+        "covered": 0,
+        "expected": 4,
+        "matched": 2,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 20,
+        "ms": 182286
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report outlines the procedures for configuring a local model server to connect to the Kovrune interface and manage model loading, as well as the steps required to troubleshoot connection failures or model loading errors.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report outlines the procedures for configuring a local model server to connect to the Kovrune interface and manage model loading, as well as the steps required to troubleshoot connection failures or model loading errors.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections detail the workflow for resolving pinned revisions, downloading weights, and verifying file integrity, while also explaining how to verify local environment requirements and handle common setup issues.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections detail the workflow for resolving pinned revisions, downloading weights, and verifying file integrity, while also explaining how to verify local environment requirements and handle common setup issues.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "judged": 2,
+        "backed": 0,
+        "ms": 17479
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp03-reading-answers",
+      "plan": {
+        "title": "How to Read and Check Kovrune's Answers",
+        "sections": [
+          "What is the correct method for reading Kovrune's answers to ensure accuracy?",
+          "How should a reader verify the validity of Kovrune's answers using the provided sources?",
+          "What specific steps must be taken to confirm that Kovrune's answers are consistent with the source material?",
+          "How can a reader identify potential errors or inconsistencies in Kovrune's answers based on the analysis of the sources?"
+        ]
+      },
+      "planMs": 16016,
+      "sections": [
+        {
+          "question": "What is the correct method for reading Kovrune's answers to ensure accuracy?",
+          "answer": "The correct method for reading Kovrune's answers to ensure accuracy is to tick the sources you want to use (such as Wikipedia or OpenAlex) and ask questions. Kovrune reads your documents in the browser and never uploads them, then searches for the answer using those sources. The model combines the specific information from your documents with background information from other ticked sources, and each source adds a step to the answer. To ensure accuracy, you should ask about one document at a time with words that appear in it, and you can stop the run at any time.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 64535,
+          "evidence": 3,
+          "verified": 3,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 7626,
+          "cachedTokens": 5856,
+          "promptMs": 30168
+        },
+        {
+          "question": "How should a reader verify the validity of Kovrune's answers using the provided sources?",
+          "answer": "A reader should verify the validity of Kovrune's answers by examining the 'Reading the answer' section of the user guide (kovrune-user-guide#6). This section provides a checklist of labels that indicate the quality of the answer based on whether quotes are found and how many sentences are backed by actual source text. Specifically, the reader should check if every quote is word-for-word in its source and if the answer sentences share most words with the quotes. Additionally, the reader must verify that the marked sentences in the answer actually share few words with any quote, ensuring the model did not add details from memory. Finally, the reader should confirm that the answer is supported by the ticked sources, as the model searches for these sources before generating the final response.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 117054,
+          "evidence": 5,
+          "verified": 5,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 8217,
+          "cachedTokens": 6641,
+          "promptMs": 26531
+        },
+        {
+          "question": "What specific steps must be taken to confirm that Kovrune's answers are consistent with the source material?",
+          "answer": "To confirm that Kovrune's answers are consistent with the source material, the following steps must be taken based on the guidelines found in the documents: 1. Verify that every quote used in the answer is word-for-word present in its source. 2. Check that every sentence of the answer shares most of its words with a quote from the source. 3. Ensure that the sentences marked as sharing few words with any quote are checked against the sources to see if they are merely adding details from memory. 4. Verify that all quotes used are actually found in the cited sources. 5. If any quotes are not found in the sources, the answer may be wrong and must be checked against the sources starting with the marked quotes. 6. If no quotes are found in the sources, the answer may be wrong. 7. If the model found no answer in what it searched, this is often the right answer.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 67512,
+          "evidence": 7,
+          "verified": 6,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 4033,
+          "cachedTokens": 3090,
+          "promptMs": 16293
+        },
+        {
+          "question": "How can a reader identify potential errors or inconsistencies in Kovrune's answers based on the analysis of the sources?",
+          "answer": "A reader can identify potential errors or inconsistencies in Kovrune's answers by analyzing the design documents (specifically Kovrune-design-r3.pdf) for alignment between stated goals, technical constraints, and evaluation criteria. This involves checking if the architecture supports the claimed features (e.g., local-first, decentralized, P2P), verifying that the evaluation methodology (M0 benchmark, fixed tasks) is consistent with the stated goals, and ensuring that technical specifications (like runtime choices, transport protocols, and security measures) are logically consistent with the vision. The documents also highlight specific areas of risk, such as the lack of testing for agent quality on browser-sized models and the deferred open participation in P2P, which are inconsistencies or gaps in the current design.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 127180,
+          "evidence": 4,
+          "verified": 4,
+          "cutOffs": 0,
+          "droppedResults": 1,
+          "promptTokens": 12977,
+          "cachedTokens": 7762,
+          "promptMs": 82879
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 0,
+        "planCovered": 0,
+        "covered": 0,
+        "expected": 3,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 27,
+        "ms": 376281
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report explains how to read and verify Kovrune's answers by following specific steps outlined in the provided documents. It details the correct method for reading the answers to ensure accuracy and describes how a reader can verify the validity of the answers using the provided sources.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report explains how to read and verify Kovrune's answers by following specific steps outlined in the provided documents. ",
+                "backed": false
+              },
+              {
+                "text": "It details the correct method for reading the answers to ensure accuracy and describes how a reader can verify the validity of the answers using the provided sources.",
+                "backed": false
+              }
+            ],
+            "judged": 2,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections found summarize the correct method for reading Kovrune's answers, the steps to verify the answers, and the specific steps to confirm consistency with the source material.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections found summarize the correct method for reading Kovrune's answers, the steps to verify the answers, and the specific steps to confirm consistency with the source material.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "judged": 3,
+        "backed": 0,
+        "ms": 21927
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp04-mpl",
+      "plan": {
+        "title": "Mozilla Public License 2.0: Obligations and Rights",
+        "sections": [
+          "What are the primary obligations that a user must fulfill when distributing software under the Mozilla Public License 2.0?",
+          "What specific rights does a user have when distributing software under the Mozilla Public License 2.0?",
+          "How does the Mozilla Public License 2.0 define the scope of the license's applicability to derivative works?",
+          "What are the key restrictions on how a user can modify or distribute the software under the Mozilla Public License 2.0?"
+        ]
+      },
+      "planMs": 17713,
+      "sections": [
+        {
+          "question": "What are the primary obligations that a user must fulfill when distributing software under the Mozilla Public License 2.0?",
+          "answer": "The primary obligations a user must fulfill when distributing software under the Mozilla Public License 2.0 include: (1) attaching the 'Incompatible With Secondary Licenses' notice if distributing source code incompatible with secondary licenses (Exhibit B); (2) offering warranty, support, indemnity, or liability obligations only on their own behalf and not on behalf of Contributors; (3) making it absolutely clear that such obligations are offered by the user alone; and (4) if it is impossible to comply due to statute or regulation, complying to the maximum extent possible and describing the limitations in a text file included with distributions.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 67033,
+          "evidence": 3,
+          "verified": 3,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 5725,
+          "cachedTokens": 4220,
+          "promptMs": 25979
+        },
+        {
+          "question": "What specific rights does a user have when distributing software under the Mozilla Public License 2.0?",
+          "answer": "A user has the following specific rights when distributing software under the Mozilla Public License 2.0: 1. The user may distribute the software to any recipient. 2. The user may grant the rights to its Contributions conveyed by this License. 3. The user may grant the rights to its Contributions to any third party. 4. The user may grant the rights to its Contributions to any third party.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 123089,
+          "evidence": 5,
+          "verified": 5,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 8009,
+          "cachedTokens": 6457,
+          "promptMs": 27586
+        },
+        {
+          "question": "How does the Mozilla Public License 2.0 define the scope of the license's applicability to derivative works?",
+          "answer": "The Mozilla Public License 2.0 defines the scope of applicability to derivative works in Section 1.5, titled 'Incompatible With Secondary Licenses'. It states that a work is 'Incompatible With Secondary Licenses' if the initial Contributor attached the notice described in Exhibit B to the Covered Software, or if the Covered Software was made available under version 1.1 or earlier of the License but not also under the terms of a Secondary License.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 58808,
+          "evidence": 1,
+          "verified": 1,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 6035,
+          "cachedTokens": 4607,
+          "promptMs": 25777
+        },
+        {
+          "question": "What are the key restrictions on how a user can modify or distribute the software under the Mozilla Public License 2.0?",
+          "answer": "The key restriction on modifying or distributing the software under the Mozilla Public License 2.0 is that no one other than the license steward (Mozilla Foundation) has the right to modify or publish new versions of the License. Any modification of the License itself must be done by the license steward.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 42432,
+          "evidence": 1,
+          "verified": 1,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 4382,
+          "cachedTokens": 3315,
+          "promptMs": 19236
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 0,
+        "planCovered": 0,
+        "covered": 0,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 24,
+        "ms": 291362
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report outlines the primary obligations and specific rights associated with distributing software under the Mozilla Public License 2.0, detailing the conditions users must meet and the permissions they are granted.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report outlines the primary obligations and specific rights associated with distributing software under the Mozilla Public License 2.0, detailing the conditions users must meet and the permissions they are granted.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections summarize that users must attach specific notices and limit liability to their own actions, while simultaneously retaining the right to distribute the software and grant rights to their contributions to third parties.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections summarize that users must attach specific notices and limit liability to their own actions, while simultaneously retaining the right to distribute the software and grant rights to their contributions to third parties.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "judged": 2,
+        "backed": 0,
+        "ms": 18332
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx01-eiffel",
+      "plan": {
+        "title": "The Eiffel Tower: History, Design, and Significance",
+        "sections": [
+          "When was the Eiffel Tower built and what was its initial purpose?",
+          "Who designed the Eiffel Tower and what were the key structural innovations involved?",
+          "How has the Eiffel Tower evolved over time in terms of its function and public perception?",
+          "What is the current status and significance of the Eiffel Tower today?"
+        ]
+      },
+      "planMs": 14438,
+      "sections": [
+        {
+          "question": "When was the Eiffel Tower built and what was its initial purpose?",
+          "answer": "The Eiffel Tower was built in 1889 and was initially named 'tour de 300 mètres' (300 meters) for the 1889 World's Fair in Paris to celebrate the centenary of the French Revolution.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 42185,
+          "evidence": 1,
+          "verified": 1,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 1979,
+          "cachedTokens": 869,
+          "promptMs": 18921
+        },
+        {
+          "question": "Who designed the Eiffel Tower and what were the key structural innovations involved?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 6,
+          "ms": 41505,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 5904,
+          "cachedTokens": 4592,
+          "promptMs": 23951
+        },
+        {
+          "question": "How has the Eiffel Tower evolved over time in terms of its function and public perception?",
+          "answer": "none",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 28424,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 2737,
+          "cachedTokens": 1778,
+          "promptMs": 17266
+        },
+        {
+          "question": "What is the current status and significance of the Eiffel Tower today?",
+          "answer": "The Eiffel Tower is currently a 330-meter-tall iron tower located in Paris, France, situated at the northern end of the Champ-de-Mars park along the Seine. Originally built for the 1889 World's Fair, it has become the symbol of France and a major tourist attraction, having welcomed over 300 million visitors since its opening. Its height has been increased to 330 meters, and it serves as an antenna for radio and television programs. It remains the tallest iron structure in the world and the second-tallest structure in Europe, with the top platform at 279.11 meters being the highest accessible observation deck in Europe. The tower is a UNESCO World Heritage Site and a cultural landmark representing the industrial and romantic spirit of Paris.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 5,
+          "ms": 143274,
+          "evidence": 8,
+          "verified": 6,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 4690,
+          "cachedTokens": 3510,
+          "promptMs": 22933
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 1,
+        "covered": 3,
+        "expected": 3,
+        "matched": 1,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 3,
+        "unmatchedLabelled": 0,
+        "calls": 18,
+        "ms": 255388
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report examines the history, design, and significance of the Eiffel Tower, detailing its construction timeline and original purpose, as well as its current status and enduring importance.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report examines the history, design, and significance of the Eiffel Tower, detailing its construction timeline and original purpose, as well as its current status and enduring importance.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections reveal that the Eiffel Tower was originally built for the 1889 World's Fair to celebrate the centenary of the French Revolution, and today it stands as a 330-meter-tall iron structure that serves as a major tourist attraction and a UNESCO World Heritage Site.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections reveal that the Eiffel Tower was originally built for the 1889 World's Fair to celebrate the centenary of the French Revolution, and today it stands as a 330-meter-tall iron structure that serves as a major tourist attraction and a UNESCO World Heritage Site.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "judged": 2,
+        "backed": 0,
+        "ms": 16963
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx02-fuji",
+      "plan": {
+        "title": "Mount Fuji: Geography, History, and Cultural Significance",
+        "sections": [
+          "What is the geographical location and physical characteristics of Mount Fuji?",
+          "What is the historical significance of Mount Fuji in Japanese culture and history?",
+          "What are the primary methods and challenges associated with Mount Fuji's annual volcanic activity?",
+          "How does Mount Fuji influence the local economy and tourism industry?"
+        ]
+      },
+      "planMs": 15016,
+      "sections": [
+        {
+          "question": "What is the geographical location and physical characteristics of Mount Fuji?",
+          "answer": "Mount Fuji is located in Japan and is a stratovolcano. It was designated a World Heritage Site in 2013.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 583949,
+          "evidence": 1,
+          "verified": 1,
+          "cutOffs": 6,
+          "droppedResults": 0,
+          "promptTokens": 6116,
+          "cachedTokens": 4709,
+          "promptMs": 25100
+        },
+        {
+          "question": "What is the historical significance of Mount Fuji in Japanese culture and history?",
+          "answer": "Mount Fuji holds significant historical and cultural importance in Japan, including its status as a world cultural heritage site since 2013. It is recognized as a special monument (特別名勝) in 1952, a historical site (史跡) in 2011, and was designated as a national park in 1936. Culturally, it is revered as a sacred mountain (霊峰) and a source of art and spirituality, with the Shinto deity Fushimi-inari (浅間大神) residing at its summit. Historically, it was the center of the Fuji-san Shinto cult, and later became a key site for the Fuji-san Shinto sect (富士修験道). The mountain's unique shape and geological features have influenced Japanese art and landscape appreciation for centuries.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 71430,
+          "evidence": 2,
+          "verified": 2,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 5406,
+          "cachedTokens": 4210,
+          "promptMs": 22896
+        },
+        {
+          "question": "What are the primary methods and challenges associated with Mount Fuji's annual volcanic activity?",
+          "answer": "None",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 24000,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 2274,
+          "cachedTokens": 1522,
+          "promptMs": 14060
+        },
+        {
+          "question": "How does Mount Fuji influence the local economy and tourism industry?",
+          "answer": "Mount Fuji influences the local economy and tourism industry in Japan by attracting visitors to its surrounding areas and promoting summer hiking, which supports the region's tourism sector.",
+          "quotesFound": false,
+          "status": "unverified",
+          "calls": 8,
+          "ms": 239220,
+          "evidence": 1,
+          "verified": 0,
+          "cutOffs": 2,
+          "droppedResults": 1,
+          "promptTokens": 12462,
+          "cachedTokens": 8144,
+          "promptMs": 71824
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 1,
+        "covered": 1,
+        "expected": 3,
+        "matched": 1,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 3,
+        "unmatchedLabelled": 0,
+        "calls": 26,
+        "ms": 918599
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report examines the geographical location and physical characteristics of Mount Fuji, its historical significance in Japanese culture and history, and its influence on the local economy and tourism industry.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report examines the geographical location and physical characteristics of Mount Fuji, its historical significance in Japanese culture and history, and its influence on the local economy and tourism industry.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections collectively describe Mount Fuji as a stratovolcano located in Japan, a World Heritage Site designated in 2013, and a revered sacred mountain that has shaped Japanese art, spirituality, and the regional tourism sector.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections collectively describe Mount Fuji as a stratovolcano located in Japan, a World Heritage Site designated in 2013, and a revered sacred mountain that has shaped Japanese art, spirituality, and the regional tourism sector.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "judged": 2,
+        "backed": 0,
+        "ms": 15393
+      }
+    },
+    {
+      "suite": "reportsholdout",
+      "taskId": "rx03-troubleshooting",
+      "plan": {
+        "title": "Troubleshooting Kovrune with Llama.cpp",
+        "sections": [
+          "What are the common reasons for failing to initialize the llama.cpp backend in Kovrune, and how can they be resolved?",
+          "How can I verify that the correct llama.cpp binary is being used and that the environment variables are properly configured?",
+          "What specific configuration steps are required to enable the GPU backend for Kovrune when using llama.cpp?",
+          "How do I troubleshoot memory allocation errors or CUDA out-of-memory errors when running Kovrune with the GPU backend?"
+        ]
+      },
+      "planMs": 18222,
+      "sections": [
+        {
+          "question": "What are the common reasons for failing to initialize the llama.cpp backend in Kovrune, and how can they be resolved?",
+          "answer": "Common reasons for failing to initialize the llama.cpp backend in Kovrune and their resolutions include: 1) Port conflicts (another server using port 8080), resolved by stopping the other server or changing the port; 2) Wrong model path (GGUF file not found), resolved by using the full path to the model file; 3) HTTPS not supported with `-hf` flag, resolved by downloading the model with curl or rebuilding with SSL support; 4) Server not running or listening on the wrong interface, resolved by starting the server with `--host 0.0.0.0` or using the correct network address; 5) Browser permission issues, resolved by allowing the site to access the local network address.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 133985,
+          "evidence": 5,
+          "verified": 5,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 8060,
+          "cachedTokens": 6280,
+          "promptMs": 31945
+        },
+        {
+          "question": "How can I verify that the correct llama.cpp binary is being used and that the environment variables are properly configured?",
+          "answer": "None",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 6,
+          "ms": 34522,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 5652,
+          "cachedTokens": 4407,
+          "promptMs": 21255
+        },
+        {
+          "question": "What specific configuration steps are required to enable the GPU backend for Kovrune when using llama.cpp?",
+          "answer": "To enable the GPU backend for Kovrune with llama.cpp, follow these steps:\n\n1. **Choose the browser option**: Use Chrome or Edge on Apple silicon Macs or laptops with a recent NVIDIA/AMD GPU. Download the model once (e.g., Qwen3.5-2B, 1.1 GB) and delete it to free space.\n\n2. **Set up a local model server**: Install llama.cpp using the provided commands, then download the model file.\n\n3. **Configure the server**: Ensure the llama.cpp server is running and configured to use the local model file. The browser will then test the model against this server.\n\n4. **Test the model**: Run the model test to verify the GPU backend is working correctly. If the test fails, check the browser path for GPU compatibility or ensure the server is using the correct model file.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 123163,
+          "evidence": 5,
+          "verified": 5,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 7012,
+          "cachedTokens": 5550,
+          "promptMs": 25360
+        },
+        {
+          "question": "How do I troubleshoot memory allocation errors or CUDA out-of-memory errors when running Kovrune with the GPU backend?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 27931,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 2794,
+          "cachedTokens": 1782,
+          "promptMs": 16798
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 2,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 3,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 24,
+        "ms": 319601
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report examines the common reasons for failing to initialize the llama.cpp backend in Kovrune and the specific configuration steps required to enable the GPU backend when using llama.cpp.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report examines the common reasons for failing to initialize the llama.cpp backend in Kovrune and the specific configuration steps required to enable the GPU backend when using llama.cpp.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections identified that port conflicts, model path errors, and server configuration issues can prevent initialization, while enabling the GPU backend requires selecting the correct browser option and ensuring the local model server is properly configured and running.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections identified that port conflicts, model path errors, and server configuration issues can prevent initialization, while enabling the GPU backend requires selecting the correct browser option and ensuring the local model server is properly configured and running.",
+                "backed": false
+              }
+            ],
+            "judged": 1,
+            "backed": 0
+          }
+        },
+        "judged": 2,
+        "backed": 0,
+        "ms": 17508
+      }
+    }
+  ]
+}

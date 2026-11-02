@@ -1,0 +1,577 @@
+{
+  "harnessVersion": "0.55.0",
+  "createdAt": "2026-11-01T23:41:25.288Z",
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpuCores": 4,
+      "memoryGb": 16
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "planner": "as the app plans",
+    "notes": "--long-reply-room when-answering on the reports with a cut-off section plus one control, code dd0f72d."
+  },
+  "results": [
+    {
+      "suite": "reports",
+      "taskId": "rp01-local-server",
+      "plan": {
+        "title": "Setting Up Kovrune with a Local Model Server",
+        "sections": [
+          "How do I configure the Kovrune client to connect to a local model server?",
+          "What are the specific steps to install and launch a local model server for Kovrune?"
+        ]
+      },
+      "planMs": 22787,
+      "sections": [
+        {
+          "question": "How do I configure the Kovrune client to connect to a local model server?",
+          "answer": "To configure the Kovrune client to connect to a local model server, users can use the Local endpoint adapter. This adapter allows connection to local servers like Ollama, LM Studio, or a llama.cpp server through an OpenAI-compatible adapter. The endpoint is configured by the user on their machine or LAN. Setup guidance covers cross-origin configuration (e.g., OLLAMA_ORIGINS) and the browser's local-network-access permission prompt. The adapter reports the model's context length and whether structured output is supported. Hosted third-party APIs are not a supported runtime, but users can technically point the adapter at any compatible URL if it is local.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 136960,
+          "evidence": 2,
+          "verified": 1,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 3053,
+          "cachedTokens": 1760,
+          "promptMs": 56536
+        },
+        {
+          "question": "What are the specific steps to install and launch a local model server for Kovrune?",
+          "answer": "To install and launch a local model server for Kovrune:\n\n1. Install llama.cpp on Linux or WSL:\n   bash\n   sudo apt install build-essential cmake git libssl-dev\n   git clone https://github.com/ggml-org/llama.cpp.git\n   cd llama.cpp\n   cmake -B build\n   cmake --build build --config Release -j\n   \n\n2. Download a model file (e.g., Qwen3.5-2B):\n   bash\n   mkdir -p ~/models\n   curl -L -o ~/models/Qwen3.5-2B-Q4_K_M.gguf \\\n     https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf\n   \n\n3. Start the server:\n   bash\n   cd ~/llama.cpp/build/bin\n   ./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080\n   \n\nEvidence:\n- From kovrune-user-guide#2: \"llama.cpp server is the supported local server. Ollama works but is experimental\"\n- From kovrune-user-guide#2: \"sudo apt install build-essential cmake git libssl-dev; git clone https://github.com/ggml-org/llama.cpp.git; cd llama.cpp; cmake -B build; cmake --build build --config Release -j\"\n- From kovrune-user-guide#3: \"curl -L -o ~/models/Qwen3.5-2B-Q4_K_M.gguf https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf\"\n- From kovrune-user-guide#3: \"./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080\"",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 7,
+          "ms": 499033,
+          "evidence": 4,
+          "verified": 2,
+          "cutOffs": 1,
+          "droppedResults": 1,
+          "promptTokens": 10454,
+          "cachedTokens": 5713,
+          "promptMs": 202087
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 2,
+        "covered": 1,
+        "expected": 4,
+        "matched": 2,
+        "right": 1,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 0,
+        "unmatchedLabelled": 0,
+        "calls": 11,
+        "ms": 635993
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report details how to configure the Kovrune client to connect to a local model server using the Local endpoint adapter and outlines the specific steps to install and launch a local model server. It covers the setup of the adapter for cross-origin configuration and the installation of the llama.cpp server on Linux or WSL.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report details how to configure the Kovrune client to connect to a local model server using the Local endpoint adapter and outlines the specific steps to install and launch a local model server. ",
+                "backed": false
+              },
+              {
+                "text": "It covers the setup of the adapter for cross-origin configuration and the installation of the llama.cpp server on Linux or WSL.",
+                "backed": false
+              }
+            ],
+            "judged": 2,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections confirm that the Local endpoint adapter enables connection to local servers like Ollama or llama.cpp through an OpenAI-compatible interface, while the installation process involves building llama.cpp, downloading a model file, and starting the server with specific parameters. Although Ollama is noted as experimental, the llama.cpp server is the supported local runtime for Kovrune.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections confirm that the Local endpoint adapter enables connection to local servers like Ollama or llama.cpp through an OpenAI-compatible interface, while the installation process involves building llama.cpp, downloading a model file, and starting the server with specific parameters. ",
+                "backed": false
+              },
+              {
+                "text": "Although Ollama is noted as experimental, the llama.cpp server is the supported local runtime for Kovrune.",
+                "backed": true
+              }
+            ],
+            "judged": 2,
+            "backed": 1
+          }
+        },
+        "judged": 4,
+        "backed": 1,
+        "ms": 57055
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp02-privacy",
+      "plan": {
+        "title": "Kovrune Data Handling and Network Transmission Report",
+        "sections": [
+          "What specific data does Kovrune collect and store regarding user accounts and device information?",
+          "How does Kovrune process and utilize the collected data for its services and analytics?",
+          "What types of data are transmitted over the network between the user's device and Kovrune's servers?",
+          "What protocols and encryption methods does Kovrune use to secure data in transit and at rest?"
+        ]
+      },
+      "planMs": 27003,
+      "sections": [
+        {
+          "question": "What specific data does Kovrune collect and store regarding user accounts and device information?",
+          "answer": "Kovrune does not collect or store user account or device information in the way described. Instead, it uses locally generated keypairs stored in IndexedDB for identity, requires no real-world identity or personal information, and ensures private data stays on the user's device unless explicitly authorized. Settings and downloaded browser models are stored per site, not globally collected.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 215701,
+          "evidence": 4,
+          "verified": 4,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 12820,
+          "cachedTokens": 9928,
+          "promptMs": 124510
+        },
+        {
+          "question": "How does Kovrune process and utilize the collected data for its services and analytics?",
+          "answer": "Kovrune processes and utilizes collected data by running the AI model locally on the user's computer without sending anything to an online AI service. Documents are read in the browser and never uploaded. Only the browser path downloads the model from Hugging Face and WebLLM's runtime library from GitHub, or the local-server path talks only to a server address the user entered. Saved data (setup, source choices, extracted text, and finished answers with quotes and steps) remains on the user's computer in the browser only. The model runs on the user's computer, and nothing is sent to an online AI service.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 121153,
+          "evidence": 2,
+          "verified": 1,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 3074,
+          "cachedTokens": 2035,
+          "promptMs": 45029
+        },
+        {
+          "question": "What types of data are transmitted over the network between the user's device and Kovrune's servers?",
+          "answer": "The provided documents do not contain information about the specific types of data transmitted over the network between the user's device and Kovrune's servers. The documents only mention that the browser needs permission to reach the server on the user's computer (specifically for 'Apps on device' permission) and that the server listens on port 8080, but they do not list the data types being transmitted.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 100627,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 3787,
+          "cachedTokens": 2346,
+          "promptMs": 58825
+        },
+        {
+          "question": "What protocols and encryption methods does Kovrune use to secure data in transit and at rest?",
+          "answer": "The provided documents do not contain specific information about the encryption methods Kovrune uses to secure data in transit or at rest. While the documents mention that peers use WebCrypto keys stored in IndexedDB for local identity and that messages carry signatures, they do not specify the exact encryption algorithms (e.g., AES, RSA, TLS versions) used for securing data in transit or at rest.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 5,
+          "ms": 114325,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 5222,
+          "cachedTokens": 3527,
+          "promptMs": 70952
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 21,
+        "ms": 551806
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report details what Kovrune collects and stores regarding user accounts and device information, and explains how the service processes and utilizes data for its services and analytics. It clarifies the specific data handling practices and network transmission methods employed by the application.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report details what Kovrune collects and stores regarding user accounts and device information, and explains how the service processes and utilizes data for its services and analytics. ",
+                "backed": false
+              },
+              {
+                "text": "It clarifies the specific data handling practices and network transmission methods employed by the application.",
+                "backed": false
+              }
+            ],
+            "judged": 2,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The sections found indicate that Kovrune does not collect or store user account or device information in the described manner, relying instead on locally generated keypairs and ensuring private data remains on the user's device. Furthermore, the processing and utilization of data occur entirely locally on the user's computer, with documents read in the browser and nothing sent to an online AI service, while only the browser path downloads models from specific sources or communicates with a user-entered server address.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections found indicate that Kovrune does not collect or store user account or device information in the described manner, relying instead on locally generated keypairs and ensuring private data remains on the user's device. ",
+                "backed": false
+              },
+              {
+                "text": "Furthermore, the processing and utilization of data occur entirely locally on the user's computer, with documents read in the browser and nothing sent to an online AI service, while only the browser path downloads models from specific sources or communicates with a user-entered server address.",
+                "backed": false
+              }
+            ],
+            "judged": 2,
+            "backed": 0
+          }
+        },
+        "judged": 4,
+        "backed": 0,
+        "ms": 44323
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp04-mpl",
+      "plan": {
+        "title": "Obligations and Rights Under the Mozilla Public License 2.0",
+        "sections": [
+          "What are the primary obligations a licensee must fulfill when distributing or using MPL 2.0 covered works?",
+          "What specific rights does a licensee have regarding the use, modification, and distribution of MPL 2.0 covered works?"
+        ]
+      },
+      "planMs": 22162,
+      "sections": [
+        {
+          "question": "What are the primary obligations a licensee must fulfill when distributing or using MPL 2.0 covered works?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "no-answer",
+          "calls": 8,
+          "ms": 366884,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 1,
+          "droppedResults": 1,
+          "promptTokens": 12890,
+          "cachedTokens": 7583,
+          "promptMs": 228418
+        },
+        {
+          "question": "What specific rights does a licensee have regarding the use, modification, and distribution of MPL 2.0 covered works?",
+          "answer": "",
+          "quotesFound": false,
+          "status": "no-answer",
+          "calls": 8,
+          "ms": 369657,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 1,
+          "droppedResults": 1,
+          "promptTokens": 13254,
+          "cachedTokens": 8179,
+          "promptMs": 227079
+        }
+      ],
+      "score": {
+        "planned": 2,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 0,
+        "covered": 0,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 2,
+        "unmatchedLabelled": 0,
+        "calls": 16,
+        "ms": 736541
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp05-ada",
+      "plan": {
+        "title": "Ada Lovelace: The Visionary Behind the First Computer Program",
+        "sections": [
+          "Who was Ada Lovelace and what was her background before working with Charles Babbage?",
+          "What was the significance of her work on Babbage's Analytical Engine?",
+          "Why is Ada Lovelace considered the first computer programmer?",
+          "How did Ada Lovelace's vision for computing extend beyond simple calculation?"
+        ]
+      },
+      "planMs": 25212,
+      "sections": [
+        {
+          "question": "Who was Ada Lovelace and what was her background before working with Charles Babbage?",
+          "answer": "Ada Lovelace (née Augusta Ada Byron; 10 December 1815 – 27 November 1852) was an English mathematician and writer. She was the only legitimate child of poet Lord Byron and reformer Anne Isabella Milbanke. Her father separated from her mother a month after she was born and died when she was eight. Although often ill in childhood, she pursued her studies assiduously. She married William King in 1835, who became the 1st Earl of Lovelace. This title made her the Countess of Lovelace. Her educational contacts included scientists like Charles Babbage, Andrew Crosse, and Michael Faraday. She described her approach as 'poetical science' and herself as an 'Analyst (& Metaphysician).'",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 4,
+          "ms": 272909,
+          "evidence": 9,
+          "verified": 9,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 2935,
+          "cachedTokens": 1792,
+          "promptMs": 53743
+        },
+        {
+          "question": "What was the significance of her work on Babbage's Analytical Engine?",
+          "answer": "Ada Lovelace's work on Babbage's Analytical Engine was significant because she was the first to recognize the machine had applications beyond pure calculation, she is often considered the first computer programmer, she translated an article by Luigi Menabrea about the engine and supplemented it with seven long explanatory notes, and she described a method of using the machine to calculate Bernoulli numbers which is often called the first published computer program.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 4,
+          "ms": 163639,
+          "evidence": 2,
+          "verified": 2,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 3513,
+          "cachedTokens": 2310,
+          "promptMs": 54009
+        },
+        {
+          "question": "Why is Ada Lovelace considered the first computer programmer?",
+          "answer": "Ada Lovelace is considered the first computer programmer because she was the first to recognize that Charles Babbage's analytical engine could do more than just perform calculations; she identified its potential to encode and manipulate information beyond mere arithmetical figures, such as music. Additionally, she is credited with several computing 'firsts' for her collaboration with Babbage.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 3,
+          "ms": 83552,
+          "evidence": 2,
+          "verified": 2,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 1808,
+          "cachedTokens": 828,
+          "promptMs": 41498
+        },
+        {
+          "question": "How did Ada Lovelace's vision for computing extend beyond simple calculation?",
+          "answer": "Ada Lovelace's vision extended beyond simple calculation by recognizing that computers could go beyond mere calculating or number-crunching. She was the first to point out the possibility of encoding information besides mere arithmetical figures, such as music, and manipulating it with such a machine. Her mindset of 'poetical science' led her to ask questions about the analytical engine, examining how individuals and society relate to technology as a collaborative tool.",
+          "quotesFound": true,
+          "status": "verified",
+          "calls": 3,
+          "ms": 123031,
+          "evidence": 1,
+          "verified": 1,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 1791,
+          "cachedTokens": 1118,
+          "promptMs": 28330
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 1,
+        "planCovered": 2,
+        "covered": 4,
+        "expected": 4,
+        "matched": 3,
+        "right": 2,
+        "labelledWrong": 0,
+        "labelled": 2,
+        "unmatched": 1,
+        "unmatchedLabelled": 0,
+        "calls": 14,
+        "ms": 643131
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report examines the life of Ada Lovelace, her background as the daughter of Lord Byron and Anne Isabella Milbanke, and her significant work on Charles Babbage's Analytical Engine. It explores why she is considered the first computer programmer and how her vision of 'poetical science' extended computing beyond simple calculation.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report examines the life of Ada Lovelace, her background as the daughter of Lord Byron and Anne Isabella Milbanke, and her significant work on Charles Babbage's Analytical Engine. ",
+                "backed": true
+              },
+              {
+                "text": "It explores why she is considered the first computer programmer and how her vision of 'poetical science' extended computing beyond simple calculation.",
+                "backed": true
+              }
+            ],
+            "judged": 2,
+            "backed": 2
+          }
+        },
+        "conclusion": {
+          "text": "The sections reveal that Ada Lovelace was an English mathematician who recognized the Analytical Engine's potential to manipulate information beyond mere arithmetical figures, such as music. Her translation of Luigi Menabrea's article and her seven explanatory notes established her as the first computer programmer by describing a method to calculate Bernoulli numbers. Ultimately, her mindset led her to view the machine as a collaborative tool for individuals and society, rather than just a calculator.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The sections reveal that Ada Lovelace was an English mathematician who recognized the Analytical Engine's potential to manipulate information beyond mere arithmetical figures, such as music. ",
+                "backed": true
+              },
+              {
+                "text": "Her translation of Luigi Menabrea's article and her seven explanatory notes established her as the first computer programmer by describing a method to calculate Bernoulli numbers. ",
+                "backed": true
+              },
+              {
+                "text": "Ultimately, her mindset led her to view the machine as a collaborative tool for individuals and society, rather than just a calculator.",
+                "backed": true
+              }
+            ],
+            "judged": 3,
+            "backed": 3
+          }
+        },
+        "judged": 5,
+        "backed": 5,
+        "ms": 58048
+      }
+    },
+    {
+      "suite": "reports",
+      "taskId": "rp06-roadmap",
+      "plan": {
+        "title": "Kovrune Roadmap Analysis",
+        "sections": [
+          "What are the specific milestones and phases outlined in Kovrune's official roadmap for network expansion and protocol upgrades?",
+          "What strategic decisions regarding tokenomics and governance structure were made to align with the project's long-term sustainability goals?",
+          "How does the technical design of Kovrune's consensus mechanism and layer-2 architecture support its planned scalability and security enhancements?",
+          "What community-driven initiatives and partnership strategies are integrated into the roadmap to foster ecosystem growth and adoption?"
+        ]
+      },
+      "planMs": 28536,
+      "sections": [
+        {
+          "question": "What are the specific milestones and phases outlined in Kovrune's official roadmap for network expansion and protocol upgrades?",
+          "answer": "Kovrune's official roadmap outlines milestones M0 through M6 for network expansion and protocol upgrades. M0 is the Benchmark gate (2-3 weeks) to evaluate models on reference hardware. M1 introduces Local agent with UI, model library, and bounded agent loop. M2 adds Persistence and release hardening with IndexedDB and signed builds. M2.5 implements Sandboxed execution using Pyodide and QuickJS. M3 is the Trusted-circle prototype with peer identities and WebRTC. M4 enables Delegation within circles for task offers and verification. M5 covers Collaborative workflows with multi-step task graphs. M6 is the Community preview with documentation and self-hosting guides. Deferred until evidence supports them is Open participation by unknown peers.",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 8,
+          "ms": 451891,
+          "evidence": 8,
+          "verified": 8,
+          "cutOffs": 1,
+          "droppedResults": 2,
+          "promptTokens": 12918,
+          "cachedTokens": 7958,
+          "promptMs": 206110
+        },
+        {
+          "question": "What strategic decisions regarding tokenomics and governance structure were made to align with the project's long-term sustainability goals?",
+          "answer": "The documents do not contain information about strategic decisions regarding tokenomics or governance structure aligned with long-term sustainability goals. The project explicitly states 'Cryptocurrency, tokens, or blockchain identity' are 'Out of scope' (kovrune-design-r3#35). The governance section describes open-source practices like public repositories, contribution guidelines, and community discussion but does not mention tokenomics or specific strategic decisions for long-term sustainability in the context of tokens.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 4,
+          "ms": 115775,
+          "evidence": 3,
+          "verified": 3,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 3222,
+          "cachedTokens": 2179,
+          "promptMs": 46325
+        },
+        {
+          "question": "How does the technical design of Kovrune's consensus mechanism and layer-2 architecture support its planned scalability and security enhancements?",
+          "answer": "The provided documents do not contain information about Kovrune's consensus mechanism or layer-2 architecture. The documents describe Kovrune as a local-first research app that runs AI agents locally on the user's machine, with features like WebLLM, Transformers.js, and P2P networking for task exchange within trusted circles. However, there is no mention of a consensus mechanism or layer-2 architecture in the context of scalability and security enhancements as described in the question.",
+          "quotesFound": false,
+          "status": "not-found",
+          "calls": 8,
+          "ms": 184057,
+          "evidence": 0,
+          "verified": 0,
+          "cutOffs": 0,
+          "droppedResults": 0,
+          "promptTokens": 12781,
+          "cachedTokens": 10260,
+          "promptMs": 119114
+        },
+        {
+          "question": "What community-driven initiatives and partnership strategies are integrated into the roadmap to foster ecosystem growth and adoption?",
+          "answer": "The roadmap integrates community-driven initiatives and partnership strategies through:\n\n1. **Governance**: Public repository, issue tracker, contribution guidelines, security reporting, transparent breaking change decisions, community discussion for major changes, and documented operators/funding for community-run infrastructure.\n\n2. **Open Participation**: Anyone can be a Kovruner without sharing compute, running a relay, or contributing code.\n\n3. **Milestone 6 Community Preview**: Documentation, security assumptions, hardware/browser support matrix, model compatibility list, self-hosting guide, and contribution guidelines to allow new users to join a documented test circle.\n\n4. **Deferred Open Participation**: Open participation by unknown peers is deferred until evidence supports them.\n\nEvidence:\n- From kovrune-design-r3#34: \"Anyone can be a Kovruner without sharing compute, running a relay, or contributing code.\"\n- From kovrune-design-r3#34: \"### M6 — Community Preview Documentation, security assumptions, hardware/browser support matrix, model compatibility list, self-hosting guide for the app and relays, and contribution guidelines.\"\n- From kovrune-design-r3#34: \"Deferred until evidence supports them - Open participation by unknown peers.\"\n- From kovrune-design-r3#36: \"Governance - Public repository and issue tracker. - Contribution and review guidelines. - A documented security reporting process. - Transparent decisions about breaking protocol changes, with versioned releases and migration notes. - Community discussion for major architectural changes. - Documented operators and funding for any community-run signaling or relay infrastructure.\"\n- From kovrune-design-r3#36: \"Kovrune's software is licensed under the Mozilla Public License 2.0. MPL-2.0 is file-level copyleft: modifications to Kovrune's own files must be shared under the same license, while Kovrune can be combined with code under other licenses. This balances adoption with keeping improvements to the core open.\"",
+          "quotesFound": false,
+          "status": "verified",
+          "calls": 6,
+          "ms": 343315,
+          "evidence": 5,
+          "verified": 5,
+          "cutOffs": 1,
+          "droppedResults": 0,
+          "promptTokens": 6696,
+          "cachedTokens": 5000,
+          "promptMs": 74715
+        }
+      ],
+      "score": {
+        "planned": 4,
+        "fallback": false,
+        "joined": 4,
+        "planCovered": 0,
+        "covered": 2,
+        "expected": 4,
+        "matched": 0,
+        "right": 0,
+        "labelledWrong": 0,
+        "labelled": 0,
+        "unmatched": 4,
+        "unmatchedLabelled": 0,
+        "calls": 26,
+        "ms": 1095038
+      },
+      "synthesis": {
+        "introduction": {
+          "text": "This report analyzes Kovrune's official roadmap, detailing specific milestones from M0 through M6 regarding network expansion and protocol upgrades. It further examines the community-driven initiatives and partnership strategies integrated to foster ecosystem growth and adoption.",
+          "support": {
+            "sentences": [
+              {
+                "text": "This report analyzes Kovrune's official roadmap, detailing specific milestones from M0 through M6 regarding network expansion and protocol upgrades. ",
+                "backed": false
+              },
+              {
+                "text": "It further examines the community-driven initiatives and partnership strategies integrated to foster ecosystem growth and adoption.",
+                "backed": false
+              }
+            ],
+            "judged": 2,
+            "backed": 0
+          }
+        },
+        "conclusion": {
+          "text": "The analysis confirms that Kovrune's design prioritizes a phased rollout starting with benchmarking and local agent development before introducing trusted circles and collaborative workflows. While open participation by unknown peers is deferred until evidence supports them, the roadmap establishes a clear path for community involvement through governance, documentation, and a community preview phase.",
+          "support": {
+            "sentences": [
+              {
+                "text": "The analysis confirms that Kovrune's design prioritizes a phased rollout starting with benchmarking and local agent development before introducing trusted circles and collaborative workflows. ",
+                "backed": false
+              },
+              {
+                "text": "While open participation by unknown peers is deferred until evidence supports them, the roadmap establishes a clear path for community involvement through governance, documentation, and a community preview phase.",
+                "backed": true
+              }
+            ],
+            "judged": 2,
+            "backed": 1
+          }
+        },
+        "judged": 4,
+        "backed": 1,
+        "ms": 48497
+      }
+    }
+  ]
+}
