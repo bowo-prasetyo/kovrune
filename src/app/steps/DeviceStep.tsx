@@ -39,14 +39,15 @@ export function DeviceStep({ onChoose }: { onChoose: (path: ModelPath, caps: Dev
       <h2>Where should the model run?</h2>
       <p className="callout">
         <strong>
-          {advice.path === "browser" ? "Recommended: in this browser." : "Recommended: a local model server."}
+          {advice.path === "browser" ? "Recommended: in this browser (experimental)." : "Recommended: a local model server."}
         </strong>{" "}
         {advice.reason}
       </p>
       <ul>
         <li>
-          <strong>In this browser:</strong> the page downloads a model once (1–2.4 GB) and runs it on your GPU. Nothing
-          else to install.
+          <strong>In this browser (experimental):</strong> the page downloads a model once (1–2.4 GB) and runs it on
+          your GPU. Nothing else to install. This path has not yet answered a question end to end on a real GPU in
+          testing; if the model test is slow or its answers look broken, use a local model server instead.
         </li>
         <li>
           <strong>Local model server:</strong> you install llama.cpp and run the model natively. Works on most
