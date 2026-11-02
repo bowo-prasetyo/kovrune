@@ -4,7 +4,7 @@ Kovrune is a web app, so what you run is whatever the server sends. This page ex
 
 | | |
 | --- | --- |
-| Status | Builds are reproducible (M2 slice 4). The app is hosted on Cloudflare Pages, which sends the policy as a header, and releases are signed by the owner (slice 5) |
+| Status | Builds are reproducible (M2 slice 4). The app is hosted on Cloudflare Pages, which sends the policy as a header, and releases are signed by the owner (slice 5). First signed release: [v0.1.0](https://github.com/bowo-prasetyo/kovrune/releases/tag/v0.1.0), 2 November 2026 |
 
 ## How a release is made
 

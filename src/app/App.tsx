@@ -234,7 +234,11 @@ export function App() {
           <a href={`${REPO_URL}/commit/${BUILD.commit}`} target="_blank" rel="noreferrer">
             {BUILD.commit}
           </a>{" "}
-          ({BUILD.date}), published from <code>main</code> by GitHub Actions. Not yet a signed release.
+          ({BUILD.date}), published from <code>main</code> by GitHub Actions. Not a signed release;{" "}
+          <a href={`${REPO_URL}/releases`} target="_blank" rel="noreferrer">
+            signed releases
+          </a>{" "}
+          are on GitHub.
         </footer>
       )}
       {BUILD.kind === "release" && (
