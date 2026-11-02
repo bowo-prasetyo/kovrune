@@ -16,12 +16,12 @@ Kovrune has no tokens, no blockchain and no central AI service. See [`docs/desig
 
 - **M0 (benchmark gate): provisional go.** See [`docs/m0-benchmark.md`](docs/m0-benchmark.md#m0-status). Help confirm it by running the benchmark on a 16 GB laptop: [issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9).
 - **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). The app runs a model in your browser or on a local model server, and answers questions about your own documents with verified quotes. It can also search Wikipedia and OpenAlex (scholarly papers) when you choose to.
-- **First release: v0.1.0, a technical preview, being prepared.** It fixes one signed build for the usability test; the browser path is experimental in it ([release notes](docs/release-notes/v0.1.0.md)). Security reports: [`SECURITY.md`](SECURITY.md).
+- **First release: [v0.1.0](https://github.com/bowo-prasetyo/kovrune/releases/tag/v0.1.0), a technical preview, published 2 November 2026.** It fixes one signed build for the usability test; the browser path is experimental in it ([release notes](docs/release-notes/v0.1.0.md)). Security reports: [`SECURITY.md`](SECURITY.md).
 - **Report mode: available.** Long reports built from short, checked answers, one per section ([user guide](docs/user-guide.md#write-a-report), [design](docs/report-mode.md)). Measuring their quality (a report suite) is next.
 
 ## Running the app
 
-**Try the preview:** <https://kovrune.pages.dev/> in Chrome or Edge. It is built from `main` by GitHub Actions and served by Cloudflare Pages, and is not yet a signed release. The old address, `bowo-prasetyo.github.io/kovrune`, forwards there.
+**Try the preview:** <https://kovrune.pages.dev/> in Chrome or Edge. It is built from `main` by GitHub Actions and served by Cloudflare Pages, so it is newer than the latest release and not signed. Signed releases are on the [releases page](https://github.com/bowo-prasetyo/kovrune/releases). The old address, `bowo-prasetyo.github.io/kovrune`, forwards there.
 
 The [user guide](docs/user-guide.md) covers setup step by step, including llama.cpp on Windows with WSL, and troubleshooting. To run the app locally instead, you need Node.js 22 or newer; start it and open the address it prints:
 

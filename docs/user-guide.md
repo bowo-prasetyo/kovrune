@@ -15,7 +15,7 @@ Kovrune answers questions about your documents, and optionally Wikipedia and sch
 
 **Use the preview site:** open <https://kovrune.pages.dev/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way (section 2).
 
-The preview is built automatically from the latest `main` by GitHub Actions and served by Cloudflare Pages; the commit it was built from is shown at the bottom of the page. It is not yet a signed release, so if you prefer to run code you built yourself, run the app locally instead.
+The preview is built automatically from the latest `main` by GitHub Actions and served by Cloudflare Pages; the commit it was built from is shown at the bottom of the page. It is not a signed release. Signed releases are on the [releases page](https://github.com/bowo-prasetyo/kovrune/releases); to run one, or code you built yourself, run the app locally instead.
 
 **Used the old address?** The preview used to be at `bowo-prasetyo.github.io/kovrune`, which now forwards here. Browsers keep saved data separately for each site, so if you saved documents or answers there, the old address shows how many and offers **Download a backup**; restore it here under **Storage and backup**. Models are downloaded again at the new address, and the browser asks for its permissions again.
 
