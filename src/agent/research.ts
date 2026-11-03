@@ -130,7 +130,7 @@ export async function runResearch(options: {
   const evidence = checkEvidence(
     final.evidence,
     (id) => library.textFor(id) ?? session?.textFor(id),
-    (id) => library.pageStartsFor(id),
+    (id) => library.pageStartsFor(id) ?? session?.pageStartsFor(id),
   );
   const citations: Record<string, Citation> = {};
   for (const { docId } of final.evidence) {

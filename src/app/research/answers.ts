@@ -238,13 +238,21 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
   for (const { docId } of answer.evidence) {
     const citation = answer.citations[docId];
     if (!citation?.work) continue;
-    const key = `openalex_${docId.replace(/^openalex:/, "").replace(/#\d+$/, "")}`;
+    const paper = docId.replace(/#\d+$/, "");
     const { authors, year, doi, venue } = citation.work;
+    // arXiv papers are cited as arXiv's own BibTeX does: a @misc with the identifier as eprint.
+    const eprint = paper.startsWith("arxiv:") ? paper.slice("arxiv:".length) : undefined;
+    const key = eprint ? `arxiv_${eprint.replace(/[^\w]/g, "_")}` : `openalex_${paper.replace(/^openalex:/, "")}`;
     const fields: Array<[string, string | number | undefined]> = [
       ["title", citation.title],
       ["author", authors.length ? authors.join(" and ") : undefined],
       ["year", year],
-      [venue ? "journal" : "howpublished", venue ?? citation.source],
+      ...(eprint
+        ? ([
+            ["eprint", eprint],
+            ["archivePrefix", "arXiv"],
+          ] as Array<[string, string]>)
+        : ([[venue ? "journal" : "howpublished", venue ?? citation.source]] as Array<[string, string]>)),
       ["doi", doi],
       ["url", citation.url],
       ["note", `Retrieved from ${citation.source} on ${citation.retrievedAt.slice(0, 10)}`],
@@ -253,7 +261,7 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
       .filter(([, value]) => value !== undefined)
       .map(([name, value]) => `  ${name} = {${bib(String(value))}}`)
       .join(",\n");
-    entries.set(key, `@${venue ? "article" : "misc"}{${key},\n${body}\n}`);
+    entries.set(key, `@${venue && !eprint ? "article" : "misc"}{${key},\n${body}\n}`);
   }
 }
 

@@ -146,7 +146,10 @@ If your laptop is slow but you have a faster computer on the same network, such 
 ## 4. Ask questions
 
 1. **Add documents:** PDF, text, Markdown or HTML, with **Choose files** or by dropping them on the page. **Show text** shows what Kovrune read from a file.
-2. **Choose where to search.** Your documents are always searched. Tick **Wikipedia** (with its language) or **OpenAlex** (scholarly papers) to search those too; with either ticked, you can ask questions without adding documents.
+2. **Choose where to search.** Your documents are always searched. Tick **Wikipedia** (with its language), **OpenAlex** or **arXiv** to search those too; with any of them ticked, you can ask questions without adding documents.
+   - **OpenAlex** covers scholarly papers of every field, but Kovrune reads only their abstracts: OpenAlex catalogues papers and does not hold their text. A question about a paper's methods or results beyond its abstract usually ends as "not found".
+   - **arXiv** covers preprints in physics, mathematics, computer science and related fields, and Kovrune reads them in full. Papers are found through OpenAlex's index of arXiv (arXiv's own search can't be used from a web page), and each paper the model reads is downloaded from arxiv.org as a PDF. A long paper is read a part at a time, the part that best matches your question, and a quote shows its page. Downloading a paper takes a few seconds more than reading an abstract.
+   - **OpenAlex API key (optional).** Without a key, OpenAlex shares a small daily budget among everyone on your network's address, which can run out until midnight UTC on a shared network (an office, a campus, a mobile carrier). A free key from [OpenAlex](https://help.openalex.org/api/authentication/) gives you your own; enter it under the boxes. It is kept in this browser and sent only to OpenAlex, and backups do not include it.
    - Your documents come first: the model reads what it finds in them before it may search the others.
    - Then every source you ticked is searched before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
    - Each ticked source adds a step or two, so an answer takes a little longer. Leave them unticked for answers from your documents only.
@@ -231,7 +234,7 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 
 - **The model runs on your computer.** Nothing is sent to an online AI service.
 - **Your documents** are read in the browser and never uploaded.
-- **Wikipedia and OpenAlex** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services. Your documents and your question as you typed it are not sent.
+- **Wikipedia, OpenAlex and arXiv** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services: arXiv searches go to OpenAlex, and the arXiv papers the model reads are downloaded from arxiv.org. Your documents and your question as you typed it are not sent. An OpenAlex API key, if you enter one, is sent only to OpenAlex.
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub, both at fixed versions that are checked against published checksums;
   - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([section 3](#use-a-model-server-on-another-computer)).
@@ -254,8 +257,11 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 | The model test reports far fewer tokens/s than the table in [section 3](#download-a-model), and the first request is the slowest | The model is short of memory: other programs (large spreadsheets, many browser tabs) use it, so parts of the model are moved to disk. WSL gets only half the computer's memory by default | Close those programs and test again. With WSL, give it more memory: in `%UserProfile%\.wslconfig` put `[wsl2]` and `memory=6GB` on two lines, run `wsl --shutdown`, and start the server again. In WSL, `free -h` shows whether swap is in use |
 | "Wikipedia could not be reached" | No internet connection, or the network blocks it | Check the connection; the research continues with the other sources |
 | "Wikipedia did not answer within 20 seconds" (or OpenAlex) | The service is slow or the connection is poor | Try again later; the research continues with the other sources |
+| "arXiv did not answer within 90 seconds" | A paper's PDF downloads slowly on a poor connection | Try again later; the research continues with the other sources |
+| "The PDF of arXiv paper … could not be read" | The PDF is damaged or unusual, or scanned images | The research continues with the other sources and papers |
 | "The model server sent nothing for 300 seconds" | The model server stopped or hung during the question | Check the terminal where llama-server runs; restart it if it's stuck, then press **Continue** on the interrupted question to pick up where it stopped |
 | "OpenAlex is busy (too many requests)" | OpenAlex limits how often anonymous users may search, and many questions in a short time reach the limit. Kovrune waits and tries once more when OpenAlex asks for a short wait | Wait a few minutes. The answer meanwhile comes from your other sources, and the search's step in the trace ends with "failed" |
+| "OpenAlex has no requests left for now; they come back in about … hours" (also for arXiv searches) | Without an API key, OpenAlex gives everyone on your network's address one small daily budget, and it is used up until midnight UTC | Add a free OpenAlex API key under **Search in**. Meanwhile the answer comes from your other sources |
 | A PDF shows "No text found" | The PDF is scanned images | Use a PDF with selectable text |
 
 Still stuck? Open an issue at <https://github.com/bowo-prasetyo/kovrune/issues> with what you did, what you saw, and your OS and browser.

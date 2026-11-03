@@ -33,6 +33,7 @@ const KNOWN = [
   pinned.model_lib,
   "https://ja.wikipedia.org/w/api.php",
   "https://api.openalex.org/works",
+  "https://arxiv.org/pdf/2005.11401",
 ];
 
 describe("content security policy", () => {

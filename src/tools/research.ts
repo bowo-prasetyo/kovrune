@@ -10,6 +10,11 @@ import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
 import type { DocumentIndex, SearchHit } from "./search.ts";
 
+/** "A", "A and B", "A, B and C": one or two names read as before arXiv made three possible. */
+export function joinNames(names: string[]): string {
+  return names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
 export const RESEARCH_SYSTEM = `You are a research agent. Answer the user's question using only documents you find with the tools, not outside knowledge.
 Search first, then read the documents you need. Some documents are outdated or corrected by later ones; prefer the most recent correction.
 Finish with final_answer. For each document that supports the answer, give its ID and a short quote copied word for word from that document.
@@ -21,7 +26,7 @@ If the documents do not contain the answer, set "found" to false, say what is mi
  */
 export function researchSystem(options: { documents: boolean; sources: string[] }): string {
   if (!options.sources.length) return RESEARCH_SYSTEM;
-  const sources = options.sources.join(" and ");
+  const sources = joinNames(options.sources);
   const where = options.documents
     ? `You can also search ${sources}. Look in the user's documents first: search them and read what you find. Then search ${sources} too, and combine what you find: prefer the user's documents for anything specific to them, use the other sources for background and for what the documents do not cover, and say so when sources disagree.`
     : `Search ${options.sources.length > 1 ? `each of ${sources}` : sources} to find documents.`;
@@ -135,7 +140,7 @@ export function createResearchTools(
   const nextSources = (observation: string) => {
     const unsearched = (session?.sources ?? []).filter((source) => !searchedSources.has(source.name));
     return unsearched.length && openSourcesOpen()
-      ? `${observation}\n\nBefore you answer, also search ${unsearched.map((source) => source.label).join(" and ")} (${unsearched.map((source) => `search_${source.name}`).join(", ")}).`
+      ? `${observation}\n\nBefore you answer, also search ${joinNames(unsearched.map((source) => source.label))} (${unsearched.map((source) => `search_${source.name}`).join(", ")}).`
       : observation;
   };
   // Search across languages: search matches words, so an English query finds nothing in a Japanese

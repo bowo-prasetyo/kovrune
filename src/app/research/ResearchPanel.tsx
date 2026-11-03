@@ -22,10 +22,20 @@ import {
   type SavedReport,
 } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
-import { loadSourcePrefs, openSourcesFor, saveSourcePrefs, WIKIPEDIA_LANGUAGES, type SourcePrefs } from "./sources.ts";
+import {
+  anyOpenSource as anyOpenSourceTicked,
+  loadSourcePrefs,
+  openSourceNames,
+  openSourcesFor,
+  saveSourcePrefs,
+  WIKIPEDIA_LANGUAGES,
+  type SourcePrefs,
+} from "./sources.ts";
+
 import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
+import { joinNames } from "../../tools/research.ts";
 import { usePendingTask } from "./usePendingTask.ts";
 import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, toSavedReport, upsert } from "./report.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
@@ -72,7 +82,7 @@ export function ResearchPanel({
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
-  const anyOpenSource = prefs.wikipedia || prefs.openalex;
+  const anyOpenSource = anyOpenSourceTicked(prefs);
   const canAsk = modelReady && !running && !planning && (usable.length > 0 || anyOpenSource) && question.trim().length > 0;
   // The question in progress, saved after every step so that it can continue after a reload or an error.
   const pending = usePendingTask();
@@ -93,7 +103,7 @@ export function ResearchPanel({
     setState({ phase: "idle" });
     setPlanning("Planning the report…");
     try {
-      const sources = [...(usable.length ? ["your documents"] : []), ...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : [])];
+      const sources = [...(usable.length ? ["your documents"] : []), ...openSourceNames(prefs)];
       // For models it is on for (plansFromSources), the planner is shown what the documents say about
       // the request, so that it plans sections the documents can answer.
       const model = await openModel(settings);
@@ -344,13 +354,39 @@ export function ResearchPanel({
           )}
           <label className="choice">
             <input type="checkbox" checked={prefs.openalex} disabled={running} onChange={(e) => updatePrefs({ openalex: e.target.checked })} />
-            OpenAlex (scholarly papers)
+            OpenAlex (scholarly papers: abstracts)
           </label>
+          <label className="choice">
+            <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
+            arXiv (preprints, read in full)
+          </label>
+          {(prefs.openalex || prefs.arxiv) && (
+            <label className="openalex-key">
+              OpenAlex API key (optional)
+              <input
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                value={prefs.openalexKey}
+                disabled={running}
+                onChange={(e) => updatePrefs({ openalexKey: e.target.value.trim() })}
+                placeholder="Free from openalex.org"
+              />
+            </label>
+          )}
+          {(prefs.openalex || prefs.arxiv) && (
+            <p className="hint">
+              Without a key, OpenAlex shares a small daily budget among everyone on your network's address, and it can run out until
+              midnight UTC. A free key from <a href="https://help.openalex.org/api/authentication/">OpenAlex</a> gives you your own;
+              it is kept in this browser and sent only to OpenAlex.
+            </p>
+          )}
           {anyOpenSource && (
             <p className="hint">
               The search words the model chooses, and the articles it opens, are requested from{" "}
-              {[prefs.wikipedia && "Wikipedia", prefs.openalex && "OpenAlex"].filter(Boolean).join(" and ")}. Your documents and
-              your question as typed stay on this computer.
+              {joinNames([...openSourceNames(prefs).filter((n) => n !== "arXiv"), ...(prefs.arxiv && !prefs.openalex ? ["OpenAlex"] : [])])}
+              {prefs.arxiv ? ", and the arXiv papers it reads are downloaded from arxiv.org" : ""}. Your documents and your question as
+              typed stay on this computer.
             </p>
           )}
         </fieldset>
@@ -385,7 +421,7 @@ export function ResearchPanel({
           </p>
         )}
         {usable.length === 0 && !anyOpenSource && (
-          <p className="hint">Add a document above, or tick Wikipedia or OpenAlex, to ask a question.</p>
+          <p className="hint">Add a document above, or tick Wikipedia, OpenAlex or arXiv, to ask a question.</p>
         )}
         <div className="actions">
           {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run
