@@ -2,6 +2,8 @@ import { useState } from "react";
 import { ACCEPT, formatBytes, readDocument } from "./library.ts";
 import { savedTextBytes } from "./store.ts";
 import type { SavedDocuments } from "./useSavedDocuments.ts";
+import { reinsert } from "./undo.ts";
+import { useUndo } from "./UndoNotice.tsx";
 
 const KIND_LABELS = { pdf: "PDF", html: "HTML", markdown: "Markdown", text: "Text" } as const;
 
@@ -13,6 +15,15 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
   const [reading, setReading] = useState(0);
   const [preview, setPreview] = useState<string>();
   const [dragging, setDragging] = useState(false);
+  const removal = useUndo();
+
+  /** Removes a document and its saved copy, with a way to bring it back. */
+  function remove(doc: (typeof documents)[number]) {
+    const index = documents.findIndex((d) => d.id === doc.id);
+    onChange((docs) => docs.filter((d) => d.id !== doc.id));
+    if (preview === doc.id) setPreview(undefined);
+    removal.offer(`Removed ${doc.fileName}.`, () => onChange((docs) => reinsert(docs, doc, index)));
+  }
 
   async function addFiles(files: File[]) {
     setErrors([]);
@@ -104,10 +115,16 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
                   {doc.text.length.toLocaleString()} characters
                 </span>
                 <span className="doc-actions">
-                  <button onClick={() => setPreview(preview === doc.id ? undefined : doc.id)} aria-expanded={preview === doc.id}>
+                  <button
+                    onClick={() => setPreview(preview === doc.id ? undefined : doc.id)}
+                    aria-expanded={preview === doc.id}
+                    aria-label={`${preview === doc.id ? "Hide" : "Show"} the text of ${doc.fileName}`}
+                  >
                     {preview === doc.id ? "Hide text" : "Show text"}
                   </button>
-                  <button onClick={() => onChange((docs) => docs.filter((d) => d.id !== doc.id))}>Remove</button>
+                  <button aria-label={`Remove ${doc.fileName}`} onClick={() => remove(doc)}>
+                    Remove
+                  </button>
                 </span>
               </div>
               {doc.warning && <p className="warning">{doc.warning}</p>}
@@ -116,6 +133,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
           ))}
         </ul>
       )}
+      {removal.notice}
     </section>
   );
 }

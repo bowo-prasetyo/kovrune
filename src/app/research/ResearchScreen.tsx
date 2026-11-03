@@ -1,6 +1,7 @@
 import { LoadProgressView } from "../LoadProgressView.tsx";
 import { describeSetup, modelCaution } from "../models.ts";
 import { useModelLoad } from "../useModelLoad.ts";
+import { useServerStatus } from "../useServerStatus.ts";
 import { describeLastTest, type Settings } from "../settings.ts";
 import { DocumentLibrary } from "./DocumentLibrary.tsx";
 import type { SavedAnswer } from "./answers.ts";
@@ -26,11 +27,17 @@ export function ResearchScreen({
   onChangeSetup: () => void;
 }) {
   const load = useModelLoad(settings);
+  const server = useServerStatus(settings);
   const caution = modelCaution(settings);
   return (
     <>
       <div className="setup-summary">
         <span>
+          {server.status && (
+            <span className={`server-status ${server.status.state}`} role="status">
+              {server.status.state === "checking" ? "Checking the server… " : server.status.state === "ok" ? "Server connected: " : "Server not ready: "}
+            </span>
+          )}
           {describeSetup(settings)}
           {settings.lastTest && <span className="hint">, {describeLastTest(settings.lastTest)}</span>}
         </span>
@@ -47,6 +54,15 @@ export function ResearchScreen({
         <p className="hint" role="note">
           {caution}
         </p>
+      )}
+      {server.status?.state === "problem" && (
+        <div className="warning server-problem" role="alert">
+          <p>{server.status.message}</p>
+          <p className="hint">Questions will fail until the server answers. Kovrune checks again when you come back to this tab.</p>
+          <div className="actions">
+            <button onClick={server.recheck}>Check again</button>
+          </div>
+        </div>
       )}
       <LoadProgressView state={load.state} onRetry={load.retry} />
       <DocumentLibrary library={library} />

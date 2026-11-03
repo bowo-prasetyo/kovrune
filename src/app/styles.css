@@ -8,6 +8,8 @@
   --callout: #ecfdf5;
   --warning: #fffbeb;
   --error: #fef2f2;
+  --caution: #b45309;
+  --danger: #b91c1c;
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.5;
@@ -24,6 +26,8 @@
     --callout: #052e2b;
     --warning: #3a2a05;
     --error: #3b0d0d;
+    --caution: #fbbf24;
+    --danger: #f87171;
     color-scheme: dark;
   }
 }
@@ -212,6 +216,46 @@ select {
   overflow-wrap: anywhere;
 }
 
+/* Whether the model server answers (useServerStatus.ts), before the setup it serves. */
+.server-status {
+  font-weight: 600;
+}
+
+.server-status::before {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  vertical-align: 0.05em;
+}
+
+.server-status.ok::before {
+  background: var(--accent);
+}
+
+.server-status.problem {
+  color: var(--danger);
+}
+
+.server-status.problem::before {
+  background: var(--danger);
+}
+
+.server-problem {
+  margin-bottom: 16px;
+}
+
+.server-problem p {
+  margin: 0 0 6px;
+}
+
+.server-problem .actions {
+  margin-top: 8px;
+}
+
 .setup-summary .links {
   display: flex;
   gap: 12px;
@@ -334,21 +378,66 @@ textarea {
   font-size: 0.9em;
 }
 
+.elapsed {
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Where a run's answer, report or error appears; focused when it does, so no ring is needed. */
+.outcome {
+  scroll-margin-top: 16px;
+}
+
+.outcome:focus {
+  outline: none;
+}
+
+/* An answer's label. Each kind looks different, and the ones where nothing backs the answer stand out
+   most: "Quotes not found" used to look like "Quotes found, answer too short to check". */
+.status-line {
+  margin: 8px 0;
+}
+
 .status {
-  display: inline-block;
-  padding: 1px 10px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 12px;
   border-radius: 999px;
   font-weight: 600;
   border: 1px solid var(--line);
 }
 
-.status.verified {
+.status.found {
   background: var(--callout);
   border-color: var(--accent);
 }
 
-.status.unverified {
+.status.check {
   background: var(--warning);
+  border-color: var(--caution);
+}
+
+.status.danger {
+  background: var(--error);
+  border: 2px solid var(--danger);
+}
+
+.status.danger .status-icon {
+  color: var(--danger);
+}
+
+.status-detail {
+  color: var(--muted);
+  font-size: 0.95em;
+}
+
+.status-detail.danger {
+  color: var(--fg);
+  padding: 8px 12px;
+  border-left: 4px solid var(--danger);
+  background: var(--error);
+  border-radius: 4px;
 }
 
 .answer {
@@ -629,4 +718,55 @@ fieldset.sources label.openalex-key {
   display: block;
   margin: 8px 0 4px;
   max-width: 28em;
+}
+
+/* After Remove or Delete: what was removed, and a way to bring it back (UndoNotice.tsx). */
+.undo-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--callout);
+}
+
+.undo-notice span {
+  flex: 1;
+  min-width: 12em;
+  overflow-wrap: anywhere;
+}
+
+.undo-notice button {
+  padding: 4px 12px;
+}
+
+.undo-notice button.link {
+  padding: 4px 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+/* The Ctrl+Enter hint beside Ask (shortcut.ts); not shown on touch screens, which have no such keys. */
+.actions .shortcut {
+  align-self: center;
+}
+
+kbd {
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.9em;
+}
+
+@media (pointer: coarse) {
+  .actions .shortcut {
+    display: none;
+  }
 }

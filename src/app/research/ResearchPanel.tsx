@@ -34,10 +34,14 @@ import {
 
 import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
-import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
+import { describePages, describeCall, describeStatus, REVIEW_STEP, type LabelSeverity } from "./trace.ts";
 import { joinNames } from "../../tools/research.ts";
 import { usePendingTask } from "./usePendingTask.ts";
-import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, toSavedReport, upsert } from "./report.ts";
+import { isSubmitShortcut, shortcutKeys } from "./shortcut.ts";
+import { reinsert } from "./undo.ts";
+import { useUndo } from "./UndoNotice.tsx";
+import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, reportMinutes, toSavedReport, upsert } from "./report.ts";
+import { describeElapsed } from "./elapsed.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
@@ -71,6 +75,7 @@ export function ResearchPanel({
   onOpenAnswer: (id: string | undefined) => void;
 }) {
   const [question, setQuestion] = useState("");
+  const keys = useMemo(() => shortcutKeys(navigator.platform || navigator.userAgent), []);
   const [state, setState] = useState<RunState>({ phase: "idle" });
   // Report mode (docs/report-mode.md): a report is planned as questions, one per section, each answered as a question is.
   const [mode, setMode] = useState<"question" | "report">("question");
@@ -79,6 +84,22 @@ export function ResearchPanel({
   const [synthesis, setSynthesis] = useState(false);
   const [planning, setPlanning] = useState<string>();
   const controller = useRef<AbortController>(undefined);
+  // When the run started, and how long the model test says it can take, for the time shown under its steps.
+  const [run, setRun] = useState<{ startedAt: number; upToMinutes?: number; what: "question" | "report" }>();
+  // The answer, report or error a run ends with: brought into view and focused when it appears, since on a
+  // laptop screen it appeared below the fold with nothing to say it had.
+  const outcome = useRef<HTMLDivElement>(null);
+  const shownPhase = useRef(state.phase);
+  useEffect(() => {
+    const before = shownPhase.current;
+    shownPhase.current = state.phase;
+    if (before !== "running" || (state.phase !== "done" && state.phase !== "error")) return;
+    const element = outcome.current;
+    if (!element) return;
+    element.focus({ preventScroll: true });
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    element.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+  }, [state.phase]);
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
@@ -146,6 +167,11 @@ export function ResearchPanel({
     };
     const steps: string[] = [];
     setPlan(undefined);
+    setRun({
+      startedAt: Date.now(),
+      upToMinutes: reportMinutes(reportPlan.sections.length + (withSynthesis ? 1 : 0), settings.lastTest?.maxTaskMinutes),
+      what: "report",
+    });
     setState({ phase: "running", steps, reportId: id });
     save({ unfinished: true });
     try {
@@ -233,6 +259,7 @@ export function ResearchPanel({
       pending.save(task);
       setState({ phase: "running", steps: [...steps], restored: model?.replayed });
     };
+    setRun({ startedAt: Date.now(), upToMinutes: settings.lastTest?.maxTaskMinutes, what: "question" });
     setState({ phase: "running", steps });
     try {
       model = new ReplayingModel(await openModel(settings), { replay: resumed?.calls, onRecord: (recorded) => (calls = recorded) });
@@ -327,6 +354,31 @@ export function ResearchPanel({
           if (canAsk) void (mode === "report" ? planTheReport() : ask());
         }}
       >
+        <label>
+          {mode === "report" ? "Report topic" : "Question"}
+          <textarea
+            rows={3}
+            value={question}
+            disabled={running}
+            placeholder={mode === "report" ? "For example: blockchain technology, how it works and where it is used" : "For example: What was the total income in 2024?"}
+            onChange={(event) => setQuestion(event.target.value)}
+            aria-keyshortcuts="Control+Enter Meta+Enter"
+            onKeyDown={(event) => {
+              if (!isSubmitShortcut(event.nativeEvent)) return;
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }}
+          />
+        </label>
+        {mode === "question" && looksLikeReport(question) && (
+          <p className="hint">
+            This asks for a report. A short answer can't hold one:{" "}
+            <button type="button" className="link" onClick={() => setMode("report")}>
+              Write a report
+            </button>{" "}
+            plans it as a few questions, each answered with checked quotes.
+          </p>
+        )}
         <fieldset className="sources">
           <legend>Search in</legend>
           <label className="choice">
@@ -391,7 +443,7 @@ export function ResearchPanel({
           )}
         </fieldset>
         <fieldset className="mode">
-          <legend>Answer</legend>
+          <legend>Mode</legend>
           <label className="choice">
             <input type="radio" name="mode" checked={mode === "question"} disabled={running} onChange={() => setMode("question")} />
             Ask a question
@@ -401,25 +453,6 @@ export function ResearchPanel({
             Write a report
           </label>
         </fieldset>
-        <label>
-          {mode === "report" ? "Report topic" : "Question"}
-          <textarea
-            rows={3}
-            value={question}
-            disabled={running}
-            placeholder={mode === "report" ? "For example: blockchain technology, how it works and where it is used" : "For example: What was the total income in 2024?"}
-            onChange={(event) => setQuestion(event.target.value)}
-          />
-        </label>
-        {mode === "question" && looksLikeReport(question) && (
-          <p className="hint">
-            This asks for a report. A short answer can't hold one:{" "}
-            <button type="button" className="link" onClick={() => setMode("report")}>
-              Write a report
-            </button>{" "}
-            plans it as a few questions, each answered with checked quotes.
-          </p>
-        )}
         {usable.length === 0 && !anyOpenSource && (
           <p className="hint">Add a document above, or tick Wikipedia, OpenAlex or arXiv, to ask a question.</p>
         )}
@@ -434,6 +467,11 @@ export function ResearchPanel({
             <button key="ask" type="submit" className="primary" disabled={!canAsk}>
               {mode === "report" ? "Plan the report" : "Ask"}
             </button>
+          )}
+          {!running && (
+            <span className="hint shortcut">
+              or press <kbd>{keys[0]}</kbd>+<kbd>{keys[1]}</kbd>
+            </span>
           )}
         </div>
       </form>
@@ -461,6 +499,7 @@ export function ResearchPanel({
           {running && <li className="progress">Waiting for the model…</li>}
         </ol>
       )}
+      {running && run && <Elapsed {...run} />}
 
       {(state.phase === "running" || state.phase === "done") && !!state.restored && (
         <p className="hint">
@@ -469,29 +508,31 @@ export function ResearchPanel({
         </p>
       )}
       {pending.saveError && running && <p className="hint">{pending.saveError}</p>}
-      {state.phase === "stopped" && <p className="warning">Stopped.</p>}
-      {state.phase === "error" && (
-        <>
-          <p className="error" role="alert">
-            {state.message}
-          </p>
-          {pending.task && resume?.resumable && pending.task.calls.length > 0 && (
+      <div ref={outcome} tabIndex={-1} className="outcome">
+        {state.phase === "stopped" && <p className="warning">Stopped.</p>}
+        {state.phase === "error" && (
+          <>
+            <p className="error" role="alert">
+              {state.message}
+            </p>
+            {pending.task && resume?.resumable && pending.task.calls.length > 0 && (
+              <div className="actions">
+                <button className="primary" disabled={!modelReady} onClick={() => void ask(pending.task)}>
+                  Continue from step {pending.task.calls.length + 1}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+        {state.phase === "done" && (
+          <>
+            <ResultView answer={state.answer} live />
             <div className="actions">
-              <button className="primary" disabled={!modelReady} onClick={() => void ask(pending.task)}>
-                Continue from step {pending.task.calls.length + 1}
-              </button>
+              <ExportButtons answer={state.answer} />
             </div>
-          )}
-        </>
-      )}
-      {state.phase === "done" && (
-        <>
-          <ResultView answer={state.answer} live />
-          <div className="actions">
-            <ExportButtons answer={state.answer} />
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
       <PastAnswers
         history={history}
         shownId={state.phase === "done" ? state.answer.id : state.phase === "running" ? state.reportId : undefined}
@@ -499,6 +540,24 @@ export function ResearchPanel({
         onOpen={onOpenAnswer}
       />
     </section>
+  );
+}
+
+/**
+ * The time a running question or report has taken, against what the model test says it can take. A
+ * timer, so screen readers don't announce every second (role="timer" is not a live region).
+ */
+function Elapsed({ startedAt, upToMinutes, what }: { startedAt: number; upToMinutes?: number; what: "question" | "report" }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const elapsed = describeElapsed(now - startedAt, upToMinutes, what);
+  return (
+    <p className={elapsed.over ? "elapsed warning" : "elapsed hint"} role="timer">
+      {elapsed.text}
+    </p>
   );
 }
 
@@ -531,6 +590,14 @@ function PastAnswers({
   onOpen: (id: string | undefined) => void;
 }) {
   const past = history.records.filter((a) => a.id !== shownId).reverse();
+  const deletion = useUndo();
+  /** Deletes a saved answer, with a way to bring it back. */
+  const remove = (answer: SavedAnswer) => {
+    const index = history.records.findIndex((a) => a.id === answer.id);
+    history.setRecords((answers) => answers.filter((a) => a.id !== answer.id));
+    if (answer.id === openId) onOpen(undefined);
+    deletion.offer(`Deleted “${answer.question}”.`, () => history.setRecords((answers) => reinsert(answers, answer, index)));
+  };
   // An answer opened by its address (a bookmark, Back or Forward) is brought into view.
   useEffect(() => {
     if (openId) document.getElementById(`answer-${openId}`)?.scrollIntoView({ block: "start" });
@@ -544,6 +611,7 @@ function PastAnswers({
           {history.saveError}
         </p>
       )}
+      {deletion.notice}
       {past.length === 0 ? (
         <p className="hint">
           {history.store.persistent
@@ -582,9 +650,7 @@ function PastAnswers({
                   )}
                   <div className="actions">
                     <ExportButtons answer={answer} />
-                    <button onClick={() => history.setRecords((answers) => answers.filter((a) => a.id !== answer.id))}>
-                      Delete
-                    </button>
+                    <button onClick={() => remove(answer)}>Delete</button>
                   </div>
                 </details>
               </li>
@@ -628,13 +694,21 @@ function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: bool
   }
   const support = shownSupport(answer);
   const status = describeStatus(answer.status, answer.evidence, support);
+  // The label, then the answer it is about, then what the label means: the answer used to sit below a
+  // paragraph of explanation, and the explanation of ⚠ was given twice.
   return (
     <div className={`result ${answer.status}`} role={live ? "status" : undefined}>
       {sourceErrors}
-      <p>
-        <span className={`status ${status.tone}`}>{status.label}</span> {status.detail}
+      <p className="status-line">
+        <span className={`status ${status.severity}`}>
+          <span className="status-icon" aria-hidden="true">
+            {STATUS_ICONS[status.severity]}
+          </span>
+          {status.label}
+        </span>
       </p>
-      {answer.answer && <Answer text={answer.answer} support={support} />}
+      {answer.answer && <Answer text={answer.answer} support={support} explainMarks={!status.detail.includes("⚠")} />}
+      <p className={`status-detail ${status.severity}`}>{status.detail}</p>
       {answer.evidence.length > 0 && (
         <>
           <h3>Evidence</h3>
@@ -659,8 +733,14 @@ function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: bool
   );
 }
 
-/** The answer, with the sentences no found quote backs marked. */
-function Answer({ text, support }: { text: string; support?: SentenceSupport }) {
+/** A mark for each kind of label, so the labels that ask the most of the reader don't look like the others. */
+const STATUS_ICONS: Record<LabelSeverity, string> = { found: "✓", check: "⚠", danger: "✗", none: "–" };
+
+/**
+ * The answer, with the sentences no found quote backs marked. `explainMarks` adds what ⚠ means,
+ * for labels whose own explanation doesn't already say it.
+ */
+function Answer({ text, support, explainMarks = true }: { text: string; support?: SentenceSupport; explainMarks?: boolean }) {
   const unbacked = support?.sentences.some((s) => s.backed === false);
   if (!support || !unbacked) return <p className="answer">{text}</p>;
   return (
@@ -677,10 +757,13 @@ function Answer({ text, support }: { text: string; support?: SentenceSupport }) 
           ),
         )}
       </p>
-      <p className="hint">
-        ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or "not" that the quotes don't back. This is a word check, not a proof: a marked
-        sentence can still be right, and an unmarked one can still be wrong.
-      </p>
+      {explainMarks && (
+        <p className="hint">
+          ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or "not" that the
+          quotes don't back. This is a word check, not a proof: a marked sentence can still be right, and an unmarked one can still
+          be wrong.
+        </p>
+      )}
     </>
   );
 }

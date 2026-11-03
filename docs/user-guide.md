@@ -53,7 +53,7 @@ The browser option is **experimental**: it has passed its checks in testing, but
 
 You can choose the other option anyway. Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.
 
-**In the browser**, pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. The download happens once and is stored in the browser; **Delete the download** frees the space again. Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used. If the GPU lacks 16-bit shader support, Kovrune uses a 32-bit version of the model, which needs more memory and runs slower.
+**In the browser**, pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. The download happens once and is stored in the browser; **Delete the download** frees the space again, after asking, since using the model again means downloading it again. Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used. If the GPU lacks 16-bit shader support, Kovrune uses a 32-bit version of the model, which needs more memory and runs slower.
 
 ## 3. Set up a local model server
 
@@ -156,14 +156,14 @@ If your laptop is slow but you have a faster computer on the same network, such 
    - Then every source you ticked is searched before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
    - Each ticked source adds a step or two, so an answer takes a little longer. Leave them unticked for answers from your documents only.
    - Combining sources works best with Qwen3.5-4B. Qwen3.5-2B often answers from one source only.
-3. **Type a question and press Ask.** You see each step: what the model searched for, how much each search found ("5 results", "nothing found"), and what it read. A source that found results but isn't quoted in the answer was searched, and the model chose not to use it. If the model is about to say the answer isn't there without having read anything its search found, it is asked once to read first; if it answers in another language than your question, it is asked once to use yours. The step says so. **Stop** ends the run at any time.
+3. **Type a question and press Ask**, or Ctrl+Enter (⌘ Enter on a Mac). The question box is at the top; where to search and **Mode** (a question or a report) are below it. You see each step: what the model searched for, how much each search found ("5 results", "nothing found"), and what it read. A source that found results but isn't quoted in the answer was searched, and the model chose not to use it. If the model is about to say the answer isn't there without having read anything its search found, it is asked once to read first; if it answers in another language than your question, it is asked once to use yours. The step says so. Under the steps, a timer shows how long the question has taken, and how long your model test says it can take; if it takes longer, it says so, and you can keep waiting or stop. **Stop** ends the run at any time. When the answer arrives, the page scrolls to it.
 
 Tips:
 
 - Ask about one document at a time, with words that appear in it.
 - Documents can be in any language, including Chinese, Japanese, Korean and Thai, which are written without spaces. You can ask in another language than a document's: when your documents are in another writing system than your search, such as Japanese documents and an English question, each search is also translated, and the best match in that language is added (the step says "Found by searching the Japanese documents for …"). Between languages that share an alphabet, such as English and French, searches are not translated, so ask about a French document in French, or use words both languages share, such as names. Accents don't matter: "energie" finds "énergie".
 - With a small model, an answer takes a minute or two.
-- Documents stay in the list after a reload: their text is saved in this browser. **Remove** deletes a document's saved copy. In a private window, or when the browser blocks site data, they are kept only until you reload, and the page says so.
+- Documents stay in the list after a reload: their text is saved in this browser. **Remove** deletes a document's saved copy; **Undo**, in the notice that follows, brings it back. In a private window, or when the browser blocks site data, they are kept only until you reload, and the page says so.
 - Scanned PDFs (images without a text layer) can't be read.
 
 **If a question is interrupted.** Kovrune saves each step of a question as it goes. If the page is closed or reloaded, or the browser crashes, the page shows the question as **Interrupted** the next time:
@@ -171,11 +171,13 @@ Tips:
 - **Ask again from the start** puts the question back in the box; **Discard** forgets it.
 - If a document the question searched has been removed, or you changed the model setup, it can only be asked again.
 
+**Is the model server running?** With a local model server, the line above your documents says **Server connected**, or **Server not ready** with the reason: the server can't be reached, didn't answer within 5 seconds, or no longer offers the model your setup was tested with. Start the server, or start it with that model, and press **Check again**; Kovrune also checks again when you come back to its tab.
+
 If the model server stops answering in the middle of a question, start it again and press **Continue from step N** under the error. **Stop** discards the question's progress.
 
 ### Write a report
 
-An answer is a few sentences, each checked against a quote. For a longer report, choose **Write a report** above the question box. Kovrune builds it from several checked answers, one per section.
+An answer is a few sentences, each checked against a quote. For a longer report, choose **Write a report** under **Mode**, below the question box. Kovrune builds it from several checked answers, one per section.
 
 1. **Type the topic** (for example "blockchain technology, how it works and where it is used") and press **Plan the report**. The model proposes a title and a few questions, one per section, each answerable from a passage or two.
 2. **Edit the plan.** Change the title or any question, reorder them (↑ ↓), and add or remove sections, from 2 to 8. Questions that ask one thing each work best: split a question that asks two. Below the plan is how long the report can take, from your model test. Each section takes about as long as a question.
@@ -192,7 +194,7 @@ Reports work best with Qwen3.5-4B. With Qwen3.5-2B, sections are often long and 
 
 ## 5. Reading the answer
 
-Each answer has a label:
+Each answer has a label, then the answer, then what the label means. The label's mark says how much it asks of you: ✓ in green for **Quotes found**; ⚠ in amber when the quotes are real but the answer may not follow from them; ✗ in red when quotes are missing or not in the sources, so nothing backs the answer.
 
 | Label | Meaning |
 | --- | --- |
@@ -217,7 +219,7 @@ The browser's **Back** and **Forward** buttons move between the setup steps and 
 
 - **Export as Markdown** saves the question, the label, the answer (with ⚠ marks), each quote with its source and page, and the steps, as a `.md` file.
 - **Export papers as BibTeX** appears when the answer cites OpenAlex papers, and saves a `.bib` file with their authors, year, venue and DOI.
-- **Delete** removes one answer; **Delete all saved answers** removes them all. Documents and models are kept.
+- **Delete** removes one answer, and **Undo** in the notice that follows brings it back; **Delete all saved answers** removes them all, after asking. Documents and models are kept.
 
 Exports are made in the browser; nothing is uploaded.
 
@@ -226,7 +228,7 @@ Exports are made in the browser; nothing is uploaded.
 **Storage and backup**, at the bottom of the research screen, shows what Kovrune keeps in this browser:
 - **Space used:** how much Kovrune uses, and how much the browser allows it.
 - **Protected or not protected:** browsers may clear a site's data without asking when the disk runs low, and Safari after a week without use. **Ask the browser to keep it** asks for protection. Chrome and Edge decide from how you use the site, so they may decline at first.
-- **Downloaded models:** each one with its size, and **Delete** to free the space. The model in use can't be deleted; change the setup to another model first.
+- **Downloaded models:** each one with its size, and **Delete** to free the space, after asking. The model in use can't be deleted; change the setup to another model first.
 
 **Download a backup** saves your documents' text and your saved answers in one `.json` file. **Restore from a backup** adds them back, in this browser after it cleared its data, or in another browser. Restoring only adds what is missing; a document with the same name but different text is added alongside the one already here. Models and the setup aren't in the backup: download the model again and redo the setup.
 

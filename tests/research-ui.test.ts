@@ -74,6 +74,21 @@ describe("answer status and cleanup", () => {
     assert.equal(describeStatus("not-found", []).label, "Not found in your sources");
   });
 
+  it("gives the labels where nothing backs the answer their own look", () => {
+    // UX audit: "Quotes not found" and "No quotes" were shown in the same yellow as "answer too short
+    // to check", so the riskiest answers looked like the mildest warning.
+    const ok = { verified: true };
+    const bad = { verified: false };
+    const severity = (...args: Parameters<typeof describeStatus>) => describeStatus(...args).severity;
+    assert.equal(severity("verified", [ok, ok]), "found");
+    assert.equal(severity("verified", [ok], { judged: 0, backed: 0 }), "check", "too short to check");
+    assert.equal(severity("verified", [ok], { judged: 5, backed: 3 }), "check", "some sentences not backed");
+    assert.equal(severity("verified", [bad, ok]), "danger", "some quotes not found");
+    assert.equal(severity("unverified", [bad]), "danger", "quotes not found");
+    assert.equal(severity("unverified", []), "danger", "no quotes");
+    assert.equal(severity("not-found", []), "none");
+  });
+
   it("removes internal part labels from answers", () => {
     assert.equal(
       withoutPartLabels("As the tutorial (part 1 of 10) says, select the perspective."),

@@ -62,6 +62,13 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 }
 
 /**
+ * How much a label asks of the reader, for how it looks: "found" when every check passed, "check" when
+ * the quotes are real but the answer may not follow from them, "danger" when quotes are missing or not
+ * in the sources, so nothing backs the answer, and "none" when there is no answer to trust.
+ */
+export type LabelSeverity = "found" | "check" | "danger" | "none";
+
+/**
  * The status line for an answer. A quote check proves the quotes are in the documents,
  * not that they support every part of the answer, so the wording says only that. With
  * `support`, the label also says how many of the answer's sentences a found quote backs.
@@ -70,7 +77,7 @@ export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
   support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
-): { label: string; detail: string; tone: AnswerStatus } {
+): { label: string; detail: string; tone: AnswerStatus; severity: LabelSeverity } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
   const coverage = support && `${support.backed} of ${support.judged} sentences backed by a quote`;
@@ -87,6 +94,7 @@ export function describeStatus(
             ? "Every quote below is word for word in the source it cites. The answer is too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes. Check that the quotes answer your question."
             : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
           tone: "verified",
+          severity: "found",
         };
       }
       // Every quote is found, and the model's check said yes, but the answer it read in the passages
@@ -97,6 +105,7 @@ export function describeStatus(
           label: "Quotes found, answer not confirmed",
           detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, the model ${read ? `read "${read}"` : "found no answer in them"}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
           tone: "unverified",
+          severity: "check",
         };
       }
       // Every quote is found, and the other checks confirm what the answer says, but asked which parts of
@@ -109,6 +118,7 @@ export function describeStatus(
             support.completeness.parts ? `found one it leaves out${missing ? `: "${missing}"` : ""}` : "gave no clear reply"
           }. Check that the answer covers everything you asked.`,
           tone: "unverified",
+          severity: "check",
         };
       }
       // Every quote is found, but the model's own check does not confirm the answer (review.ts).
@@ -123,6 +133,7 @@ export function describeStatus(
               "Every quote below is word for word in the source it cites, but the model's check of whether the quoted passages state what the answer says gave no clear reply. Check the answer against the sources.",
           }[support.review],
           tone: "unverified",
+          severity: "check",
         };
       }
       if (found === evidence.length && support?.judged === 0) {
@@ -131,6 +142,7 @@ export function describeStatus(
           detail:
             "Every quote below is word for word in the source it cites, but the answer is too short to compare with them. Short answers like this are often wrong even with real quotes: check that the quotes answer your question.",
           tone: "unverified",
+          severity: "check",
         };
       }
       return found === evidence.length
@@ -139,6 +151,7 @@ export function describeStatus(
             detail:
               "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with the quotes, or have a number, unit, month or a \"not\" that the quotes don't back, or rest on a quote that leaves out many words. They may come from the model's memory; check them against the sources.",
             tone: "unverified",
+            severity: "check",
           }
         : {
             label: `Some quotes not found (${found} of ${evidence.length} found)`,
@@ -147,6 +160,7 @@ export function describeStatus(
               (unbacked > 0 ? ` ${coverage}; the others are marked ⚠.` : "") +
               " Check the answer against the sources.",
             tone: "unverified",
+            severity: "danger",
           };
     case "unverified":
       return evidence.length
@@ -154,14 +168,16 @@ export function describeStatus(
             label: "Quotes not found",
             detail: "The quotes below are not in the sources they cite. The answer may be wrong; check it against the sources.",
             tone: "unverified",
+            severity: "danger",
           }
         : {
             label: "No quotes",
             detail: "The model answered without quoting any source, so nothing backs this answer. Check it before relying on it.",
             tone: "unverified",
+            severity: "danger",
           };
     case "not-found":
-      return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched.", tone: "not-found" };
+      return { label: "Not found in your sources", detail: "The model did not find the answer in the sources it searched.", tone: "not-found", severity: "none" };
   }
 }
 

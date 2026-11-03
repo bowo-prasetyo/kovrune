@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BROWSER_MODELS, browserModelFor, type BrowserModel } from "../../models/catalog.ts";
 import { checkBrowserModel, recommendBrowserModel, type DeviceCapabilities, type StorageInfo } from "../device.ts";
-import { browserStorage, deleteBrowserModel, requestPersistentStorage } from "../models.ts";
+import { browserStorage, confirmModelDeletion, deleteBrowserModel, requestPersistentStorage } from "../models.ts";
 import { BROWSER_CONTEXT_LENGTH, type BrowserSettings } from "../settings.ts";
 
 const gb = (mb: number) => `${(mb / 1000).toFixed(1)} GB`;
@@ -84,9 +84,11 @@ export function BrowserModelStep({
         <button onClick={onBack}>Back</button>
         {downloaded && (
           <button
-            onClick={() =>
-              void deleteBrowserModel(check.variant.modelId).finally(() => setRefresh((n) => n + 1))
-            }
+            onClick={() => {
+              // A model can't be brought back without downloading it again, so this asks rather than offering undo.
+              if (!confirm(confirmModelDeletion(chosen.label, gb(chosen.downloadMB)))) return;
+              void deleteBrowserModel(check.variant.modelId).finally(() => setRefresh((n) => n + 1));
+            }}
           >
             Delete the download
           </button>

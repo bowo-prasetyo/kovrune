@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import {
   askToKeepData,
+  confirmModelDeletion,
   deleteBrowserModel,
   downloadedBrowserModels,
   storageStatus,
@@ -111,7 +112,9 @@ export function StorageSection({
               <button
                 disabled={model.modelId === inUse}
                 title={model.modelId === inUse ? "To delete it, change the setup to another model first." : undefined}
-                onClick={() => void deleteBrowserModel(model.modelId).finally(refresh)}
+                onClick={() => {
+                  if (confirm(confirmModelDeletion(model.label, size(model.bytes)))) void deleteBrowserModel(model.modelId).finally(refresh);
+                }}
               >
                 Delete
               </button>
