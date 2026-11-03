@@ -216,6 +216,46 @@ select {
   overflow-wrap: anywhere;
 }
 
+/* Whether the model server answers (useServerStatus.ts), before the setup it serves. */
+.server-status {
+  font-weight: 600;
+}
+
+.server-status::before {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  vertical-align: 0.05em;
+}
+
+.server-status.ok::before {
+  background: var(--accent);
+}
+
+.server-status.problem {
+  color: var(--danger);
+}
+
+.server-status.problem::before {
+  background: var(--danger);
+}
+
+.server-problem {
+  margin-bottom: 16px;
+}
+
+.server-problem p {
+  margin: 0 0 6px;
+}
+
+.server-problem .actions {
+  margin-top: 8px;
+}
+
 .setup-summary .links {
   display: flex;
   gap: 12px;

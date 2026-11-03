@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 import { recommendPath } from "../src/app/device.ts";
 import { isPublicHttpsPage } from "../src/app/build-info.ts";
 import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/local-access.ts";
-import { describeConnectionError, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
+import { describeConnectionError, describeMissingModel, describeServerTimeout, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
 import { slowModelAdvice } from "../src/app/models.ts";
 import { describeLastTest, parseSettings } from "../src/app/settings.ts";
 import { listModels, LocalEndpointModel } from "../src/models/local-endpoint.ts";
@@ -241,5 +241,22 @@ describe("the last model test", () => {
   it("is described for the setup summary", () => {
     assert.equal(describeLastTest(lastTest, "en-GB"), "tested 26 Oct, 1.6 tokens/s (a question can take up to 24 min)");
     assert.match(describeLastTest({ ...lastTest, maxTaskMinutes: 0.4 }, "en-GB"), /can take under a minute\)$/);
+  });
+});
+
+describe("model server check on the research screen", () => {
+  it("says when the server no longer offers the setup's model", () => {
+    // UX audit: with the server stopped or restarted with another model, the research screen said
+    // "tested Nov 3" and nothing else until a question failed.
+    assert.equal(describeMissingModel(["/models/Qwen3.5-4B-Q4_K_M.gguf"], "/models/Qwen3.5-4B-Q4_K_M.gguf"), undefined);
+    assert.equal(
+      describeMissingModel(["/models/Qwen3.5-2B-Q4_K_M.gguf"], "/models/Qwen3.5-4B-Q4_K_M.gguf"),
+      "The model server is running, but no longer offers Qwen3.5-4B-Q4_K_M.gguf, the model this setup was tested with. It offers Qwen3.5-2B-Q4_K_M.gguf. Start the server with that model again, or use Change setup to test another.",
+    );
+    assert.match(describeMissingModel([], "qwen3.5:4b")!, /It offers no models\./);
+  });
+
+  it("says a slow server may still be starting", () => {
+    assert.match(describeServerTimeout("http://127.0.0.1:8080/v1"), /^http:\/\/127\.0\.0\.1:8080\/v1 didn't answer within 5 seconds\. .*still be starting/);
   });
 });

@@ -1,7 +1,7 @@
 // Local model servers the app can connect to (docs/m1-plan.md, decision D2).
 
 import { isPublicHttpsPage } from "./build-info.ts";
-import { addressSpaceOf, PERMISSION_LABEL } from "./local-access.ts";
+import { accessState, addressSpaceOf, describeBlockedAccess, PERMISSION_LABEL } from "./local-access.ts";
 
 export type ServerKind = "llama.cpp" | "ollama" | "other";
 
@@ -77,6 +77,19 @@ export function describeConnectionError(
   return message;
 }
 
+/**
+ * describeConnectionError, but on the public site a browser permission is the usual cause of a failed
+ * request to a local server, so it names the permission when it is that (local-access.ts).
+ */
+export async function explainConnectionFailure(error: unknown, baseUrl: string): Promise<string> {
+  const space = addressSpaceOf(baseUrl);
+  if (space && error instanceof TypeError && typeof location !== "undefined" && isPublicHttpsPage(location)) {
+    const blocked = describeBlockedAccess(space, await accessState(space));
+    if (blocked) return blocked;
+  }
+  return describeConnectionError(error, baseUrl);
+}
+
 /** A readable name for a model ID; llama.cpp reports the full file path of the loaded model. */
 export function modelLabel(id: string): string {
   return id.split(/[\\/]/).filter(Boolean).at(-1) ?? id;
@@ -143,4 +156,22 @@ function contextFromOllama(reported: number | undefined, typed: number): { conte
       `Ollama runs this model with ${reported} tokens of context, so the context length is set to that.` +
       (reported < typed ? ` To give it more, ${OLLAMA_CONTEXT_ADVICE}.` : ""),
   };
+}
+
+/** How long the research screen waits for the model server to list its models before calling it unreachable. */
+export const SERVER_CHECK_SECONDS = 5;
+
+/**
+ * What to say when a saved setup's server answers but no longer offers its model (llama.cpp
+ * restarted with another file, or the model removed from Ollama), or undefined when it does.
+ */
+export function describeMissingModel(found: string[], model: string): string | undefined {
+  if (found.includes(model)) return undefined;
+  const offered = found.length ? ` It offers ${found.map(modelLabel).join(", ")}.` : " It offers no models.";
+  return `The model server is running, but no longer offers ${modelLabel(model)}, the model this setup was tested with.${offered} Start the server with that model again, or use Change setup to test another.`;
+}
+
+/** What to say when the server didn't answer in time: it may be starting, or busy loading a model. */
+export function describeServerTimeout(baseUrl: string): string {
+  return `${baseUrl} didn't answer within ${SERVER_CHECK_SECONDS} seconds. The server may still be starting or loading the model; check its terminal window.`;
 }
