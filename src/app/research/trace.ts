@@ -80,7 +80,7 @@ export function describeStatus(
 ): { label: string; detail: string; tone: AnswerStatus; severity: LabelSeverity } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
-  const coverage = support && `${support.backed} of ${support.judged} sentences backed by a quote`;
+  const coverage = support && `${support.backed} of ${support.judged} ${support.judged === 1 ? "sentence" : "sentences"} backed by a quote`;
   switch (status) {
     case "verified":
       if (labelledQuotesFound(status, evidence, support)) {

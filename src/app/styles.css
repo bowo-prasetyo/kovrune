@@ -610,6 +610,22 @@ footer.build {
   font-weight: 600;
 }
 
+/* Each past answer's label, so answers can be told apart without opening them. */
+.past-meta {
+  display: block;
+  margin: 2px 0 0 1.1em;
+}
+
+.status.small {
+  padding: 0 8px;
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+.status.small.danger {
+  border-width: 1px;
+}
+
 .past-steps {
   margin-top: 8px;
 }

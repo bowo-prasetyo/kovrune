@@ -13,6 +13,7 @@ import {
   answerToMarkdown,
   exportFileName,
   formatTime,
+  listLabel,
   shownSupport,
   sourceTitle,
   toSavedAnswer,
@@ -633,8 +634,11 @@ function PastAnswers({
                 >
                   <summary>
                     <span className="past-question">{answer.question}</span>{" "}
-                    <span className="hint">
-                      {formatTime(answer.askedAt)}, {answer.model}
+                    <span className="past-meta">
+                      <StatusPill {...listLabel(answer)} small />{" "}
+                      <span className="hint">
+                        {formatTime(answer.askedAt)}, {answer.model}
+                      </span>
                     </span>
                   </summary>
                   <ResultView answer={answer} />
@@ -700,12 +704,7 @@ function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: bool
     <div className={`result ${answer.status}`} role={live ? "status" : undefined}>
       {sourceErrors}
       <p className="status-line">
-        <span className={`status ${status.severity}`}>
-          <span className="status-icon" aria-hidden="true">
-            {STATUS_ICONS[status.severity]}
-          </span>
-          {status.label}
-        </span>
+        <StatusPill label={status.label} severity={status.severity} />
       </p>
       {answer.answer && <Answer text={answer.answer} support={support} explainMarks={!status.detail.includes("⚠")} />}
       <p className={`status-detail ${status.severity}`}>{status.detail}</p>
@@ -735,6 +734,18 @@ function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: bool
 
 /** A mark for each kind of label, so the labels that ask the most of the reader don't look like the others. */
 const STATUS_ICONS: Record<LabelSeverity, string> = { found: "✓", check: "⚠", danger: "✗", none: "–" };
+
+/** A label with its mark, in an answer and, `small`, in the Past answers list. */
+function StatusPill({ label, severity, small = false }: { label: string; severity: LabelSeverity; small?: boolean }) {
+  return (
+    <span className={`status ${severity}${small ? " small" : ""}`}>
+      <span className="status-icon" aria-hidden="true">
+        {STATUS_ICONS[severity]}
+      </span>
+      {label}
+    </span>
+  );
+}
 
 /**
  * The answer, with the sentences no found quote backs marked. `explainMarks` adds what ⚠ means,

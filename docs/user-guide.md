@@ -213,7 +213,7 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 
 ### Past answers and export
 
-Each finished answer is saved in the browser and listed under **Past answers**, newest first, with when it was asked and which model answered. Open one to see it as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. An open answer has its own address (`…/answers/…`), so you can bookmark it; it opens only in the browser that saved it.
+Each finished answer is saved in the browser and listed under **Past answers**, newest first, with its label, when it was asked and which model answered. A report shows how many of its sections got **Quotes found**, in red when any section's quotes are missing or not found. Open one to see it as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. An open answer has its own address (`…/answers/…`), so you can bookmark it; it opens only in the browser that saved it.
 
 The browser's **Back** and **Forward** buttons move between the setup steps and past answers, and a reload stays on the same screen.
 
