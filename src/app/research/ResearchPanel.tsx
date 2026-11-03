@@ -34,7 +34,7 @@ import {
 
 import { download } from "./download.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
-import { describePages, describeCall, describeStatus, REVIEW_STEP } from "./trace.ts";
+import { describePages, describeCall, describeStatus, REVIEW_STEP, type LabelSeverity } from "./trace.ts";
 import { joinNames } from "../../tools/research.ts";
 import { usePendingTask } from "./usePendingTask.ts";
 import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, toSavedReport, upsert } from "./report.ts";
@@ -628,13 +628,21 @@ function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: bool
   }
   const support = shownSupport(answer);
   const status = describeStatus(answer.status, answer.evidence, support);
+  // The label, then the answer it is about, then what the label means: the answer used to sit below a
+  // paragraph of explanation, and the explanation of ⚠ was given twice.
   return (
     <div className={`result ${answer.status}`} role={live ? "status" : undefined}>
       {sourceErrors}
-      <p>
-        <span className={`status ${status.tone}`}>{status.label}</span> {status.detail}
+      <p className="status-line">
+        <span className={`status ${status.severity}`}>
+          <span className="status-icon" aria-hidden="true">
+            {STATUS_ICONS[status.severity]}
+          </span>
+          {status.label}
+        </span>
       </p>
-      {answer.answer && <Answer text={answer.answer} support={support} />}
+      {answer.answer && <Answer text={answer.answer} support={support} explainMarks={!status.detail.includes("⚠")} />}
+      <p className={`status-detail ${status.severity}`}>{status.detail}</p>
       {answer.evidence.length > 0 && (
         <>
           <h3>Evidence</h3>
@@ -659,8 +667,14 @@ function ResultView({ answer, live = false }: { answer: SavedAnswer; live?: bool
   );
 }
 
-/** The answer, with the sentences no found quote backs marked. */
-function Answer({ text, support }: { text: string; support?: SentenceSupport }) {
+/** A mark for each kind of label, so the labels that ask the most of the reader don't look like the others. */
+const STATUS_ICONS: Record<LabelSeverity, string> = { found: "✓", check: "⚠", danger: "✗", none: "–" };
+
+/**
+ * The answer, with the sentences no found quote backs marked. `explainMarks` adds what ⚠ means,
+ * for labels whose own explanation doesn't already say it.
+ */
+function Answer({ text, support, explainMarks = true }: { text: string; support?: SentenceSupport; explainMarks?: boolean }) {
   const unbacked = support?.sentences.some((s) => s.backed === false);
   if (!support || !unbacked) return <p className="answer">{text}</p>;
   return (
@@ -677,10 +691,13 @@ function Answer({ text, support }: { text: string; support?: SentenceSupport }) 
           ),
         )}
       </p>
-      <p className="hint">
-        ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or "not" that the quotes don't back. This is a word check, not a proof: a marked
-        sentence can still be right, and an unmarked one can still be wrong.
-      </p>
+      {explainMarks && (
+        <p className="hint">
+          ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or "not" that the
+          quotes don't back. This is a word check, not a proof: a marked sentence can still be right, and an unmarked one can still
+          be wrong.
+        </p>
+      )}
     </>
   );
 }
