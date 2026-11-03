@@ -86,6 +86,7 @@ export function ResearchPanel({
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
   const anyOpenSource = anyOpenSourceTicked(prefs);
+  const downloads = [...(prefs.arxiv ? ["arxiv.org"] : []), ...(prefs.datacite ? ["zenodo.org"] : [])];
   const canAsk = modelReady && !running && !planning && (usable.length > 0 || anyOpenSource) && question.trim().length > 0;
   // The question in progress, saved after every step so that it can continue after a reload or an error.
   const pending = usePendingTask();
@@ -395,6 +396,10 @@ export function ResearchPanel({
               <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
               arXiv (preprints, read in full)
             </label>
+            <label className="choice">
+              <input type="checkbox" checked={prefs.datacite} disabled={running} onChange={(e) => updatePrefs({ datacite: e.target.checked })} />
+              DataCite (repositories such as Zenodo: read in full where the PDF is open, else abstracts)
+            </label>
             {prefs.openalex && (
               <label className="openalex-key">
                 OpenAlex API key (optional)
@@ -419,9 +424,12 @@ export function ResearchPanel({
             {anyOpenSource && (
               <p className="hint">
                 The search words the model chooses, and the articles it opens, are requested from{" "}
-                {joinNames([...openSourceNames(prefs).filter((n) => n !== "arXiv"), ...(prefs.arxiv ? ["DataCite (for arXiv)"] : [])])}
-                {prefs.arxiv ? ", and the arXiv papers it reads are downloaded from arxiv.org" : ""}. Your documents and your question as
-                typed stay on this computer.
+                {joinNames([
+                  ...openSourceNames(prefs).filter((n) => n !== "arXiv" && n !== "DataCite"),
+                  ...(prefs.arxiv || prefs.datacite ? [prefs.datacite ? "DataCite" : "DataCite (for arXiv)"] : []),
+                ])}
+                {downloads.length ? `, and the papers it reads are downloaded from ${joinNames(downloads)}` : ""}. Your documents and your
+                question as typed stay on this computer.
               </p>
             )}
           </fieldset>
@@ -437,7 +445,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex or arXiv, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv or DataCite, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run

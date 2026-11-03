@@ -41,7 +41,7 @@ The setup wizard checks your device and recommends where to run the model:
 
 Either way, the wizard then tests the model (about a minute on capable hardware) and saves your setup in the browser.
 
-Then add documents (PDF, text, Markdown or HTML), or tick Wikipedia, OpenAlex or arXiv to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document:
+Then add documents (PDF, text, Markdown or HTML), or tick Wikipedia, OpenAlex, arXiv or DataCite to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document:
 - **Quotes found**: every quote is word for word in your documents, and every sentence of the answer shares most of its words with a quote, with no number, unit, month or "not" that the quotes don't back. A short answer, such as a number, is too short to compare word by word, so it gets the label only when the model's check below confirms it; only Qwen3.5-4B is asked about short answers so far. The model then checks that the quoted passages state what the answer says, and with Qwen3.5-4B, reads the answer in the passages without seeing its own and must find the same one. This proves the quotes are real, not that the answer is right; check that they support the whole answer.
 - **Quotes found, answer not confirmed**: the quotes are real, but asked whether they state what the answer says, the model said only partly, or not at all, or gave no clear reply; or, reading the passages without seeing the answer, it found a different one, which is shown. A number or a condition may differ, or part of the answer may be missing.
 - **Quotes found, answer too short to check**: with models other than Qwen3.5-4B, and on answers saved by earlier versions of Kovrune, the quotes are real, but the answer (such as a name or a number) is too short to compare with them. Short answers are often wrong even with real quotes, so check that the quotes answer your question.
@@ -51,7 +51,7 @@ Then add documents (PDF, text, Markdown or HTML), or tick Wikipedia, OpenAlex or
 
 Documents and answers stay on your device: they are saved in your browser, so they are still there after a reload. A question interrupted by a reload or a lost model server can continue where it stopped. **Storage and backup** shows what the browser keeps, and saves documents and answers to a backup file you can restore in any browser. An answer can be exported as Markdown, with its quotes and sources, and the papers it cites as BibTeX. Scanned PDFs without a text layer cannot be read.
 
-Nothing you type or add is sent to an online AI service. The app's network requests are the model download (Hugging Face, plus WebLLM's runtime library from GitHub, at fixed versions checked against their SHA-256), the model server you connect it to, and, only when you tick them, Wikipedia and OpenAlex searches and arXiv searches (through DataCite) and paper downloads.
+Nothing you type or add is sent to an online AI service. The app's network requests are the model download (Hugging Face, plus WebLLM's runtime library from GitHub, at fixed versions checked against their SHA-256), the model server you connect it to, and, only when you tick them, Wikipedia and OpenAlex searches, arXiv and DataCite searches (both through DataCite), and paper downloads from arxiv.org and zenodo.org.
 
 ## Development
 

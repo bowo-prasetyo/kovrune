@@ -264,7 +264,13 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
     const { authors, year, doi, venue } = citation.work;
     // arXiv papers are cited as arXiv's own BibTeX does: a @misc with the identifier as eprint.
     const eprint = paper.startsWith("arxiv:") ? paper.slice("arxiv:".length) : undefined;
-    const key = eprint ? `arxiv_${eprint.replace(/[^\w]/g, "_")}` : `openalex_${paper.replace(/^openalex:/, "")}`;
+    // Repository works from DataCite are a @misc published by their repository, not a journal article.
+    const repository = paper.startsWith("datacite:");
+    const key = eprint
+      ? `arxiv_${eprint.replace(/[^\w]/g, "_")}`
+      : repository
+        ? `datacite_${paper.slice("datacite:".length).replace(/[^\w]/g, "_")}`
+        : `openalex_${paper.replace(/^openalex:/, "")}`;
     const fields: Array<[string, string | number | undefined]> = [
       ["title", citation.title],
       ["author", authors.length ? authors.join(" and ") : undefined],
@@ -274,7 +280,7 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
             ["eprint", eprint],
             ["archivePrefix", "arXiv"],
           ] as Array<[string, string]>)
-        : ([[venue ? "journal" : "howpublished", venue ?? citation.source]] as Array<[string, string]>)),
+        : ([[venue && !repository ? "journal" : "howpublished", venue ?? citation.source]] as Array<[string, string]>)),
       ["doi", doi],
       ["url", citation.url],
       ["note", `Retrieved from ${citation.source} on ${citation.retrievedAt.slice(0, 10)}`],
@@ -283,7 +289,7 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
       .filter(([, value]) => value !== undefined)
       .map(([name, value]) => `  ${name} = {${bib(String(value))}}`)
       .join(",\n");
-    entries.set(key, `@${venue && !eprint ? "article" : "misc"}{${key},\n${body}\n}`);
+    entries.set(key, `@${venue && !eprint && !repository ? "article" : "misc"}{${key},\n${body}\n}`);
   }
 }
 

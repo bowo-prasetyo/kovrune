@@ -32,11 +32,14 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       return `Searching OpenAlex for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_arxiv":
       return `Searching arXiv for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
+    case "search_datacite":
+      return `Searching DataCite for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "read": {
       const id = String(args.docId ?? "");
       if (id.startsWith("wikipedia:")) return `Reading Wikipedia: ${id.slice(10).replace(/#\d+$/, "").replace(/_/g, " ")}`;
       if (id.startsWith("openalex:")) return `Reading OpenAlex work ${id.slice(9).replace(/#\d+$/, "")}`;
       if (id.startsWith("arxiv:")) return `Reading arXiv paper ${id.slice(6).replace(/#\d+$/, "")}`;
+      if (id.startsWith("datacite:")) return `Reading DataCite work ${id.slice(9).replace(/#\d+$/, "")}`;
       return `Reading ${titleFor(id) ?? id}`;
     }
     case "final_answer":
