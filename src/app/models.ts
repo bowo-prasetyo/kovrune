@@ -156,6 +156,11 @@ export async function browserStorage(modelId: string): Promise<{ freeMB: number;
   return { freeMB, downloaded };
 }
 
+/** The question asked before a downloaded model is deleted: unlike a document or an answer, it can't be undone without downloading it again. */
+export function confirmModelDeletion(label: string, size: string): string {
+  return `Delete ${label} (${size}) from this browser? To use it again, it has to be downloaded again.`;
+}
+
 export async function deleteBrowserModel(modelId: string): Promise<void> {
   if (browserModel?.modelId === modelId) releaseBrowserModel();
   const { deleteDownloads, pinnedModel, storedVerifiedFiles } = await import("../models/pinned.ts");

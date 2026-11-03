@@ -37,6 +37,8 @@ import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks
 import { describePages, describeCall, describeStatus, REVIEW_STEP, type LabelSeverity } from "./trace.ts";
 import { joinNames } from "../../tools/research.ts";
 import { usePendingTask } from "./usePendingTask.ts";
+import { reinsert } from "./undo.ts";
+import { useUndo } from "./UndoNotice.tsx";
 import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, reportMinutes, toSavedReport, upsert } from "./report.ts";
 import { describeElapsed } from "./elapsed.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
@@ -575,6 +577,14 @@ function PastAnswers({
   onOpen: (id: string | undefined) => void;
 }) {
   const past = history.records.filter((a) => a.id !== shownId).reverse();
+  const deletion = useUndo();
+  /** Deletes a saved answer, with a way to bring it back. */
+  const remove = (answer: SavedAnswer) => {
+    const index = history.records.findIndex((a) => a.id === answer.id);
+    history.setRecords((answers) => answers.filter((a) => a.id !== answer.id));
+    if (answer.id === openId) onOpen(undefined);
+    deletion.offer(`Deleted “${answer.question}”.`, () => history.setRecords((answers) => reinsert(answers, answer, index)));
+  };
   // An answer opened by its address (a bookmark, Back or Forward) is brought into view.
   useEffect(() => {
     if (openId) document.getElementById(`answer-${openId}`)?.scrollIntoView({ block: "start" });
@@ -588,6 +598,7 @@ function PastAnswers({
           {history.saveError}
         </p>
       )}
+      {deletion.notice}
       {past.length === 0 ? (
         <p className="hint">
           {history.store.persistent
@@ -626,9 +637,7 @@ function PastAnswers({
                   )}
                   <div className="actions">
                     <ExportButtons answer={answer} />
-                    <button onClick={() => history.setRecords((answers) => answers.filter((a) => a.id !== answer.id))}>
-                      Delete
-                    </button>
+                    <button onClick={() => remove(answer)}>Delete</button>
                   </div>
                 </details>
               </li>

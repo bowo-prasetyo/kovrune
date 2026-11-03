@@ -719,3 +719,34 @@ fieldset.sources label.openalex-key {
   margin: 8px 0 4px;
   max-width: 28em;
 }
+
+/* After Remove or Delete: what was removed, and a way to bring it back (UndoNotice.tsx). */
+.undo-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--callout);
+}
+
+.undo-notice span {
+  flex: 1;
+  min-width: 12em;
+  overflow-wrap: anywhere;
+}
+
+.undo-notice button {
+  padding: 4px 12px;
+}
+
+.undo-notice button.link {
+  padding: 4px 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 1.2em;
+  line-height: 1;
+}
