@@ -140,7 +140,13 @@ export function checkEvidence(
       return { ...item, verified: true, ...(context ? { context } : {}), ...(elidedWords !== undefined ? { elidedWords } : {}) };
     }
     const closest = closestPassage(item.quote, text);
-    return { ...item, verified: false, reason: "quote not found in the document", ...(closest ? { closest } : {}) };
+    // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a
+    // quote; but "not found" misleads: a preview user's arXiv quote joined two sentences of the same
+    // abstract and introduction, about 600 characters apart.
+    const reason = piecesTooFarApart(normalized, quote)
+      ? `its parts are in the document, but too far apart to be one quote ("…" may leave out at most ${MAX_ELIDED_CHARS} characters)`
+      : "quote not found in the document";
+    return { ...item, verified: false, reason, ...(closest ? { closest } : {}) };
   });
 }
 
@@ -186,6 +192,19 @@ function containsWords(text: string, quote: string): boolean {
 export function quoteHas(quote: string, part: string): boolean {
   const wanted = stripEdgePunctuation(normalizeForMatch(part));
   return wanted.length > 0 && containsWords(normalizeForMatch(quote), wanted);
+}
+
+/** Whether a normalized quote that leaves words out has every piece in `text`, in order, however far apart. */
+function piecesTooFarApart(text: string, quote: string): boolean {
+  const pieces = quote.split(ELISION).map(stripEdgePunctuation).filter(hasWordChar);
+  if (pieces.length < 2 || Math.max(...pieces.map((piece) => wordCount(piece, hasWordChar))) < MIN_QUOTE_WORDS) return false;
+  let end = 0;
+  return pieces.every((piece) => {
+    const at = findWords(text, piece, end);
+    if (at < 0) return false;
+    end = at + piece.length;
+    return true;
+  });
 }
 
 /**

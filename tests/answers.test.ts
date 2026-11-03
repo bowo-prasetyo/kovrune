@@ -141,7 +141,7 @@ describe("saved answers", () => {
     const markdown = answerToMarkdown(partial);
     assert.match(markdown, /\*\*Some quotes not found \(1 of 2 found\)\.\*\*/);
     assert.match(markdown, /EUR 450,000\. ⚠ Lovelace invented the telephone in 1876\./);
-    assert.match(markdown, /2\. ✗ annual-report\.pdf\n\n {3}> invented the telephone\n\n {3}Not found: quote not found in the document\./);
+    assert.match(markdown, /2\. ✗ annual-report\.pdf\n\n {3}> invented the telephone\n\n {3}Problem: quote not found in the document\./);
   });
 
   it("exports the cited papers as BibTeX, and nothing without them", async () => {
