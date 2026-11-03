@@ -2,6 +2,7 @@ import { LoadProgressView } from "../LoadProgressView.tsx";
 import { describeSetup, modelCaution } from "../models.ts";
 import { useModelLoad } from "../useModelLoad.ts";
 import { useServerStatus } from "../useServerStatus.ts";
+import type { Navigate } from "../links.ts";
 import { describeLastTest, type Settings } from "../settings.ts";
 import { DocumentLibrary } from "./DocumentLibrary.tsx";
 import type { SavedAnswer } from "./answers.ts";
@@ -13,16 +14,14 @@ export function ResearchScreen({
   settings,
   library,
   history,
-  openAnswerId,
-  onOpenAnswer,
+  navigate,
   onRetest,
   onChangeSetup,
 }: {
   settings: Settings;
   library: SavedDocuments;
   history: SavedRecords<SavedAnswer>;
-  openAnswerId?: string;
-  onOpenAnswer: (id: string | undefined) => void;
+  navigate: Navigate;
   onRetest: () => void;
   onChangeSetup: () => void;
 }) {
@@ -68,8 +67,7 @@ export function ResearchScreen({
       <DocumentLibrary library={library} />
       <ResearchPanel settings={settings} documents={library.documents} modelReady={load.state.phase === "ready"}
         history={history}
-        openAnswerId={openAnswerId}
-        onOpenAnswer={onOpenAnswer}
+        navigate={navigate}
       />
       <StorageSection settings={settings} library={library} history={history} />
     </>

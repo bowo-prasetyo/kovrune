@@ -1,9 +1,9 @@
 // The app's addresses: which screen a path shows, and which path a screen has, so the
-// browser's Back and Forward move between screens, a reload stays on the screen, and a
-// past answer can be bookmarked. The host serves the app for every path (Cloudflare
+// browser's Back and Forward move between screens, a reload stays on the screen, and past
+// answers have their own page (/answers), with one page for each (/answers/<id>), which can be bookmarked. The host serves the app for every path (Cloudflare
 // Pages does so when there is no 404.html; Vite's dev and preview servers do too).
 
-export type Step = "device" | "server" | "browser" | "test" | "research";
+export type Step = "device" | "server" | "browser" | "test" | "research" | "answers";
 
 /** What a path asks for. */
 export type Route =
@@ -11,12 +11,13 @@ export type Route =
   | { screen: "server" }
   | { screen: "browser" }
   | { screen: "test" }
+  | { screen: "answers" }
   | { screen: "answer"; id: string };
 
 /** What the app shows. */
 export interface View {
   step: Step;
-  /** The past answer opened, on the research screen. */
+  /** The past answer open on its own page; without it, the answers page lists them all. */
   answerId?: string;
 }
 
@@ -33,6 +34,7 @@ export function routeFromPath(pathname: string, base = "/"): Route {
   for (const [screen, setupPath] of Object.entries(SETUP_PATHS)) {
     if (clean === setupPath) return { screen } as Route;
   }
+  if (clean === "answers") return { screen: "answers" };
   const answer = /^answers\/([^/]+)$/.exec(clean);
   if (answer) return { screen: "answer", id: decodeURIComponent(answer[1]!) };
   return { screen: "home" };
@@ -40,7 +42,8 @@ export function routeFromPath(pathname: string, base = "/"): Route {
 
 /** The path a view has. Before the first setup, home is its first step. */
 export function pathForView(view: View, base = "/"): string {
-  if (view.step === "research") return view.answerId ? `${base}answers/${encodeURIComponent(view.answerId)}` : base;
+  if (view.step === "answers") return view.answerId ? `${base}answers/${encodeURIComponent(view.answerId)}` : `${base}answers`;
+  if (view.step === "research") return base;
   if (view.step === "device") return base;
   return `${base}${SETUP_PATHS[view.step]}`;
 }
@@ -61,8 +64,10 @@ export function resolveRoute(route: Route, now: { saved: boolean; draft: boolean
     case "test":
       // Testing a saved setup again is allowed; it is what "Test the model again" does.
       return now.draft ? { step: "test" } : start;
+    case "answers":
+      return now.saved ? { step: "answers" } : start;
     case "answer":
-      return now.saved ? { step: "research", answerId: route.id } : start;
+      return now.saved ? { step: "answers", answerId: route.id } : start;
   }
 }
 
@@ -72,6 +77,7 @@ const TITLES: Record<Step, string> = {
   browser: "Choose a model",
   test: "Test the model",
   research: "",
+  answers: "Past answers",
 };
 
 /** The browser tab's title for a view. */

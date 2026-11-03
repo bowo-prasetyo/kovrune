@@ -4,6 +4,8 @@ import { BUILD, REPO_URL } from "./build-info.ts";
 import { HELP_URL } from "./help.ts";
 import { describeSetup, releaseBrowserModel } from "./models.ts";
 import { ResearchScreen } from "./research/ResearchScreen.tsx";
+import { AnswersScreen } from "./research/AnswersScreen.tsx";
+import { linkTo } from "./links.ts";
 import { useSavedAnswers, useSavedDocuments } from "./research/useSavedDocuments.ts";
 import { restrictConnections } from "./csp.ts";
 import { pathForView, resolveRoute, routeFromPath, titleForView, type Step, type View } from "./routes.ts";
@@ -47,6 +49,8 @@ export function App() {
     resolveRoute(routeFromPath(location.pathname, base), { saved: !!active, draft: !!draft, caps: false }),
   );
   const step = view.step;
+  // The setup's steps, as opposed to the research screen and the Past answers page.
+  const setupStep = step !== "research" && step !== "answers";
   // Kept here, not in the research screen, so documents survive re-testing the model; saved in the browser.
   const library = useSavedDocuments();
   const answers = useSavedAnswers();
@@ -80,12 +84,22 @@ export function App() {
     if (draft && !active) saveDraft(draft);
   }, [draft, active]);
 
-  // A bookmarked answer that isn't saved in this browser (removed, or saved elsewhere) opens nothing.
+  // A bookmarked answer that isn't saved in this browser (deleted, or saved elsewhere) opens the list.
   useEffect(() => {
     if (view.answerId && answers.store && !answers.records.some((a) => a.id === view.answerId)) {
-      navigate({ step: "research" }, "replace");
+      navigate({ step: "answers" }, "replace");
     }
   });
+
+  // The research screen stays where it was while the answers page shows (it is only hidden), so a
+  // question keeps running and the box keeps what was typed; back on it, so does the scroll position.
+  const researchScroll = useRef(0);
+  const shownStep = useRef(step);
+  useEffect(() => {
+    if (shownStep.current === "research" && step !== "research") researchScroll.current = window.scrollY;
+    if (shownStep.current !== "research" && step === "research") window.scrollTo(0, researchScroll.current);
+    shownStep.current = step;
+  }, [step]);
 
   const openAnswer = view.answerId ? answers.records.find((a) => a.id === view.answerId) : undefined;
   useEffect(() => {
@@ -97,9 +111,16 @@ export function App() {
       <header>
         <div className="title-row">
           <h1>Kovrune</h1>
-          <a href={HELP_URL} target="_blank" rel="noreferrer">
-            Help
-          </a>
+          <nav className="title-links" aria-label="Kovrune">
+            {active && (
+              <a {...linkTo(step === "answers" ? { step: "research" } : { step: "answers" }, navigate)}>
+                {step === "answers" ? "Research" : `Past answers${answers.records.length ? ` (${answers.records.length})` : ""}`}
+              </a>
+            )}
+            <a href={HELP_URL} target="_blank" rel="noreferrer">
+              Help
+            </a>
+          </nav>
         </div>
         <p className="tagline">Your documents. Your machine. Answers you can check.</p>
       </header>
@@ -115,7 +136,7 @@ export function App() {
         </section>
       )}
 
-      {step !== "research" && (
+      {setupStep && (
         <ol className="steps" aria-label="Setup steps">
           {STEP_LABELS.map(([ids, label]) => (
             <li key={label} aria-current={ids.includes(step) ? "step" : undefined}>
@@ -125,7 +146,7 @@ export function App() {
         </ol>
       )}
 
-      {changing && saved && step !== "research" && (
+      {changing && saved && setupStep && (
         <div className="callout current-setup" role="status">
           <p>
             <strong>Current setup:</strong> {describeSetup(saved)}
@@ -208,25 +229,27 @@ export function App() {
           }}
         />
       )}
-      {step === "research" && active && (
-        <ResearchScreen
-          settings={active}
-          library={library}
-          history={answers}
-          openAnswerId={view.answerId}
-          onOpenAnswer={(id) => (id ? navigate({ step: "research", answerId: id }) : navigate({ step: "research" }, "replace"))}
-          onRetest={() => {
-            setDraft(active);
-            setStep("test");
-          }}
-          onChangeSetup={() => {
-            // The page's connections are limited to this setup's server; a reload lifts that for the
-            // setup steps. The saved setup stays until a new one passes its test.
-            saveDraft(active);
-            setChangingSetup(true);
-            location.assign(base);
-          }}
-        />
+      {step === "answers" && active && <AnswersScreen history={answers} answerId={view.answerId} navigate={navigate} />}
+      {(step === "research" || step === "answers") && active && (
+        <div className="research-view" hidden={step !== "research"}>
+          <ResearchScreen
+            settings={active}
+            library={library}
+            history={answers}
+            navigate={navigate}
+            onRetest={() => {
+              setDraft(active);
+              setStep("test");
+            }}
+            onChangeSetup={() => {
+              // The page's connections are limited to this setup's server; a reload lifts that for the
+              // setup steps. The saved setup stays until a new one passes its test.
+              saveDraft(active);
+              setChangingSetup(true);
+              location.assign(base);
+            }}
+          />
+        </div>
       )}
       {BUILD.kind === "preview" && (
         <footer className="build">
