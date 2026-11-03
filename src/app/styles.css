@@ -750,3 +750,23 @@ fieldset.sources label.openalex-key {
   font-size: 1.2em;
   line-height: 1;
 }
+
+/* The Ctrl+Enter hint beside Ask (shortcut.ts); not shown on touch screens, which have no such keys. */
+.actions .shortcut {
+  align-self: center;
+}
+
+kbd {
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.9em;
+}
+
+@media (pointer: coarse) {
+  .actions .shortcut {
+    display: none;
+  }
+}

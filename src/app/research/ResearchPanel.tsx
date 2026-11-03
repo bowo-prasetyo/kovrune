@@ -37,6 +37,7 @@ import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks
 import { describePages, describeCall, describeStatus, REVIEW_STEP, type LabelSeverity } from "./trace.ts";
 import { joinNames } from "../../tools/research.ts";
 import { usePendingTask } from "./usePendingTask.ts";
+import { isSubmitShortcut, shortcutKeys } from "./shortcut.ts";
 import { reinsert } from "./undo.ts";
 import { useUndo } from "./UndoNotice.tsx";
 import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, reportMinutes, toSavedReport, upsert } from "./report.ts";
@@ -74,6 +75,7 @@ export function ResearchPanel({
   onOpenAnswer: (id: string | undefined) => void;
 }) {
   const [question, setQuestion] = useState("");
+  const keys = useMemo(() => shortcutKeys(navigator.platform || navigator.userAgent), []);
   const [state, setState] = useState<RunState>({ phase: "idle" });
   // Report mode (docs/report-mode.md): a report is planned as questions, one per section, each answered as a question is.
   const [mode, setMode] = useState<"question" | "report">("question");
@@ -352,6 +354,31 @@ export function ResearchPanel({
           if (canAsk) void (mode === "report" ? planTheReport() : ask());
         }}
       >
+        <label>
+          {mode === "report" ? "Report topic" : "Question"}
+          <textarea
+            rows={3}
+            value={question}
+            disabled={running}
+            placeholder={mode === "report" ? "For example: blockchain technology, how it works and where it is used" : "For example: What was the total income in 2024?"}
+            onChange={(event) => setQuestion(event.target.value)}
+            aria-keyshortcuts="Control+Enter Meta+Enter"
+            onKeyDown={(event) => {
+              if (!isSubmitShortcut(event.nativeEvent)) return;
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }}
+          />
+        </label>
+        {mode === "question" && looksLikeReport(question) && (
+          <p className="hint">
+            This asks for a report. A short answer can't hold one:{" "}
+            <button type="button" className="link" onClick={() => setMode("report")}>
+              Write a report
+            </button>{" "}
+            plans it as a few questions, each answered with checked quotes.
+          </p>
+        )}
         <fieldset className="sources">
           <legend>Search in</legend>
           <label className="choice">
@@ -416,7 +443,7 @@ export function ResearchPanel({
           )}
         </fieldset>
         <fieldset className="mode">
-          <legend>Answer</legend>
+          <legend>Mode</legend>
           <label className="choice">
             <input type="radio" name="mode" checked={mode === "question"} disabled={running} onChange={() => setMode("question")} />
             Ask a question
@@ -426,25 +453,6 @@ export function ResearchPanel({
             Write a report
           </label>
         </fieldset>
-        <label>
-          {mode === "report" ? "Report topic" : "Question"}
-          <textarea
-            rows={3}
-            value={question}
-            disabled={running}
-            placeholder={mode === "report" ? "For example: blockchain technology, how it works and where it is used" : "For example: What was the total income in 2024?"}
-            onChange={(event) => setQuestion(event.target.value)}
-          />
-        </label>
-        {mode === "question" && looksLikeReport(question) && (
-          <p className="hint">
-            This asks for a report. A short answer can't hold one:{" "}
-            <button type="button" className="link" onClick={() => setMode("report")}>
-              Write a report
-            </button>{" "}
-            plans it as a few questions, each answered with checked quotes.
-          </p>
-        )}
         {usable.length === 0 && !anyOpenSource && (
           <p className="hint">Add a document above, or tick Wikipedia, OpenAlex or arXiv, to ask a question.</p>
         )}
@@ -459,6 +467,11 @@ export function ResearchPanel({
             <button key="ask" type="submit" className="primary" disabled={!canAsk}>
               {mode === "report" ? "Plan the report" : "Ask"}
             </button>
+          )}
+          {!running && (
+            <span className="hint shortcut">
+              or press <kbd>{keys[0]}</kbd>+<kbd>{keys[1]}</kbd>
+            </span>
           )}
         </div>
       </form>
