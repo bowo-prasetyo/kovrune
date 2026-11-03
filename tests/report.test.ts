@@ -255,6 +255,7 @@ describe("report mode: writing and saving a report (slice 2)", () => {
     assert.equal(describeReportLabels(counted.report!, byCount), "2 of 3 sections: Some sentences not backed by a quote. 1 not written.");
     assert.equal(labelKind("Some quotes not found (2 of 3 found)"), "Some quotes not found");
     assert.equal(labelKind("Quotes found"), "Quotes found");
+    assert.equal(labelKind("0 of 1 sentence backed by a quote"), "Some sentences not backed by a quote", "one sentence, singular");
   });
 
   it("is saved again after each section, in place", () => {

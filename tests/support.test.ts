@@ -268,7 +268,7 @@ describe("elided quotes and decimal commas (harness 0.37.0)", () => {
     const support = sentenceSupport(answer, evidence, () => "Cobble overview", "Which license is Cobble released under?");
     assert.deepEqual([support.backed, support.judged], [0, 1]);
     assert.equal(labelledQuotesFound("verified", evidence, support), false);
-    assert.equal(describeStatus("verified", evidence, support).label, "0 of 1 sentences backed by a quote");
+    assert.equal(describeStatus("verified", evidence, support).label, "0 of 1 sentence backed by a quote");
     // Leaving out an aside keeps the claim, so the quote still backs it.
     const aside = checkEvidence([{ docId: "cobble", quote: "Cobble, which ... never loses data" }], () => "Cobble, which is written in Go, never loses data.");
     assert.equal(sentenceSupport("Cobble never loses data.", aside).backed, 1);
