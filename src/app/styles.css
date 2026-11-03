@@ -786,3 +786,12 @@ kbd {
     display: none;
   }
 }
+
+/* Saved records that can't be read, set aside instead of shown (records.ts). */
+.damaged p {
+  margin: 0;
+}
+
+.damaged .actions {
+  margin-top: 8px;
+}

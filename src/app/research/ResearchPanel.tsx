@@ -41,6 +41,7 @@ import { usePendingTask } from "./usePendingTask.ts";
 import { isSubmitShortcut, shortcutKeys } from "./shortcut.ts";
 import { reinsert } from "./undo.ts";
 import { useUndo } from "./UndoNotice.tsx";
+import { DamagedNotice } from "./DamagedNotice.tsx";
 import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, reportMinutes, toSavedReport, upsert } from "./report.ts";
 import { describeElapsed } from "./elapsed.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
@@ -612,6 +613,7 @@ function PastAnswers({
           {history.saveError}
         </p>
       )}
+      <DamagedNotice damaged={history.damaged} onDelete={history.deleteDamaged} noun="answer" />
       {deletion.notice}
       {past.length === 0 ? (
         <p className="hint">

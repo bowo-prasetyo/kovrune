@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { SavedAnswer } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
+import type { z } from "zod";
+import { answerSchema, documentSchema, readable } from "./records.ts";
 import { describeSaveError, sharedStores, storeChanges, type RecordStore, type Stores } from "./store.ts";
 
 export interface SavedRecords<T extends { id: string }> {
@@ -10,16 +12,24 @@ export interface SavedRecords<T extends { id: string }> {
   store?: RecordStore<T>;
   /** Set when a record could not be saved, e.g. because the browser's storage is full. */
   saveError?: string;
+  /**
+   * Saved records that can't be shown, because they don't hold what the screens read (records.ts).
+   * They stay in the browser until deleted, and are left out of the list and of backups.
+   */
+  damaged: unknown[];
+  /** Deletes the damaged records from the browser. */
+  deleteDamaged: () => Promise<void>;
 }
 
 /**
  * Records loaded from the browser's storage and kept in sync with it: added records are saved
  * and removed ones deleted. Records are never edited, so the sync only adds and removes.
  */
-function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => RecordStore<T>, noun: string): SavedRecords<T> {
+function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => RecordStore<T>, noun: string, schema: z.ZodType): SavedRecords<T> {
   const [records, setRecords] = useState<T[]>([]);
   const [store, setStore] = useState<RecordStore<T>>();
   const [saveError, setSaveError] = useState<string>();
+  const [damaged, setDamaged] = useState<unknown[]>([]);
   // What the store holds, as far as this page knows.
   const saved = useRef<T[]>([]);
 
@@ -27,9 +37,11 @@ function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => Rec
     let cancelled = false;
     void sharedStores().then(async (stores) => {
       const opened = pick(stores);
-      const loaded = await opened.list().catch(() => []);
+      // A damaged record crashed the page on every reload; it is now set aside, not shown (records.ts).
+      const { records: loaded, damaged } = readable<T>(await opened.list().catch(() => []), schema);
       if (cancelled) return;
       saved.current = loaded;
+      setDamaged(damaged);
       // Keep anything added before loading finished; the sync below then saves it.
       const ids = new Set(loaded.map((r) => r.id));
       setRecords((current) => [...loaded, ...current.filter((r) => !ids.has(r.id))]);
@@ -54,7 +66,14 @@ function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => Rec
     );
   }, [store, records, noun]);
 
-  return { records, setRecords, store, saveError };
+  const deleteDamaged = async () => {
+    if (!store) return;
+    // IndexedDB keys every record by its ID (store.ts), so even a damaged one has one.
+    await Promise.all(damaged.map((record) => store.remove((record as { id: string }).id)));
+    setDamaged([]);
+  };
+
+  return { records, setRecords, store, saveError, damaged, deleteDamaged };
 }
 
 export interface SavedDocuments {
@@ -63,15 +82,17 @@ export interface SavedDocuments {
   /** Undefined while the saved documents load. */
   store?: RecordStore<LibraryDocument>;
   saveError?: string;
+  damaged: unknown[];
+  deleteDamaged: () => Promise<void>;
 }
 
 /** The document library, saved in the browser. */
 export function useSavedDocuments(): SavedDocuments {
-  const { records, setRecords, store, saveError } = useSavedRecords((stores) => stores.documents, "document");
-  return { documents: records, setDocuments: setRecords, store, saveError };
+  const { records, setRecords, ...rest } = useSavedRecords((stores) => stores.documents, "document", documentSchema);
+  return { documents: records, setDocuments: setRecords, ...rest };
 }
 
 /** Past answers, saved in the browser, oldest first. */
 export function useSavedAnswers(): SavedRecords<SavedAnswer> {
-  return useSavedRecords((stores) => stores.answers, "answer");
+  return useSavedRecords((stores) => stores.answers, "answer", answerSchema);
 }

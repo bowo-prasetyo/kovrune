@@ -232,6 +232,8 @@ Exports are made in the browser; nothing is uploaded.
 
 **Download a backup** saves your documents' text and your saved answers in one `.json` file. **Restore from a backup** adds them back, in this browser after it cleared its data, or in another browser. Restoring only adds what is missing; a document with the same name but different text is added alongside the one already here. Models and the setup aren't in the backup: download the model again and redo the setup.
 
+If a saved document or answer can't be read, for example because the browser's storage damaged it, Kovrune leaves it out of the list and says so above it. **Save to a file** keeps a copy, which you can attach to a bug report; **Delete** removes it from the browser.
+
 If the browser's storage for Kovrune is full, saving a document or an answer fails with a message saying so. Free space under **Storage and backup**, for example by deleting a model you don't use, or free disk space.
 
 ## 6. Privacy
