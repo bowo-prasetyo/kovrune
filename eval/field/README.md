@@ -706,7 +706,7 @@ After a reply is cut off at 512 tokens, the retry gets 1,024 (0.31.0), and since
 - **The targeted case never happened.** In the preview user's log, a 568-token answer was rejected by the check that the model reads what it quotes, and then each 26-token read was fitted at the raised limit. That case needs a long answer that quotes search snippets, followed by reads, with long documents or open sources. The offline report suite does not reproduce it.
 - **No harm was seen either**, in 13 sections with cut-off replies. So the case for the change rests on its design and on the unit test, which scripts the user's sequence (a cut-off, then reads) and fits nothing where `"always"` fits three results away. Under the declared condition it is not adopted: `longReplyRoom` stays `"always"`. Switching it on without a measurement that reaches the case would be the project owner's decision.
 
-### Short forced reads: the passage around a quote (0.56.0)
+### Short forced reads: the passage around a quote (0.56.0, measured, not adopted)
 
 When an answer quotes an open-source document seen only as a search snippet, the read-first rule sends the model to read it. Since PR #116, that read gives the part holding the quote: a whole part, about 1,800 characters. A preview user's arXiv question had five such reads in a row, each leaving less room and making the server process the conversation again, 25 of 47 minutes on a laptop CPU.
 
@@ -720,6 +720,21 @@ When an answer quotes an open-source document seen only as a search snippet, the
 3. on the tasks where the rule sent the model to read, the prompt tokens the server processed fall by at least 20%.
 
 A model with no such task is untested, and the change is not adopted on its account.
+
+**Result: not adopted** (through the archive, on an Intel Xeon @ 2.10GHz with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=OFF`. Baselines: [4B](../results/field-0.56-archive-qwen3.5-4b-q4km.json), [2B](../results/field-0.56-archive-qwen3.5-2b-q4km.json). Short forced reads: [4B](../results/field-0.56-archive-passage-qwen3.5-4b-q4km.json), [2B](../results/field-0.56-archive-passage-qwen3.5-2b-q4km.json)).
+
+| | Tasks sent to read | Prompt tokens processed on them | Passed: `field` / `multi` / held out | Labelled Quotes found, wrong |
+| --- | --- | --- | --- | --- |
+| 4B | 54 (34 not held out) | 47,786 → 37,894 (20.7% fewer) | 76 → 76 of 89 / 4 → 4 of 13 / 34 → 34 of 45 | 3 of 85 → 4 of 86 |
+| 2B | 8 (3 not held out) | 7,797 → 9,718 (24.6% more) | 63 → 63 of 89 / 1 → 1 of 13 / 26 → 26 of 45 | 12 of 64 → 12 of 63 |
+
+- **4B saved what was asked for, just.** On its 54 tasks, prompt time fell from 1,514 to 1,257 s and wall time from 76 to 72 minutes. Of the 34 tasks that can be named, 24 took the same steps, most with fewer tokens processed. Six processed more; on four of them, with the same steps, the cache carried over from the task before differed. No task passed or failed differently. But one more answer was labelled Quotes found and failed. It is on a held-out multi task that failed in both runs, so only the count is read. That breaks condition 2.
+- **2B read more.** On `f24`, 2B was given the passage around its quote and answered the same, but only after four more reads of the same document: once by its ID, which gives the part that best matches the question, then three times by its parts' IDs. In the baseline, one read of the part was enough. Of the 8 tasks, 4 were followed by another read, against 2 in the baseline. So the processed tokens rose, and condition 3 fails.
+- **The test bed worked.** The read-first rule sent 4B to read in 54 of 147 tasks, and 2B in 8. The three controls repeated exactly on both models.
+
+`main` keeps `forcedReadPassage` off. The archive source (`--as-source`) and the recorded objections stay, so a later change to how open sources are read can be measured offline.
+
+A short passage saves the most when the model trusts it, as 4B mostly did. 2B, at least once, went looking for the rest. So the next try could give the passage and a little more of the part, or show the passage only when the quote was found exactly. Both would need a new condition, declared before the run.
 
 ## Results
 

@@ -23,6 +23,9 @@ import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } fr
 // 0.25, 4B's stress test at 2,048 tokens processed 17% fewer prompt tokens but lost two tasks
 // (eval/field/README.md, harness 0.54.0).
 // forcedReadPassage: a read the read-first rule asks for gives the passage around each quote, not a part.
+// false: through the archive (--as-source), 4B processed 20.7% fewer prompt tokens on the tasks sent to
+// read, but one more answer labelled Quotes found failed; 2B read on and processed 24.6% more
+// (eval/field/README.md, harness 0.56.0).
 // longReplyRoom: where the raised limit is kept free after a cut-off (AgentConfig.longReplyRoom).
 // "always": on the report suite, "when-answering" changed nothing, as no cut-off was followed by reads
 // (eval/field/README.md, harness 0.55.0).

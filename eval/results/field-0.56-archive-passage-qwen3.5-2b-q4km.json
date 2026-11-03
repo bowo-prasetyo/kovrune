@@ -1,0 +1,804 @@
+{
+  "harnessVersion": "0.56.0",
+  "createdAt": "2026-11-03T13:00:44.818Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2"
+  },
+  "config": {
+    "suites": [
+      "field",
+      "holdout",
+      "multi",
+      "multiholdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "f24-servers",
+      "h02-hf-error",
+      "h31-earl-year",
+      "m04-stop-server",
+      "m07-webllm-github",
+      "x02-download-delete",
+      "x05-m0-speed",
+      "x06-ada-exposition",
+      "f01-preview-permission",
+      "f02-not-local-network",
+      "f03-https-not-supported"
+    ],
+    "forcedReadPassage": true,
+    "asSource": true
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+    "seconds": 7.8,
+    "decodeTokensPerSecond": 13.6,
+    "maxResearchTaskMinutes": 5.6,
+    "minutesPerSource": 1.3
+  },
+  "field": {
+    "committedTasks": 89,
+    "localTasks": 0,
+    "localDocuments": 0
+  },
+  "summary": [
+    {
+      "suite": "field",
+      "mode": "constrained",
+      "tasks": 4,
+      "passed": 4,
+      "successRate": 1,
+      "successInterval": [
+        0.51,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 12.9,
+      "prefillTokensPerSecond": 245.6,
+      "medianTaskSeconds": 33.9,
+      "maxPromptTokens": 2420,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 5074,
+      "promptSeconds": 60.3,
+      "falseReassurance": {
+        "labelled": 3,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "holdout",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 2,
+      "successRate": 1,
+      "successInterval": [
+        0.342,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 12.4,
+      "prefillTokensPerSecond": 223.7,
+      "medianTaskSeconds": 34.2,
+      "maxPromptTokens": 1150,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 1758,
+      "promptSeconds": 22.9,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "multi",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 0,
+      "successRate": 0,
+      "successInterval": [
+        0,
+        0.658
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 12.3,
+      "prefillTokensPerSecond": 293.5,
+      "medianTaskSeconds": 39.2,
+      "maxPromptTokens": 1204,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 1546,
+      "promptSeconds": 21.3,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 1
+      }
+    },
+    {
+      "suite": "multiholdout",
+      "mode": "constrained",
+      "tasks": 3,
+      "passed": 1,
+      "successRate": 0.333,
+      "successInterval": [
+        0.061,
+        0.792
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 12.7,
+      "prefillTokensPerSecond": 336.1,
+      "medianTaskSeconds": 47.8,
+      "maxPromptTokens": 1683,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 4220,
+      "promptSeconds": 52.6,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 1
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1669,
+      "completionTokens": 157,
+      "estimatedTokens": false,
+      "maxPromptTokens": 984,
+      "cachedTokens": 677,
+      "promptMs": 12606,
+      "modelMs": 24875,
+      "ttftMs": 12666,
+      "wallMs": 35306,
+      "actions": [
+        "search_archive {\"query\":\"Kovrune Chrome permission model server\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"On the preview site, the page is on the web and "
+      ],
+      "final": "{\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"On the preview site, the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called Apps on device (\\\"Access other apps and services on this device\\\").\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "Which Chrome permission lets Kovrune reach a model server on my own computer?",
+              "answer": "Apps on device"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f02-not-local-network",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1680,
+      "completionTokens": 127,
+      "estimatedTokens": false,
+      "maxPromptTokens": 991,
+      "cachedTokens": 681,
+      "promptMs": 12279,
+      "modelMs": 22245,
+      "ttftMs": 12333,
+      "wallMs": 32582,
+      "actions": [
+        "search_archive {\"query\":\"browser permission model server\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"Local network access\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"Local network access is a different permis"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Local network access\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"Local network access is a different permission, for other devices on your network, and isn't needed for a server on your own computer.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "Which similar-sounding browser permission is not needed for a model server on my own computer?",
+              "answer": "Local network access"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "field",
+      "taskId": "f03-https-not-supported",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1601,
+      "completionTokens": 196,
+      "estimatedTokens": false,
+      "maxPromptTokens": 881,
+      "cachedTokens": 712,
+      "promptMs": 10144,
+      "modelMs": 25362,
+      "ttftMs": 10188,
+      "wallMs": 25413,
+      "actions": [
+        "search_archive {\"query\":\"llama-server HTTPS not supported -hf\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"To resolve the 'HTTPS is not supported' error when using `-hf` with llama-server, you need to ensure that the llama.cpp bin"
+      ],
+      "final": "{\"found\":true,\"answer\":\"To resolve the 'HTTPS is not supported' error when using `-hf` with llama-server, you need to ensure that the llama.cpp binary was built with SSL support. This can be done by downloading the model using `curl` (as instructed in the guide) or by rebuilding llama.cpp after installing the SSL development libraries with `sudo apt install libssl-dev`.\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"`HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev`\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "field",
+      "taskId": "f24-servers",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 9935,
+      "completionTokens": 291,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2420,
+      "cachedTokens": 7741,
+      "promptMs": 25261,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 47767,
+      "ttftMs": 25414,
+      "wallMs": 59662,
+      "actions": [
+        "search_archive {\"query\":\"Kovrune local model server\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Kovrune supports the llama.cpp local model server, while Ollama is experimental.\",\"evidence\":[{\"docId\":\"archive:",
+        "read {\"docId\":\"archive:kovrune-design-r3\"}",
+        "read {\"docId\":\"archive:kovrune-design-r3\"}",
+        "read {\"docId\":\"archive:kovrune-design-r3#3\"}",
+        "read {\"docId\":\"archive:kovrune-design-r3#1\"}",
+        "read {\"docId\":\"archive:kovrune-design-r3#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"Kovrune supports the llama.cpp local model server, while Ollama is experimental.\",\"evidence\":[{\"docId\":\"archive:kovrune-des"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Kovrune supports the llama.cpp local model server, while Ollama is experimental.\",\"evidence\":[{\"docId\":\"archive:kovrune-design-r3\",\"quote\":\"llama.cpp server is the supported local server; Ollama is experimental.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-design-r3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "Which local model server does Kovrune support?",
+              "answer": "llama.cpp local model server"
+            },
+            {
+              "asks": "What status does Ollama have?",
+              "answer": "experimental"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h02-hf-error",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2112,
+      "completionTokens": 224,
+      "estimatedTokens": false,
+      "maxPromptTokens": 834,
+      "cachedTokens": 1266,
+      "promptMs": 11072,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 29730,
+      "ttftMs": 11125,
+      "wallMs": 40883,
+      "actions": [
+        "search_archive {\"query\":\"llama-server -hf download option SSL\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"When llama-server's -hf download option is used and llama.cpp was built without SSL, the error is 'HTTPS is not ",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"When llama-server's -hf download option is used and llama.cpp was built without SSL, the error is 'HTTPS is not supported'."
+      ],
+      "final": "{\"found\":true,\"answer\":\"When llama-server's -hf download option is used and llama.cpp was built without SSL, the error is 'HTTPS is not supported'.\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"`HTTPS is not supported` with `-hf` | llama.cpp was built without SSL\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "What error does llama-server's -hf download option give when llama.cpp was built without SSL?",
+              "answer": "'HTTPS is not supported'"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h31-earl-year",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 3037,
+      "completionTokens": 200,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1150,
+      "cachedTokens": 2125,
+      "promptMs": 11829,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 27553,
+      "ttftMs": 11897,
+      "wallMs": 27568,
+      "actions": [
+        "search_archive {\"query\":\"William King Earl of Lovelace\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"1838\",\"evidence\":[{\"docId\":\"archive:ada-lovelace-lead\",\"quote\":\"King was a Baron, and was created Viscount Ockha",
+        "read {\"docId\":\"archive:ada-lovelace-lead\"}",
+        "read {\"docId\":\"archive:ada-lovelace-lead#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"1838\",\"evidence\":[{\"docId\":\"archive:ada-lovelace-lead#1\",\"quote\":\"King was a Baron, and was created Viscount Ockham and 1st"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1838\",\"evidence\":[{\"docId\":\"archive:ada-lovelace-lead#1\",\"quote\":\"King was a Baron, and was created Viscount Ockham and 1st Earl of Lovelace in 1838.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:ada-lovelace-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m04-stop-server",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2240,
+      "completionTokens": 235,
+      "estimatedTokens": false,
+      "maxPromptTokens": 864,
+      "cachedTokens": 1664,
+      "promptMs": 7847,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 27197,
+      "ttftMs": 7959,
+      "wallMs": 27235,
+      "actions": [
+        "search_archive {\"query\":\"llama-server port 8080 stop\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"To stop an earlier llama-server blocking port 8080, run `pkill -x llama-server`. When switching models in its ow",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"To stop an earlier llama-server blocking port 8080, run `pkill -x llama-server`. When switching models in its own terminal,"
+      ],
+      "final": "{\"found\":true,\"answer\":\"To stop an earlier llama-server blocking port 8080, run `pkill -x llama-server`. When switching models in its own terminal, use the `--port` key to specify a different port.\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"`pkill -x llama-server`\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multi",
+      "taskId": "m07-webllm-github",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 4066,
+      "completionTokens": 356,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1204,
+      "cachedTokens": 3096,
+      "promptMs": 13411,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 42469,
+      "ttftMs": 13528,
+      "wallMs": 51217,
+      "actions": [
+        "read {\"docId\":\"1\"}",
+        "search_archive {\"query\":\"WebLLM\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"WebLLM fetches its compiled model libraries from the GitHub repository `kovrune-design-r3` (specifically the `ma",
+        "read {\"docId\":\"archive:kovrune-design-r3\"}",
+        "final_answer {\"found\":true,\"answer\":\"WebLLM fetches its compiled model libraries from the GitHub repository `kovrune-design-r3` (specifically the `main` revisio"
+      ],
+      "final": "{\"found\":true,\"answer\":\"WebLLM fetches its compiled model libraries from the GitHub repository `kovrune-design-r3` (specifically the `main` revision). The user guide's privacy section states that the browser path downloads the model from Hugging Face and WebLLM's runtime library from GitHub.\",\"evidence\":[{\"docId\":\"archive:kovrune-design-r3\",\"quote\":\"WebLLM downloads the `main` revision, without hash checks;\"},{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub;\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-design-r3",
+          "verified": true
+        },
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "From which GitHub repository does WebLLM fetch its compiled model libraries in M1?",
+              "answer": "kovrune-design-r3"
+            },
+            {
+              "asks": "What does the user guide's privacy section say the browser path downloads from GitHub?",
+              "answer": "WebLLM's runtime library"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x02-download-delete",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 6164,
+      "completionTokens": 343,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1617,
+      "cachedTokens": 4777,
+      "promptMs": 17628,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 44729,
+      "ttftMs": 17738,
+      "wallMs": 52548,
+      "actions": [
+        "search_archive {\"query\":\"browser path download model button free space\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The browser path downloads the model once and stores it in the browser; deleting the download frees the space.\",",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide#1\"}",
+        "read {\"docId\":\"archive:kovrune-user-guide#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"The browser path downloads the model once and stores it in the browser; deleting the download frees the space.\",\"evidence\":"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The browser path downloads the model once and stores it in the browser; deleting the download frees the space.\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"The download happens once and is stored in the browser; Delete the download frees the space again.\"},{\"docId\":\"archive:kovrune-design-r3\",\"quote\":\"Remove downloaded model files to free storage.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        },
+        {
+          "docId": "archive:kovrune-design-r3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "From where does the browser path download its model?",
+              "answer": "The browser path downloads the model once and stores it in the browser"
+            },
+            {
+              "asks": "Which button frees the space that download takes?",
+              "answer": "Deleting the download"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x05-m0-speed",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 4840,
+      "completionTokens": 378,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1360,
+      "cachedTokens": 3460,
+      "promptMs": 16290,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 45851,
+      "ttftMs": 16389,
+      "wallMs": 46193,
+      "actions": [
+        "search_archive {\"query\":\"M0 benchmark gate\"}",
+        "read {\"docId\":\"archive:kovrune-design-r3\"}",
+        "search_archive {\"query\":\"user guide's laptop with 8 GB of memory and integrated Intel graphics\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The M0 benchmark gate was designed to confirm that WebGPU is enabled by default in current browsers and that WAS",
+        "read {\"docId\":\"archive:kovrune-user-guide\"}",
+        "final_answer {\"found\":true,\"answer\":\"The M0 benchmark gate confirmed that WebGPU is enabled by default in current browsers and that WASM fallback works everywhe"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The M0 benchmark gate confirmed that WebGPU is enabled by default in current browsers and that WASM fallback works everywhere but is too slow for agent workloads beyond very small models. The model test of the model that passed its quality criteria runs on the user guide's laptop with 8 GB of memory and integrated Intel graphics, which is considered a reference hardware class for benchmarks.\",\"evidence\":[{\"docId\":\"archive:kovrune-user-guide\",\"quote\":\"Everything else, including laptops with integrated Intel graphics\"},{\"docId\":\"archive:kovrune-design-r3\",\"quote\":\"Laptop with integrated GPU and 8 GB RAM.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:kovrune-user-guide",
+          "verified": true
+        },
+        {
+          "docId": "archive:kovrune-design-r3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x06-ada-exposition",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 6796,
+      "completionTokens": 363,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1683,
+      "cachedTokens": 5343,
+      "promptMs": 18663,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 47782,
+      "ttftMs": 18836,
+      "wallMs": 47809,
+      "actions": [
+        "search_archive {\"query\":\"Ada Lovelace death year\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Ada Lovelace died in 1852. The Exposition universelle was held in 1889.\",\"evidence\":[{\"docId\":\"archive:ada-lovel",
+        "read {\"docId\":\"archive:ada-lovelace-lead\"}",
+        "read {\"docId\":\"archive:ada-lovelace-lead#1\"}",
+        "read {\"docId\":\"archive:ada-lovelace-lead#3\"}",
+        "search_archive {\"query\":\"Exposition universelle year\"}",
+        "final_answer {\"found\":true,\"answer\":\"Ada Lovelace died in 1852. The Exposition universelle was held in 1889.\",\"evidence\":[{\"docId\":\"archive:ada-lovelace-lead#3\""
+      ],
+      "final": "{\"found\":true,\"answer\":\"Ada Lovelace died in 1852. The Exposition universelle was held in 1889.\",\"evidence\":[{\"docId\":\"archive:ada-lovelace-lead#3\",\"quote\":\"Ada is widely commemorated, including in the names of a programming language, roads, buildings and institutes, as well as programmes, lectures and courses.\"},{\"docId\":\"archive:eiffel-tower-fr-lead\",\"quote\":\"Construite en deux ans par Gustave Eiffel et ses collaborateurs pour l'Exposition universelle de Paris de 1889\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "archive:ada-lovelace-lead#3",
+          "verified": true
+        },
+        {
+          "docId": "archive:eiffel-tower-fr-lead",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    }
+  ]
+}
