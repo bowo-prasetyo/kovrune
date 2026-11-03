@@ -338,6 +338,20 @@ textarea {
   font-size: 0.9em;
 }
 
+.elapsed {
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Where a run's answer, report or error appears; focused when it does, so no ring is needed. */
+.outcome {
+  scroll-margin-top: 16px;
+}
+
+.outcome:focus {
+  outline: none;
+}
+
 /* An answer's label. Each kind looks different, and the ones where nothing backs the answer stand out
    most: "Quotes not found" used to look like "Quotes found, answer too short to check". */
 .status-line {

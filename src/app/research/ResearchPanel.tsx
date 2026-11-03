@@ -37,7 +37,8 @@ import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks
 import { describePages, describeCall, describeStatus, REVIEW_STEP, type LabelSeverity } from "./trace.ts";
 import { joinNames } from "../../tools/research.ts";
 import { usePendingTask } from "./usePendingTask.ts";
-import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, toSavedReport, upsert } from "./report.ts";
+import { describeEstimate, describeReportLabels, describeSynthesisBacking, looksLikeReport, reportMinutes, toSavedReport, upsert } from "./report.ts";
+import { describeElapsed } from "./elapsed.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import type { SavedRecords } from "./useSavedDocuments.ts";
 
@@ -79,6 +80,22 @@ export function ResearchPanel({
   const [synthesis, setSynthesis] = useState(false);
   const [planning, setPlanning] = useState<string>();
   const controller = useRef<AbortController>(undefined);
+  // When the run started, and how long the model test says it can take, for the time shown under its steps.
+  const [run, setRun] = useState<{ startedAt: number; upToMinutes?: number; what: "question" | "report" }>();
+  // The answer, report or error a run ends with: brought into view and focused when it appears, since on a
+  // laptop screen it appeared below the fold with nothing to say it had.
+  const outcome = useRef<HTMLDivElement>(null);
+  const shownPhase = useRef(state.phase);
+  useEffect(() => {
+    const before = shownPhase.current;
+    shownPhase.current = state.phase;
+    if (before !== "running" || (state.phase !== "done" && state.phase !== "error")) return;
+    const element = outcome.current;
+    if (!element) return;
+    element.focus({ preventScroll: true });
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    element.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+  }, [state.phase]);
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   const running = state.phase === "running";
@@ -146,6 +163,11 @@ export function ResearchPanel({
     };
     const steps: string[] = [];
     setPlan(undefined);
+    setRun({
+      startedAt: Date.now(),
+      upToMinutes: reportMinutes(reportPlan.sections.length + (withSynthesis ? 1 : 0), settings.lastTest?.maxTaskMinutes),
+      what: "report",
+    });
     setState({ phase: "running", steps, reportId: id });
     save({ unfinished: true });
     try {
@@ -233,6 +255,7 @@ export function ResearchPanel({
       pending.save(task);
       setState({ phase: "running", steps: [...steps], restored: model?.replayed });
     };
+    setRun({ startedAt: Date.now(), upToMinutes: settings.lastTest?.maxTaskMinutes, what: "question" });
     setState({ phase: "running", steps });
     try {
       model = new ReplayingModel(await openModel(settings), { replay: resumed?.calls, onRecord: (recorded) => (calls = recorded) });
@@ -461,6 +484,7 @@ export function ResearchPanel({
           {running && <li className="progress">Waiting for the model…</li>}
         </ol>
       )}
+      {running && run && <Elapsed {...run} />}
 
       {(state.phase === "running" || state.phase === "done") && !!state.restored && (
         <p className="hint">
@@ -469,29 +493,31 @@ export function ResearchPanel({
         </p>
       )}
       {pending.saveError && running && <p className="hint">{pending.saveError}</p>}
-      {state.phase === "stopped" && <p className="warning">Stopped.</p>}
-      {state.phase === "error" && (
-        <>
-          <p className="error" role="alert">
-            {state.message}
-          </p>
-          {pending.task && resume?.resumable && pending.task.calls.length > 0 && (
+      <div ref={outcome} tabIndex={-1} className="outcome">
+        {state.phase === "stopped" && <p className="warning">Stopped.</p>}
+        {state.phase === "error" && (
+          <>
+            <p className="error" role="alert">
+              {state.message}
+            </p>
+            {pending.task && resume?.resumable && pending.task.calls.length > 0 && (
+              <div className="actions">
+                <button className="primary" disabled={!modelReady} onClick={() => void ask(pending.task)}>
+                  Continue from step {pending.task.calls.length + 1}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+        {state.phase === "done" && (
+          <>
+            <ResultView answer={state.answer} live />
             <div className="actions">
-              <button className="primary" disabled={!modelReady} onClick={() => void ask(pending.task)}>
-                Continue from step {pending.task.calls.length + 1}
-              </button>
+              <ExportButtons answer={state.answer} />
             </div>
-          )}
-        </>
-      )}
-      {state.phase === "done" && (
-        <>
-          <ResultView answer={state.answer} live />
-          <div className="actions">
-            <ExportButtons answer={state.answer} />
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
       <PastAnswers
         history={history}
         shownId={state.phase === "done" ? state.answer.id : state.phase === "running" ? state.reportId : undefined}
@@ -499,6 +525,24 @@ export function ResearchPanel({
         onOpen={onOpenAnswer}
       />
     </section>
+  );
+}
+
+/**
+ * The time a running question or report has taken, against what the model test says it can take. A
+ * timer, so screen readers don't announce every second (role="timer" is not a live region).
+ */
+function Elapsed({ startedAt, upToMinutes, what }: { startedAt: number; upToMinutes?: number; what: "question" | "report" }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const elapsed = describeElapsed(now - startedAt, upToMinutes, what);
+  return (
+    <p className={elapsed.over ? "elapsed warning" : "elapsed hint"} role="timer">
+      {elapsed.text}
+    </p>
   );
 }
 
