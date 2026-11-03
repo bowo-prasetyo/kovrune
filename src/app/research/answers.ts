@@ -7,7 +7,7 @@ import type { SentenceSupport } from "../../agent/support.ts";
 import type { Synthesis, SynthesisPart } from "../../agent/synthesis.ts";
 import type { Citation } from "../../sources/session.ts";
 import { describeReportLabels } from "./report.ts";
-import { describeNoAnswer, describePages, describeStatus } from "./trace.ts";
+import { describeNoAnswer, describePages, describeStatus, type LabelSeverity } from "./trace.ts";
 
 export interface SavedAnswer {
   id: string;
@@ -153,6 +153,28 @@ export const SYNTHESIS_NOTE =
 /** A section's label, as its answer would read on its own. */
 export function sectionLabel(section: SavedAnswer): string {
   return section.status === "no-answer" ? "No answer" : describeStatus(section.status, section.evidence, shownSupport(section)).label;
+}
+
+/**
+ * A saved answer's label in the Past answers list, so answers can be told apart without opening them:
+ * an answer's own label; "No answer"; or, for a report, how many of its sections got "Quotes found",
+ * red when any section's quotes are missing or not found, since one such section is enough to check.
+ */
+export function listLabel(answer: SavedAnswer): { label: string; severity: LabelSeverity } {
+  if (answer.report) {
+    const { sections, plan } = answer.report;
+    if (!sections.length) return { label: "Report: no sections written", severity: "none" };
+    const kinds = sections.map((section) => listLabel(section).severity);
+    const found = kinds.filter((k) => k === "found").length;
+    const danger = kinds.filter((k) => k === "danger").length;
+    const label = `Report: ${found} of ${plan.length} ${plan.length === 1 ? "section" : "sections"} Quotes found`;
+    if (danger) return { label: `${label}, ${danger} with quotes missing or not found`, severity: "danger" };
+    if (found === plan.length) return { label, severity: "found" };
+    return { label, severity: kinds.every((k) => k === "none") ? "none" : "check" };
+  }
+  if (answer.status === "no-answer") return { label: "No answer", severity: "none" };
+  const { label, severity } = describeStatus(answer.status, answer.evidence, shownSupport(answer));
+  return { label, severity };
 }
 
 /**
