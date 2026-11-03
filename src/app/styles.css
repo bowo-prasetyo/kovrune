@@ -624,3 +624,9 @@ fieldset.mode label.choice {
 .report-section h4 {
   margin: 0.25em 0 0.5em;
 }
+
+fieldset.sources label.openalex-key {
+  display: block;
+  margin: 8px 0 4px;
+  max-width: 28em;
+}

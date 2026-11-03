@@ -4,7 +4,7 @@ import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import { createOpenAlex, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
 import { SourceSession } from "../src/sources/session.ts";
-import { getJson, retryWait, SourceError, type FetchLike } from "../src/sources/types.ts";
+import { getJson, longWait, retryWait, SourceError, type FetchLike } from "../src/sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../src/sources/wikipedia.ts";
 import { createResearchTools, RESEARCH_SYSTEM, researchSystem } from "../src/tools/research.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
@@ -368,9 +368,18 @@ describe("source requests", () => {
 
   it("does not wait for a long Retry-After, or retry twice", async () => {
     let calls = 0;
-    const long: FetchLike = async () => (calls++, response(429, {}, "3600"));
+    const long: FetchLike = async () => (calls++, response(429, {}, "60"));
     await assert.rejects(getJson(long, "OpenAlex", "u"), /OpenAlex is busy/);
     assert.equal(calls, 1);
+    // OpenAlex's daily budget without an API key: the wait is said as it is, with the hint.
+    const daily: FetchLike = async () => response(429, {}, "80131");
+    await assert.rejects(
+      getJson(daily, "OpenAlex", "u", undefined, { limitHint: "Add a key." }),
+      (error: Error) => error.message === "OpenAlex has no requests left for now; they come back in about 22 hours. Add a key.",
+    );
+    assert.equal(longWait("3599"), undefined);
+    assert.equal(longWait("5400"), "about 2 hours");
+    assert.equal(longWait(null), undefined);
     calls = 0;
     const always: FetchLike = async () => (calls++, response(429, {}, "0"));
     await assert.rejects(getJson(always, "OpenAlex", "u"), /OpenAlex is busy/);

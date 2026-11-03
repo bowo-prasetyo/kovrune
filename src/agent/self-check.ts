@@ -146,7 +146,7 @@ export function describeSelfCheck(result: SelfCheckResult): string[] {
   ];
   if (result.failedStep !== "first-action") {
     lines.push(
-      `Speed: ${result.decodeTokensPerSecond} tokens/s. A research task can take up to ${result.maxResearchTaskMinutes} min at this speed, and up to ${result.minutesPerSource} min more for each of Wikipedia and OpenAlex it searches.`,
+      `Speed: ${result.decodeTokensPerSecond} tokens/s. A research task can take up to ${result.maxResearchTaskMinutes} min at this speed, and up to ${result.minutesPerSource} min more for each of Wikipedia, OpenAlex and arXiv it searches.`,
     );
   }
   if (!result.passed) {

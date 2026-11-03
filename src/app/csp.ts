@@ -24,6 +24,9 @@ export const CONNECT_HOSTS = [
   "https://raw.githubusercontent.com",
   "https://*.wikipedia.org",
   "https://api.openalex.org",
+  // arXiv: searched through DataCite, and papers' PDFs read whole from arXiv (sources/arxiv.ts).
+  "https://api.datacite.org",
+  "https://arxiv.org",
 ];
 
 export const CSP_DIRECTIVES: Record<string, string[]> = {

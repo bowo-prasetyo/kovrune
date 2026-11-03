@@ -87,6 +87,11 @@ export class SourceSession {
     return this.fetched.get(parentId(id))?.doc.text;
   }
 
+  /** A fetched PDF's page offsets in the text textFor returns (arXiv papers), so a quote shows its page. */
+  pageStartsFor(id: string): number[] | undefined {
+    return this.fetched.get(parentId(id))?.doc.pageStarts;
+  }
+
   partsOf(id: string): string[] {
     return this.fetched.get(parentId(id))?.parts.map((p) => p.id) ?? [];
   }

@@ -89,24 +89,30 @@ describe("answer status and cleanup", () => {
 
 describe("open source preferences", () => {
   it("are off by default, with Wikipedia in the browser's language", () => {
-    assert.deepEqual(parseSourcePrefs(null, "ja-JP"), { wikipedia: false, language: "ja", openalex: false });
+    assert.deepEqual(parseSourcePrefs(null, "ja-JP"), { wikipedia: false, language: "ja", openalex: false, arxiv: false, openalexKey: "" });
     assert.equal(parseSourcePrefs(null, undefined).language, "en");
     assert.equal(defaultLanguage("zh-Hant-TW"), "zh");
   });
 
   it("ignore malformed or unsafe stored values", () => {
-    assert.deepEqual(parseSourcePrefs('{"wikipedia":"yes","language":"evil.com/x","openalex":true}', "en-US"), {
+    assert.deepEqual(parseSourcePrefs('{"wikipedia":"yes","language":"evil.com/x","openalex":true,"arxiv":1,"openalexKey":42}', "en-US"), {
       wikipedia: false,
       language: "en",
       openalex: true,
+      arxiv: false,
+      openalexKey: "",
     });
+    assert.equal(parseSourcePrefs('{"arxiv":true,"openalexKey":" abc "}', "en").openalexKey, "abc", "a key is kept, trimmed");
     assert.equal(parseSourcePrefs("{not json", "en").wikipedia, false);
   });
 
   it("create only the chosen sources", () => {
-    assert.deepEqual(openSourcesFor({ wikipedia: true, language: "ja", openalex: false }).map((s) => s.label), ["Wikipedia (ja)"]);
-    assert.deepEqual(openSourcesFor({ wikipedia: false, language: "en", openalex: true }).map((s) => s.name), ["openalex"]);
-    assert.deepEqual(openSourcesFor({ wikipedia: false, language: "en", openalex: false }), []);
+    const none = { wikipedia: false, language: "en", openalex: false, arxiv: false, openalexKey: "" };
+    assert.deepEqual(openSourcesFor({ ...none, wikipedia: true, language: "ja" }).map((s) => s.label), ["Wikipedia (ja)"]);
+    assert.deepEqual(openSourcesFor({ ...none, openalex: true }).map((s) => s.name), ["openalex"]);
+    assert.deepEqual(openSourcesFor({ ...none, arxiv: true }).map((s) => s.label), ["arXiv"]);
+    assert.deepEqual(openSourcesFor({ ...none, wikipedia: true, openalex: true, arxiv: true }).map((s) => s.name), ["wikipedia", "openalex", "arxiv"]);
+    assert.deepEqual(openSourcesFor(none), []);
   });
 
   it("describe open-source steps in the trace", () => {

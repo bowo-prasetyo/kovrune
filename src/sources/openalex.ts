@@ -1,13 +1,25 @@
 // Scholarly works through the OpenAlex API, which allows cross-origin requests.
 // Abstracts come as an inverted index (word -> positions) and are rebuilt here.
 
-import { getJson, SourceError, type FetchLike, type OpenSource, type WorkInfo } from "./types.ts";
+import { getJson, SourceError, type FetchLike, type OpenSource, type RequestOptions, type WorkInfo } from "./types.ts";
 
 const PREFIX = "openalex:";
-const API = "https://api.openalex.org/works";
-const FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location";
+export const OPENALEX_API = "https://api.openalex.org/works";
+export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location";
 
-interface Work {
+/**
+ * Said when OpenAlex's daily budget is used up. Since 2026, requests without an API key share a
+ * small daily budget with everyone on the same IP address; a free key has its own.
+ */
+export const OPENALEX_KEY_HINT = "A free OpenAlex API key, added under Search in, gives you your own daily budget.";
+
+/** OpenAlex's request options: its own budget with a key, and the hint without one. */
+export function openAlexOptions(apiKey?: string): { params: Record<string, string>; options: RequestOptions } {
+  const key = apiKey?.trim();
+  return key ? { params: { api_key: key }, options: {} } : { params: {}, options: { limitHint: OPENALEX_KEY_HINT } };
+}
+
+export interface Work {
   id: string;
   display_name?: string;
   publication_year?: number;
@@ -67,13 +79,15 @@ export function workInfo(work: Work): WorkInfo {
   };
 }
 
-export function createOpenAlex(fetchImpl: FetchLike = fetch): OpenSource {
+/** OpenAlex; with `apiKey`, requests use the user's own daily budget (openAlexOptions). */
+export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string): OpenSource {
+  const { params: auth, options } = openAlexOptions(apiKey);
   return {
     name: "openalex",
     label: "OpenAlex",
     async search(query, signal) {
-      const params = new URLSearchParams({ search: query, "per-page": "5", select: FIELDS });
-      const data = await getJson(fetchImpl, "OpenAlex", `${API}?${params}`, signal);
+      const params = new URLSearchParams({ search: query, "per-page": "5", select: WORK_FIELDS, ...auth });
+      const data = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}?${params}`, signal, options);
       const works: Work[] = data?.results ?? [];
       return works.map((work) => {
         const abstract = rebuildAbstract(work.abstract_inverted_index);
@@ -88,7 +102,7 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch): OpenSource {
     async fetch(id, signal) {
       const key = id.slice(PREFIX.length);
       if (!/^W\d+$/.test(key)) throw new SourceError(`"${id}" is not an OpenAlex work ID.`);
-      const work: Work = await getJson(fetchImpl, "OpenAlex", `${API}/${key}?${new URLSearchParams({ select: FIELDS })}`, signal);
+      const work: Work = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}/${key}?${new URLSearchParams({ select: WORK_FIELDS, ...auth })}`, signal, options);
       return {
         id: workId(work),
         title: work.display_name ?? "Untitled",

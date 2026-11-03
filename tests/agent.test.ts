@@ -691,7 +691,7 @@ describe("self-check", () => {
     assert.ok(result.decodeTokensPerSecond > 50 && result.decodeTokensPerSecond < 120, String(result.decodeTokensPerSecond));
     assert.ok(result.maxResearchTaskMinutes >= 0.5 && result.maxResearchTaskMinutes <= 1.4, String(result.maxResearchTaskMinutes));
     assert.ok(result.minutesPerSource >= 0.1 && result.minutesPerSource <= 0.4, String(result.minutesPerSource));
-    assert.match(describeSelfCheck(result).join("\n"), /up to [\d.]+ min at this speed, and up to [\d.]+ min more for each of Wikipedia and OpenAlex/);
+    assert.match(describeSelfCheck(result).join("\n"), /up to [\d.]+ min at this speed, and up to [\d.]+ min more for each of Wikipedia, OpenAlex and arXiv/);
   });
 
   it("estimates the worst case from the limits research runs with", async () => {
