@@ -103,6 +103,9 @@ export function createResearchTools(
   // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
   const readIds = new Set<string>();
   let askedToReadCited = false;
+  // What the answer quoted from each open-source document it was sent to read, so the read gives the
+  // part holding the quote rather than the part matching the question (SourceSession.read).
+  const quotedFrom = new Map<string, string[]>();
   // A quote from a part counts as read when that part was, and from a whole document when any of its
   // parts was. An open source picks the part it shows (sources/session.ts), so any read of it counts.
   const wasRead = (id: string) =>
@@ -200,7 +203,9 @@ export function createResearchTools(
         if (session?.sourceFor(docId)) {
           unread.clear();
           readIds.add(docId);
-          return nextSources(await session.read(docId));
+          const quotes = quotedFrom.get(parentId(docId)) ?? [];
+          quotedFrom.delete(parentId(docId));
+          return nextSources(await session.read(docId, undefined, quotes));
         }
         const doc = index.get(docId);
         if (!doc) {
@@ -266,6 +271,9 @@ export function createResearchTools(
         const toRead = unreadCited.slice(0, Math.max(callsLeft - READ_FIRST_RESERVE, 0));
         if (toRead.length) {
           askedToReadCited = true;
+          for (const { docId, quote } of evidence) {
+            if (toRead.includes(docId)) quotedFrom.set(parentId(docId), [...(quotedFrom.get(parentId(docId)) ?? []), quote]);
+          }
           const what = toRead.length === 1 ? toRead[0] : toRead.join(", ");
           const some = toRead.length < unreadCited.length ? ` There are steps left for ${toRead.length === 1 ? "one read" : `${toRead.length} reads`}, so read only ${toRead.length === 1 ? "that one" : "those"}.` : "";
           return {

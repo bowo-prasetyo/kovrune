@@ -20,6 +20,17 @@ describe("evidence check", () => {
     assert.equal(curly!.verified, true);
   });
 
+  it("says when a quote's parts are in the document but too far apart, rather than not found", () => {
+    // A preview user's arXiv quote joined the abstract and the introduction, about 600 characters apart.
+    const paper = `focused our survey on the state of the art research into the interpretability of AI. ${"We surveyed many methods in depth. ".repeat(20)}I. INTRODUCTION HE research around the theme of Trustworthy AI (TAI) is growing like never before.`;
+    const check = (quote: string) => checkEvidence([{ docId: "d", quote }], () => paper)[0]!;
+    const far = check("the art research into the interpretability of AI. … HE research around the theme of Trustworthy AI (TAI)");
+    assert.equal(far.verified, false);
+    assert.match(far.reason!, /^its parts are in the document, but too far apart to be one quote/);
+    assert.equal(check("the art research into the interpretability … of quantum cats in boxes").reason, "quote not found in the document");
+    assert.equal(check("HE research around the theme … the art research into the interpretability").reason, "quote not found in the document", "out of order is not found");
+  });
+
   it("takes single and double quote marks as the same, since models write a passage's double quotes as single ones", () => {
     // A preview user's report: Wikipedia's "a system for electronic transactions without relying on
     // trust" was quoted with single quotes inside the JSON reply and marked not found.

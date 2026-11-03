@@ -2,6 +2,7 @@
 // so the evidence check verifies quotes against exactly what the model read, and
 // each citation keeps its URL and retrieval time.
 
+import { quoteHas } from "../agent/evidence.ts";
 import { chunkDocument, parentId } from "../documents/chunk.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { SourceError, type FetchedDocument, type OpenSource, type WorkInfo } from "./types.ts";
@@ -13,6 +14,28 @@ export interface Citation {
   source: string;
   /** Scholarly works: authors, year, DOI and venue. */
   work?: WorkInfo;
+}
+
+/** "…" or "...", where a quote leaves words out. */
+const ELISION = /\s*\[?\s*(?:…|\.{3,})\s*\]?\s*/;
+
+/**
+ * The part that holds a quote: the first part containing its longest piece word for word, or failing
+ * that the part whose words best match it. The read-first rule sends the model to read what it quoted
+ * from a snippet, and the part matching the question was another one: a preview user's arXiv question
+ * read five papers that way, each a part away from what it quoted.
+ */
+export function partQuoted(parts: SourceDocument[], quotes: string[]): SourceDocument | undefined {
+  for (const quote of quotes) {
+    const piece = quote.split(ELISION).sort((a, b) => b.length - a.length)[0]?.trim();
+    if (!piece) continue;
+    const holding = parts.find((p) => quoteHas(p.text, piece));
+    if (holding) return holding;
+  }
+  const words = quotes.join(" ");
+  if (!words.trim()) return undefined;
+  const best = new DocumentIndex(parts).search(words)[0]?.docId;
+  return parts.find((p) => p.id === best);
 }
 
 export class SourceSession {
@@ -35,8 +58,12 @@ export class SourceSession {
     return this.sources.find((s) => id.startsWith(`${s.name}:`));
   }
 
-  /** The tool result for reading an open-source document or one of its parts. */
-  async read(id: string, signal = this.signal): Promise<string> {
+  /**
+   * The tool result for reading an open-source document or one of its parts. For a document too long
+   * for the context, the part the model names is given, or else the part containing one of `quotes`
+   * (what its answer quoted from a search snippet), or else the part that best matches the question.
+   */
+  async read(id: string, signal = this.signal, quotes: string[] = []): Promise<string> {
     const source = this.sourceFor(id);
     if (!source) return `No document with ID "${id}". Use an ID returned by a search.`;
     let entry;
@@ -51,6 +78,7 @@ export class SourceSession {
     // A whole article does not fit; give the part that best matches the question.
     const part =
       parts.find((p) => p.id === id) ??
+      partQuoted(parts, quotes) ??
       parts.find((p) => p.id === new DocumentIndex(parts).search(this.question)[0]?.docId) ??
       parts[0]!;
     const number = parts.indexOf(part) + 1;

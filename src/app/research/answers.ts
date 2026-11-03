@@ -122,7 +122,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
           ? `[${citation.title}](${citation.url}) (${citation.source}, retrieved ${citation.retrievedAt.slice(0, 10)})`
           : `${sourceTitle(answer, item.docId)}${item.context?.pages ? `, ${describePages(item.context.pages)}` : ""}`;
         lines.push(`${i + 1}. ${item.verified ? "✓" : "✗"} ${where}`, "", `   > ${oneLine(item.quote)}`, "");
-        if (!item.verified && item.reason) lines.push(`   Not found: ${item.reason}.`, "");
+        if (!item.verified && item.reason) lines.push(`   Problem: ${item.reason}.`, "");
       });
     }
   }
@@ -199,7 +199,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
     if (section.answer) lines.push(markedAnswer(section), "");
     for (const item of section.evidence) {
       const where = reference(section, item.docId, item.context?.pages ? describePages(item.context.pages) : undefined);
-      lines.push(`- ${item.verified ? "✓" : "✗"} ${where}: > ${oneLine(item.quote)}${!item.verified && item.reason ? ` (not found: ${item.reason})` : ""}`);
+      lines.push(`- ${item.verified ? "✓" : "✗"} ${where}: > ${oneLine(item.quote)}${!item.verified && item.reason ? ` (problem: ${item.reason})` : ""}`);
     }
     if (section.evidence.length) lines.push("");
   });
