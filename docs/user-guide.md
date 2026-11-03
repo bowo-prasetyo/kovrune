@@ -15,7 +15,7 @@ Kovrune answers questions about your documents, and optionally Wikipedia and sch
 
 **Use the preview site:** open <https://kovrune.pages.dev/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way (section 2).
 
-The preview is built automatically from the latest `main` by GitHub Actions and served by Cloudflare Pages; the commit it was built from is shown at the bottom of the page. It is not yet a signed release, so if you prefer to run code you built yourself, run the app locally instead.
+The preview is built automatically from the latest `main` by GitHub Actions and served by Cloudflare Pages; the commit it was built from is shown at the bottom of the page. It is not a signed release. Signed releases are on the [releases page](https://github.com/bowo-prasetyo/kovrune/releases); to run one, or code you built yourself, run the app locally instead.
 
 **Used the old address?** The preview used to be at `bowo-prasetyo.github.io/kovrune`, which now forwards here. Browsers keep saved data separately for each site, so if you saved documents or answers there, the old address shows how many and offers **Download a backup**; restore it here under **Storage and backup**. Models are downloaded again at the new address, and the browser asks for its permissions again.
 
@@ -46,8 +46,10 @@ The first screen checks your device and recommends one of two options:
 
 | Option | Good for | What you need |
 | --- | --- | --- |
-| **In this browser** | Apple silicon Macs, laptops with a recent NVIDIA or AMD GPU | Chrome or Edge, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B) |
+| **In this browser** (experimental) | Apple silicon Macs, laptops with a recent NVIDIA or AMD GPU | Chrome or Edge, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B) |
 | **Local model server** | Everything else, including laptops with integrated Intel graphics | llama.cpp, set up once ([section 3](#3-set-up-a-local-model-server)) |
+
+The browser option is **experimental**: it has passed its checks in testing, but has not yet answered a question end to end on a real GPU ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). If the model test is slow or the answers look broken, use a local model server.
 
 You can choose the other option anyway. Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.
 

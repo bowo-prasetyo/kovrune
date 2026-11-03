@@ -4,7 +4,7 @@ Kovrune is a web app, so what you run is whatever the server sends. This page ex
 
 | | |
 | --- | --- |
-| Status | Builds are reproducible (M2 slice 4). The app is hosted on Cloudflare Pages, which sends the policy as a header, and releases are signed by the owner (slice 5) |
+| Status | Builds are reproducible (M2 slice 4). The app is hosted on Cloudflare Pages, which sends the policy as a header, and releases are signed by the owner (slice 5). First signed release: [v0.1.0](https://github.com/bowo-prasetyo/kovrune/releases/tag/v0.1.0), 2 November 2026 |
 
 ## How a release is made
 
@@ -17,6 +17,15 @@ Kovrune is a web app, so what you run is whatever the server sends. This page ex
 So a published release carries two independent checks: GitHub Actions built it, and the owner's own rebuild matched it before they signed.
 
 The app at <https://kovrune.pages.dev/> is the preview, built from `main` on every push ([`cloudflare.yml`](../.github/workflows/cloudflare.yml)); releases are for anyone who wants to host or check a fixed version.
+
+## Before tagging
+
+- [ ] [`release-signers`](../release-signers) has the owner's public key, merged to `main` ([below](#sign-a-release-owner)). Without it, the signature check unpublishes the release.
+- [ ] `version` in `package.json` matches the tag, without the `v`.
+- [ ] `docs/release-notes/<tag>.md` exists. The release workflow puts it at the top of the draft's notes; its links should point at the tag, not at `main`.
+- [ ] CI is green on the commit to tag.
+
+Then push the tag from that commit: `git tag v0.1.0 && git push origin v0.1.0`.
 
 ## Check a release yourself
 

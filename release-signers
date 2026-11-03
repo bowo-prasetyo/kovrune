@@ -5,3 +5,4 @@
 #
 # `npm run release:verify` and the "Release signature" workflow check signatures against
 # the keys listed here, in the commit the release was tagged from.
+bowo-prasetyo namespaces="kovrune-release" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIC099RsdZN0zQoaXLu/6hrq91mzNiS7TvF4wuFGd1L1M Kovrune releases
