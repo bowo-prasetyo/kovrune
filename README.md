@@ -15,7 +15,7 @@ Kovrune has no tokens, no blockchain and no central AI service. See [`docs/desig
 ## Status
 
 - **M0 (benchmark gate): provisional go.** See [`docs/m0-benchmark.md`](docs/m0-benchmark.md#m0-status). Help confirm it by running the benchmark on a 16 GB laptop: [issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9).
-- **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). The app runs a model in your browser or on a local model server, and answers questions about your own documents with verified quotes. It can also search Wikipedia and OpenAlex (scholarly papers) when you choose to.
+- **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). The app runs a model in your browser or on a local model server, and answers questions about your own documents with verified quotes. It can also search Wikipedia, OpenAlex (scholarly papers, abstracts) and arXiv (preprints, read in full) when you choose to.
 - **First release: [v0.1.0](https://github.com/bowo-prasetyo/kovrune/releases/tag/v0.1.0), a technical preview, published 2 November 2026.** It fixes one signed build for the usability test; the browser path is experimental in it ([release notes](docs/release-notes/v0.1.0.md)). Security reports: [`SECURITY.md`](SECURITY.md).
 - **Report mode: available.** Long reports built from short, checked answers, one per section ([user guide](docs/user-guide.md#write-a-report), [design](docs/report-mode.md)). Measuring their quality (a report suite) is next.
 
