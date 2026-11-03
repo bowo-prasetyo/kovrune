@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { describeSaveError, sharedStores, type TaskStore } from "./store.ts";
+import { readable, taskSchema } from "./records.ts";
 import { TASK_ID, type SavedTask } from "./tasks.ts";
 
 export interface PendingTask {
@@ -26,7 +27,8 @@ export function usePendingTask(): PendingTask {
       .then((tasks) => tasks.list())
       .then(
         (saved) => {
-          const found = saved.find((t) => t.id === TASK_ID);
+          // A damaged task is passed over, not shown (records.ts); the next question's progress replaces it.
+          const found = readable<SavedTask>(saved, taskSchema).records.find((t) => t.id === TASK_ID);
           // A task saved while this page loaded wins over the old one.
           if (!cancelled && found) setTask((current) => current ?? found);
         },

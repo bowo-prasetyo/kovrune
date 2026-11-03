@@ -4,11 +4,12 @@ import { savedTextBytes } from "./store.ts";
 import type { SavedDocuments } from "./useSavedDocuments.ts";
 import { reinsert } from "./undo.ts";
 import { useUndo } from "./UndoNotice.tsx";
+import { DamagedNotice } from "./DamagedNotice.tsx";
 
 const KIND_LABELS = { pdf: "PDF", html: "HTML", markdown: "Markdown", text: "Text" } as const;
 
 export function DocumentLibrary({ library }: { library: SavedDocuments }) {
-  const { documents, setDocuments: onChange, store, saveError } = library;
+  const { documents, setDocuments: onChange, store, saveError, damaged, deleteDamaged } = library;
   // Adding waits for the saved documents, so a new file cannot take a saved one's ID.
   const loading = !store;
   const [errors, setErrors] = useState<string[]>([]);
@@ -91,6 +92,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
           {saveError}
         </p>
       )}
+      <DamagedNotice damaged={damaged} onDelete={deleteDamaged} noun="document" />
 
       {reading > 0 && (
         <p className="progress" aria-live="polite">

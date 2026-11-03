@@ -9,56 +9,9 @@ import { z } from "zod";
 import type { SavedAnswer } from "./answers.ts";
 import { BACKUP_FORMAT, BACKUP_VERSION, type Backup } from "./backup-format.ts";
 import { documentId, type LibraryDocument } from "./library.ts";
+import { answerSchema, documentSchema } from "./records.ts";
 
 export { BACKUP_FORMAT, BACKUP_VERSION, backupFileName, makeBackup, type Backup } from "./backup-format.ts";
-
-const documentSchema = z.object({
-  id: z.string().min(1),
-  title: z.string(),
-  text: z.string(),
-  fileName: z.string(),
-  kind: z.enum(["text", "markdown", "html", "pdf"]),
-  bytes: z.number().nonnegative(),
-  pages: z.number().int().positive().optional(),
-  pageStarts: z.array(z.number().int().nonnegative()).optional(),
-  warning: z.string().optional(),
-});
-
-const supportSchema = z.looseObject({ sentences: z.array(z.looseObject({ text: z.string() })), judged: z.number(), backed: z.number() });
-// A report's introduction or conclusion: its text and checked sentences.
-const synthesisPart = z.looseObject({ text: z.string(), support: supportSchema });
-
-// Answers are shown again exactly as saved; the checks cover what the result view reads.
-const answerFields = {
-  id: z.string().min(1),
-  question: z.string(),
-  askedAt: z.string(),
-  model: z.string(),
-  status: z.enum(["verified", "unverified", "not-found", "no-answer"]),
-  answer: z.string().optional(),
-  evidence: z.array(z.looseObject({ docId: z.string(), quote: z.string(), verified: z.boolean() })),
-  support: supportSchema.optional(),
-  citations: z.record(z.string(), z.looseObject({})),
-  titles: z.record(z.string(), z.string()),
-  sourceErrors: z.array(z.string()),
-  noAnswer: z.string().optional(),
-  steps: z.array(z.string()),
-};
-// A report's sections are answers too (docs/report-mode.md).
-const answerSchema = z.looseObject({
-  ...answerFields,
-  report: z
-    .looseObject({
-      title: z.string(),
-      request: z.string(),
-      plan: z.array(z.string()),
-      sections: z.array(z.looseObject(answerFields)),
-      unfinished: z.boolean().optional(),
-      stopped: z.boolean().optional(),
-      synthesis: z.looseObject({ introduction: synthesisPart, conclusion: synthesisPart }).optional(),
-    })
-    .optional(),
-});
 
 /** Reads a backup file's text. Throws an error whose message can be shown to the user. */
 export function parseBackup(text: string): Backup {

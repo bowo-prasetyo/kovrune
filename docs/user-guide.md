@@ -213,13 +213,17 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 
 ### Past answers and export
 
-Each finished answer is saved in the browser and listed under **Past answers**, newest first, with its label, when it was asked and which model answered. A report shows how many of its sections got **Quotes found**, in red when any section's quotes are missing or not found. Open one to see it as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. An open answer has its own address (`…/answers/…`), so you can bookmark it; it opens only in the browser that saved it.
+Each finished answer is saved in the browser. The research screen lists the three most recent under **Recent answers**; **All past answers**, there or at the top of the page, opens the **Past answers** page with every saved answer, newest first, each with its label, when it was asked and which model answered. A report shows how many of its sections got **Quotes found**, in red when any section's quotes are missing or not found.
 
-The browser's **Back** and **Forward** buttons move between the setup steps and past answers, and a reload stays on the same screen.
+- **Search** finds answers by words in the question or the answer, or in a report's sections; accents and capitals don't matter. **Show** narrows the list by label: quotes found, to check (⚠), quotes missing or not found (✗), no answer, or reports.
+- Click a question to open the answer on its own page, as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. Its address (`…/answers/…`) can be bookmarked; it opens only in the browser that saved it.
+- A question that is running keeps running while you look at past answers, and what you typed in the question box stays there.
+
+The browser's **Back** and **Forward** buttons move between the setup steps, the research screen and past answers, and a reload stays on the same screen.
 
 - **Export as Markdown** saves the question, the label, the answer (with ⚠ marks), each quote with its source and page, and the steps, as a `.md` file.
 - **Export papers as BibTeX** appears when the answer cites OpenAlex papers, and saves a `.bib` file with their authors, year, venue and DOI.
-- **Delete** removes one answer, and **Undo** in the notice that follows brings it back; **Delete all saved answers** removes them all, after asking. Documents and models are kept.
+- **Delete**, on the Past answers page or an answer's page, removes one answer, and **Undo** in the notice that follows brings it back; **Delete all saved answers**, at the bottom of the Past answers page, removes them all, after asking. Documents and models are kept.
 
 Exports are made in the browser; nothing is uploaded.
 
@@ -231,6 +235,8 @@ Exports are made in the browser; nothing is uploaded.
 - **Downloaded models:** each one with its size, and **Delete** to free the space, after asking. The model in use can't be deleted; change the setup to another model first.
 
 **Download a backup** saves your documents' text and your saved answers in one `.json` file. **Restore from a backup** adds them back, in this browser after it cleared its data, or in another browser. Restoring only adds what is missing; a document with the same name but different text is added alongside the one already here. Models and the setup aren't in the backup: download the model again and redo the setup.
+
+If a saved document or answer can't be read, for example because the browser's storage damaged it, Kovrune leaves it out of the list and says so above it. **Save to a file** keeps a copy, which you can attach to a bug report; **Delete** removes it from the browser.
 
 If the browser's storage for Kovrune is full, saving a document or an answer fails with a message saying so. Free space under **Storage and backup**, for example by deleting a model you don't use, or free disk space.
 
