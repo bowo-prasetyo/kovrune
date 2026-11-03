@@ -234,6 +234,18 @@ describe("research agent", () => {
     );
   });
 
+  it("can serve a task's documents as an open source, scored with the library's own IDs (--as-source)", async () => {
+    const quote = MAINTAINER_QUOTE[1];
+    const answer = JSON.stringify({ tool: "final_answer", args: { found: true, answer: "The Tessel Foundation", evidence: [{ docId: "archive:lumen-overview", quote }] } });
+    const model = new ScriptedModel([`{"tool":"search_archive","args":{"query":"LumenDB maintained Tessel"}}`, answer, `{"tool":"read","args":{"docId":"archive:lumen-overview"}}`, answer]);
+    const run = await runResearchTask(task("r01-lumen-maintainer"), "research", baseLibrary, model, { constrained: true, asSource: true });
+    assert.match(model.requests[0]!.messages[0]!.content, /search_archive/);
+    assert.equal(run.research?.status, "verified");
+    assert.equal(run.score.passed, true, JSON.stringify(run.score.checks));
+    // The answer quoted a snippet first, so the read-first rule sent the model to read it.
+    assert.deepEqual(run.agent.calls.flatMap((c) => (c.rejected ? [c.rejected] : [])), ["About to answer from search snippets; reading the documents it quotes first"]);
+  });
+
   it("reads a document again when its result was removed, instead of calling it a repeat", async () => {
     const reads = corpus.slice(0, 4).map((doc) => `{"tool":"read","args":{"docId":"${doc.id}"}}`);
     const model = new ScriptedModel([...reads, reads[0]!, final(true, "Tessel Foundation", [MAINTAINER_QUOTE])]);
