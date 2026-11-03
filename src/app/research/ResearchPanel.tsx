@@ -360,7 +360,7 @@ export function ResearchPanel({
             <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
             arXiv (preprints, read in full)
           </label>
-          {(prefs.openalex || prefs.arxiv) && (
+          {prefs.openalex && (
             <label className="openalex-key">
               OpenAlex API key (optional)
               <input
@@ -374,7 +374,7 @@ export function ResearchPanel({
               />
             </label>
           )}
-          {(prefs.openalex || prefs.arxiv) && (
+          {prefs.openalex && (
             <p className="hint">
               Without a key, OpenAlex shares a small daily budget among everyone on your network's address, and it can run out until
               midnight UTC. A free key from <a href="https://help.openalex.org/api/authentication/">OpenAlex</a> gives you your own;
@@ -384,7 +384,7 @@ export function ResearchPanel({
           {anyOpenSource && (
             <p className="hint">
               The search words the model chooses, and the articles it opens, are requested from{" "}
-              {joinNames([...openSourceNames(prefs).filter((n) => n !== "arXiv"), ...(prefs.arxiv && !prefs.openalex ? ["OpenAlex"] : [])])}
+              {joinNames([...openSourceNames(prefs).filter((n) => n !== "arXiv"), ...(prefs.arxiv ? ["DataCite (for arXiv)"] : [])])}
               {prefs.arxiv ? ", and the arXiv papers it reads are downloaded from arxiv.org" : ""}. Your documents and your question as
               typed stay on this computer.
             </p>

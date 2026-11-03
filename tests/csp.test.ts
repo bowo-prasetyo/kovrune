@@ -34,6 +34,7 @@ const KNOWN = [
   "https://ja.wikipedia.org/w/api.php",
   "https://api.openalex.org/works",
   "https://arxiv.org/pdf/2005.11401",
+  "https://api.datacite.org/dois",
 ];
 
 describe("content security policy", () => {

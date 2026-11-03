@@ -50,7 +50,7 @@ Then add documents (PDF, text, Markdown or HTML), or tick Wikipedia, OpenAlex or
 
 Documents and answers stay on your device: they are saved in your browser, so they are still there after a reload. A question interrupted by a reload or a lost model server can continue where it stopped. **Storage and backup** shows what the browser keeps, and saves documents and answers to a backup file you can restore in any browser. An answer can be exported as Markdown, with its quotes and sources, and the papers it cites as BibTeX. Scanned PDFs without a text layer cannot be read.
 
-Nothing you type or add is sent to an online AI service. The app's network requests are the model download (Hugging Face, plus WebLLM's runtime library from GitHub, at fixed versions checked against their SHA-256), the model server you connect it to, and, only when you tick them, Wikipedia and OpenAlex searches and arXiv paper downloads (arXiv is searched through OpenAlex).
+Nothing you type or add is sent to an online AI service. The app's network requests are the model download (Hugging Face, plus WebLLM's runtime library from GitHub, at fixed versions checked against their SHA-256), the model server you connect it to, and, only when you tick them, Wikipedia and OpenAlex searches and arXiv searches (through DataCite) and paper downloads.
 
 ## Development
 

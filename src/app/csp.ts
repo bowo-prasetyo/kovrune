@@ -24,7 +24,8 @@ export const CONNECT_HOSTS = [
   "https://raw.githubusercontent.com",
   "https://*.wikipedia.org",
   "https://api.openalex.org",
-  // arXiv papers' PDFs, read whole (sources/arxiv.ts).
+  // arXiv: searched through DataCite, and papers' PDFs read whole from arXiv (sources/arxiv.ts).
+  "https://api.datacite.org",
   "https://arxiv.org",
 ];
 

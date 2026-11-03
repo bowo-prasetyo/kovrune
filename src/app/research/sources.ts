@@ -1,6 +1,6 @@
 // Which open sources the user lets the agent search. Off by default: searching them
-// sends the model's search words to Wikipedia or OpenAlex (arXiv is searched through
-// OpenAlex), and reading an arXiv paper downloads its PDF from arxiv.org.
+// sends the model's search words to Wikipedia, OpenAlex or DataCite (arXiv is searched
+// through DataCite), and reading an arXiv paper downloads its PDF from arxiv.org.
 
 import { extractPdfText } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
@@ -14,10 +14,10 @@ export interface SourcePrefs {
   /** Wikipedia language edition, e.g. "en" or "ja". */
   language: string;
   openalex: boolean;
-  /** arXiv preprints, found through OpenAlex and read whole from their PDFs. */
+  /** arXiv preprints, found through DataCite and read whole from their PDFs. */
   arxiv: boolean;
   /**
-   * The user's own OpenAlex API key, for OpenAlex and arXiv searches; empty for none. Without one,
+   * The user's own OpenAlex API key, for OpenAlex searches; empty for none. Without one,
    * requests share a small daily budget with everyone on the same IP address. Kept in this browser
    * only, and sent only to OpenAlex. Backups do not include it.
    */
@@ -69,7 +69,7 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
   return [
     ...(prefs.wikipedia ? [createWikipedia(prefs.language)] : []),
     ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey)] : []),
-    ...(prefs.arxiv ? [createArxiv({ apiKey: prefs.openalexKey, extractPdf: async (bytes) => extractPdfText(bytes, await loadBrowserPdfJs()) })] : []),
+    ...(prefs.arxiv ? [createArxiv({ extractPdf: async (bytes) => extractPdfText(bytes, await loadBrowserPdfJs()) })] : []),
   ];
 }
 

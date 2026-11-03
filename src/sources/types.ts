@@ -1,7 +1,7 @@
 // Open research sources (docs/m1-plan.md, slice 4): public services the agent can
 // search besides the user's documents. Each allows requests from web pages, so the
 // app calls them directly; nothing goes through a Kovrune server. arXiv's search API
-// does not, so arXiv papers are found through OpenAlex and read from arXiv's PDFs,
+// does not, so arXiv papers are found through DataCite and read from arXiv's PDFs,
 // which do (sources/arxiv.ts).
 
 export interface SourceHit {
