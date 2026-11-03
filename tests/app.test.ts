@@ -6,6 +6,7 @@ import { recommendPath } from "../src/app/device.ts";
 import { isPublicHttpsPage } from "../src/app/build-info.ts";
 import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/local-access.ts";
 import { describeConnectionError, describeMissingModel, describeServerTimeout, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
+import { CRASH_RECOVERY } from "../src/app/help.ts";
 import { slowModelAdvice } from "../src/app/models.ts";
 import { describeLastTest, parseSettings } from "../src/app/settings.ts";
 import { listModels, LocalEndpointModel } from "../src/models/local-endpoint.ts";
@@ -258,5 +259,14 @@ describe("model server check on the research screen", () => {
 
   it("says a slow server may still be starting", () => {
     assert.match(describeServerTimeout("http://127.0.0.1:8080/v1"), /^http:\/\/127\.0\.0\.1:8080\/v1 didn't answer within 5 seconds\. .*still be starting/);
+  });
+});
+
+describe("page shown after a crash", () => {
+  it("says what a reload keeps", () => {
+    // UX audit: it said "documents you added need adding again", from before documents were saved.
+    assert.doesNotMatch(CRASH_RECOVERY, /adding again/);
+    assert.match(CRASH_RECOVERY, /documents and saved answers are kept/);
+    assert.match(CRASH_RECOVERY, /can continue where it stopped/);
   });
 });

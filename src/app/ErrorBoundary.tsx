@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from "react";
-import { HELP_URL } from "./help.ts";
+import { CRASH_RECOVERY, HELP_URL } from "./help.ts";
 
 /** Shows a way out instead of a blank page if a screen crashes. */
 export class ErrorBoundary extends Component<{ children: ReactNode }, { error?: Error }> {
@@ -20,8 +20,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error?: 
             The page hit an unexpected error: <code>{this.state.error.message}</code>
           </p>
           <p>
-            Reloading usually fixes it. Your setup is kept; documents you added need adding again. If it keeps happening,
-            please report it with the message above (see the <a href={HELP_URL}>user guide</a>).
+            {CRASH_RECOVERY} If it keeps happening, please report it with the message above (see the{" "}
+            <a href={HELP_URL}>user guide</a>).
           </p>
           <div className="actions">
             <button className="primary" onClick={() => location.reload()}>
