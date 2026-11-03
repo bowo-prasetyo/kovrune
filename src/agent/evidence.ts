@@ -289,11 +289,11 @@ function pageAt(offset: number, pageStarts: number[]): number {
 }
 
 /** A verified quote with the source text around it, cut at word boundaries, and its pages in a PDF. */
-export function quoteContext(quote: string, text: string, pageStarts?: number[]): QuoteContext | undefined {
+export function quoteContext(quote: string, text: string, pageStarts?: number[], around = CONTEXT_CHARS): QuoteContext | undefined {
   const at = locateQuote(quote, text);
   if (!at) return undefined;
-  let from = Math.max(0, at.start - CONTEXT_CHARS);
-  let to = Math.min(text.length, at.end + CONTEXT_CHARS);
+  let from = Math.max(0, at.start - around);
+  let to = Math.min(text.length, at.end + around);
   // Cut at whitespace, so no word is shown in part.
   if (from > 0) {
     const space = text.slice(from, at.start).search(/\s/);

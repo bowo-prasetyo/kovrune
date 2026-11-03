@@ -2,7 +2,7 @@
 // so the evidence check verifies quotes against exactly what the model read, and
 // each citation keeps its URL and retrieval time.
 
-import { quoteHas } from "../agent/evidence.ts";
+import { quoteContext, quoteHas } from "../agent/evidence.ts";
 import { chunkDocument, parentId } from "../documents/chunk.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { SourceError, type FetchedDocument, type OpenSource, type WorkInfo } from "./types.ts";
@@ -15,6 +15,9 @@ export interface Citation {
   /** Scholarly works: authors, year, DOI and venue. */
   work?: WorkInfo;
 }
+
+/** Characters of the document shown on each side of a quote by a short forced read (passage). */
+export const PASSAGE_CHARS = 300;
 
 /** "…" or "...", where a quote leaves words out. */
 const ELISION = /\s*\[?\s*(?:…|\.{3,})\s*\]?\s*/;
@@ -85,6 +88,39 @@ export class SourceSession {
     return (
       `[${part.id}] ${doc.title} (part ${number} of ${parts.length})\n${part.text}\n\n` +
       `Other parts: ${doc.id}#1 to ${doc.id}#${parts.length}.`
+    );
+  }
+
+  /**
+   * The read the read-first rule asks for, short: for each quote found in the document, the passage
+   * around it (PASSAGE_CHARS on each side), and the part to read for more. Undefined when no quote is
+   * found, so the caller gives the part instead and the model can see what it got wrong. A whole part
+   * is about 1,800 characters, and on a slow machine each forced read of one left less room in the
+   * context and had the server process the conversation again (eval/field/README.md).
+   */
+  async passage(id: string, quotes: string[], signal = this.signal): Promise<string | undefined> {
+    const source = this.sourceFor(id);
+    if (!source || !quotes.length) return undefined;
+    let entry;
+    try {
+      entry = await this.load(parentId(id), source, signal);
+    } catch (error) {
+      if (error instanceof SourceError) return this.noteError(error.message);
+      throw error;
+    }
+    const { doc, parts } = entry;
+    const found = quotes.flatMap((quote) => {
+      const context = quoteContext(quote, doc.text, undefined, PASSAGE_CHARS);
+      if (!context) return [];
+      const part = parts.length > 1 ? partQuoted(parts, [quote]) : undefined;
+      const text = `${context.more.before ? "… " : ""}${context.before}${context.passage}${context.after}${context.more.after ? " …" : ""}`;
+      return [{ part, text: text.replace(/\s+/g, " ").trim() }];
+    });
+    if (!found.length) return undefined;
+    const more = [...new Set(found.map((f) => f.part?.id).filter((p): p is string => Boolean(p)))];
+    return (
+      `[${doc.id}] ${doc.title} (the passage${found.length > 1 ? "s" : ""} your answer quoted)\n${[...new Set(found.map((f) => f.text))].join("\n\n")}\n\n` +
+      (more.length ? `To see more, read ${more.join(" or ")}.` : `To see more, read ${doc.id}.`)
     );
   }
 

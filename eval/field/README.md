@@ -706,6 +706,21 @@ After a reply is cut off at 512 tokens, the retry gets 1,024 (0.31.0), and since
 - **The targeted case never happened.** In the preview user's log, a 568-token answer was rejected by the check that the model reads what it quotes, and then each 26-token read was fitted at the raised limit. That case needs a long answer that quotes search snippets, followed by reads, with long documents or open sources. The offline report suite does not reproduce it.
 - **No harm was seen either**, in 13 sections with cut-off replies. So the case for the change rests on its design and on the unit test, which scripts the user's sequence (a cut-off, then reads) and fits nothing where `"always"` fits three results away. Under the declared condition it is not adopted: `longReplyRoom` stays `"always"`. Switching it on without a measurement that reaches the case would be the project owner's decision.
 
+### Short forced reads: the passage around a quote (0.56.0)
+
+When an answer quotes an open-source document seen only as a search snippet, the read-first rule sends the model to read it. Since PR #116, that read gives the part holding the quote: a whole part, about 1,800 characters. A preview user's arXiv question had five such reads in a row, each leaving less room and making the server process the conversation again, 25 of 47 minutes on a laptop CPU.
+
+**The change.** With `forcedReadPassage`, that read gives only the passage around each quote: the quote and about 300 characters on each side, cut at word boundaries, with the part to read for more. A quote not found in the document still gets the whole part, so the model can see what it got wrong. A part the model names is given whole, and the user's own documents are not affected. Off until measured: `--forced-read-passage` sets it.
+
+**Measuring it.** The offline suites use no open sources, so the rule never sends the model to one. `--as-source` serves the field documents as an open source, "the document archive": same documents, same search, but reached as Wikipedia or arXiv are, with snippets, the read-first rule and session reads. Each task now records the objections that sent the model on (`objections`). The baseline runs `field`, `holdout`, `multi` and `multiholdout` this way. The variant runs only the tasks where the rule sent the model to read what it quoted, plus three that it did not, which must repeat. The held-out suites are read as totals. Prompt tokens processed carry the server's cache over from the task before, so the first task of a run counts a few hundred more.
+
+**Adoption condition, declared before the run.** At 4,096 tokens, through the archive, `forcedReadPassage` is adopted when, for both Qwen3.5-4B and 2B:
+1. passed tasks do not fall on `field` or `multi`, and the held-out totals do not fall;
+2. answers labelled Quotes found that fail their task do not rise;
+3. on the tasks where the rule sent the model to read, the prompt tokens the server processed fall by at least 20%.
+
+A model with no such task is untested, and the change is not adopted on its account.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

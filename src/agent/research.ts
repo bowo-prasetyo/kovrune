@@ -22,6 +22,7 @@ import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } fr
 // fitHeadroom: the share of the budget freed beyond what fitting needs (AgentConfig.fitHeadroom). 0: at
 // 0.25, 4B's stress test at 2,048 tokens processed 17% fewer prompt tokens but lost two tasks
 // (eval/field/README.md, harness 0.54.0).
+// forcedReadPassage: a read the read-first rule asks for gives the passage around each quote, not a part.
 // longReplyRoom: where the raised limit is kept free after a cut-off (AgentConfig.longReplyRoom).
 // "always": on the report suite, "when-answering" changed nothing, as no cut-off was followed by reads
 // (eval/field/README.md, harness 0.55.0).
@@ -32,6 +33,7 @@ export const RESEARCH_LIMITS = {
   callsPerSource: 2,
   fitHeadroom: 0,
   longReplyRoom: "always" as "always" | "when-answering",
+  forcedReadPassage: false,
 };
 
 export interface ResearchResult {
@@ -94,6 +96,8 @@ export async function runResearch(options: {
   fitHeadroom?: number;
   /** Overrides RESEARCH_LIMITS.longReplyRoom, for measuring it (--long-reply-room). */
   longReplyRoom?: "always" | "when-answering";
+  /** Overrides RESEARCH_LIMITS.forcedReadPassage, for measuring it (--forced-read-passage). */
+  forcedReadPassage?: boolean;
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
   /** Called when a search has run, with its result count. */
@@ -108,7 +112,9 @@ export async function runResearch(options: {
     model: options.model,
     system: researchSystem({ documents: library.documents.length > 0, sources: sources.map((s) => s.label) }),
     task: options.question,
-    tools: createResearchTools(library.index, session, options.question, library.languages, translator(options.model, signal)),
+    tools: createResearchTools(library.index, session, options.question, library.languages, translator(options.model, signal), {
+      forcedReadPassage: options.forcedReadPassage ?? RESEARCH_LIMITS.forcedReadPassage,
+    }),
     finalTool: "final_answer",
     config: {
       constrained: options.constrained ?? true,
