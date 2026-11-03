@@ -35,6 +35,7 @@ const KNOWN = [
   "https://api.openalex.org/works",
   "https://arxiv.org/pdf/2005.11401",
   "https://api.datacite.org/dois",
+  "https://zenodo.org/api/records/15310522/files/paper.pdf/content",
 ];
 
 describe("content security policy", () => {

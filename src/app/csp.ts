@@ -27,6 +27,8 @@ export const CONNECT_HOSTS = [
   // arXiv: searched through DataCite, and papers' PDFs read whole from arXiv (sources/arxiv.ts).
   "https://api.datacite.org",
   "https://arxiv.org",
+  // DataCite works on Zenodo: their records and PDFs (sources/datacite.ts).
+  "https://zenodo.org",
 ];
 
 export const CSP_DIRECTIVES: Record<string, string[]> = {
