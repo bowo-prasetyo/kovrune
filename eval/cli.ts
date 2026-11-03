@@ -40,6 +40,8 @@ const { values } = parseArgs({
     preset: { type: "string", default: "full" },
     "fit-headroom": { type: "string" },
     "long-reply-room": { type: "string" },
+    "forced-read-passage": { type: "boolean" },
+    "as-source": { type: "boolean" },
     tasks: { type: "string" },
     "ignore-self-check": { type: "boolean", default: false },
     "hardware-class": { type: "string", default: "other" },
@@ -118,6 +120,8 @@ const report = await runBenchmark({
     taskIds: values.tasks?.split(","),
     ...(values["fit-headroom"] !== undefined ? { fitHeadroom: Number(values["fit-headroom"]) } : {}),
     ...(values["long-reply-room"] !== undefined ? { longReplyRoom: values["long-reply-room"] as "always" | "when-answering" } : {}),
+    ...(values["forced-read-passage"] ? { forcedReadPassage: true } : {}),
+    ...(values["as-source"] ? { asSource: true } : {}),
   },
   onCall: (call, index) => console.log(formatCall(call, index)),
   onResult: (result, done, total) => {

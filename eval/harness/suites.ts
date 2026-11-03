@@ -7,6 +7,8 @@ import { corpus } from "../tasks/corpus.ts";
 import { type ResearchTask } from "../tasks/research.ts";
 import { runAgent, type AgentRun, type AgentTool, type CallRecord } from "../../src/agent/agent.ts";
 import { ResearchLibrary, runResearch, type ResearchResult } from "../../src/agent/research.ts";
+import { parentId } from "../../src/documents/chunk.ts";
+import type { OpenSource } from "../../src/sources/types.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
 
@@ -32,6 +34,10 @@ export interface TaskOptions {
   fitHeadroom?: number;
   /** AgentConfig.longReplyRoom for research tasks; the app's value when absent. */
   longReplyRoom?: "always" | "when-answering";
+  /** The research option forcedReadPassage; the app's value when absent. */
+  forcedReadPassage?: boolean;
+  /** Serve the task's documents as an open source ("the document archive"), not as the user's documents (archiveSource). */
+  asSource?: boolean;
   signal?: AbortSignal;
   onCall?: (call: CallRecord, index: number) => void;
 }
@@ -54,11 +60,57 @@ export async function runResearchTask(
   suite: Exclude<SuiteName, "coding">,
   library: ResearchLibrary,
   model: LanguageModel,
-  { constrained, fitHeadroom, longReplyRoom, signal, onCall }: TaskOptions,
+  { constrained, fitHeadroom, longReplyRoom, forcedReadPassage, asSource, signal, onCall }: TaskOptions,
 ): Promise<TaskRun> {
-  const research = await runResearch({ question: task.question, library, model, constrained, fitHeadroom, longReplyRoom, signal, onCall });
-  const score = scoreResearch(task, research, library);
+  const options = { question: task.question, model, constrained, fitHeadroom, longReplyRoom, forcedReadPassage, signal, onCall };
+  if (!asSource) {
+    const research = await runResearch({ ...options, library });
+    const score = scoreResearch(task, research, library);
+    return { suite, taskId: task.id, kind: task.kind, score, agent: research.agent, research };
+  }
+  const research = await runResearch({ ...options, library: new ResearchLibrary([]), sources: [archiveSource(library)] });
+  // Cited archive IDs are the library's, prefixed, so the task's citations are scored as they are.
+  const unprefixed = research.final
+    ? { ...research, final: { ...research.final, evidence: research.final.evidence.map((e) => ({ ...e, docId: e.docId.replace(ARCHIVE_PREFIX, "") })) } }
+    : research;
+  const score = scoreResearch(task, unprefixed, library);
   return { suite, taskId: task.id, kind: task.kind, score, agent: research.agent, research };
+}
+
+const ARCHIVE_PREFIX = /^archive:/;
+
+/**
+ * A library served as an open source, for measuring what only open sources do (the read-first rule's
+ * reads of what an answer quoted from a snippet, SourceSession): the same documents and search,
+ * reached as Wikipedia or arXiv are. Search gives each document once, with the snippet of its best
+ * part; a read fetches the whole document, which the session splits into the same parts.
+ */
+export function archiveSource(library: ResearchLibrary): OpenSource {
+  return {
+    name: "archive" as OpenSource["name"],
+    label: "the document archive",
+    async search(query) {
+      const seen = new Set<string>();
+      return library.index.search(query, 8).flatMap((hit) => {
+        const id = parentId(hit.docId);
+        if (seen.has(id)) return [];
+        seen.add(id);
+        return [{ id: `archive:${id}`, title: library.documentFor(id)!.title, snippet: hit.snippet }];
+      }).slice(0, 5);
+    },
+    async fetch(id) {
+      const doc = library.documentFor(id.replace(ARCHIVE_PREFIX, ""));
+      if (!doc) throw new Error(`no archive document ${id}`);
+      return {
+        id: `archive:${doc.id}`,
+        title: doc.title,
+        text: doc.text,
+        url: `archive:${doc.id}`,
+        retrievedAt: "2026-01-01T00:00:00.000Z",
+        ...(doc.pageStarts ? { pageStarts: doc.pageStarts } : {}),
+      };
+    },
+  };
 }
 
 /** Removes Markdown fences and module syntax the sandbox cannot evaluate. */

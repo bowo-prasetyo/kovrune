@@ -87,6 +87,8 @@ export function createResearchTools(
   question?: string,
   languages: string[] = [],
   translate?: Translate,
+  /** forcedReadPassage: a read the read-first rule asks for gives the passage around each quote (SourceSession.passage). */
+  options: { forcedReadPassage?: boolean } = {},
 ): AgentTool[] {
   const hasDocuments = index.size > 0;
   let searchedDocuments = false;
@@ -205,7 +207,9 @@ export function createResearchTools(
           readIds.add(docId);
           const quotes = quotedFrom.get(parentId(docId)) ?? [];
           quotedFrom.delete(parentId(docId));
-          return nextSources(await session.read(docId, undefined, quotes));
+          // A part the model names is given whole; the document it was sent to read, only around the quotes.
+          const short = options.forcedReadPassage && docId === parentId(docId) ? await session.passage(docId, quotes) : undefined;
+          return nextSources(short ?? (await session.read(docId, undefined, quotes)));
         }
         const doc = index.get(docId);
         if (!doc) {

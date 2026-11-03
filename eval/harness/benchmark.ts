@@ -16,7 +16,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.55.0";
+export const HARNESS_VERSION = "0.56.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -56,6 +56,10 @@ export interface BenchmarkConfig {
   fitHeadroom?: number;
   /** AgentConfig.longReplyRoom for research tasks, when measuring a value other than the app's. */
   longReplyRoom?: "always" | "when-answering";
+  /** The research option forcedReadPassage, when measuring a value other than the app's. */
+  forcedReadPassage?: boolean;
+  /** Serve the research tasks' documents as an open source (suites.ts archiveSource). */
+  asSource?: boolean;
 }
 
 export interface Environment {
@@ -102,6 +106,8 @@ export interface TaskResult {
   cachedTokens?: number;
   /** Time the server spent processing prompts, over the task's agent calls, when it reports it. */
   promptMs?: number;
+  /** The final tool's objections that sent the model on (CallRecord.rejected), in order; absent when none did. */
+  objections?: string[];
   /** Wall time spent in model calls. */
   modelMs: number;
   /** Time to first token, summed over calls. */
@@ -215,6 +221,7 @@ function toResult(run: TaskRun, mode: Mode, wallMs: number): TaskResult {
     ...(calls.some((c) => c.droppedResults) ? { droppedResults: Math.max(...calls.map((c) => c.droppedResults ?? 0)) } : {}),
     ...(calls.length && calls.every((c) => c.cachedTokens !== undefined) ? { cachedTokens: calls.reduce((s, c) => s + c.cachedTokens!, 0) } : {}),
     ...(calls.length && calls.every((c) => c.promptMs !== undefined) ? { promptMs: calls.reduce((s, c) => s + c.promptMs!, 0) } : {}),
+    ...(calls.some((c) => c.rejected) ? { objections: calls.flatMap((c) => (c.rejected ? [c.rejected] : [])) } : {}),
     modelMs: Math.round(calls.reduce((s, c) => s + c.totalMs, 0)),
     ttftMs: Math.round(calls.reduce((s, c) => s + c.ttftMs, 0)),
     wallMs: Math.round(wallMs),
@@ -400,7 +407,7 @@ export async function runBenchmark(options: {
     ...researchSuites.flatMap(({ suite, tasks, library }) =>
       tasks.map((task) => ({
         mode,
-        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, longReplyRoom: config.longReplyRoom, signal, onCall }),
+        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, longReplyRoom: config.longReplyRoom, forcedReadPassage: config.forcedReadPassage, asSource: config.asSource, signal, onCall }),
       })),
     ),
     ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),

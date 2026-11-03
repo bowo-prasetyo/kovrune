@@ -139,6 +139,18 @@ describe("source session", () => {
     assert.match(await session.read("wikipedia:Ada_Lovelace#3", undefined, [babbage]), /\(part 3 of/);
   });
 
+  it("gives, for a short forced read, the passage around each quote and the part to read for more", async () => {
+    const session = new SourceSession([createWikipedia("en", fakeFetch(wikipediaRoutes))], "What did she work on?");
+    const bernoulli = "a method for calculating Bernoulli numbers";
+    const short = (await session.passage("wikipedia:Ada_Lovelace", [bernoulli]))!;
+    assert.match(short, /^\[wikipedia:Ada_Lovelace\] Ada Lovelace \(the passage your answer quoted\)\n/);
+    assert.ok(short.includes(bernoulli));
+    assert.ok(short.length < 900, `about 300 characters each side: ${short.length}`);
+    assert.match(short, /To see more, read wikipedia:Ada_Lovelace#\d+\.$/);
+    assert.equal(await session.passage("wikipedia:Ada_Lovelace", ["a method for weaving Jacquard silk"]), undefined, "a quote not in the document: no passage");
+    assert.equal(await session.passage("wikipedia:Ada_Lovelace", []), undefined);
+  });
+
   it("turns source failures into tool results the agent can act on", async () => {
     const session = new SourceSession([createWikipedia("en", fakeFetch([]))], "q");
     assert.match(await session.read("wikipedia:Anything"), /could not be reached/);
@@ -227,6 +239,27 @@ describe("research with Wikipedia", () => {
     assert.match(read, /\(part 1 of \d+\)/, "the part the answer quoted, not the one about Bernoulli numbers");
     assert.ok(read.includes(babbage));
     assert.equal(result.status, "verified");
+  });
+
+  it("with forcedReadPassage, reads only the passage around what the answer quoted from a snippet", async () => {
+    const babbage = "chiefly known for her work on Charles Babbage's proposed mechanical general-purpose computer";
+    const answer = JSON.stringify({ tool: "final_answer", args: { found: true, answer: "She worked on Babbage's computer.", evidence: [{ docId: "wikipedia:Ada_Lovelace", quote: babbage }] } });
+    const run = (forcedReadPassage: boolean) =>
+      runResearch({
+        question: "Whose computer did Ada Lovelace work on?",
+        library: new ResearchLibrary([]),
+        model: new ScriptedModel([`{"tool":"search_wikipedia","args":{"query":"Ada Lovelace"}}`, answer, `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`, answer]),
+        sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))],
+        forcedReadPassage,
+      });
+    const readOf = (result: Awaited<ReturnType<typeof run>>) => [...result.agent.transcript].reverse().find((m) => m.content.startsWith("Tool result") && m.content.includes("[wikipedia:Ada_Lovelace"))!.content;
+    const whole = await run(false);
+    const short = await run(true);
+    assert.match(readOf(whole), /\(part 1 of \d+\)/);
+    assert.match(readOf(short), /\(the passage your answer quoted\)/);
+    assert.ok(readOf(short).includes(babbage));
+    assert.ok(readOf(short).length < readOf(whole).length, `${readOf(short).length} < ${readOf(whole).length}`);
+    assert.equal(short.status, "verified", "the quote is checked against the whole article");
   });
 
   it("only lets the model read and cite IDs it has seen, so the class 1 typos cannot happen", async () => {
