@@ -17,6 +17,7 @@
 | D1 | Which model path a new user sees first | A **device advisor** chooses automatically: the browser (WebLLM) on capable GPUs, a local server otherwise. The user can override it. |
 | D2 | Supported local servers | **llama.cpp server** is officially supported. **Ollama is experimental**: allowed, but only after it passes the self-check, with a warning. |
 | D3 | PDF support | **Yes, in M1**: text extraction with pdf.js. Scanned PDFs without a text layer are reported as "no text found"; there is no OCR. |
+| D3a | Office documents | **Word (.docx), PowerPoint (.pptx), OpenDocument text (.odt) and presentation (.odp)**, read without a library ([`office-formats.md`](office-formats.md)). Slides are cited like pages. Older binary formats (.doc, .ppt) are not read; the app says to save them as .docx, .pptx or PDF. Spreadsheets are a later phase. |
 | D4 | Team | Two people. Work is cut into vertical slices; each ends in a pull request the owner reviews and tests on the class 1 laptop. |
 
 ## What M0 changed

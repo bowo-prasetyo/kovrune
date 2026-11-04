@@ -8,6 +8,7 @@ import {
   answerToBibtex,
   answerToMarkdown,
   exportFileName,
+  quotePages,
   sectionLabel,
   shownSupport,
   sourceTitle,
@@ -17,7 +18,7 @@ import {
 } from "./answers.ts";
 import { download } from "./download.ts";
 import { describeReportLabels, describeSynthesisBacking } from "./report.ts";
-import { describePages, describeStatus, type LabelSeverity } from "./trace.ts";
+import { describeStatus, type LabelSeverity } from "./trace.ts";
 
 export function ExportButtons({ answer }: { answer: SavedAnswer }) {
   const bibtex = answerToBibtex(answer);
@@ -76,7 +77,7 @@ export function ResultView({ answer, live = false }: { answer: SavedAnswer; live
                   {item.verified ? "✓" : "✗"}
                 </span>{" "}
                 <SourceName docId={item.docId} answer={answer} />
-                {item.context?.pages && <span className="hint">, {describePages(item.context.pages)}</span>}
+                {item.context?.pages && <span className="hint">, {quotePages(answer, item)}</span>}
                 <blockquote>{item.quote}</blockquote>
                 {item.context && <InContext context={item.context} />}
                 {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}

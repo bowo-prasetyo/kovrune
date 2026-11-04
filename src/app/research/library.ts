@@ -1,6 +1,6 @@
 // The user's documents: read from files here, and saved in the browser by store.ts.
 
-import { extractText, type DocumentKind } from "../../documents/extract.ts";
+import { ACCEPTED_EXTENSIONS, extractText, type DocumentKind } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
 
 export interface LibraryDocument {
@@ -11,13 +11,13 @@ export interface LibraryDocument {
   kind: DocumentKind;
   bytes: number;
   pages?: number;
-  /** PDFs: where each page starts in `text`, so quotes can be cited by page. */
+  /** PDFs and presentations: where each page or slide starts in `text`, so quotes can be cited by it. */
   pageStarts?: number[];
   warning?: string;
 }
 
 /** Accepted file types, for the file picker. */
-export const ACCEPT = ".pdf,.txt,.text,.md,.markdown,.html,.htm";
+export const ACCEPT = ACCEPTED_EXTENSIONS.join(",");
 
 /** A short, readable, unique document ID from a file name, e.g. "annual-report-2024". */
 export function documentId(fileName: string, taken: Set<string>): string {

@@ -5,7 +5,15 @@ import type { SavedAnswer } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 
 export const BACKUP_FORMAT = "kovrune-backup";
-export const BACKUP_VERSION = 1;
+/**
+ * 2: documents may be Word, PowerPoint or OpenDocument files (docs/office-formats.md). A backup
+ * without any is still written as version 1, so versions from before can restore it; one with them
+ * is version 2, so those versions say to update the app instead of calling the backup damaged.
+ */
+export const BACKUP_VERSION = 2;
+
+/** The document kinds version 1 knew. */
+const VERSION_1_KINDS: ReadonlySet<string> = new Set(["text", "markdown", "html", "pdf"]);
 
 export interface Backup {
   format: typeof BACKUP_FORMAT;
@@ -17,7 +25,8 @@ export interface Backup {
 }
 
 export function makeBackup(documents: LibraryDocument[], answers: SavedAnswer[], now = new Date()): Backup {
-  return { format: BACKUP_FORMAT, version: BACKUP_VERSION, exportedAt: now.toISOString(), documents, answers };
+  const version = documents.every((doc) => VERSION_1_KINDS.has(doc.kind)) ? 1 : BACKUP_VERSION;
+  return { format: BACKUP_FORMAT, version, exportedAt: now.toISOString(), documents, answers };
 }
 
 export function backupFileName(now = new Date()): string {
