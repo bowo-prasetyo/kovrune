@@ -69,6 +69,16 @@ function toGrid(rows: TableRow[]): string[][] {
 }
 
 export function renderTable(rows: TableRow[]): string {
+  const { head, body } = tableLines(rows);
+  return [...head, ...body].join("\n");
+}
+
+/**
+ * A table's lines: its header rows, and one line per row below them, each labelled with the
+ * header's column names when there is a header (empty rows are left out). Spreadsheets use the two
+ * apart, to split a long sheet between rows (sheets.ts).
+ */
+export function tableLines(rows: TableRow[]): { head: string[]; body: string[] } {
   const grid = toGrid(rows);
   const columns = Math.max(0, ...grid.map((row) => row.length));
   let headerRows = 0;
@@ -77,11 +87,7 @@ export function renderTable(rows: TableRow[]): string {
   // A header that is every row is not one: nothing would be labelled with it.
   if (headerRows >= grid.length) headerRows = 0;
 
-  const lines: string[] = [];
-  if (headerRows === 0) {
-    for (const row of grid) if (row.some(Boolean)) lines.push(row.join("\t"));
-    return lines.join("\n");
-  }
+  if (headerRows === 0) return { head: [], body: grid.filter((row) => row.some(Boolean)).map((row) => row.join("\t")) };
 
   // Column names: the header rows' texts in each column, as in a header of two rows ("Grade" over "Term 1").
   const names = Array.from({ length: columns }, (_, column) => {
@@ -92,18 +98,20 @@ export function renderTable(rows: TableRow[]): string {
     }
     return parts.join(" ");
   });
+  const head: string[] = [];
   for (const row of grid.slice(0, headerRows)) {
     // A spanning header cell is in each of its columns, but written once.
     const cells = row.filter((text, column) => text && text !== row[column - 1]);
-    if (cells.length) lines.push(cells.join(" | "));
+    if (cells.length) head.push(cells.join(" | "));
   }
+  const body: string[] = [];
   for (const row of grid.slice(headerRows)) {
     const cells = row.flatMap((text, column) => {
       if (!text) return [];
       const name = names[column];
       return [name && name !== text ? `${name}: ${text}` : text];
     });
-    if (cells.length) lines.push(cells.join(" | "));
+    if (cells.length) body.push(cells.join(" | "));
   }
-  return lines.join("\n");
+  return { head, body };
 }

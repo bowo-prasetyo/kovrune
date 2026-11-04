@@ -18,12 +18,15 @@ const NAMESPACES: Record<string, string> = {
   "http://purl.oclc.org/ooxml/officeDocument/relationships": "r",
   "http://schemas.openxmlformats.org/package/2006/relationships": "rel",
   "http://schemas.openxmlformats.org/markup-compatibility/2006": "mc",
+  "http://schemas.openxmlformats.org/spreadsheetml/2006/main": "x",
+  "http://purl.oclc.org/ooxml/spreadsheetml/main": "x",
   "urn:oasis:names:tc:opendocument:xmlns:office:1.0": "office",
   "urn:oasis:names:tc:opendocument:xmlns:text:1.0": "text",
   "urn:oasis:names:tc:opendocument:xmlns:table:1.0": "table",
   "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0": "draw",
   "urn:oasis:names:tc:opendocument:xmlns:presentation:1.0": "presentation",
   "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0": "svg",
+  "urn:oasis:names:tc:opendocument:xmlns:style:1.0": "style",
   "urn:oasis:names:tc:opendocument:xmlns:manifest:1.0": "manifest",
 };
 
