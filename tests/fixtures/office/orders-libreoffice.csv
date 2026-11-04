@@ -1,0 +1,6 @@
+Orders 2025 (Kansai office),,,,,,
+,,,,,,
+Order,Customer,Date,Total,Discount,,Status
+1001,Acme Trading,2025-03-01,"¥125,000",5.0%,,Delivered
+1002,Sakura Foods,2025-03-14,"¥250,000",,,Delayed
+1003,Cancelled by phone,,,,,Cancelled
