@@ -153,7 +153,7 @@ The field library has seven documents; a user's may have hundreds, and search sh
 | + 300 generated (seed 1, the test's floor) | 93.5% | 91.0% | 69 |
 | + 300 generated, seeds 1–5 | 90.9–93.5% | 89.9–91.0% | 67–69 |
 | + 1,000 generated, seeds 1–5 | 92.2–93.5% | 88.8–89.9% | 67–68 |
-| **Since 0.57.0** ([headings kept with what they introduce](#headings-kept-with-what-they-introduce-057-0-defect-fix-models-not-yet-run)): + 300 generated (seed 1, the test's floor) | 93.5% | 89.9% | 68 |
+| **Since 0.57.0** ([headings kept with what they introduce](#headings-kept-with-what-they-introduce-0570-defect-fix-models-not-yet-run)): + 300 generated (seed 1, the test's floor) | 93.5% | 89.9% | 68 |
 
 - **Search loses a little, not much.** Most field questions name rare words ("Trystero", "Secondary Licenses", "cure"), and BM25 weighs rare words most. What is lost is where the questions use common words: `f13`'s "class 1" laptop, the licence questions (`f17`, `f23`, `f45`) against generated licences, and the two-document `f84`.
 - **What it does not show:** the generated documents are in English, so the Japanese and Chinese tasks are not tested; and they are not real documents, so a real library with several versions of one report, nearly the same text, would be harder. `tests/retrieval.test.ts` keeps the 300-document figures as floors, so a change to search or chunking that loses ground in a larger library shows in the tests.
@@ -765,6 +765,32 @@ So a chunk no longer ends with heading-like paragraphs: they move to the start o
 - **What is lost:** `f46` asks in French which permission lets the preview site reach a server on one's own computer; the answer ("Apps on device") is in the English user guide. With the guide's sections starting at their headings, that paragraph is now a part of its own (752 characters), and among generated documents another part of the guide outranks it on the few words the French question shares with it ("site"). It is the same task in all 15 runs. `f84` asks about two documents; in 11 runs one of them, the user guide, drops out of the results, but its answer passage was not found before either. Tuning the rule to keep it would be tuning to one task, which this suite exists to prevent, so the floors in `tests/retrieval.test.ts` were lowered by that one passage: 300 generated documents, seed 1, now 89.9% of answer passages and 68 complete.
 - **Not yet run on a model.** This was adopted as a [defect fix](#rule-for-prompt-and-guard-changes) at the project owner's request, before the model runs the clause asks for, because llama.cpp could not be built where it was written. Next: run research, unanswerable, pdf, field and held-out on Qwen3.5-2B and 4B against 0.56.0, and record the comparison here. By the clause, it is reverted if, on either model, a protected suite loses at least two more tasks than it gains, or loses with a p-value below 0.25.
 
+### Office documents (0.58.0)
+
+The field documents are text, Markdown and one PDF. A preview user researches Word files, Excel workbooks and CSV files (November 2026), which Kovrune reads since #122–#126, and the first of them, a report card, showed two defects no suite could: table columns lost (#123) and headings cut from their tables (#124). The **office suite** asks about such files (`eval/field/office.ts`):
+
+```bash
+npm run bench:endpoint -- --model <model> --suites office,officeholdout --modes constrained --out eval/results/<name>.json
+```
+
+- **Documents,** made up and built by `office/source/make.py` (LibreOffice 24.2 for the .docx and .xlsx), read through the app's own extraction:
+  - `report-card-2025.docx`: a report card in the user's layout, three pages with the student's name and term only at the top of each, a heading before each subject's table of marks (◯ under Excellent, Good or Needs Improvement), a behaviour table, comments and a two-column staff table. Its marks differ between the First and the Third Term, and 4 of its 7 parts do not say which term they are: the gap [fix B](../../docs/office-formats.md) would close.
+  - `orders-2025.xlsx`: 60 orders with dates (`yyyy/m/d`) and yen amounts under a title row, customers on a second sheet, returns on a hidden third.
+  - `inventory-sjis.csv`: 60 parts in Japanese, saved as Japanese Excel saves CSV (Shift_JIS, the yen sign as byte 0x5C).
+  - The library also holds the seven field documents, as other documents a user has. The field suite's own library is unchanged.
+- **Questions:** 15 in `office`, 7 in `officeholdout`, which is read only as totals, as the other held-out suites are. Over the three documents: marks asked for by term (the facts differ between terms), a question needing two tables, behaviour and comments, the staff table; an order's total and status, a phone number, a city and a contact that need the two sheets, the hidden sheet; and stock, a warehouse, a price and a date asked in Japanese. Each suite has a question the documents do not answer (a Calligraphy mark, an email address, a fax number). They were written before any model ran on them, and are not changed to fit a run.
+- **Search alone** (`bench:retrieval`, no model): the cited documents for all 19 answerable questions, the answer passages for 18; `o03` (two subjects' tables) finds one of the two. For a mark, the fact ("Good") is in every part of the report card, so this measure cannot tell whether search found the right term's part; only the model runs can.
+- **Not yet run on a model.** The plan, on the project owner's laptop overnight:
+  1. **The heading fix's revert check (#124, 0.57.0):** research, unanswerable, pdf, field and holdout at `9e5092c` (0.56.0) and at this version, on Qwen3.5-4B, then 2B, compared with `bench:compare` by [the defect-fix clause](#rule-for-prompt-and-guard-changes). The office suite cannot run at 0.56.0, which reads no spreadsheets.
+  2. **The office suite's baseline:** office and officeholdout at this version, on both models. Fix B is then built only if the report card's questions fail for want of their term, and measured against this baseline.
+
+  ```bash
+  llama-server -m Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
+  npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b --context 4096 \
+    --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --modes constrained \
+    --suites research,unanswerable,pdf,field,holdout,office,officeholdout --out eval/results/office-0.58-qwen3.5-4b-q4km.json
+  ```
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
@@ -1013,6 +1039,8 @@ Frozen copies, so later edits to the originals do not change the suite. All seve
 The first 24 tasks in `tasks.ts` cover each English document, two questions that need two documents, and four questions none of them answers. One of those is the live checks' invented "first person to be awarded a patent"; the licence's patent clauses are a distractor. Tasks `f25`–`f36` ask about the Japanese, Chinese and French documents in their own language: three questions each that the document answers, and one it does not.
 
 What the committed set still lacks is what users brought in the live checks and will bring to the usability test: slide decks (like the Papyrus tutorial), scanned-looking layouts, papers with columns and tables. Those documents are usually not ours to commit.
+
+The [office suite](#office-documents-0580)'s documents, in `office/`, are made up for it and built by `office/source/make.py`, so they need no licence: a report card (`report-card-2025.docx`), an order workbook (`orders-2025.xlsx`) and a parts inventory in Japanese (`inventory-sjis.csv`).
 
 ## Local documents
 

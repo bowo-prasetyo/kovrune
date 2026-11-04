@@ -8,6 +8,7 @@ import { researchTasks, type ResearchTask } from "../tasks/research.ts";
 import { unanswerableTasks } from "../tasks/unanswerable.ts";
 import { holdoutTasks } from "../field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../field/multi.ts";
+import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
 import type { ResearchLibrary } from "../../src/agent/research.ts";
 import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
@@ -16,7 +17,7 @@ import { labelledQuotesFound } from "../../src/agent/support.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.57.0";
+export const HARNESS_VERSION = "0.58.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -376,7 +377,7 @@ export async function runBenchmark(options: {
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
   /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
-  field?: { library: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
+  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -387,7 +388,7 @@ export async function runBenchmark(options: {
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
   if (FIELD_SUITES.some((suite) => config.suites.includes(suite)) && !options.field) {
-    throw new Error("The field, holdout, multi and multiholdout suites need field (loadFieldSuite).");
+    throw new Error("The field, holdout, multi, multiholdout, office and officeholdout suites need field (loadFieldSuite).");
   }
   const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
@@ -398,6 +399,8 @@ export async function runBenchmark(options: {
     { suite: "holdout" as const, tasks: pick("holdout", holdoutTasks), library: options.field?.library ?? baseLibrary },
     { suite: "multi" as const, tasks: pick("multi", multiTasks), library: options.field?.library ?? baseLibrary },
     { suite: "multiholdout" as const, tasks: pick("multiholdout", multiHoldoutTasks), library: options.field?.library ?? baseLibrary },
+    { suite: "office" as const, tasks: pick("office", officeTasks), library: options.field?.officeLibrary ?? baseLibrary },
+    { suite: "officeholdout" as const, tasks: pick("officeholdout", officeHoldoutTasks), library: options.field?.officeLibrary ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;
