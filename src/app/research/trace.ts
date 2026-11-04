@@ -184,8 +184,8 @@ export function describeStatus(
   }
 }
 
-/** "p. 4", or "pp. 3–5" for a quote that runs across pages; "slide 4" or "slides 3–5" in a presentation. */
-export function describePages({ first, last }: { first: number; last: number }, unit: "page" | "slide" = "page"): string {
-  if (unit === "slide") return first === last ? `slide ${first}` : `slides ${first}–${last}`;
+/** "p. 4", or "pp. 3–5" for a quote that runs across pages; "slide 4" or "slides 3–5" in a presentation, "sheet 2" in a spreadsheet. */
+export function describePages({ first, last }: { first: number; last: number }, unit: "page" | "slide" | "sheet" = "page"): string {
+  if (unit !== "page") return first === last ? `${unit} ${first}` : `${unit}s ${first}–${last}`;
   return first === last ? `p. ${first}` : `pp. ${first}–${last}`;
 }

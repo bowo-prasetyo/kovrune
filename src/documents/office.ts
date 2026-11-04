@@ -9,17 +9,24 @@
 // Word and Writer files have no fixed pages (they depend on layout), so they get no page numbers.
 
 import { openZip, isZip, ZipError, type ZipArchive } from "./zip.ts";
+import { mainPart, relationships } from "./ooxml.ts";
+import { joinPages } from "./pages.ts";
+import { readOdsContent, readXlsx } from "./sheets.ts";
 import { renderTable, type TableRow } from "./tables.ts";
 import { walkXml, type XmlHandler } from "./xml.ts";
 
-export type OfficeKind = "docx" | "pptx" | "odt" | "odp";
+export type OfficeKind = "docx" | "pptx" | "xlsx" | "odt" | "odp" | "ods";
+
+export { joinPages };
 
 export interface OfficeText {
   text: string;
-  /** Presentations: the number of slides. */
+  /** Presentations and spreadsheets: the number of slides or sheets. */
   pages?: number;
-  /** Presentations: where each slide starts in `text`, by slide number minus one. */
+  /** Presentations and spreadsheets: where each slide or sheet starts in `text`, by its number minus one. */
   pageStarts?: number[];
+  /** Shown to the user, e.g. when a workbook is too large to read whole. */
+  warning?: string;
 }
 
 /**
@@ -30,19 +37,22 @@ export interface OfficeText {
  */
 export const OFFICE_READER_VERSION = 2;
 
-/** Kinds whose pages are slides. */
-export const SLIDE_KINDS: ReadonlySet<string> = new Set<OfficeKind>(["pptx", "odp"]);
+/** What a kind's pages are, where they are not pages: slides in presentations, sheets in spreadsheets. */
+export const PAGE_UNITS: Partial<Record<string, "slide" | "sheet">> = { pptx: "slide", odp: "slide", xlsx: "sheet", ods: "sheet" };
 
 const FORMAT_NAMES: Record<OfficeKind, string> = {
   docx: "Word",
   pptx: "PowerPoint",
+  xlsx: "Excel",
   odt: "OpenDocument text",
   odp: "OpenDocument presentation",
+  ods: "OpenDocument spreadsheet",
 };
 
-const ODF_MIME: Record<"odt" | "odp", string> = {
+const ODF_MIME: Record<"odt" | "odp" | "ods", string> = {
   odt: "application/vnd.oasis.opendocument.text",
   odp: "application/vnd.oasis.opendocument.presentation",
+  ods: "application/vnd.oasis.opendocument.spreadsheet",
 };
 
 /** An OLE2 compound file: a pre-2007 Office file, or a password-protected Office 2007+ one. */
@@ -67,26 +77,17 @@ export async function extractOfficeText(bytes: Uint8Array, kind: OfficeKind): Pr
         return await readDocx(zip);
       case "pptx":
         return await readPptx(zip);
+      case "xlsx":
+        return await readXlsx(zip);
       case "odt":
       case "odp":
+      case "ods":
         return await readOdf(zip, kind);
     }
   } catch (error) {
     if (error instanceof ZipError) throw new Error(error.message);
     throw error;
   }
-}
-
-/** One slide or document per string, joined by blank lines, with where each starts. */
-export function joinPages(pages: string[]): { text: string; pageStarts: number[] } {
-  let text = "";
-  const pageStarts: number[] = [];
-  for (const page of pages) {
-    if (page && text) text += "\n\n";
-    pageStarts.push(text.length);
-    text += page;
-  }
-  return { text, pageStarts };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -279,49 +280,6 @@ function notesSection(heading: string, notes: string[]): string {
 
 // ---------------------------------------------------------------------------------------------
 // Office Open XML packages
-
-interface Relationship {
-  id: string;
-  /** The last segment of the relationship type, e.g. "officeDocument" or "slide". */
-  type: string;
-  /** The target part's path in the archive. */
-  target: string;
-}
-
-/** The relationships of a part (or of the package, for ""), from its .rels part. */
-async function relationships(zip: ZipArchive, part: string): Promise<Relationship[]> {
-  const slash = part.lastIndexOf("/");
-  const folder = part.slice(0, slash + 1);
-  const xml = await zip.text(`${folder}_rels/${part.slice(slash + 1)}.rels`);
-  if (!xml) return [];
-  const found: Relationship[] = [];
-  walkXml(xml, {
-    open(name, attr) {
-      if (name !== "rel:Relationship" || attr("TargetMode") === "External") return;
-      const id = attr("Id");
-      const type = attr("Type")?.split("/").at(-1);
-      const target = attr("Target");
-      if (id && type && target) found.push({ id, type, target: resolvePath(folder, target) });
-    },
-  });
-  return found;
-}
-
-/** A relationship target, relative to the source part's folder or absolute from the package root. */
-function resolvePath(folder: string, target: string): string {
-  const parts = (target.startsWith("/") ? target.slice(1) : folder + target).split("/");
-  const out: string[] = [];
-  for (const part of parts) {
-    if (part === "..") out.pop();
-    else if (part !== "." && part !== "") out.push(part);
-  }
-  return out.join("/");
-}
-
-async function mainPart(zip: ZipArchive, fallback: string): Promise<string> {
-  const main = (await relationships(zip, "")).find((rel) => rel.type === "officeDocument")?.target;
-  return main && zip.has(main) ? main : fallback;
-}
 
 // Elements whose content is never shown as text: formatting properties, alternative copies of
 // drawings for older readers, and extensions.
@@ -537,7 +495,7 @@ function withNotes(slide: string, notes: string): string {
 // ---------------------------------------------------------------------------------------------
 // OpenDocument
 
-async function readOdf(zip: ZipArchive, kind: "odt" | "odp"): Promise<OfficeText> {
+async function readOdf(zip: ZipArchive, kind: "odt" | "odp" | "ods"): Promise<OfficeText> {
   const format = FORMAT_NAMES[kind];
   const mime = (await zip.text("mimetype"))?.trim();
   if (mime && mime !== ODF_MIME[kind]) throw new Error(`This is not an ${format} file: it holds ${mime}.`);
@@ -546,7 +504,7 @@ async function readOdf(zip: ZipArchive, kind: "odt" | "odp"): Promise<OfficeText
   }
   const xml = await zip.text("content.xml");
   if (xml === undefined) throw new Error(`This ${format} file is damaged: it has no content.`);
-  return kind === "odt" ? odtText(xml) : odpText(xml);
+  return kind === "odt" ? odtText(xml) : kind === "odp" ? odpText(xml) : readOdsContent(xml);
 }
 
 /**
