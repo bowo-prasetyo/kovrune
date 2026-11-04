@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KIND_LABELS, pageUnit } from "../../documents/extract.ts";
+import { KIND_LABELS, pageUnit, readByEarlierVersion } from "../../documents/extract.ts";
 import { ACCEPT, formatBytes, readDocument } from "./library.ts";
 import { savedTextBytes } from "./store.ts";
 import type { SavedDocuments } from "./useSavedDocuments.ts";
@@ -130,6 +130,12 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
                 </span>
               </div>
               {doc.warning && <p className="warning">{doc.warning}</p>}
+              {readByEarlierVersion(doc) && (
+                <p className="warning">
+                  Read by an earlier version of Kovrune, which lost which column of a table each value was in. Remove it and add the file again for better
+                  answers about its tables.
+                </p>
+              )}
               {preview === doc.id && <pre className="doc-text">{doc.text || "(no text)"}</pre>}
             </li>
           ))}

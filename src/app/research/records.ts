@@ -16,6 +16,7 @@ export const documentSchema = z.object({
   pages: z.number().int().positive().optional(),
   pageStarts: z.array(z.number().int().nonnegative()).optional(),
   warning: z.string().optional(),
+  reader: z.number().int().positive().optional(),
 });
 
 const supportSchema = z.looseObject({ sentences: z.array(z.looseObject({ text: z.string() })), judged: z.number(), backed: z.number() });

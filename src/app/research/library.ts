@@ -14,6 +14,8 @@ export interface LibraryDocument {
   /** PDFs and presentations: where each page or slide starts in `text`, so quotes can be cited by it. */
   pageStarts?: number[];
   warning?: string;
+  /** Office files: the version of the reader that read it (documents/office.ts). */
+  reader?: number;
 }
 
 /** Accepted file types, for the file picker. */
@@ -45,6 +47,7 @@ export async function readDocument(file: File, taken: Set<string>): Promise<Libr
     pages: extracted.pages,
     pageStarts: extracted.pageStarts,
     warning: extracted.warning,
+    ...(extracted.reader ? { reader: extracted.reader } : {}),
   };
 }
 
