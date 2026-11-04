@@ -113,4 +113,6 @@ describe("retrieval in a library of hundreds of documents", () => {
   });
 });
 
-const SCALE_FLOOR = { documentRecall: 0.935, passageRecall: 0.91, complete: 69 };
+// Since 0.57.0, headings kept with what they introduce lose one answer passage here (f46), on every
+// size and seed measured; see eval/field/README.md, "Headings kept with what they introduce".
+const SCALE_FLOOR = { documentRecall: 0.935, passageRecall: 0.899, complete: 68 };

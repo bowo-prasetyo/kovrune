@@ -22,26 +22,59 @@ export function chunkDocument(doc: SourceDocument, maxChars = CHUNK_CHARS): Sour
   if (textWeight(text) <= maxChars) return [{ ...doc, text }];
 
   const pieces: string[] = [];
-  let current = "";
+  let current: string[] = [];
   let weight = 0;
-  const flush = () => {
-    if (current.trim()) pieces.push(current.trim());
-    current = "";
-    weight = 0;
+  const add = (unit: string) => {
+    weight = current.length ? weight + textWeight(unit) + 2 : textWeight(unit);
+    current.push(unit);
   };
   for (const unit of splitUnits(text, maxChars)) {
-    const unitWeight = textWeight(unit);
-    if (current && weight + unitWeight + 2 > maxChars) flush();
-    weight = current ? weight + unitWeight + 2 : unitWeight;
-    current = current ? `${current}\n\n${unit}` : unit;
+    if (current.length && weight + textWeight(unit) + 2 > maxChars) {
+      // A chunk does not end with the heading of what comes next: it moves on with it, so a table
+      // or section is not cut off from its name (eval/field/README.md, "Headings kept with what they introduce").
+      // Only if they fit with the paragraph they introduce; otherwise they stay where they are.
+      const headings = trailingHeadings(current);
+      const fits = headings.reduce((sum, h) => sum + textWeight(h) + 2, 0) + textWeight(unit) <= maxChars;
+      const carried = fits ? headings : [];
+      pieces.push(current.slice(0, current.length - carried.length).join("\n\n"));
+      current = [];
+      weight = 0;
+      for (const heading of carried) add(heading);
+    }
+    add(unit);
   }
-  flush();
+  if (current.length) pieces.push(current.join("\n\n"));
 
   return pieces.map((piece, i) => ({
     id: `${doc.id}${CHUNK_SEPARATOR}${i + 1}`,
     title: `${doc.title} (part ${i + 1} of ${pieces.length})`,
     text: piece,
   }));
+}
+
+/** A heading-like line is at most this long: a title, a subject name or a label, not a sentence. */
+const MAX_HEADING_CHARS = 80;
+/** A heading-like paragraph has at most this many lines, as in a page header ("Student Name: …", "Grade: 6", "Third Term"). */
+const MAX_HEADING_LINES = 4;
+
+/**
+ * Whether a paragraph reads as the heading of what follows: a Markdown heading, or a few short
+ * lines none of which ends a sentence ("Mathematics", "Attendance Record:", a page header). Some
+ * short lines that are not headings pass too; moving one to the next chunk only moves where the
+ * chunks meet, and quotes are checked against the whole document either way.
+ */
+export function isHeadingLike(paragraph: string): boolean {
+  const lines = paragraph.split("\n").map((line) => line.trim());
+  if (lines.length > MAX_HEADING_LINES) return false;
+  if (lines.length === 1 && /^#{1,6}\s/.test(lines[0]!) && textWeight(lines[0]!) <= MAX_HEADING_CHARS * 2) return true;
+  return lines.every((line) => line !== "" && textWeight(line) <= MAX_HEADING_CHARS && !/[.!?;,。！？；，]$/.test(line));
+}
+
+/** The heading-like paragraphs at the end of a chunk's paragraphs, unless they are all it holds. */
+function trailingHeadings(units: string[]): string[] {
+  let n = 0;
+  while (n < units.length && isHeadingLike(units[units.length - 1 - n]!)) n++;
+  return n < units.length ? units.slice(units.length - n) : [];
 }
 
 /** Paragraphs, with any paragraph longer than maxChars broken into sentences or words. */

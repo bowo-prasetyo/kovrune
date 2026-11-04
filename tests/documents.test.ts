@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { answerStatus, checkEvidence, closestPassage, normalizeForMatch } from "../src/agent/evidence.ts";
 import { ResearchLibrary } from "../src/agent/research.ts";
-import { chunkDocument, parentId } from "../src/documents/chunk.ts";
+import { chunkDocument, isHeadingLike, parentId } from "../src/documents/chunk.ts";
 import { detectKind, extractText, htmlToText, joinHyphenatedLines, type PdfJsLike } from "../src/documents/extract.ts";
 import { corpus } from "../eval/tasks/corpus.ts";
 
@@ -226,6 +226,42 @@ describe("chunking", () => {
     const chunks = chunkDocument({ id: "d", title: "D", text }, 500);
     assert.ok(chunks.every((c) => c.text.length <= 500), String(chunks.map((c) => c.text.length)));
     assert.equal(chunks.map((c) => c.text).join(" ").replace(/\s+/g, " "), text.trim().replace(/\s+/g, " "));
+  });
+
+  it("keeps a heading with what it introduces, not at the end of the chunk before", () => {
+    // A preview user's report card (November 2026), with made-up names: each subject's name was the
+    // last line of one part and its table the start of the next, so a part's tables had no subject.
+    const row = (perspective: string, mark: string) =>
+      `Perspective: ${perspective} | Description: ${"Understands and applies what was learned in class. ".repeat(3).trim()} | ${mark}: ◯`;
+    const table = ["Perspective | Description | Excellent | Good | Needs Improvement", row("Knowledge & Skills", "Good"), row("Thinking, Judgment & Expression", "Excellent"), row("Attitude Toward Independent Learning", "Good")].join("\n");
+    const subjects = ["Japanese Language", "Social Studies", "Mathematics", "Science", "Music", "Art and Crafts"];
+    const page = (n: number, term: string) => [`【Page ${n}】`, `Student Name: TEST STUDENT\nGrade: 6\nLearning Record – ${term}`, ...subjects.flatMap((subject) => [subject, table])];
+    const text = [...page(1, "First Term"), ...page(2, "Third Term")].join("\n\n");
+    const chunks = chunkDocument({ id: "card", title: "card.docx", text });
+    assert.ok(chunks.length >= 4);
+    for (const chunk of chunks) {
+      assert.ok(!isHeadingLike(chunk.text.split("\n\n").at(-1)!), `part ends with a heading: …${chunk.text.slice(-40)}`);
+      const first = chunk.text.split("\n\n")[0]!;
+      assert.ok(subjects.includes(first) || first.startsWith("【Page"), `part starts without its heading: ${first.slice(0, 40)}`);
+    }
+    assert.equal(chunks.map((c) => c.text).join("\n\n"), text, "no text is lost or repeated");
+  });
+
+  it("tells headings from sentences, and carries one only when it fits with what follows", () => {
+    assert.equal(isHeadingLike("Mathematics"), true);
+    assert.equal(isHeadingLike("## 4. Ask questions"), true);
+    assert.equal(isHeadingLike("Attendance Record:"), true, "a colon introduces what follows");
+    assert.equal(isHeadingLike("Student Name: TEST STUDENT\nGrade: 6\nLearning Record – Third Term"), true, "a page header");
+    assert.equal(isHeadingLike("The budget was approved."), false);
+    assert.equal(isHeadingLike("a\nb\nc\nd\ne"), false, "five lines are a list, not a heading");
+    assert.equal(isHeadingLike(`A line far too long to be any heading at all, ${"really ".repeat(10)}`), false);
+    // A heading that cannot fit with the paragraph it introduces stays where it was.
+    const body = "word ".repeat(190).trim();
+    const chunks = chunkDocument({ id: "d", title: "D", text: [body, "Next section", "x ".repeat(495).trim()].join("\n\n") }, 1000);
+    assert.equal(chunks[0]!.text.endsWith("Next section"), true);
+    // A chunk of headings only keeps them: there is nothing before them to keep apart.
+    const headings = chunkDocument({ id: "h", title: "H", text: ["One", "Two", "y ".repeat(499).trim()].join("\n\n") }, 1000);
+    assert.equal(headings[0]!.text, "One\n\nTwo");
   });
 
   it("maps chunk IDs back to their document", () => {
