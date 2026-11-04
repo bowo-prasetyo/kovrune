@@ -8,3 +8,6 @@
 - `office/`: one short report (`report.md`, written for these tests) in four formats, to check that
   each is read the same way (`tests/office.test.ts`). `report.docx` and `report.pptx` were made from
   it with pandoc 3; `report.odt` and `report.odp` were saved by LibreOffice from those.
+- `office/orders.fods`: a small two-sheet workbook written for these tests (made-up orders, a hidden
+  contacts sheet), as flat OpenDocument XML; `orders.xlsx` and `orders.ods` were saved from it by
+  LibreOffice 24.2 (`tests/sheets.test.ts`).

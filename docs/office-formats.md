@@ -1,14 +1,15 @@
 # Office and OpenDocument files
 
-Kovrune reads Word (.docx), PowerPoint (.pptx), OpenDocument text (.odt) and OpenDocument presentation (.odp) files, besides PDF, text, Markdown and HTML (decision D3a in [`m1-plan.md`](m1-plan.md)). This page says how, and what is left out.
+Kovrune reads Word (.docx), PowerPoint (.pptx), Excel (.xlsx), and OpenDocument text (.odt), presentation (.odp) and spreadsheet (.ods) files, besides PDF, text, Markdown and HTML (decision D3a in [`m1-plan.md`](m1-plan.md)). This page says how, and what is left out.
 
 ## Phases
 
 | Phase | Formats | Status |
 | --- | --- | --- |
 | 1 | .docx, .pptx, .odt, .odp | Done |
-| 2 | .xlsx, .ods | Not started. Needs number and date formats read from the file's styles, or numbers would not match what the user sees (a date is stored as a number such as 45717). Spreadsheets also suit passage search less well, so the first step is to ask testers whether they want it. |
-| — | .doc, .ppt, .xls, .rtf | Not planned. These are binary formats, each needing its own parser for files that are now rare. The app explains how to save them as .docx, .pptx or PDF. |
+| 2 | .xlsx, .ods | Done, for looking up rows ([Spreadsheets](#spreadsheets)). Totals, averages and counts over many rows need a calculation tool, which is not planned yet. |
+| — | .csv, .tsv | Not started. Simple to parse, but Excel in Japan saves CSV in Shift_JIS, so the encoding has to be detected first. |
+| — | .doc, .ppt, .xls, .rtf | Not planned. These are binary formats, each needing its own parser for files that are now rare. The app explains how to save them as .docx, .pptx, .xlsx or PDF. |
 
 ## How the files are read
 
@@ -65,6 +66,32 @@ Only the text of a document is saved, not the file, so a document read before ve
 
 The labels were not measured on a model before they were adopted (building llama.cpp was not available where they were written). They change no existing benchmark suite, since none has Office documents. The [field suite](../eval/field/README.md) has no tables from Office files yet, so the next step is to add tasks over one, such as a report card, and run them on Qwen3.5-2B and 4B.
 
+## Spreadsheets
+
+Excel (.xlsx) and OpenDocument (.ods) workbooks are read for **looking up rows**: "Which orders are delayed?", "What is Acme Trading's phone number?". Search finds the rows and quotes are checked word for word, as in any document. Questions over many rows (totals, averages, counts) are not answered well: the model reads a few parts of a document, never a whole sheet, and a 4B model adds up unreliably; the quote check would show that the rows it used are real, not that its sum is right. That needs a calculation tool that runs over the whole sheet, related to M2.5's sandbox.
+
+**Text** (`src/documents/sheets.ts`):
+
+```
+Sheet: Orders
+Orders 2025 (Kansai office)
+Order | Customer | Date | Total | Discount | Status
+Order: 1001 | Customer: Acme Trading | Date: 2025-03-01 | Total: ¥125,000 | Discount: 5.0% | Status: Delivered
+```
+
+- **One sheet per page,** so quotes are cited as "sheet 2". The sheet's line says "(hidden)" for hidden sheets, which are read too. Chart sheets, charts and pictures are not read.
+- **The header** is the first row with two or more filled cells, if each of them names a column (has a letter in it and is at most 60 characters long). Rows above it are written as they are: titles, dates. Every row below is labelled with the header's names, as [tables](#tables) in documents are; without a header, cells are separated by tabs, empty ones included. A sheet with no row of two cells, such as a list in one column, is written row by row. A header of dates or numbers (columns headed "2025/1", "2025/2") is not taken for one; its rows are written with tabs.
+- **Merged cells** are placed as merged table cells are: a cell merged across columns in the first of them, a cell merged down repeated in each row.
+- **Long sheets are split between rows.** Rows are written in blocks of at most about 1,400 characters, each starting with the sheet's line, and a document is split into parts at those blocks (`chunk.ts`). So a part never cuts a row in half, and a part read on its own still says which sheet it is from and, through its labels, which column each value is in. The sheet's line in every block is not in the file; neither are the labels, and **Show text** shows both.
+- **Limits:** 20,000 rows per workbook and 100 columns per sheet. Beyond that, the document says what was left out and suggests splitting the file. A 20,000-row sheet of 6 columns is read in about a second, as 2.1 million characters and about 1,500 parts; building the search index over it takes about 0.2 seconds and a search a few milliseconds.
+
+**Values as the cell shows them.** Excel stores a value and, separately, how to show it: the date 2025-03-01 is stored as 45717 with a format such as `yyyy/m/d` (`src/documents/number-format.ts`).
+
+- **Dates and times:** days are counted from 1900 (with Excel's 29 February 1900) or, in workbooks with the 1904 date system, from 1904. Formats such as `yyyy/m/d`, `yyyy"年"m"月"d"日"`, `d-mmm-yy`, `h:mm AM/PM` and `[h]:mm` are followed; "m" is minutes after an hour or before seconds, months otherwise; times are rounded to the second, as Excel does. The built-in short date (format 14) and the East Asian built-in dates, whose look depends on the reader's language settings (2025/3/1, 3/1/2025, 令和7年3月1日), are written as ISO dates (2025-03-01).
+- **Numbers:** thousands separators, decimals (fixed `0.00` and optional `0.##`), percentages, scientific notation, thousands scaling (`#,##0,"K"`), currency symbols (`"¥"#,##0`, `[$€-407]`), text around the number (`#,##0"円"`), and separate sections for negative numbers and zero. Anything else is written as Excel's General format shows it.
+- **Other cells:** text from shared and inline strings, without Japanese reading guides (furigana, which Excel stores but does not show); TRUE and FALSE; error codes (#N/A, #DIV/0!); and for formulas, the value Excel saved with the file (the formula itself is not run).
+- **OpenDocument** keeps each cell's text as LibreOffice shows it, so .ods cells are written as they are, with no formats to apply. A workbook saved as both .xlsx and .ods by LibreOffice gives the same text (`tests/sheets.test.ts`).
+
 ## Untrusted files
 
 Documents are untrusted ([`design.md`](design.md) §7.1). Reading them:
@@ -74,6 +101,7 @@ Documents are untrusted ([`design.md`](design.md) §7.1). Reading them:
 - **Macros** and embedded objects are never run or opened: only the XML parts that hold text are read.
 - **Password-protected files** cannot be read. Office files are then not ZIP archives but OLE2 compound files, which are recognised by their first eight bytes. OpenDocument files say so in their manifest. Either way the user is told to remove the password.
 - **A file that isn't what its extension says,** such as a spreadsheet named .odt, gets a message saying what it holds.
+- **Spreadsheets padded out to their full size:** LibreOffice writes the empty rows and columns after the data as repeats, up to a million rows and 1,024 columns. Empty repeats are skipped and filled ones capped at the row and column limits, so they cost nothing.
 - The text then goes through the same steps as every other document, including being marked as untrusted in the model's prompt.
 
 Speed: a Word or Writer file of about 2.4 million characters (well over 1,000 pages) is read in about 0.1 seconds.
@@ -82,8 +110,8 @@ Speed: a Word or Writer file of about 2.4 million characters (well over 1,000 pa
 
 Saved documents and backups keep the document's kind (`records.ts`). Old backups still restore.
 
-Version 0.1.0 rejects a whole backup if one of its documents has a kind it doesn't know, and calls the backup damaged. So a backup with an Office document in it is written as backup version 2, and older versions say instead that it was made by a newer version and the app should be updated. Backups without Office documents are still written as version 1, so every version can restore them.
+Version 0.1.0 rejects a whole backup if one of its documents has a kind it doesn't know, and calls the backup damaged. So a backup is written with the lowest version that knows all its documents' kinds: version 1 for text, Markdown, HTML and PDF only, 2 with Word, PowerPoint or OpenDocument text and presentation files, 3 with spreadsheets. A version older than a backup says instead that it was made by a newer version and the app should be updated.
 
 In the browser's own storage, an older version reading an Office document (for example after going back from the preview to a release in the same browser) sets that document aside as damaged and keeps the rest.
 
-Quotes are cited as slides in a presentation, and as pages elsewhere. Which applies is worked out from the cited document's file name, so the right word is used in answers saved before presentations could be read, and in exports.
+Quotes are cited as slides in a presentation, sheets in a spreadsheet, and pages elsewhere. Which applies is worked out from the cited document's file name, so the right word is used in answers saved before presentations could be read, and in exports.
