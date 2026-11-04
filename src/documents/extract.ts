@@ -2,7 +2,7 @@
 // and OpenDocument files. PDF extraction uses pdf.js; scanned PDFs without a text layer yield no
 // text (there is no OCR, docs/m1-plan.md decision D3). Office files are read by office.ts.
 
-import { extractOfficeText, joinPages, SLIDE_KINDS, type OfficeKind } from "./office.ts";
+import { extractOfficeText, joinPages, OFFICE_READER_VERSION, SLIDE_KINDS, type OfficeKind } from "./office.ts";
 
 export type DocumentKind = "text" | "markdown" | "html" | "pdf" | OfficeKind;
 
@@ -37,6 +37,14 @@ export interface ExtractedDocument {
   pageStarts?: number[];
   /** Shown to the user, e.g. when a PDF has no text layer. */
   warning?: string;
+  /** Office files: the version of the reader that read it (office.ts OFFICE_READER_VERSION). */
+  reader?: number;
+}
+
+/** Whether an Office document was read by an earlier version of the reader, which lost the columns of its tables. */
+export function readByEarlierVersion(doc: { kind: DocumentKind; reader?: number }): boolean {
+  const office = doc.kind === "docx" || doc.kind === "pptx" || doc.kind === "odt" || doc.kind === "odp";
+  return office && (doc.reader ?? 1) < OFFICE_READER_VERSION;
 }
 
 export function detectKind(fileName: string, mimeType = ""): DocumentKind | undefined {
@@ -169,6 +177,7 @@ export async function extractText(
     return {
       kind,
       text,
+      reader: OFFICE_READER_VERSION,
       ...(pages !== undefined ? { pages } : {}),
       ...(pageStarts ? { pageStarts } : {}),
       warning: text.trim()

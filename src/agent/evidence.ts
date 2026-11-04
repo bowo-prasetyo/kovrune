@@ -105,8 +105,9 @@ export function normalizeForMatch(text: string): string {
     // device**" or "`llama-server`" drop them (field suite, issue #35).
     .replace(/[*`]+|__/g, "")
     // List markers standing alone are layout, not words: slides use "•" and "–" bullets, and
-    // models quoting them swap one for the other or drop them.
-    .replace(/(^|\s)[-•·▪◦‣●*](?=\s|$)/g, "$1");
+    // models quoting them swap one for the other or drop them. So is "|" between a table's
+    // cells (documents/tables.ts), which models quoting a row drop.
+    .replace(/(^|\s)[-•·▪◦‣●*|](?=\s|$)/g, "$1");
   // Whitespace between Chinese or Japanese characters is layout, such as a PDF's line breaks.
   return dropUnspacedGaps(unified).replace(/\s+/g, " ").trim();
 }

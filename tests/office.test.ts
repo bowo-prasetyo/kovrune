@@ -7,8 +7,9 @@ import { quotePages, type SavedAnswer } from "../src/app/research/answers.ts";
 import { documentSchema } from "../src/app/research/records.ts";
 import { makeBackup, parseBackup } from "../src/app/research/backup.ts";
 import { ACCEPT } from "../src/app/research/library.ts";
-import { detectKind, extractText, pageUnit, type PdfJsLike } from "../src/documents/extract.ts";
+import { detectKind, extractText, pageUnit, readByEarlierVersion, type PdfJsLike } from "../src/documents/extract.ts";
 import { extractOfficeText } from "../src/documents/office.ts";
+import { renderTable } from "../src/documents/tables.ts";
 import { walkXml } from "../src/documents/xml.ts";
 import { openZip, ZipError } from "../src/documents/zip.ts";
 
@@ -164,7 +165,8 @@ describe("Word files", () => {
     assert.equal(
       result.text,
       "Annual Report 2025\n\nThe project is licensed under the “Mozilla Public License 2.0”. Revenue grew by 12.5 % in Q3.\n\n" +
-        "Region\tUsers\nEurope\t1,204\nAsia\t980\n\nA footnote follows.\n\nFootnotes\n\n1. Data from the internal survey, March 2025.",
+        // pandoc marks the table's first row as its header (w:tblHeader), so each value has its column's name.
+        "Region | Users\nRegion: Europe | Users: 1,204\nRegion: Asia | Users: 980\n\nA footnote follows.\n\nFootnotes\n\n1. Data from the internal survey, March 2025.",
     );
   });
 
@@ -237,7 +239,8 @@ describe("PowerPoint files", () => {
     const result = await extractText(file("report.pptx", fixture("report.pptx")), noPdf);
     assert.equal(result.pages, 3);
     assert.match(result.text, /^Annual Report 2025\n\nThe project is licensed under the “Mozilla Public License 2\.0”\./);
-    assert.match(result.text, /Region\tUsers\nEurope\t1,204\nAsia\t980/);
+    // The table's first row is its header (a:tblPr firstRow).
+    assert.match(result.text, /Region \| Users\nRegion: Europe \| Users: 1,204\nRegion: Asia \| Users: 980/);
   });
 
   it("warns when the slides hold no text", async () => {
@@ -295,6 +298,7 @@ describe("OpenDocument files", () => {
   it("reads a real Impress file", async () => {
     const result = await extractText(file("report.odp", fixture("report.odp")), noPdf);
     assert.equal(result.pages, 3);
+    // Impress saved this table without a header row style, and two columns are not guessed to have one.
     assert.match(result.text, /Region\tUsers\nEurope\t1,204\nAsia\t980/);
   });
 
@@ -349,5 +353,165 @@ describe("Office documents in the app", () => {
     assert.equal(quotePages(answer("Q3 review.pptx (part 2 of 4)"), item), "slide 2");
     assert.equal(quotePages(answer("paper.pdf"), item), "p. 2");
     assert.equal(quotePages(answer("paper.pdf"), { ...item, context: { ...item.context, pages: undefined } }), undefined);
+  });
+});
+
+describe("tables", () => {
+  const cell = (text: string, options: { span?: number; continues?: boolean } = {}) => ({ text, span: options.span ?? 1, ...(options.continues ? { continues: true } : {}) });
+  const row = (texts: Array<string | ReturnType<typeof cell>>, options: { header?: boolean; skip?: number } = {}) => ({
+    cells: texts.map((t) => (typeof t === "string" ? cell(t) : t)),
+    header: options.header ?? false,
+    skip: options.skip ?? 0,
+  });
+  const REPORT_HEADER = ["Perspective", "Description", "Excellent", "Good", "Needs Improvement"];
+
+  it("labels each value with its column's header, so a mark says which column it is in", () => {
+    // A preview user's report card (November 2026): the marks were all written after the description,
+    // and the model could not tell Excellent from Good.
+    const text = renderTable([
+      row(REPORT_HEADER),
+      row(["Knowledge & Skills", "Understands the use of words.", "◯", "", ""]),
+      row(["Thinking, Judgment & Expression", "Develops the ability to think.", "", "◯", ""]),
+      row(["Attitude Toward Independent Learning", "Reads actively.", "", "", "◯"]),
+    ]);
+    assert.equal(
+      text,
+      "Perspective | Description | Excellent | Good | Needs Improvement\n" +
+        "Perspective: Knowledge & Skills | Description: Understands the use of words. | Excellent: ◯\n" +
+        "Perspective: Thinking, Judgment & Expression | Description: Develops the ability to think. | Good: ◯\n" +
+        "Perspective: Attitude Toward Independent Learning | Description: Reads actively. | Needs Improvement: ◯",
+    );
+  });
+
+  it("keeps empty cells as tabs when a table has no header, so values stay in their columns", () => {
+    assert.equal(renderTable([row(["Ada", "", "36"]), row(["", "Grace", ""]), row(["", "", ""])]), "Ada\t\t36\n\tGrace");
+  });
+
+  it("guesses a header only for a first row of short names over three or more columns", () => {
+    // Two columns are usually labels and values; a first row of them is data.
+    assert.equal(renderTable([row(["Principal", "Tomoko Yamafuji"]), row(["Vice Principal", "Yoshinori Ikeda"])]), "Principal\tTomoko Yamafuji\nVice Principal\tYoshinori Ikeda");
+    // An empty cell, a number or a sentence in the first row: not a header.
+    assert.match(renderTable([row(["Name", "", "Age"]), row(["Ada", "x", "36"])]), /^Name\t\tAge\nAda\tx\t36$/);
+    assert.match(renderTable([row(["2024", "2025", "2026"]), row(["1", "2", "3"])]), /^2024\t2025\t2026/);
+    assert.match(renderTable([row(["Read the text.", "Then answer.", "Done."]), row(["a", "b", "c"])]), /^Read the text\.\t/);
+    // One row only: nothing to label.
+    assert.equal(renderTable([row(["Name", "Age", "City"])]), "Name\tAge\tCity");
+  });
+
+  it("uses a header the file marks, also for two columns, and names columns from every header row", () => {
+    assert.equal(renderTable([row(["Region", "Users"], { header: true }), row(["Europe", "1,204"])]), "Region | Users\nRegion: Europe | Users: 1,204");
+    const twoRowHeader = renderTable([
+      row(["Subject", cell("Grade", { span: 2 })], { header: true }),
+      row(["", "Term 1", "Term 2"], { header: true }),
+      row(["Music", "A", "B"]),
+    ]);
+    assert.equal(twoRowHeader, "Subject | Grade\nTerm 1 | Term 2\nSubject: Music | Grade Term 1: A | Grade Term 2: B");
+  });
+
+  it("places cells by the columns they span or skip, and repeats a cell merged down from above", () => {
+    assert.equal(renderTable([row([cell("Wide", { span: 2 }), "C"]), row(["a", "b", "c"]), row(["z"], { skip: 2 })]), "Wide\t\tC\na\tb\tc\n\t\tz");
+    const merged = renderTable([
+      row(["Subject", "Perspective", "Mark"], { header: true }),
+      row(["Music", "Skills", "◯"]),
+      row([cell("", { continues: true }), "Attitude", "△"]),
+    ]);
+    assert.equal(merged, "Subject | Perspective | Mark\nSubject: Music | Perspective: Skills | Mark: ◯\nSubject: Music | Perspective: Attitude | Mark: △");
+  });
+
+  it("reads Word tables: guessed headers, spans, vertical merges, header rows and nested tables", async () => {
+    const tc = (text: string, props = "") => `<w:tc><w:tcPr><w:tcW w:w="100"/>${props}</w:tcPr>${text ? para(text) : "<w:p/>"}</w:tc>`;
+    const tr = (cells: string, props = "") => `<w:tr>${props ? `<w:trPr>${props}</w:trPr>` : ""}${cells}</w:tr>`;
+    const card =
+      `<w:tbl><w:tblPr/><w:tblGrid/>` +
+      tr(REPORT_HEADER.map((h) => tc(h)).join("")) +
+      tr(tc("Knowledge & Skills") + tc("Understands words.") + tc("") + tc("◯") + tc("")) +
+      `</w:tbl>`;
+    assert.equal(
+      (await extractOfficeText(await docx(card), "docx")).text,
+      "Perspective | Description | Excellent | Good | Needs Improvement\nPerspective: Knowledge & Skills | Description: Understands words. | Good: ◯",
+    );
+    const spans =
+      `<w:tbl>` +
+      tr(tc("Subject") + tc("Term", '<w:gridSpan w:val="2"/>'), '<w:tblHeader/>') +
+      tr(tc("Music", '<w:vMerge w:val="restart"/>') + tc("A") + tc("B")) +
+      tr(tc("", "<w:vMerge/>") + tc("C") + tc(`<nested>`.replace("<nested>", ""))) +
+      tr(tc("Art") + `<w:tc>${para("In a box:")}<w:tbl>${tr(tc("x") + tc("y"))}${tr(tc("z"))}</w:tbl></w:tc>`) +
+      tr(tc("Late"), '<w:gridBefore w:val="2"/>') +
+      `</w:tbl>`;
+    assert.equal(
+      (await extractOfficeText(await docx(spans), "docx")).text,
+      "Subject | Term\nSubject: Music | Term: A | Term: B\nSubject: Music | Term: C\nSubject: Art | Term: In a box: x y z\nTerm: Late",
+    );
+  });
+
+  it("verifies quotes of a labelled row, with or without the bars between its cells", async () => {
+    const card = `<w:tbl>${[REPORT_HEADER, ["Knowledge & Skills", "Understands the use of words and sentences.", "", "◯", ""]]
+      .map((cells) => `<w:tr>${cells.map((c) => `<w:tc>${c ? para(c) : "<w:p/>"}</w:tc>`).join("")}</w:tr>`)
+      .join("")}</w:tbl>`;
+    const { text } = await extractOfficeText(await docx(card), "docx");
+    const check = (quote: string) => checkEvidence([{ docId: "card", quote }], () => text)[0]!.verified;
+    assert.equal(check("Perspective: Knowledge & Skills | Description: Understands the use of words and sentences. | Good: ◯"), true);
+    assert.equal(check("Knowledge & Skills Description: Understands the use of words and sentences. Good: ◯"), true, "the bars are layout");
+    assert.equal(check("Understands the use of words and sentences"), true, "a quote inside one cell");
+    assert.equal(check("Understands the use of words and sentences. Excellent: ◯"), false, "the wrong column is not in the text");
+  });
+
+  it("reads PowerPoint tables with a header row and merged cells", async () => {
+    const tc = (text: string, attrs = "") => `<a:tc${attrs}><a:txBody>${text ? `<a:p><a:r><a:t>${text}</a:t></a:r></a:p>` : "<a:p/>"}</a:txBody></a:tc>`;
+    const slide =
+      `<p:sld ${A} ${P}><p:cSld><p:spTree><p:graphicFrame><a:graphic><a:graphicData><a:tbl><a:tblPr firstRow="1"/>` +
+      `<a:tr>${tc("Subject")}${tc("Mark", ' gridSpan="2"')}${tc("", ' hMerge="1"')}</a:tr>` +
+      `<a:tr>${tc("Music", ' rowSpan="2"')}${tc("")}${tc("◯")}</a:tr>` +
+      `<a:tr>${tc("", ' vMerge="1"')}${tc("△")}${tc("")}</a:tr>` +
+      `</a:tbl></a:graphicData></a:graphic></p:graphicFrame></p:spTree></p:cSld></p:sld>`;
+    const bytes = await makeZip({
+      "ppt/presentation.xml": `<p:presentation ${P} ${R}><p:sldIdLst><p:sldId r:id="a"/></p:sldIdLst></p:presentation>`,
+      "ppt/_rels/presentation.xml.rels": `<Relationships ${RELS}><Relationship Id="a" Type="${TYPE}/slide" Target="slides/slide1.xml"/></Relationships>`,
+      "ppt/slides/slide1.xml": slide,
+    });
+    assert.equal((await extractOfficeText(bytes, "pptx")).text, "Subject | Mark\nSubject: Music | Mark: ◯\nSubject: Music | Mark: △");
+  });
+
+  it("reads OpenDocument tables: header rows, covered and repeated cells, and Impress's header style", async () => {
+    const zip = (mime: string, body: string) =>
+      makeZip({ mimetype: mime, "content.xml": `<office:document-content ${ODF}><office:body>${body}</office:body></office:document-content>` });
+    const td = (text: string, attrs = "") => (text ? `<table:table-cell${attrs}><text:p>${text}</text:p></table:table-cell>` : `<table:table-cell${attrs}/>`);
+    const writer =
+      `<office:text><table:table><table:table-column table:number-columns-repeated="4"/>` +
+      `<table:table-header-rows><table:table-row>${td("Name")}${td("Marks", ' table:number-columns-spanned="2"')}<table:covered-table-cell/>${td("Note")}</table:table-row></table:table-header-rows>` +
+      `<table:table-row>${td("Ada")}${td("", ' table:number-columns-repeated="2"')}${td("Top")}</table:table-row>` +
+      `<table:table-row>${td("Grace")}${td("◯")}<table:covered-table-cell><text:p>hidden</text:p></table:covered-table-cell>${td("")}</table:table-row>` +
+      `</table:table></office:text>`;
+    assert.equal(
+      (await extractOfficeText(await zip("application/vnd.oasis.opendocument.text", writer), "odt")).text,
+      "Name | Marks | Note\nName: Ada | Note: Top\nName: Grace | Marks: ◯",
+    );
+    // A covered cell no span accounts for is under a cell merged down: it repeats the text above.
+    const merged =
+      `<office:text><table:table><table:table-header-rows><table:table-row>${td("Subject")}${td("Perspective")}${td("Mark")}</table:table-row></table:table-header-rows>` +
+      `<table:table-row>${td("Music", ' table:number-rows-spanned="2"')}${td("Skills")}${td("◯")}</table:table-row>` +
+      `<table:table-row><table:covered-table-cell/>${td("Attitude")}${td("△")}</table:table-row></table:table></office:text>`;
+    assert.equal(
+      (await extractOfficeText(await zip("application/vnd.oasis.opendocument.text", merged), "odt")).text,
+      "Subject | Perspective | Mark\nSubject: Music | Perspective: Skills | Mark: ◯\nSubject: Music | Perspective: Attitude | Mark: △",
+    );
+    const impress =
+      `<office:presentation><draw:page><draw:frame><table:table table:use-first-row-styles="true">` +
+      `<table:table-row>${td("Region")}${td("Users")}</table:table-row><table:table-row>${td("Asia")}${td("980")}</table:table-row>` +
+      `</table:table></draw:frame></draw:page></office:presentation>`;
+    assert.equal((await extractOfficeText(await zip("application/vnd.oasis.opendocument.presentation", impress), "odp")).text, "Region | Users\nRegion: Asia | Users: 980");
+  });
+});
+
+describe("Office documents read by an earlier version", () => {
+  it("are pointed out, so the file can be added again: only their text was saved", async () => {
+    const result = await extractText(file("report.docx", fixture("report.docx")), noPdf);
+    assert.equal(result.reader, 2);
+    assert.equal(readByEarlierVersion({ kind: "docx", reader: result.reader }), false);
+    assert.equal(readByEarlierVersion({ kind: "docx" }), true, "saved before readers were recorded");
+    assert.equal(readByEarlierVersion({ kind: "odp", reader: 1 }), true);
+    assert.equal(readByEarlierVersion({ kind: "pdf" }), false);
+    const record = { id: "r", title: "r.docx", text: "x", fileName: "r.docx", kind: "docx", bytes: 1, reader: 2 };
+    assert.equal(documentSchema.safeParse(record).success, true);
   });
 });
