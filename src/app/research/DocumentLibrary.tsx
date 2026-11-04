@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { KIND_LABELS, pageUnit } from "../../documents/extract.ts";
 import { ACCEPT, formatBytes, readDocument } from "./library.ts";
 import { savedTextBytes } from "./store.ts";
 import type { SavedDocuments } from "./useSavedDocuments.ts";
@@ -6,7 +7,6 @@ import { reinsert } from "./undo.ts";
 import { useUndo } from "./UndoNotice.tsx";
 import { DamagedNotice } from "./DamagedNotice.tsx";
 
-const KIND_LABELS = { pdf: "PDF", html: "HTML", markdown: "Markdown", text: "Text" } as const;
 
 export function DocumentLibrary({ library }: { library: SavedDocuments }) {
   const { documents, setDocuments: onChange, store, saveError, damaged, deleteDamaged } = library;
@@ -59,7 +59,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
           if (!loading) void addFiles([...event.dataTransfer.files]);
         }}
       >
-        <p>Drop PDF, text, Markdown or HTML files here, or</p>
+        <p>Drop PDF, Word, PowerPoint, OpenDocument, text, Markdown or HTML files here, or</p>
         <label className="file-button">
           Choose files
           <input
@@ -113,7 +113,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
                 <span className="doc-name">{doc.fileName}</span>
                 <span className="doc-meta">
                   {KIND_LABELS[doc.kind]}
-                  {doc.pages ? `, ${doc.pages} page${doc.pages === 1 ? "" : "s"}` : ""}, {formatBytes(doc.bytes)},{" "}
+                  {doc.pages ? `, ${doc.pages} ${pageUnit(doc.kind)}${doc.pages === 1 ? "" : "s"}` : ""}, {formatBytes(doc.bytes)},{" "}
                   {doc.text.length.toLocaleString()} characters
                 </span>
                 <span className="doc-actions">

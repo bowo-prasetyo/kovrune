@@ -269,7 +269,7 @@ describe("text extraction", () => {
     };
     assert.deepEqual(await extractText(file("a.md", "# Title\r\n\r\nBody"), noPdf), { kind: "markdown", text: "# Title\n\nBody", warning: undefined });
     assert.match((await extractText(file("empty.txt", "  "), noPdf)).warning ?? "", /no text/);
-    await assert.rejects(extractText(file("a.docx", "x"), noPdf), /Unsupported file type/);
+    await assert.rejects(extractText(file("a.xlsx", "x"), noPdf), /Unsupported file type/);
   });
 
   it("warns when a PDF has no text layer", async () => {

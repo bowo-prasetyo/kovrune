@@ -5,6 +5,7 @@ import type { CheckedEvidence } from "../../agent/evidence.ts";
 import type { ResearchLibrary, ResearchResult } from "../../agent/research.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
 import type { Synthesis, SynthesisPart } from "../../agent/synthesis.ts";
+import { detectKind, pageUnit } from "../../documents/extract.ts";
 import type { Citation } from "../../sources/session.ts";
 import { describeReportLabels } from "./report.ts";
 import { describeNoAnswer, describePages, describeStatus, type LabelSeverity } from "./trace.ts";
@@ -94,6 +95,17 @@ export function sourceTitle(answer: SavedAnswer, docId: string): string {
   return answer.citations[docId]?.title ?? answer.titles[docId] ?? docId;
 }
 
+/**
+ * Where a quote is in its document, "p. 4" or "slide 4", or undefined when its document has no pages.
+ * The user's documents are titled with their file names, which tell a presentation's slides from pages,
+ * in answers saved before presentations could be read too.
+ */
+export function quotePages(answer: SavedAnswer, item: SavedAnswer["evidence"][number]): string | undefined {
+  if (!item.context?.pages) return undefined;
+  const fileName = answer.citations[item.docId] ? "" : sourceTitle(answer, item.docId).replace(/ \(part \d+ of \d+\)$/, "");
+  return describePages(item.context.pages, pageUnit(detectKind(fileName)));
+}
+
 export const formatTime = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
@@ -120,7 +132,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
         const citation = answer.citations[item.docId];
         const where = citation
           ? `[${citation.title}](${citation.url}) (${citation.source}, retrieved ${citation.retrievedAt.slice(0, 10)})`
-          : `${sourceTitle(answer, item.docId)}${item.context?.pages ? `, ${describePages(item.context.pages)}` : ""}`;
+          : `${sourceTitle(answer, item.docId)}${item.context?.pages ? `, ${quotePages(answer, item)}` : ""}`;
         lines.push(`${i + 1}. ${item.verified ? "✓" : "✗"} ${where}`, "", `   > ${oneLine(item.quote)}`, "");
         if (!item.verified && item.reason) lines.push(`   Problem: ${item.reason}.`, "");
       });
@@ -220,7 +232,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
     lines.push(`**${sectionLabel(section)}.**`, "");
     if (section.answer) lines.push(markedAnswer(section), "");
     for (const item of section.evidence) {
-      const where = reference(section, item.docId, item.context?.pages ? describePages(item.context.pages) : undefined);
+      const where = reference(section, item.docId, quotePages(section, item));
       lines.push(`- ${item.verified ? "✓" : "✗"} ${where}: > ${oneLine(item.quote)}${!item.verified && item.reason ? ` (problem: ${item.reason})` : ""}`);
     }
     if (section.evidence.length) lines.push("");

@@ -4,13 +4,14 @@
 // instead of crashing the page on every reload.
 
 import { z } from "zod";
+import { DOCUMENT_KINDS } from "../../documents/extract.ts";
 
 export const documentSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
   text: z.string(),
   fileName: z.string(),
-  kind: z.enum(["text", "markdown", "html", "pdf"]),
+  kind: z.enum(DOCUMENT_KINDS),
   bytes: z.number().nonnegative(),
   pages: z.number().int().positive().optional(),
   pageStarts: z.array(z.number().int().nonnegative()).optional(),
