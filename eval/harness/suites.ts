@@ -18,12 +18,13 @@ import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
  * field: questions over real documents (eval/field/), run only when asked for; holdout: more
  * questions over the same documents that changes are not tuned on (eval/field/holdout.ts);
  * multi and multiholdout: questions over the same documents that need more than one passage,
- * the second read only as totals (eval/field/multi.ts).
+ * the second read only as totals (eval/field/multi.ts); office and officeholdout: questions over
+ * Word, Excel and CSV files, the second read only as totals (eval/field/office.ts).
  */
-export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout";
+export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout" | "office" | "officeholdout";
 
 /** The suites over the field documents, which need them loaded (loadFieldSuite). */
-export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout"];
+export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout", "office", "officeholdout"];
 
 /** The evaluation set the gate needs. The field suite is reported separately, so M0 comparisons stay valid. */
 export const ALL_SUITES: SuiteName[] = ["research", "unanswerable", "pdf", "coding"];

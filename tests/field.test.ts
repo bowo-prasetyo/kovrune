@@ -10,6 +10,7 @@ import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { fieldDocuments, fieldTasks } from "../eval/field/tasks.ts";
 import { holdoutTasks } from "../eval/field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../eval/field/multi.ts";
+import { officeDocuments, officeHoldoutTasks, officeTasks } from "../eval/field/office.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
 const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
@@ -177,5 +178,75 @@ describe("field suite", () => {
       }),
       /need field/,
     );
+  });
+
+});
+
+describe("office suite", () => {
+  it("reads its Word, Excel and CSV documents through the app's own readers", async () => {
+    const suite = await loadFieldSuite();
+    for (const doc of officeDocuments) assert.ok(suite.officeLibrary.documentFor(doc.id)?.text, doc.id);
+    for (const doc of fieldDocuments) assert.ok(suite.officeLibrary.documentFor(doc.id), `${doc.id}: the field documents are there too`);
+    assert.equal(suite.library.documentFor("orders-2025"), undefined, "the field suite's library is unchanged");
+    const card = suite.officeLibrary.documentFor("report-card-2025")!.text;
+    assert.match(card, /Perspective: Thinking, Judgment & Expression \| Description: Explains reasoning about shapes, changes and data step by step\. \| Excellent: ◯/);
+    const orders = suite.officeLibrary.documentFor("orders-2025")!.text;
+    assert.match(orders, /Order: 1047 \| Customer: Ikoma Garden \| Date: 2025\/7\/29 \| Total: ¥88,000 \| Status: Delayed/);
+    assert.match(orders, /Sheet: Returns \(hidden\)/);
+    const stock = suite.officeLibrary.documentFor("inventory-sjis")!.text;
+    assert.match(stock, /品番: B-1042 \| 品名: 平ワッシャー M12 \| 倉庫: 神戸倉庫 \| 在庫数: 1332 \| 単価: ¥1,262/, "Shift_JIS decoded, ¥ restored");
+  });
+
+  it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
+    const suite = await loadFieldSuite();
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks];
+    assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
+    assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
+    for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
+      const text = normalize(task.citations.flat().map((id) => suite.officeLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    for (const tasks of [officeTasks, officeHoldoutTasks]) {
+      const cited = new Set(tasks.flatMap((t) => t.citations.flat()));
+      assert.deepEqual([...cited].sort(), officeDocuments.map((d) => d.id).sort(), "every document is asked about");
+      assert.ok(tasks.some((t) => !t.answerable) && tasks.some((t) => t.kind === "multi-hop"));
+    }
+    assert.ok(officeHoldoutTasks.length >= officeTasks.length / 3, "a quarter or more of all is held out");
+  });
+
+  it("has report card parts that do not say whose record or which term they are", async () => {
+    // What fix B would add (docs/office-formats.md): the questions ask for marks that differ by term.
+    const suite = await loadFieldSuite();
+    const parts = suite.officeLibrary.index.partsOf("report-card-2025").map((id) => suite.officeLibrary.index.get(id)!.text);
+    assert.ok(parts.length >= 5);
+    assert.ok(parts.filter((text) => !/Term/.test(text)).length >= 2, "parts without their term");
+    assert.ok(parts.every((text) => !/\n\n(Mathematics|Science|Music|Home Economics)$/.test(text)), "headings stay with their tables (#124)");
+  });
+
+  it("runs as its own suite, over its own library", async () => {
+    const suite = await loadFieldSuite();
+    const answer = JSON.stringify({
+      tool: "final_answer",
+      args: { found: true, answer: "Hayashi Kogyo's phone number is 06-6341-2287.", evidence: [{ docId: "orders-2025", quote: "Customer: Hayashi Kogyo | Contact: Mai Hayashi | Phone: 06-6341-2287" }] },
+    });
+    const model = new ScriptedModel([
+      `{"tool":"search","args":{"query":"Hayashi Kogyo phone"}}`,
+      // The library includes Chinese and Japanese documents, so search also translates the terms.
+      "林工业 电话",
+      "林工業 電話",
+      `{"tool":"read","args":{"docId":"orders-2025"}}`,
+      answer,
+      answer,
+    ]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      field: suite,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["office"], modes: ["constrained"], taskIds: ["o09-hayashi-phone"] },
+    });
+    assert.equal(report.results.length, 1);
+    assert.equal(report.results[0]!.suite, "office");
+    assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
   });
 });

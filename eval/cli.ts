@@ -9,7 +9,8 @@
 // The field suite (real documents, eval/field/) runs only when named: --suites field. So does the
 // held-out suite over the same documents (--suites field,holdout); its tasks print no result as they
 // run, so a change is not developed against them (eval/field/holdout.ts). The questions that need more
-// than one passage run as --suites multi,multiholdout, the second held out too (eval/field/multi.ts).
+// than one passage run as --suites multi,multiholdout, the second held out too (eval/field/multi.ts),
+// and the questions over Word, Excel and CSV files as --suites office,officeholdout (eval/field/office.ts).
 //
 // Press Ctrl+C to stop early; the completed tasks are still reported and written.
 // Browser runtimes (WebLLM, wllama) are benchmarked with the page in eval/browser/.

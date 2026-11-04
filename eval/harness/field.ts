@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ResearchLibrary } from "../../src/agent/research.ts";
 import { extractText, type PdfJsLike } from "../../src/documents/extract.ts";
 import type { SourceDocument } from "../../src/tools/search.ts";
+import { officeDocuments } from "../field/office.ts";
 import { fieldDocuments, fieldTasks, type FieldDocument } from "../field/tasks.ts";
 import type { ResearchTask } from "../tasks/research.ts";
 
@@ -17,6 +18,8 @@ export const FIELD_DIR = fileURLToPath(new URL("../field/", import.meta.url));
 
 export interface FieldSuite {
   library: ResearchLibrary;
+  /** The field documents and the office suite's (eval/field/office.ts): the library of the office and officeholdout suites. */
+  officeLibrary: ResearchLibrary;
   tasks: ResearchTask[];
   /** How many tasks and documents came from eval/field/local/; runs that include them are not comparable with others'. */
   local: { tasks: number; documents: number };
@@ -52,6 +55,8 @@ async function readDocument(doc: FieldDocument, dir: string, loadPdfJs: () => Pr
 export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   const loadPdfJs = async () => (await import("pdfjs-dist/legacy/build/pdf.mjs")) as unknown as PdfJsLike;
   const documents = await Promise.all(fieldDocuments.map((doc) => readDocument(doc, join(root, "docs"), loadPdfJs)));
+  // The office documents are committed only, so they are read from this repository whatever the root.
+  const office = await Promise.all(officeDocuments.map((doc) => readDocument(doc, join(FIELD_DIR, "office"), loadPdfJs)));
   const tasks = [...fieldTasks];
 
   const localDir = join(root, "local");
@@ -68,5 +73,7 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
     tasks.push(...manifest.tasks);
     local = { tasks: manifest.tasks.length, documents: manifest.documents.length };
   }
-  return { library: new ResearchLibrary(documents), tasks, local };
+  // The office suites' library holds the committed field documents, not local ones, so their runs stay comparable.
+  const committed = documents.slice(0, fieldDocuments.length);
+  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), tasks, local };
 }
