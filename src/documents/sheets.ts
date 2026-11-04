@@ -1,4 +1,4 @@
-// Text from spreadsheets: Excel (.xlsx) and OpenDocument (.ods) workbooks
+// Text from spreadsheets: Excel (.xlsx) and OpenDocument (.ods) workbooks, and CSV and TSV files
 // (docs/office-formats.md#spreadsheets). Each sheet is a page, so quotes are cited by sheet.
 //
 // A sheet is written as its rows, each labelled with the header row's column names, as tables in
@@ -50,13 +50,14 @@ class Budget {
     return true;
   }
 
-  warning(): string | undefined {
+  /** @param noun what the file is called: "workbook", or "file" for a CSV file. */
+  warning(noun: string): string | undefined {
     const parts: string[] = [];
     if (this.rowsCut) parts.push(`only the first ${MAX_SHEET_ROWS.toLocaleString("en")} rows were read`);
-    if (this.columnsCut) parts.push(`only the first ${MAX_SHEET_COLUMNS} columns of each sheet were read`);
+    if (this.columnsCut) parts.push(`only the first ${MAX_SHEET_COLUMNS} columns${noun === "workbook" ? " of each sheet" : ""} were read`);
     if (!parts.length) return undefined;
     const text = parts.join(", and ");
-    return `This workbook is large: ${text}. Split it into smaller files to search the rest.`;
+    return `This ${noun} is large: ${text}. Split it into smaller files to search the rest.`;
   }
 }
 
@@ -108,11 +109,27 @@ function sheetText(sheet: Sheet): string {
   return blocks.length === 1 && block.length === 1 ? label : blocks.join("\n\n");
 }
 
-function workbookText(sheets: Sheet[], budget: Budget): SheetText {
+function workbookText(sheets: Sheet[], budget: Budget, noun = "workbook"): SheetText {
   const pages = sheets.map(sheetText);
   const empty = sheets.every((sheet) => !sheet.rows.some((row) => row.cells.some((cell) => cell.text)));
-  const warning = empty ? "This workbook has nothing in its cells." : budget.warning();
+  const warning = empty ? `This ${noun} has nothing in its cells.` : budget.warning(noun);
   return { ...joinPages(pages), pages: pages.length, ...(warning ? { warning } : {}) };
+}
+
+/**
+ * A CSV or TSV file's rows, written as a sheet named as Excel names it on opening the file: its
+ * file name without the extension. `cut` says the parser stopped at the row limit (delimited.ts).
+ */
+export function readRows(name: string, cells: string[][], cut = false): SheetText {
+  const budget = new Budget();
+  const rows: TableRow[] = [];
+  for (const line of cells) {
+    if (!budget.takeRow()) break;
+    if (line.length > MAX_SHEET_COLUMNS && line.slice(MAX_SHEET_COLUMNS).some((text) => text.trim())) budget.columnsCut = true;
+    rows.push({ cells: line.slice(0, MAX_SHEET_COLUMNS).map((text) => ({ text: oneLine(text), span: 1 })), header: false, skip: 0 });
+  }
+  if (cut) budget.rowsCut = true;
+  return workbookText([{ name, hidden: false, rows }], budget, "file");
 }
 
 /** A cell's text on one line, as tables.ts writes cells, without soft hyphens (extract.ts drops them everywhere). */

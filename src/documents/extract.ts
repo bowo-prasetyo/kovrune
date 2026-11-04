@@ -1,13 +1,15 @@
-// Turns user files into plain text documents: text, Markdown, HTML, PDF, and Word, PowerPoint,
-// Excel and OpenDocument files. PDF extraction uses pdf.js; scanned PDFs without a text layer yield no
+// Turns user files into plain text documents: text, Markdown, HTML, PDF, CSV and TSV, and Word,
+// PowerPoint, Excel and OpenDocument files. PDF extraction uses pdf.js; scanned PDFs without a text layer yield no
 // text (there is no OCR, docs/m1-plan.md decision D3). Office files are read by office.ts.
 
+import { decodeText, parseDelimited, sniffDelimiter } from "./delimited.ts";
 import { extractOfficeText, joinPages, OFFICE_READER_VERSION, PAGE_UNITS, type OfficeKind } from "./office.ts";
+import { MAX_SHEET_ROWS, readRows } from "./sheets.ts";
 
-export type DocumentKind = "text" | "markdown" | "html" | "pdf" | OfficeKind;
+export type DocumentKind = "text" | "markdown" | "html" | "pdf" | "csv" | "tsv" | OfficeKind;
 
 /** Every kind, for checking saved records (records.ts). */
-export const DOCUMENT_KINDS = ["text", "markdown", "html", "pdf", "docx", "pptx", "xlsx", "odt", "odp", "ods"] as const satisfies readonly DocumentKind[];
+export const DOCUMENT_KINDS = ["text", "markdown", "html", "pdf", "csv", "tsv", "docx", "pptx", "xlsx", "odt", "odp", "ods"] as const satisfies readonly DocumentKind[];
 
 const OFFICE_KINDS: ReadonlySet<string> = new Set<OfficeKind>(["docx", "pptx", "xlsx", "odt", "odp", "ods"]);
 
@@ -21,6 +23,8 @@ export const KIND_LABELS: Record<DocumentKind, string> = {
   html: "HTML",
   markdown: "Markdown",
   text: "Text",
+  csv: "CSV",
+  tsv: "TSV",
   docx: "Word",
   pptx: "PowerPoint",
   xlsx: "Excel",
@@ -30,7 +34,7 @@ export const KIND_LABELS: Record<DocumentKind, string> = {
 };
 
 /** File extensions the app reads, for the file picker and error messages. */
-export const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".xlsx", ".odt", ".odp", ".ods", ".txt", ".text", ".md", ".markdown", ".html", ".htm"];
+export const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".xlsx", ".odt", ".odp", ".ods", ".csv", ".tsv", ".tab", ".txt", ".text", ".md", ".markdown", ".html", ".htm"];
 
 /** What a document's pages are: slides in presentations, sheets in spreadsheets, pages otherwise. */
 export function pageUnit(kind: DocumentKind | undefined): "page" | "slide" | "sheet" {
@@ -54,19 +58,44 @@ export function readByEarlierVersion(doc: { kind: DocumentKind; reader?: number 
   return isOfficeKind(doc.kind) && (doc.reader ?? 1) < OFFICE_READER_VERSION;
 }
 
+/** Kinds by file extension, which decides: a .csv often comes as text/plain, or as Excel's type on Windows. */
+const EXTENSION_KINDS: Record<string, DocumentKind> = {
+  pdf: "pdf",
+  html: "html",
+  htm: "html",
+  md: "markdown",
+  markdown: "markdown",
+  txt: "text",
+  text: "text",
+  docx: "docx",
+  pptx: "pptx",
+  xlsx: "xlsx",
+  odt: "odt",
+  odp: "odp",
+  ods: "ods",
+  csv: "csv",
+  tsv: "tsv",
+  tab: "tsv",
+};
+
+/** Kinds by media type, for a file whose name has no known extension. */
+const MIME_KINDS: Record<string, DocumentKind> = {
+  "application/pdf": "pdf",
+  "text/html": "html",
+  "text/plain": "text",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.oasis.opendocument.text": "odt",
+  "application/vnd.oasis.opendocument.presentation": "odp",
+  "application/vnd.oasis.opendocument.spreadsheet": "ods",
+  "text/csv": "csv",
+  "text/tab-separated-values": "tsv",
+};
+
 export function detectKind(fileName: string, mimeType = ""): DocumentKind | undefined {
   const ext = fileName.toLowerCase().split(".").at(-1) ?? "";
-  if (ext === "pdf" || mimeType === "application/pdf") return "pdf";
-  if (ext === "html" || ext === "htm" || mimeType === "text/html") return "html";
-  if (ext === "md" || ext === "markdown") return "markdown";
-  if (ext === "txt" || ext === "text" || mimeType === "text/plain") return "text";
-  if (ext === "docx" || mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return "docx";
-  if (ext === "pptx" || mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation") return "pptx";
-  if (ext === "xlsx" || mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") return "xlsx";
-  if (ext === "odt" || mimeType === "application/vnd.oasis.opendocument.text") return "odt";
-  if (ext === "odp" || mimeType === "application/vnd.oasis.opendocument.presentation") return "odp";
-  if (ext === "ods" || mimeType === "application/vnd.oasis.opendocument.spreadsheet") return "ods";
-  return undefined;
+  return EXTENSION_KINDS[ext] ?? MIME_KINDS[mimeType.split(";")[0]!.trim().toLowerCase()];
 }
 
 /** Older Office formats, which Kovrune cannot read, and what to save them as instead. */
@@ -85,7 +114,7 @@ function unsupportedMessage(fileName: string): string {
     const alternative = ext === "xls" ? "" : " or PDF";
     return `Kovrune cannot read ${legacy.name} files. Open ${fileName} in ${app} or LibreOffice, save it as ${legacy.saveAs}${alternative}, and add it again.`;
   }
-  return `Unsupported file type: ${fileName}. Use PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument (.odt, .odp, .ods), text, Markdown or HTML files.`;
+  return `Unsupported file type: ${fileName}. Use PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument (.odt, .odp, .ods), CSV, text, Markdown or HTML files.`;
 }
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", shy: "\u00ad", nbsp: " " };
@@ -200,6 +229,15 @@ export async function extractText(
           ? "No text found. The slides may hold only pictures; Kovrune cannot read text from images."
           : "This file has no text.",
     };
+  }
+  if (kind === "csv" || kind === "tsv") {
+    // A CSV file is one sheet, as Excel opens it: rows labelled with the header (sheets.ts), no pages.
+    const { text: raw } = decodeText(bytes);
+    const delimiter = kind === "tsv" ? "\t" : sniffDelimiter(raw);
+    const { rows, cut } = parseDelimited(raw, delimiter, MAX_SHEET_ROWS);
+    const name = file.name.replace(/\.[^.]+$/, "") || file.name;
+    const { text, warning } = readRows(name, rows, cut);
+    return { kind, text, ...(warning ? { warning } : {}) };
   }
   const raw = new TextDecoder().decode(bytes);
   const text = (kind === "html" ? htmlToText(raw) : raw.replace(/\r\n/g, "\n").trim()).replace(/\u00ad/g, "");

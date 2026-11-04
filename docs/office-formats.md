@@ -1,6 +1,6 @@
 # Office and OpenDocument files
 
-Kovrune reads Word (.docx), PowerPoint (.pptx), Excel (.xlsx), and OpenDocument text (.odt), presentation (.odp) and spreadsheet (.ods) files, besides PDF, text, Markdown and HTML (decision D3a in [`m1-plan.md`](m1-plan.md)). This page says how, and what is left out.
+Kovrune reads Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument text (.odt), presentation (.odp) and spreadsheet (.ods), and CSV and TSV files, besides PDF, text, Markdown and HTML (decision D3a in [`m1-plan.md`](m1-plan.md)). This page says how, and what is left out.
 
 ## Phases
 
@@ -8,7 +8,7 @@ Kovrune reads Word (.docx), PowerPoint (.pptx), Excel (.xlsx), and OpenDocument 
 | --- | --- | --- |
 | 1 | .docx, .pptx, .odt, .odp | Done |
 | 2 | .xlsx, .ods | Done, for looking up rows ([Spreadsheets](#spreadsheets)). Totals, averages and counts over many rows need a calculation tool, which is not planned yet. |
-| — | .csv, .tsv | Not started. Simple to parse, but Excel in Japan saves CSV in Shift_JIS, so the encoding has to be detected first. |
+| 2b | .csv, .tsv | Done ([CSV and TSV](#csv-and-tsv)): read as one sheet, in UTF-8, UTF-16 or Shift_JIS. |
 | — | .doc, .ppt, .xls, .rtf | Not planned. These are binary formats, each needing its own parser for files that are now rare. The app explains how to save them as .docx, .pptx, .xlsx or PDF. |
 
 ## How the files are read
@@ -92,6 +92,17 @@ Order: 1001 | Customer: Acme Trading | Date: 2025-03-01 | Total: ¥125,000 | Dis
 - **Other cells:** text from shared and inline strings, without Japanese reading guides (furigana, which Excel stores but does not show); TRUE and FALSE; error codes (#N/A, #DIV/0!); and for formulas, the value Excel saved with the file (the formula itself is not run).
 - **OpenDocument** keeps each cell's text as LibreOffice shows it, so .ods cells are written as they are, with no formats to apply. A workbook saved as both .xlsx and .ods by LibreOffice gives the same text (`tests/sheets.test.ts`).
 
+## CSV and TSV
+
+A CSV file is text, but read as plain text it would be neither readable nor searchable in two common cases, so it is read as a sheet (`src/documents/delimited.ts`, then `readRows` in `sheets.ts`):
+
+- **Encoding.** Japanese Excel's "CSV (comma delimited)" saves in Shift_JIS, which read as UTF-8 turns every Japanese word into replacement characters ("東京" becomes "����"). So a file is decoded by its byte-order mark if it has one (Excel's "CSV UTF-8" writes one; its "Unicode text" is UTF-16), else as UTF-8 if it is valid UTF-8, else as Shift_JIS, in the browser's Windows-932 variant (㈱, ①, NEC and IBM kanji). Shift_JIS has no ¥ of its own: byte 0x5C, shown as ¥ in Japanese Windows, decodes as a backslash, so Excel's "¥125,000" would read "\125,000". A backslash right before an amount is therefore written as ¥; other backslashes stay. Other legacy encodings (Windows-1252, GBK, Big5) are not told apart and come out with replacement characters; saving as "CSV UTF-8" avoids that.
+- **Columns.** Read as text, a row is "1002,Sakura Foods,2025-03-14,250000,Delayed", and the header is only at the top of the file, which most parts of a long file never see. Parsed, its rows are labelled and split into blocks like any sheet's: `Sheet: orders` (the file name without its extension, as Excel names the sheet on opening it), then `Order: 1002 | Customer: Sakura Foods | …`.
+- **Parsing** follows RFC 4180, as Excel and LibreOffice write it: a quoted cell may hold the delimiter, line breaks and doubled quotes; lines may end with CRLF, LF or CR. A cell's line breaks become spaces, as in any table. `.tsv` and `.tab` files use tabs; for `.csv` the delimiter is the one of comma, semicolon and tab that occurs most in the first line outside quotes (Excel writes semicolons where the decimal mark is a comma).
+- **Values** are as the file has them: Excel writes cells into CSV as it shows them, so there are no formats to apply.
+- **One sheet, no sheet numbers:** quotes from a CSV file show no page. The [limits](#spreadsheets) are a spreadsheet's: 20,000 rows and 100 columns.
+- **Telling it apart:** a file's extension decides its kind before its media type, since browsers report a .csv as text/plain, or as Excel's type on Windows.
+
 ## Untrusted files
 
 Documents are untrusted ([`design.md`](design.md) §7.1). Reading them:
@@ -110,7 +121,7 @@ Speed: a Word or Writer file of about 2.4 million characters (well over 1,000 pa
 
 Saved documents and backups keep the document's kind (`records.ts`). Old backups still restore.
 
-Version 0.1.0 rejects a whole backup if one of its documents has a kind it doesn't know, and calls the backup damaged. So a backup is written with the lowest version that knows all its documents' kinds: version 1 for text, Markdown, HTML and PDF only, 2 with Word, PowerPoint or OpenDocument text and presentation files, 3 with spreadsheets. A version older than a backup says instead that it was made by a newer version and the app should be updated.
+Version 0.1.0 rejects a whole backup if one of its documents has a kind it doesn't know, and calls the backup damaged. So a backup is written with the lowest version that knows all its documents' kinds: version 1 for text, Markdown, HTML and PDF only, 2 with Word, PowerPoint or OpenDocument text and presentation files, 3 with spreadsheets, 4 with CSV or TSV files. A version older than a backup says instead that it was made by a newer version and the app should be updated.
 
 In the browser's own storage, an older version reading an Office document (for example after going back from the preview to a release in the same browser) sets that document aside as damaged and keeps the rest.
 

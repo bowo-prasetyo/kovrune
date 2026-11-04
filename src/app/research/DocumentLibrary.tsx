@@ -59,7 +59,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
           if (!loading) void addFiles([...event.dataTransfer.files]);
         }}
       >
-        <p>Drop PDF, Word, PowerPoint, Excel, OpenDocument, text, Markdown or HTML files here, or</p>
+        <p>Drop PDF, Word, PowerPoint, Excel, OpenDocument, CSV, text, Markdown or HTML files here, or</p>
         <label className="file-button">
           Choose files
           <input

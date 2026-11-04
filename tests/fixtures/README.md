@@ -10,4 +10,8 @@
   it with pandoc 3; `report.odt` and `report.odp` were saved by LibreOffice from those.
 - `office/orders.fods`: a small two-sheet workbook written for these tests (made-up orders, a hidden
   contacts sheet), as flat OpenDocument XML; `orders.xlsx` and `orders.ods` were saved from it by
-  LibreOffice 24.2 (`tests/sheets.test.ts`).
+  LibreOffice 24.2 (`tests/sheets.test.ts`); `orders-libreoffice.csv` is its first sheet, saved as CSV by
+  LibreOffice 24.2 with cells as shown (`tests/csv.test.ts`).
+- `office/orders-sjis.csv` and `office/orders-utf8-bom.csv`: made-up Japanese orders, written for these
+  tests as Japanese Excel saves "CSV (comma delimited)" (Windows-932 Shift_JIS, CRLF, the yen sign as
+  byte 0x5C) and "CSV UTF-8" (with a byte-order mark).
