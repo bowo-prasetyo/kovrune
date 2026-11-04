@@ -25,7 +25,7 @@ Libraries were considered and not used. mammoth (.docx) brings four other packag
 Quotes are checked word for word against the text, so it should be what the reader sees, in reading order:
 
 - **Paragraphs** are separated by a blank line, as in Markdown, so long documents are split into parts at paragraphs.
-- **Tables:** a tab between cells and a line break between rows. Paragraphs inside a cell are joined by spaces.
+- **Tables:** one line per row. Each value is labelled with its column's header when the table has a header row; otherwise cells are separated by tabs, empty cells included. See [Tables](#tables).
 - **Left out:**
   - text deleted with tracked changes (in Word, also text moved elsewhere)
   - comments
@@ -40,6 +40,30 @@ Quotes are checked word for word against the text, so it should be what the read
 - **Not read yet:** charts, SmartArt, pictures (there is no OCR), and text in slide masters and layouts.
 
 The same report saved as .docx by pandoc and as .odt by LibreOffice gives the same text, and the tests check this (`tests/office.test.ts`).
+
+## Tables
+
+A table's meaning is often in which column a value is in. A report card marks "◯" under **Excellent**, **Good** or **Needs Improvement**, and the mark means nothing without its column. Phase 1 lost this: empty cells left no trace, so every "◯" came straight after the description. A preview user's question about a report card ended as "answer not confirmed", because the grade was not in the text the model read.
+
+So, since reader version 2 (`src/documents/tables.ts`):
+
+- **With a header row,** each value is written with its column's header, and the bars between cells mark where each one starts:
+
+  ```
+  Perspective | Description | Excellent | Good | Needs Improvement
+  Perspective: Knowledge & Skills | Description: Understands the use of words. | Good: ◯
+  ```
+
+  Even with every column kept, a 4B model counting tabs back to the header row gets the column wrong, while a label next to the value is hard to miss. Empty cells are left out: the labels say where each value is.
+- **Without a header row,** cells are separated by tabs, and empty cells keep their tab, so a value stays in its column: `Ada		36`.
+- **Which rows are headers.** A row the file marks as a header always counts: Word's repeated header row (`w:tblHeader`), PowerPoint's first-row style (`firstRow`), ODF's `table:table-header-rows` and Impress's `table:use-first-row-styles`. Otherwise, the first row counts as a header only if the table has at least two rows and three columns, and every cell of the first row is filled, at most 60 characters long, not a number and not a sentence (it doesn't end with ".", "!", "?" or "。"). Two-column tables are left alone unless marked: they are usually labels and values ("Principal | Tomoko Yamafuji"), and labelling their values with the first row's data would be wrong. A header of two rows names each column with both ("Grade Term 1").
+- **Merged cells.** A cell spanning columns is placed in the first of them; a header cell spanning columns names each of them. A cell merged down over several rows is repeated in each row it covers, so every row reads whole (Word's `vMerge`, PowerPoint's `vMerge`, and ODF's covered cells that no span to their left accounts for).
+- **One line per row.** A cell's paragraphs, line breaks and tabs become spaces, and a table inside a cell is written into the cell on its line.
+- **Quotes.** The labels are in the text quotes are checked against, so **Show text** shows them, though the document doesn't spell them out. A quote copied from the document still verifies as long as it stays within one cell. Quote checking ignores a "|" standing alone, like a list bullet, so a model that quotes a row without the bars is still found.
+
+Only the text of a document is saved, not the file, so a document read before version 2 can't be read again without it. The library points such documents out, with a note to remove them and add the file again. Each Office document is saved with the version of the reader that read it (`OFFICE_READER_VERSION` in `office.ts`); one without a version was read by version 1.
+
+The labels were not measured on a model before they were adopted (building llama.cpp was not available where they were written). They change no existing benchmark suite, since none has Office documents. The [field suite](../eval/field/README.md) has no tables from Office files yet, so the next step is to add tasks over one, such as a report card, and run them on Qwen3.5-2B and 4B.
 
 ## Untrusted files
 
