@@ -48,6 +48,31 @@ h1 {
   margin: 0;
 }
 
+/* The logo's mark beside the name (KovruneMark in App.tsx). */
+header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.mark {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+
+.mark rect {
+  fill: #0f766e;
+}
+
+.mark path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .tagline,
 dt {
   color: var(--muted);
