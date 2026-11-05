@@ -2,18 +2,69 @@
 
 Kovrune answers questions about your documents, and optionally Wikipedia and scholarly papers, with an AI model that runs on your own computer. Every answer quotes its sources, and Kovrune checks that each quote is really in the source.
 
-- [1. Start the app](#1-start-the-app)
-- [2. Choose where the model runs](#2-choose-where-the-model-runs)
-- [3. Set up a local model server](#3-set-up-a-local-model-server)
-- [4. Ask questions](#4-ask-questions)
+New here? Start with the [quick start](#1-quick-start). The other sections are for when you need them.
+
+- [1. Quick start](#1-quick-start)
+- [2. Set up Kovrune](#2-set-up-kovrune)
+  - [Open the app](#open-the-app)
+  - [Choose where the model runs](#choose-where-the-model-runs)
+  - [Set up llama.cpp](#set-up-llamacpp)
+  - [Run the model in the browser](#run-the-model-in-the-browser)
+  - [Use a model server on another computer](#use-a-model-server-on-another-computer)
+  - [Use Ollama (experimental)](#use-ollama-experimental)
+  - [Change the setup or switch models](#change-the-setup-or-switch-models)
+- [3. Ask questions and write reports](#3-ask-questions-and-write-reports)
+  - [Choose where to search](#choose-where-to-search)
+  - [While a question runs](#while-a-question-runs)
   - [Write a report](#write-a-report)
-- [5. Reading the answer](#5-reading-the-answer)
-- [6. Privacy](#6-privacy)
-- [7. Troubleshooting](#7-troubleshooting)
+- [4. Read the answer](#4-read-the-answer)
+  - [The labels](#the-labels)
+  - [The evidence](#the-evidence)
+  - [How the checks work](#how-the-checks-work)
+- [5. What Kovrune can read](#5-what-kovrune-can-read)
+  - [Your documents](#your-documents)
+  - [Open sources](#open-sources)
+- [6. Past answers, export and backup](#6-past-answers-export-and-backup)
+- [7. Privacy](#7-privacy)
+- [8. Troubleshooting](#8-troubleshooting)
 
-## 1. Start the app
+## 1. Quick start
 
-**Use the preview site:** open <https://kovrune.pages.dev/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way (section 2).
+Kovrune needs an AI model running on your computer. There are two ways; the app checks your device and recommends one.
+
+**With a local model server.** This works on any computer with 8 GB of memory or more, including laptops with integrated Intel graphics. It is the tested path. The first time takes longest: installing llama.cpp and a 2.6 GB download.
+
+1. Install llama.cpp: on Linux or WSL, build it ([below](#install-llamacpp)); on a Mac, `brew install llama.cpp`; on Windows, see the same section.
+2. Download the recommended model, Qwen3.5-4B:
+   ```bash
+   mkdir -p ~/models
+   curl -L -o ~/models/Qwen3.5-4B-Q4_K_M.gguf \
+     https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf
+   ```
+3. Start the server, and leave its terminal open while you use Kovrune:
+   ```bash
+   llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
+   ```
+   If you built llama.cpp, the command is `~/llama.cpp/build/bin/llama-server`. Wait for `listening on`.
+4. Open <https://kovrune.pages.dev/> in Chrome or Edge. Choose **Use a local model server** → **Connect**. When the browser asks to let the site reach **Apps on device**, choose **Allow**.
+5. Press **Test this model**. The test takes about a minute.
+6. Add a document with **Choose files**, type a question, and press **Ask**.
+
+On an 8 GB laptop, the lighter Qwen3.5-2B is faster but answers fewer questions correctly ([which model](#choose-where-the-model-runs)). If the browser runs in Windows and the server in WSL, add `--host 0.0.0.0` to the command in step 3.
+
+**In the browser** (experimental). This works on Apple silicon Macs and computers with a recent NVIDIA or AMD GPU, in Chrome or Edge.
+
+1. Open <https://kovrune.pages.dev/>. Choose **Run in this browser**.
+2. Pick **Qwen3.5-4B** and press **Download and test**. The model is downloaded once (2.4 GB) and kept in the browser.
+3. Add a document with **Choose files**, type a question, and press **Ask**.
+
+Then read the label above the answer ([section 4](#the-labels)): it says how far the quotes back the answer. A real quote doesn't prove a right answer, so check the quotes yourself.
+
+## 2. Set up Kovrune
+
+### Open the app
+
+**Use the preview site:** open <https://kovrune.pages.dev/> in Chrome or Edge. Nothing needs installing for the app itself; the model runs on your computer either way.
 
 The preview is built automatically from the latest `main` by GitHub Actions and served by Cloudflare Pages; the commit it was built from is shown at the bottom of the page. It is not a signed release. Signed releases are on the [releases page](https://github.com/bowo-prasetyo/kovrune/releases); to run one, or code you built yourself, run the app locally instead.
 
@@ -40,47 +91,23 @@ On Windows with WSL, run these commands in the WSL terminal and open the address
 
 Settings and downloaded browser models are stored per site: the preview site and a local copy each have their own.
 
-## 2. Choose where the model runs
+### Choose where the model runs
 
-The first screen checks your device and recommends one of two options:
+The first screen checks your device and recommends one of two options. You can choose the other one anyway. Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.
 
 | Option | Good for | What you need |
 | --- | --- | --- |
-| **In this browser** (experimental) | Apple silicon Macs, laptops with a recent NVIDIA or AMD GPU | Chrome or Edge, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B) |
-| **Local model server** | Everything else, including laptops with integrated Intel graphics | llama.cpp, set up once ([section 3](#3-set-up-a-local-model-server)) |
+| **Local model server** | Everything, including laptops with integrated Intel graphics | llama.cpp, set up once ([below](#set-up-llamacpp)) |
+| **In this browser** (experimental) | Apple silicon Macs, computers with a recent NVIDIA or AMD GPU | Chrome or Edge with WebGPU, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B) |
 
 The browser option is **experimental**: it has passed its checks in testing, but has not yet answered a question end to end on a real GPU ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). If the model test is slow or the answers look broken, use a local model server.
 
-You can choose the other option anyway. Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.
+**Which model.** Kovrune is tested with two models, the same on both paths:
 
-**In the browser**, pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. The download happens once and is stored in the browser; **Delete the download** frees the space again, after asking, since using the model again means downloading it again. Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used. If the GPU lacks 16-bit shader support, Kovrune uses a 32-bit version of the model, which needs more memory and runs slower.
-
-## 3. Set up a local model server
-
-[llama.cpp](https://github.com/ggml-org/llama.cpp) server is the supported local server. Ollama works but is experimental: in testing, some versions repeated the same step instead of answering. Ollama also cuts a prompt that is longer than the context it gives the model, without saying so, which can leave out the documents an answer quotes. After the model test, Kovrune asks Ollama for that context and uses it; if Ollama doesn't say, the test shows a warning. To give models more context, start Ollama with `OLLAMA_CONTEXT_LENGTH=4096` or more (for example `OLLAMA_CONTEXT_LENGTH=8192 ollama serve`).
-
-### Install llama.cpp
-
-Get a release from the [llama.cpp releases page](https://github.com/ggml-org/llama.cpp/releases), or build it. To build on Linux or WSL:
-
-```bash
-sudo apt install build-essential cmake git libssl-dev
-git clone https://github.com/ggml-org/llama.cpp.git
-cd llama.cpp
-cmake -B build
-cmake --build build --config Release -j
-```
-
-The server is then at `build/bin/llama-server`. `libssl-dev` gives it HTTPS support. Without it, the `-hf` download option fails with "HTTPS is not supported", and you'll need to download the model yourself as below.
-
-### Download a model
-
-Download one model file into a folder of your choice, for example `~/models`:
-
-| Model | Size | Use |
-| --- | --- | --- |
-| [Qwen3.5-4B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf) | 2.6 GB | Better answers. Choose it when a question needs several sources (for example your PDF and Wikipedia), or when accuracy matters more than speed |
-| [Qwen3.5-2B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf) | 1.2 GB | Faster. Good for questions one of your documents answers; often answers from one source only |
+| Model | Use |
+| --- | --- |
+| **Qwen3.5-4B** (recommended) | Better answers. Choose it when a question needs several sources (for example your PDF and Wikipedia), when you write reports, or when accuracy matters more than speed |
+| **Qwen3.5-2B** | Faster and lighter, for devices with 8 GB of memory or less. Good for questions one of your documents answers; it often answers from one source only, and more of its answers need checking |
 
 On a laptop with 8 GB of memory and integrated Intel graphics, both run on the processor:
 
@@ -89,41 +116,87 @@ On a laptop with 8 GB of memory and integrated Intel graphics, both run on the p
 | Qwen3.5-2B | about 8 tokens/s | 1–2 minutes | 2–3 minutes, often from one source only |
 | Qwen3.5-4B | about 5.5 tokens/s | 3–4 minutes (estimated from the speed) | about 7 minutes, combining the sources |
 
-The model test shows your own speed and how long a research task can take. You can download both models and switch between them ([below](#switch-models)).
+"Tokens/s" is how fast the model writes: a token is about three quarters of a word. The model test shows your own speed and how long a research task can take.
+
+### Set up llama.cpp
+
+[llama.cpp](https://github.com/ggml-org/llama.cpp) server is the supported local server. Setting it up takes three steps: install it, download a model file, and start it. The project tested it on Linux and in WSL (Linux inside Windows); the other ways below install the same server.
+
+#### Install llama.cpp
+
+**On Linux, or Windows with WSL,** build it. To get WSL, run `wsl --install` in PowerShell as administrator, restart, and open **Ubuntu** from the Start menu; run everything below in that terminal.
+
+```bash
+sudo apt install build-essential cmake git libssl-dev
+cd ~
+git clone https://github.com/ggml-org/llama.cpp.git
+cd llama.cpp
+cmake -B build
+cmake --build build --config Release -j
+```
+
+The server is then at `~/llama.cpp/build/bin/llama-server`. `libssl-dev` gives it HTTPS support. Without it, the `-hf` download option fails with "HTTPS is not supported", and you'll need to download the model yourself as below.
+
+**On a Mac,** install it with [Homebrew](https://brew.sh/): `brew install llama.cpp`. The server is then `llama-server`.
+
+**On Windows without WSL,** download a release from the [llama.cpp releases page](https://github.com/ggml-org/llama.cpp/releases): a Windows `.zip` with `cpu-x64` in its name runs on most PCs. Unzip it; the server is `llama-server.exe` in that folder. Download the model in your browser with the link below, and run the commands in PowerShell from that folder with `.\llama-server.exe` and the model file's full path.
+
+In the commands below, `llama-server` stands for the server you installed.
+
+#### Download a model
+
+Download one model file (see [which model](#choose-where-the-model-runs)) into a folder of your choice, for example `~/models`:
+
+| Model | File size |
+| --- | --- |
+| [Qwen3.5-4B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf) | 2.6 GB |
+| [Qwen3.5-2B Q4_K_M](https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf) | 1.2 GB |
+
+The files are in GGUF, llama.cpp's format; "Q4_K_M" means the model is compressed to about 4 to 5 bits per weight, which makes it small enough for a laptop. In a terminal:
 
 ```bash
 mkdir -p ~/models
-curl -L -o ~/models/Qwen3.5-2B-Q4_K_M.gguf \
-  https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/f6d5376be1edb4d416d56da11e5397a961aca8ae/Qwen3.5-2B-Q4_K_M.gguf
-ls -lh ~/models    # the file should be about 1.2G; a few KB means an error page
+curl -L -o ~/models/Qwen3.5-4B-Q4_K_M.gguf \
+  https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-Q4_K_M.gguf
+ls -lh ~/models    # the file should be about 2.6G; a few KB means an error page
 ```
+
+For Qwen3.5-2B, use its link from the table, and name the file `Qwen3.5-2B-Q4_K_M.gguf`. You can download both and [switch between them](#change-the-setup-or-switch-models).
 
 The `.gguf` files inside `llama.cpp/models/` (`ggml-vocab-…`) are test files, not models.
 
-### Start the server
+#### Start the server
 
 ```bash
-cd ~/llama.cpp/build/bin
-./llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080
+llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
 ```
 
-- Use the real path to your model file after `-m`.
-- `--host 0.0.0.0` is needed when the browser and the server run on different systems, such as Windows and WSL.
-- Wait for `listening on http://0.0.0.0:8080`, and leave the terminal open while you use Kovrune.
+Wait for `listening on http://127.0.0.1:8080`, and leave the terminal open while you use Kovrune. What the options do:
 
-Then, in the app: **Use a local model server** → keep the address `http://127.0.0.1:8080/v1` → **Connect** → **Test this model**.
-
-### Switch models
-
-1. In the terminal where `llama-server` runs, press **Ctrl+C** to stop it.
-2. Start it again with the other model file after `-m`, for example `./llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080`, and wait for `listening on`.
-3. In the app: **Change setup** → **Use a local model server** → **Connect** (it lists the new model) → **Test this model**. The header then names the new model.
-
-**Change setup** doesn't throw your setup away. The setup steps show it as **Current setup**, with its last model test (date and speed), and it stays in use until a new setup passes its test. **Keep current setup** goes back to your questions without changing anything. The research screen also shows the last test next to the setup's name.
+- `-m` is the model file: use the real path to yours.
+- `-c 4096` gives the model 4,096 tokens of context: what it can see at once, the question, the steps so far and what it read. Kovrune needs at least 2,048.
+- `-np 1` serves one request at a time, so that request gets the whole context.
+- `--jinja` uses the chat format that comes with the model, which Kovrune needs for the model's actions (search, read, answer).
+- `--port 8080` is the port Kovrune connects to.
+- Add `--host 0.0.0.0` only when the browser and the server run on different systems, such as Windows and WSL, or [another computer](#use-a-model-server-on-another-computer). It lets other systems on your network reach the server.
 
 If the server fails to start or the computer becomes very slow with the bigger model, close other programs, especially browser tabs, and try again.
 
-**On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer. llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://kovrune.pages.dev`).
+#### Connect Kovrune
+
+In the app: **Use a local model server** → keep the address `http://127.0.0.1:8080/v1` → **Connect** → **Test this model**.
+
+**On the preview site,** the page is on the web and the server is on your computer, so Chrome and Edge need your permission for the site to reach it. That permission is called **Apps on device** ("Access other apps and services on this device"). When the browser asks, choose **Allow**. If it doesn't ask, or you blocked it, click the icon left of the address bar → **Site settings** → set **Apps on device** to **Allow**, then reload the page. **Local network access** is a different permission, for other devices on your network, and isn't needed for a server on your own computer.
+
+### Run the model in the browser
+
+The browser path needs WebGPU, which lets a web page use the GPU; recent Chrome and Edge have it. Without WebGPU, the device step offers only the local server.
+
+Pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. **Download and test** downloads it once and stores it in the browser; the next time, the button reads **Load and test**. **Delete the download** frees the space again, after asking, since using the model again means downloading it again.
+
+Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used.
+
+If the GPU lacks 16-bit shader support (a feature of newer GPUs that the faster model versions need), Kovrune uses a 32-bit version of the model, which needs more memory and runs slower.
 
 ### Use a model server on another computer
 
@@ -133,7 +206,7 @@ If your laptop is slow but you have a faster computer on the same network, such 
 1. Set up llama.cpp and start the server as above, with `--host 0.0.0.0` so other computers can reach it, and with an API key so that only you can use it. Make a key and note it, then pass it to the server:
    ```bash
    KEY=$(openssl rand -hex 16); echo "$KEY"
-   ./llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080 --api-key "$KEY"
+   llama-server -m ~/models/Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --host 0.0.0.0 --port 8080 --api-key "$KEY"
    ```
 2. Find its IP address on your network, for example `192.168.1.20`: `ipconfig` on Windows (IPv4 Address), `ipconfig getifaddr en0` on macOS, `hostname -I` on Linux.
 3. Allow incoming connections on port 8080 in its firewall. Windows asks the first time `llama-server` starts; choose **Private networks**.
@@ -145,31 +218,53 @@ If your laptop is slow but you have a faster computer on the same network, such 
 - **Use the IP address, or a name ending in `.local`** (Macs have one, such as `my-desktop.local`). From the preview site, the browser blocks other names, such as `my-desktop` or `my-desktop.lan`, even with the permission allowed.
 - **Only on a network you trust,** such as your home network. The API key stops others on the network from using your server, but the connection isn't encrypted: your questions, the passages of your documents the model reads, and the key itself travel to the desktop in the clear, and anyone on the same network could read them. Don't do this on public, office or campus Wi-Fi.
 
-## 4. Ask questions
+### Use Ollama (experimental)
 
-1. **Add documents:** PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument text (.odt), presentation (.odp) and spreadsheet (.ods), CSV and TSV, text, Markdown or HTML, with **Choose files** or by dropping them on the page. **Show text** shows what Kovrune read from a file.
-2. **Choose where to search.** Your documents are always searched. Tick **Wikipedia** (with its language), **OpenAlex**, **arXiv** or **DataCite** to search those too; with any of them ticked, you can ask questions without adding documents.
-   - **OpenAlex** covers scholarly papers of every field, but Kovrune reads only their abstracts: OpenAlex catalogues papers and does not hold their text. A question about a paper's methods or results beyond its abstract usually ends as "not found".
-   - **arXiv** covers preprints in physics, mathematics, computer science and related fields, and Kovrune reads them in full. Papers are found through DataCite, which registers every arXiv paper's DOI (arXiv's own search can't be used from a web page), and each paper the model reads is downloaded from arxiv.org as a PDF. DataCite needs no key. A long paper is read a part at a time, the part that best matches your question, and a quote shows its page. Downloading a paper takes a few seconds more than reading an abstract.
-   - **DataCite** covers works that research repositories register: Zenodo, university repositories and others, besides arXiv's papers, which the arXiv box covers. Only texts are searched (articles, preprints, reports, theses), not datasets or software. Works on Zenodo, most of what a search finds, are read in full from their PDFs, downloaded from zenodo.org; other works, and Zenodo works without an open PDF, are read as their abstracts. Repositories hold work that has not been peer reviewed, so weigh what you read as you would a preprint. DataCite needs no key.
-   - **OpenAlex API key (optional).** Without a key, OpenAlex shares a small daily budget among everyone on your network's address, which can run out until midnight UTC on a shared network (an office, a campus, a mobile carrier). A free key from [OpenAlex](https://help.openalex.org/api/authentication/) gives you your own; enter it under the boxes once OpenAlex is ticked. It is kept in this browser and sent only to OpenAlex, and backups do not include it. arXiv does not use it.
-   - Your documents come first: the model reads what it finds in them before it may search the others.
-   - Then every source you ticked is searched before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
-   - Each ticked source adds a step or two, so an answer takes a little longer. Leave them unticked for answers from your documents only.
-   - Combining sources works best with Qwen3.5-4B. Qwen3.5-2B often answers from one source only.
-3. **Type a question and press Ask**, or Ctrl+Enter (⌘ Enter on a Mac). The question box is at the top; where to search and **Mode** (a question or a report) are below it. You see each step: what the model searched for, how much each search found ("5 results", "nothing found"), and what it read. A source that found results but isn't quoted in the answer was searched, and the model chose not to use it. If the model is about to say the answer isn't there without having read anything its search found, it is asked once to read first; if it answers in another language than your question, it is asked once to use yours. The step says so. Under the steps, a timer shows how long the question has taken, and how long your model test says it can take; if it takes longer, it says so, and you can keep waiting or stop. **Stop** ends the run at any time. When the answer arrives, the page scrolls to it.
+Ollama works but is experimental: in testing, some versions repeated the same step instead of answering. Use llama.cpp if you can.
+
+- **Context.** Ollama cuts a prompt that is longer than the context it gives the model, without saying so, which can leave out the documents an answer quotes. After the model test, Kovrune asks Ollama for that context and uses it; if Ollama doesn't say, the test shows a warning. To give models more context, start Ollama with `OLLAMA_CONTEXT_LENGTH=4096` or more (for example `OLLAMA_CONTEXT_LENGTH=8192 ollama serve`).
+- **The preview site.** llama.cpp server accepts requests from any site by default; for Ollama, add the site to `OLLAMA_ORIGINS` (for example `OLLAMA_ORIGINS=https://kovrune.pages.dev`).
+
+### Change the setup or switch models
+
+**To switch a local server's model:**
+1. In the terminal where `llama-server` runs, press **Ctrl+C** to stop it.
+2. Start it again with the other model file after `-m`, for example `llama-server -m ~/models/Qwen3.5-2B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080`, and wait for `listening on`.
+3. In the app: **Change setup** → **Use a local model server** → **Connect** (it lists the new model) → **Test this model**. The header then names the new model.
+
+**Change setup** doesn't throw your setup away. The setup steps show it as **Current setup**, with its last model test (date and speed), and it stays in use until a new setup passes its test. **Keep current setup** goes back to your questions without changing anything. The research screen also shows the last test next to the setup's name.
+
+## 3. Ask questions and write reports
+
+1. **Add documents** with **Choose files**, or by dropping them on the page: PDF, Word, PowerPoint, Excel, OpenDocument, CSV, text, Markdown or HTML ([what Kovrune reads](#your-documents)). **Show text** shows what Kovrune read from a file.
+2. **Choose where to search**, under **Search in**. Your documents are always searched. Tick **Wikipedia**, **OpenAlex**, **arXiv** or **DataCite** to search those too ([below](#choose-where-to-search)).
+3. **Type a question and press Ask**, or Ctrl+Enter (⌘ Enter on a Mac). The question box is at the top; where to search and **Mode** (a question or a report) are below it.
+
+You see each step the model takes, then the answer with its label and the quotes it is based on ([section 4](#4-read-the-answer)).
 
 Tips:
 
 - Ask about one document at a time, with words that appear in it.
-- Documents can be in any language, including Chinese, Japanese, Korean and Thai, which are written without spaces. You can ask in another language than a document's: when your documents are in another writing system than your search, such as Japanese documents and an English question, each search is also translated, and the best match in that language is added (the step says "Found by searching the Japanese documents for …"). Between languages that share an alphabet, such as English and French, searches are not translated, so ask about a French document in French, or use words both languages share, such as names. Accents don't matter: "energie" finds "énergie".
 - With a small model, an answer takes a minute or two.
+- You can ask in another language than your documents' ([how](#documents-in-other-languages)).
 - Documents stay in the list after a reload: their text is saved in this browser. **Remove** deletes a document's saved copy; **Undo**, in the notice that follows, brings it back. In a private window, or when the browser blocks site data, they are kept only until you reload, and the page says so.
-- Scanned PDFs (images without a text layer) can't be read.
-- From Word and OpenDocument text files, Kovrune reads the text, tables, and footnotes and endnotes, which follow the text. A table is read one row per line; when it has a header row, each value is labelled with its column's header, for example "Good: ◯", so **Show text** shows these labels although the document doesn't spell them out. A document added before version 2 of this reader shows a note asking you to add the file again: its tables lost which column each value was in. It leaves out headers and footers, comments, and text deleted with tracked changes. From presentations, it reads each slide's text and tables, then its speaker notes; charts, SmartArt and pictures are not read.
-- From spreadsheets, Kovrune reads every sheet, one row per line, with each value labelled by its column's header ("Customer: Acme Trading | Total: ¥125,000"), and dates and numbers as the cells show them. Ask about particular rows: "Which orders are delayed?" or "What is Acme Trading's phone number?". Totals, averages and counts over many rows are not reliable: the model reads only a few parts of a sheet at a time. Formulas show the value saved with the file. A workbook is read up to 20,000 rows and 100 columns per sheet; the document says so when a file is larger.
-- CSV and TSV files are read as one sheet, the same way. Files saved by Japanese Excel as "CSV (comma delimited)" (Shift_JIS) and as "CSV UTF-8" both read correctly; for other languages' older encodings, save as "CSV UTF-8".
-- Older Office files (.doc, .ppt, .xls), RTF files and password-protected files can't be read: open them in Word, PowerPoint, Excel or LibreOffice, save them as .docx, .pptx, .xlsx or PDF (removing the password), and add them again.
+
+### Choose where to search
+
+- **Your documents come first:** the model reads what it finds in them before it may search the others.
+- **With any open source ticked,** you can ask questions without adding documents. Wikipedia is searched in the language you choose next to it.
+- **Every source you tick is searched** before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
+- **Each ticked source adds a step or two,** so an answer takes a little longer. Leave them unticked for answers from your documents only.
+- **Combining sources works best with Qwen3.5-4B.** Qwen3.5-2B often answers from one source only.
+
+What each open source covers, and how much of it Kovrune reads, is in [Open sources](#open-sources).
+
+### While a question runs
+
+- **The steps:** what the model searched for, how much each search found ("5 results", "nothing found"), and what it read. A source that found results but isn't quoted in the answer was searched, and the model chose not to use it.
+- **Guards:** if the model is about to say the answer isn't there without having read anything its search found, it is asked once to read first; if it answers in another language than your question, it is asked once to use yours. The step says so.
+- **The timer,** under the steps, shows how long the question has taken, and how long your model test says it can take. If it takes longer, it says so, and you can keep waiting or stop.
+- **Stop** ends the run at any time. When the answer arrives, the page scrolls to it.
 
 **If a question is interrupted.** Kovrune saves each step of a question as it goes. If the page is closed or reloaded, or the browser crashes, the page shows the question as **Interrupted** the next time:
 - **Continue** picks up where it stopped. The steps already done are restored without asking the model again, so the answer comes sooner. The trace notes how many steps were restored.
@@ -197,38 +292,105 @@ A section the model could not answer says so, and the next one starts. If the mo
 
 Reports work best with Qwen3.5-4B. With Qwen3.5-2B, sections are often long and mostly unbacked by quotes: the labels say so.
 
-## 5. Reading the answer
+## 4. Read the answer
 
-Each answer has a label, then the answer, then what the label means. The label's mark says how much it asks of you: ✓ in green for **Quotes found**; ⚠ in amber when the quotes are real but the answer may not follow from them; ✗ in red when quotes are missing or not in the sources, so nothing backs the answer.
+Each answer has a label, then the answer, then what the label means, then the evidence: the quotes the answer is based on.
 
-| Label | Meaning |
-| --- | --- |
-| **Quotes found** | Every quote is word for word in its source, and every sentence of the answer shares most of its words with a quote, with no number, unit, month or "not" that the quotes don't back. A short answer, such as "4 KiB" or "1987年", is too short to compare word by word, so it gets this label only when the model confirms it, as below. So far only Qwen3.5-4B is asked about short answers: Qwen3.5-2B confirms nearly every answer, right or wrong, so its short answers keep the label below. Last, the model reads the quoted passages again and confirms that they state what the answer says. With Qwen3.5-4B it also reads the passages without seeing its answer, and must find the same answer there. This proves the quotes are real, **not** that the answer is right: a small model often confirms its own answer. Check that they support the whole answer. |
-| **Quotes found, answer not confirmed** | The quotes are real, but when the model read the quoted passages again, it said they state only part of the answer, or do not answer the question, or gave no clear reply. Or, with Qwen3.5-4B, asked for the answer in the passages without seeing its own, it found a different one: the explanation shows what it found. Or, with Qwen3.5-2B, asked which parts of your question the answer gives, it found one the answer leaves out (the explanation names it), or gave no clear reply. A number or a condition may differ from the source, or part of the answer may be missing: check it against the sources. |
-| **Quotes found, answer too short to check** | Shown with models other than Qwen3.5-4B, such as Qwen3.5-2B, and on answers saved by earlier versions, which did not ask the model about short answers. Every quote is word for word in its source, but the answer, such as a name, a number or a version, is too short to compare with them. Short answers are often wrong even with real quotes, for example a version that fixed a problem when the question asked which versions it affected: check that the quotes answer your question. |
-| **3 of 5 sentences backed by a quote** | Every quote is in its source, but the sentences marked ⚠ share few words with the quotes, or have a number, unit, month or "not" that the quotes don't back, or rest on a quote that leaves out more than five words in one place. Small models often add details from memory next to real quotes; check the marked sentences against the sources. |
-| **Some quotes not found (2 of 3 found)** | Only some quotes are in their sources. Check the answer against the sources, starting with the quotes marked ✗. |
-| **Quotes not found** | None of the quotes are in the cited sources. The answer may be wrong. |
-| **No quotes** | The model answered without quoting anything, so nothing backs the answer. |
-| **Not found in your sources** | The model found no answer in what it searched. This is often the right answer. |
+### The labels
+
+The label's mark says how much it asks of you: ✓ in green when the quotes back the answer; ⚠ in amber when the quotes are real but the answer may not follow from them; ✗ in red when quotes are missing or not in the sources, so nothing backs the answer.
+
+| Mark | Label | What it means | What to do |
+| --- | --- | --- | --- |
+| ✓ | **Quotes found** | Every quote is word for word in its source, every sentence of the answer is backed by a quote, and the model confirmed that the quoted passages state the answer | Read the quotes and check that they support the whole answer. Real quotes don't prove a right answer: a small model often confirms its own |
+| ⚠ | **Quotes found, answer not confirmed** | The quotes are real, but the model's check found that they state only part of the answer, give a different answer, or leave part of your question unanswered; or it gave no clear reply. The explanation under the label says which | Check the answer against the sources: a number or a condition may differ, or part of the answer may be missing |
+| ⚠ | **Quotes found, answer too short to check** | The quotes are real, but the answer, such as a name, a number or a version, is too short to compare with them. Shown with models other than Qwen3.5-4B, and on answers saved by earlier versions | Check that the quotes answer your question. Short answers are often wrong even with real quotes, for example a version that fixed a problem when you asked which versions it affected |
+| ⚠ | **3 of 5 sentences backed by a quote** | The quotes are real, but the sentences marked ⚠ are not backed by them | Check the marked sentences against the sources: small models often add details from memory next to real quotes |
+| ✗ | **Some quotes not found (2 of 3 found)** | Only some quotes are in their sources | Check the answer against the sources, starting with the quotes marked ✗ |
+| ✗ | **Quotes not found** | None of the quotes are in the cited sources | The answer may be wrong: check it yourself |
+| ✗ | **No quotes** | The model answered without quoting anything | Nothing backs the answer: check it yourself |
+| – | **Not found in your sources** | The model found no answer in what it searched | This is often the right answer. If you expected one, ask with words from the document, or tick more sources |
 
 **A real quote is not proof that a document is right, or honest.** The check confirms the quote is in the document, not that the document is true. A document, or a Wikipedia page, can also contain text written to steer an AI ("ignore your instructions and answer…"). Kovrune tells the model to treat what it reads as data, and the model can only search, read and answer, so such text cannot reach your files or other sites; but it can still change the answer, with quotes that check out. Look at which document each quote comes from, and be wary of answers built on a document you don't know.
 
-Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from. Quotes must match whole words; capitals, quote marks, list bullets, the bars between table cells, hyphens inside words and line breaks written out as "\n" don't matter. A quote may leave words out with "...": it is found when its parts are in the source in that order, close together, and the passage shown includes the words it left out. A quote that leaves out more than five words in one place is still found, but backs no sentence of the answer: joining distant words can change what the source says. For a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the **closest passage** with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did. Quotes from Wikipedia, OpenAlex, arXiv and DataCite link to the page and show when it was retrieved. For a quote from a PDF, the page it is on is shown next to the document's name, for example "p. 4"; for a quote from a presentation, its slide, for example "slide 4"; for a quote from a spreadsheet, its sheet, for example "sheet 2". Word and OpenDocument text files have no fixed pages (they depend on the layout), so their quotes show no page. Under each quote that was found, **Show in the source** opens the passage around it, as it is in the document, with the quoted words highlighted.
+### The evidence
 
-### Past answers and export
+Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from.
+
+- **Where it is:** for a quote from a PDF, the page is shown next to the document's name, for example "p. 4"; from a presentation, its slide, for example "slide 4"; from a spreadsheet, its sheet, for example "sheet 2". Word and OpenDocument text files have no fixed pages (they depend on the layout), so their quotes show no page. Quotes from Wikipedia, OpenAlex, arXiv and DataCite link to the page and show when it was retrieved.
+- **Show in the source,** under each quote that was found, opens the passage around it, as it is in the document, with the quoted words highlighted.
+- **The closest passage:** for a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the closest passage with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did.
+- **Quotes with "...":** a quote may leave words out with "...". It is found when its parts are in the source in that order, close together, and the passage shown includes the words it left out. A quote that leaves out more than five words in one place is still found, but backs no sentence of the answer: joining distant words can change what the source says.
+- **What counts as a match:** quotes must match whole words; capitals, quote marks, list bullets, the bars between table cells, hyphens inside words and line breaks written out as "\n" don't matter.
+
+### How the checks work
+
+You don't need this to use Kovrune; it says what the labels rest on.
+
+1. **The quotes.** Each quote must be in the source it cites, as above.
+2. **The sentences.** Each sentence of the answer must share most of its words with the quotes, with no number, unit, month or "not" that the quotes don't back, and not rest on a quote that leaves out more than five words in one place. Sentences that fail are marked ⚠.
+3. **The model's check.** The model reads the quoted passages again and is asked whether they state what the answer says. Only a clear yes keeps **Quotes found**.
+4. **Short answers,** such as "4 KiB" or "1987年", are too short to compare word by word, so they get **Quotes found** only when the model confirms them in step 3. So far only Qwen3.5-4B is asked about them: Qwen3.5-2B confirms nearly every answer, right or wrong, so its short answers read **Quotes found, answer too short to check**.
+5. **With Qwen3.5-4B,** the model also reads the passages without seeing its answer, and must find the same answer there.
+6. **With Qwen3.5-2B,** the model lists the parts your question asks for, and the answer must give each.
+
+Steps 3 to 6 ask the same small model that wrote the answer, so they catch some wrong answers, not all.
+
+## 5. What Kovrune can read
+
+### Your documents
+
+| Kind | Files |
+| --- | --- |
+| PDF | `.pdf` with a text layer. Scanned PDFs (images without a text layer) can't be read |
+| Word and OpenDocument text | `.docx`, `.odt` |
+| Presentations | `.pptx`, `.odp` |
+| Spreadsheets | `.xlsx`, `.ods`, `.csv`, `.tsv` |
+| Text | `.txt`, Markdown (`.md`), HTML (`.html`) |
+
+- **Word and OpenDocument text files:** Kovrune reads the text, tables, and footnotes and endnotes, which follow the text. A table is read one row per line; when it has a header row, each value is labelled with its column's header, for example "Good: ◯", so **Show text** shows these labels although the document doesn't spell them out. It leaves out headers and footers, comments, and text deleted with tracked changes.
+- **A note asking you to add a file again:** documents added before Kovrune labelled table columns lost which column each value was in. Remove the document and add the file again.
+- **Presentations:** each slide's text and tables, then its speaker notes. Charts, SmartArt and pictures are not read.
+- **Spreadsheets:** every sheet, one row per line, with each value labelled by its column's header ("Customer: Acme Trading | Total: ¥125,000"), and dates and numbers as the cells show them. Formulas show the value saved with the file. A workbook is read up to 20,000 rows and 100 columns per sheet; the document says so when a file is larger.
+  - Ask about particular rows: "Which orders are delayed?" or "What is Acme Trading's phone number?".
+  - Totals, averages and counts over many rows are not reliable: the model reads only a few parts of a sheet at a time.
+- **CSV and TSV files** are read as one sheet, the same way. Files saved by Japanese Excel as "CSV (comma delimited)" (Shift_JIS) and as "CSV UTF-8" both read correctly; for other languages' older encodings, save as "CSV UTF-8".
+- **Can't be read:** older Office files (.doc, .ppt, .xls), RTF files and password-protected files. Open them in Word, PowerPoint, Excel or LibreOffice, save them as .docx, .pptx, .xlsx or PDF (removing the password), and add them again.
+
+#### Documents in other languages
+
+- Documents can be in any language, including Chinese, Japanese, Korean and Thai, which are written without spaces.
+- **In another writing system:** when your documents are in another writing system than your search, such as Japanese documents and an English question, each search is also translated, and the best match in that language is added (the step says "Found by searching the Japanese documents for …").
+- **In the same alphabet:** between languages that share an alphabet, such as English and French, searches are not translated. Ask about a French document in French, or use words both languages share, such as names.
+- Accents don't matter: "energie" finds "énergie".
+
+### Open sources
+
+All four are off until you tick them, and need no account.
+
+- **Wikipedia:** encyclopedia articles, in the language edition you choose. A long article is read a part at a time, the part that best matches your question first.
+- **OpenAlex:** scholarly papers of every field, but Kovrune reads only their abstracts: OpenAlex catalogues papers and does not hold their text. A question about a paper's methods or results beyond its abstract usually ends as "not found".
+  - **API key (optional).** Without a key, OpenAlex shares a small daily budget among everyone on your network's address, which can run out until midnight UTC on a shared network (an office, a campus, a mobile carrier). A free key from [OpenAlex](https://help.openalex.org/api/authentication/) gives you your own; enter it under the boxes once OpenAlex is ticked. It is kept in this browser and sent only to OpenAlex, and backups do not include it. arXiv does not use it.
+- **arXiv:** preprints in physics, mathematics, computer science and related fields, read in full. Papers are found through DataCite, which registers every arXiv paper's DOI (arXiv's own search can't be used from a web page), and each paper the model reads is downloaded from arxiv.org as a PDF. A long paper is read a part at a time, the part that best matches your question, and a quote shows its page. Downloading a paper takes a few seconds more than reading an abstract.
+- **DataCite:** works that research repositories register: Zenodo, university repositories and others, besides arXiv's papers, which the arXiv box covers. Only texts are searched (articles, preprints, reports, theses), not datasets or software. Works on Zenodo, most of what a search finds, are read in full from their PDFs, downloaded from zenodo.org; other works, and Zenodo works without an open PDF, are read as their abstracts. Repositories hold work that has not been peer reviewed, so weigh what you read as you would a preprint.
+
+## 6. Past answers, export and backup
+
+### Past answers
 
 Each finished answer is saved in the browser. The research screen lists the three most recent under **Recent answers**; **All past answers**, there or at the top of the page, opens the **Past answers** page with every saved answer, newest first, each with its label, when it was asked and which model answered. A report shows how many of its sections got **Quotes found**, in red when any section's quotes are missing or not found.
 
 - **Search** finds answers by words in the question or the answer, or in a report's sections; accents and capitals don't matter. **Show** narrows the list by label: quotes found, to check (⚠), quotes missing or not found (✗), no answer, or reports.
 - Click a question to open the answer on its own page, as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. Its address (`…/answers/…`) can be bookmarked; it opens only in the browser that saved it.
 - A question that is running keeps running while you look at past answers, and what you typed in the question box stays there.
+- **Delete**, on the Past answers page or an answer's page, removes one answer, and **Undo** in the notice that follows brings it back; **Delete all saved answers**, at the bottom of the Past answers page, removes them all, after asking. Documents and models are kept.
 
 The browser's **Back** and **Forward** buttons move between the setup steps, the research screen and past answers, and a reload stays on the same screen.
 
+### Export
+
 - **Export as Markdown** saves the question, the label, the answer (with ⚠ marks), each quote with its source and page, and the steps, as a `.md` file.
 - **Export papers as BibTeX** appears when the answer cites OpenAlex, arXiv or DataCite works, and saves a `.bib` file with their authors, year, venue or repository, DOI and link; arXiv papers carry their arXiv identifier.
-- **Delete**, on the Past answers page or an answer's page, removes one answer, and **Undo** in the notice that follows brings it back; **Delete all saved answers**, at the bottom of the Past answers page, removes them all, after asking. Documents and models are kept.
 
 Exports are made in the browser; nothing is uploaded.
 
@@ -245,39 +407,76 @@ If a saved document or answer can't be read, for example because the browser's s
 
 If the browser's storage for Kovrune is full, saving a document or an answer fails with a message saying so. Free space under **Storage and backup**, for example by deleting a model you don't use, or free disk space.
 
-## 6. Privacy
+## 7. Privacy
 
 - **The model runs on your computer.** Nothing is sent to an online AI service.
 - **Your documents** are read in the browser and never uploaded.
 - **Wikipedia, OpenAlex, arXiv and DataCite** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services: arXiv searches go to DataCite, the arXiv papers the model reads are downloaded from arxiv.org, and the DataCite works it reads on Zenodo are downloaded from zenodo.org. Your documents and your question as you typed it are not sent. An OpenAlex API key, if you enter one, is sent only to OpenAlex.
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub, both at fixed versions that are checked against published checksums;
-  - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([section 3](#use-a-model-server-on-another-computer)).
+  - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([how](#use-a-model-server-on-another-computer)).
 - **Saved in the browser:** your setup, your source choices, and the text extracted from your documents (not the original files). Finished answers are saved too, with their quotes and steps. They stay on this computer, in this browser only. Removing documents or answers never removes a downloaded model; clearing the site's data in the browser settings removes everything, models included.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
+
+### Starting llama.cpp server
 
 | Problem | Cause | Fix |
 | --- | --- | --- |
 | `couldn't bind HTTP server socket ... port: 8080` | Another server (often an earlier llama-server) is using the port | `ss -ltnp \| grep 8080` shows it; stop it with `pkill -x llama-server`, or start on another port (`--port 8081`) and use that address in the app |
 | `failed to open GGUF file ... No such file or directory` | Wrong model path | `find ~ -name "*.gguf"` and use the full path of your model (not a `ggml-vocab` file) |
-| `HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [section 3](#download-a-model), or rebuild after `sudo apt install libssl-dev` |
-| **Connect** says it couldn't reach the server | The server isn't running, listens only inside WSL, or uses another port | Start it with `--host 0.0.0.0`; if Windows still can't reach WSL, use the address from `hostname -I` in WSL |
+| `HTTPS is not supported` with `-hf` | llama.cpp was built without SSL | Download the model with `curl` as in [Download a model](#download-a-model), or rebuild after `sudo apt install libssl-dev` |
+
+### Connecting to the server
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| **Connect** says it couldn't reach the server | The server isn't running, listens only inside WSL, or uses another port | Start it; with WSL, add `--host 0.0.0.0`. If Windows still can't reach WSL, use the address from `hostname -I` in WSL |
 | **Connect** fails on the preview site but works with `npm run dev`. The browser console (F12) shows "Permission was denied for this request to access the `loopback` address space" | The browser blocked the web page from reaching servers on your computer | Icon left of the address bar → **Site settings** → **Apps on device**: **Allow**, then reload. **Local network access** is not the one. Safari may block it entirely; use Chrome or Edge |
-| **Connect** to a server on another computer fails | The server listens only on its own computer, its firewall blocks the port, or the browser blocked the request | Start it with `--host 0.0.0.0` and allow port 8080 in its firewall. On the preview site, use its IP address or `.local` name and set **Local network access** to **Allow** ([section 3](#use-a-model-server-on-another-computer)) |
-| The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
+| **Connect** to a server on another computer fails | The server listens only on its own computer, its firewall blocks the port, or the browser blocked the request | Start it with `--host 0.0.0.0` and allow port 8080 in its firewall. On the preview site, use its IP address or `.local` name and set **Local network access** to **Allow** ([how](#use-a-model-server-on-another-computer)) |
+| "The server is running but reports no models" | The server has no model loaded | Start llama.cpp server with `-m` and the path to your model file; with Ollama, download a model first (`ollama pull`) |
+| "The server gives each request only … tokens of context" | The server was started with a small `-c`, or with `-np` above 1, which splits the context | Restart it with `-c 4096 -np 1`, then test again |
 | After the model test, a note says Ollama runs the model with less context than you set, or didn't say how much | Ollama's default context is smaller than Kovrune needs, and Ollama cuts longer prompts without saying so | Start Ollama with `OLLAMA_CONTEXT_LENGTH=4096` or more, then test again |
+
+### The browser path
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| "This browser does not offer WebGPU" | The browser is old, or WebGPU is off or unsupported on this system | Use a recent Chrome or Edge, or a local model server |
+| "Not enough browser storage: the download needs …" | The disk, or the browser's share of it, is too full | Free disk space, or delete a model you don't use under **Storage and backup** |
+| "Integrity verification failed: … did not match their published SHA-256" | A file was damaged or changed on the way; it was deleted and not used | Try again. If it happens again, open an issue (below) |
+| "This device reports about … GB of memory … It may fail to load", or "This GPU allows buffers of only … MiB" | The GPU or the device may have too little memory for the model | Choose Qwen3.5-2B, or use a local model server |
+| The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
+
+### The model test and speed
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
 | The model test says the model is "not acting on tool results" | Server problem with multi-step conversations (seen with Ollama) | Use llama.cpp server with the same model file |
 | An answer takes many minutes | Slow hardware, or the server is short of memory | Use Qwen3.5-2B, close other programs, and stop Ollama if it's running (`sudo systemctl stop ollama`) |
-| The model test reports far fewer tokens/s than the table in [section 3](#download-a-model), and the first request is the slowest | The model is short of memory: other programs (large spreadsheets, many browser tabs) use it, so parts of the model are moved to disk. WSL gets only half the computer's memory by default | Close those programs and test again. With WSL, give it more memory: in `%UserProfile%\.wslconfig` put `[wsl2]` and `memory=6GB` on two lines, run `wsl --shutdown`, and start the server again. In WSL, `free -h` shows whether swap is in use |
-| "Wikipedia could not be reached" | No internet connection, or the network blocks it | Check the connection; the research continues with the other sources |
-| "Wikipedia did not answer within 20 seconds" (or OpenAlex) | The service is slow or the connection is poor | Try again later; the research continues with the other sources |
-| "arXiv did not answer within 90 seconds" | A paper's PDF downloads slowly on a poor connection | Try again later; the research continues with the other sources |
-| "The PDF of arXiv paper … could not be read" | The PDF is damaged or unusual, or scanned images | The research continues with the other sources and papers |
-| A DataCite work is read only as its abstract ("only its record was read") | The work is not on Zenodo, has no PDF there, or its PDF is too large, scanned or could not be downloaded; the step says which | Nothing to fix: the model answers from the abstract or reads another work |
+| The model test reports far fewer tokens/s than the [speed table](#choose-where-the-model-runs), and the first request is the slowest | The model is short of memory: other programs (large spreadsheets, many browser tabs) use it, so parts of the model are moved to disk. WSL gets only half the computer's memory by default | Close those programs and test again. With WSL, give it more memory: in `%UserProfile%\.wslconfig` put `[wsl2]` and `memory=6GB` on two lines, run `wsl --shutdown`, and start the server again. In WSL, `free -h` shows whether swap (memory moved to disk) is in use |
 | "The model server sent nothing for 300 seconds" | The model server stopped or hung during the question | Check the terminal where llama-server runs; restart it if it's stuck, then press **Continue** on the interrupted question to pick up where it stopped |
-| "OpenAlex is busy (too many requests)" | OpenAlex limits how often anonymous users may search, and many questions in a short time reach the limit. Kovrune waits and tries once more when OpenAlex asks for a short wait | Wait a few minutes. The answer meanwhile comes from your other sources, and the search's step in the trace ends with "failed" |
-| "OpenAlex has no requests left for now; they come back in about … hours" | Without an API key, OpenAlex gives everyone on your network's address one small daily budget, and it is used up until midnight UTC | Add a free OpenAlex API key under **Search in**. Meanwhile the answer comes from your other sources |
+
+### Open sources
+
+In each case, the research continues with your other sources.
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
+| "Wikipedia could not be reached" | No internet connection, or the network blocks it | Check the connection |
+| "Wikipedia did not answer within 20 seconds" (or OpenAlex) | The service is slow or the connection is poor | Try again later |
+| "arXiv did not answer within 90 seconds" | A paper's PDF downloads slowly on a poor connection | Try again later |
+| "The PDF of arXiv paper … could not be read" | The PDF is damaged or unusual, or scanned images | Nothing to fix: the model can read other papers |
+| A DataCite work is read only as its abstract ("only its record was read") | The work is not on Zenodo, has no PDF there, or its PDF is too large, scanned or could not be downloaded; the step says which | Nothing to fix: the model answers from the abstract or reads another work |
+| "OpenAlex is busy (too many requests)" | OpenAlex limits how often anonymous users may search, and many questions in a short time reach the limit. Kovrune waits and tries once more when OpenAlex asks for a short wait | Wait a few minutes. The search's step in the trace ends with "failed" |
+| "OpenAlex has no requests left for now; they come back in about … hours" | Without an API key, OpenAlex gives everyone on your network's address one small daily budget, and it is used up until midnight UTC | Add a free OpenAlex API key under **Search in** ([how](#open-sources)) |
+
+### Documents
+
+| Problem | Cause | Fix |
+| --- | --- | --- |
 | A PDF shows "No text found" | The PDF is scanned images | Use a PDF with selectable text |
+| A file is "password-protected" | Kovrune can't open protected files | Open it, remove the password, save it, and add it again |
+| An older Office file (.doc, .ppt, .xls) or RTF file is refused | These formats aren't read | Save it as .docx, .pptx, .xlsx or PDF, and add it again |
 
 Still stuck? Open an issue at <https://github.com/bowo-prasetyo/kovrune/issues> with what you did, what you saw, and your OS and browser.

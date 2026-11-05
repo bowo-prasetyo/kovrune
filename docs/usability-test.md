@@ -30,7 +30,7 @@ Each session takes about 45 minutes, in person or over a screen share. One moder
 - **Start fresh.** On a computer used for an earlier session, clear the site's data first: icon left of the address bar → **Site settings** → **Delete data**. This removes the previous participant's setup, documents and answers, and any downloaded model. Don't use a guest or private window instead: there the browser saves nothing, so documents, answers and interrupted questions don't survive a reload, and the page says so.
 - The app itself needs only Chrome or Edge (the preview site). For the local-server path, llama.cpp setup is part of the test; Node.js and git are needed only to run the app locally.
 - Don't install anything else for them.
-- For the local-server path, they follow the [user guide](user-guide.md) from section 3. Hand them the guide, not instructions of your own.
+- For the local-server path, they follow the [user guide](user-guide.md) from its [quick start](user-guide.md#1-quick-start), which links to the full llama.cpp setup. Hand them the guide, not instructions of your own.
 - On the preview site, the first **Connect** to a local server needs the browser's **Apps on device** permission. Watch whether the participant notices the prompt and understands the app's message if it was blocked; record it as a finding either way.
 
 **Say at the start:** "We're testing the app, not you. Please think aloud: say what you're looking for and what you expect. I'll mostly stay quiet; if you're stuck, tell me, and I'll note where."
