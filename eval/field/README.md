@@ -793,7 +793,7 @@ npm run bench:endpoint -- --model <model> --suites office,officeholdout --modes 
 
 ## Results
 
-Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 and later. So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
+Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
 
 | Model | Harness | Field | Research | Unanswerable | PDF | Quotes found, wrong (field) | Report |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -832,6 +832,12 @@ Constrained mode, 4,096-token context, the committed tasks only. Each run also i
 | Qwen3.5-4B | 0.28.0, portable llama.cpp build | 40/47 (85%) | 19/22 | 8/8 | 4/4 | 2 of 20 | [json](../results/field-0.29-baseline-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.29.0, search ranking, not adopted | 42/47 (89%) | 19/22 | 8/8 | 3/4 | 1 of 20 | [json](../results/field-0.29-ranking-qwen3.5-4b-q4km.json) |
 | Qwen3.5-4B | 0.30.0, search ranking and read before answering | **42/47 (89%)** | 19/22 | 8/8 | 4/4 | 1 of 20 | [json](../results/field-0.30-guard-qwen3.5-4b-q4km.json) |
+
+**The table stops at 0.30.0, on the 47-task field suite.** From harness 0.32.0 the field suite has 89 tasks and the held-out suite 37, so later runs are not comparable with these rows. Their baselines are in the sections above:
+- [0.32.0, the grown suites](#baselines-on-the-grown-suites): field 79/89 (4B) and 68/89 (2B), held out 35/37 and 24/37.
+- [0.38.0, the 4B short-answer review](#the-4b-short-answer-review-measured-0380-run) and [0.42.0, the cross-check run live](#the-cross-check-run-live-0420-run): 4B field 79/89, held out 35/37, research 19/22, unanswerable 8/8, pdf 4/4.
+- [0.54.0](#fitting-with-room-to-spare-for-slow-machines-0540), the latest full 4B baseline: field 80/89, multi 9/13, held out 35/37, multiholdout 5/8.
+- [0.56.0](#short-forced-reads-the-passage-around-a-quote-0560-measured-not-adopted), both models through the document archive (`--as-source`), which is not comparable with direct runs.
 
 **The first change judged on the suite: Markdown marks in quotes (harness 0.15.0).** In the 0.14.0 runs, the right answers to `f01` (2B) and `f12` (both models) failed only on the quote check. The sources say "called **Apps on device**" and "labelled **Quotes found**", and the models quoted them without the asterisks. Users add Markdown files too, so the app showed **Quotes not found** for real quotes. Quote matching now ignores `*`, `**`, `__` and backticks.
 - **The field suite improves:** 2B goes from 15 to 17, and 4B from 19 to 20.

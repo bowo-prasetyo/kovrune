@@ -13,7 +13,7 @@ Kovrune reads Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument text
 
 ## How the files are read
 
-All four formats are ZIP archives of XML. Reading them needs no library:
+The six Office and OpenDocument formats are ZIP archives of XML. Reading them needs no library:
 
 - **ZIP** (`src/documents/zip.ts`): reads the archive's central directory and inflates entries with the platform's `DecompressionStream("deflate-raw")`, which browsers and Node 22 both have.
 - **XML** (`src/documents/xml.ts`): a small reader that walks elements and text without building a tree. It names elements by namespace, not by the prefix the file uses, so files that declare unusual prefixes, and Strict OOXML, read the same as everything else. It runs the same in browsers and Node, so the tests check the code the app runs.
@@ -64,7 +64,7 @@ So, since reader version 2 (`src/documents/tables.ts`):
 
 Only the text of a document is saved, not the file, so a document read before version 2 can't be read again without it. The library points such documents out, with a note to remove them and add the file again. Each Office document is saved with the version of the reader that read it (`OFFICE_READER_VERSION` in `office.ts`); one without a version was read by version 1.
 
-The labels were not measured on a model before they were adopted (building llama.cpp was not available where they were written). They change no existing benchmark suite, since none has Office documents. The [field suite](../eval/field/README.md) has no tables from Office files yet, so the next step is to add tasks over one, such as a report card, and run them on Qwen3.5-2B and 4B.
+The labels were not measured on a model before they were adopted (building llama.cpp was not available where they were written). They changed no benchmark suite then, since none had Office documents. Since harness 0.58.0, the [office suite](../eval/field/README.md#office-documents-0580) asks questions over a report card's tables, a workbook and a CSV file; it has not yet been run on Qwen3.5-2B and 4B.
 
 ## Spreadsheets
 

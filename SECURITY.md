@@ -14,7 +14,7 @@ Please include what you did, what happened, and the commit or release you used (
 
 In scope:
 
-- **Data leaving the device:** documents, questions or answers sent anywhere other than the model server you configured, or, when you tick them, Wikipedia and OpenAlex searches and the arXiv source's DataCite searches and paper downloads ([README](README.md#running-the-app)).
+- **Data leaving the device:** documents, questions or answers sent anywhere other than the model server you configured, or, when you tick them, Wikipedia and OpenAlex searches, DataCite searches (for the arXiv and DataCite sources), and paper downloads from arxiv.org and zenodo.org ([README](README.md#running-the-app)).
 - **The Content Security Policy** ([`docs/releases.md`](docs/releases.md#content-security-policy)): a way to run scripts the app didn't ship, or to connect to hosts the saved setup doesn't allow.
 - **Downloads:** a model file used without matching its pinned SHA-256 ([design §3.4](docs/design.md#34-catalog-entries-and-downloads)).
 - **Releases:** a way to publish a release whose files don't match its tag, or whose `SHA256SUMS.sig` isn't checked against [`release-signers`](release-signers).

@@ -406,7 +406,7 @@ M1 is done when:
    - unanswerable set ≥ 2/3 correct refusals;
    - valid actions ≥ 95%;
    - every answer judged correct includes a verified quote.
-4. **No hosted inference** in any path, verified by the app's network requests: only model downloads (Hugging Face weights, and WebLLM's compiled model libraries from GitHub), the configured local server, Wikipedia and OpenAlex.
+4. **No hosted inference** in any path, verified by the app's network requests: only model downloads (Hugging Face weights, and WebLLM's compiled model libraries from GitHub), the configured local server, Wikipedia and OpenAlex. (The arXiv and DataCite sources, added after M1's plan, add DataCite, arxiv.org and zenodo.org, only when ticked.)
 5. **Usability:** at least 3 of 5 test users complete setup and one research task without help.
 
 ## Risks
