@@ -110,7 +110,10 @@ export function App() {
     <main>
       <header>
         <div className="title-row">
-          <h1>Kovrune</h1>
+          <h1>
+            <KovruneMark />
+            Kovrune
+          </h1>
           <nav className="title-links" aria-label="Kovrune">
             {active && (
               <a {...linkTo(step === "answers" ? { step: "research" } : { step: "answers" }, navigate)}>
@@ -276,5 +279,15 @@ export function App() {
         </footer>
       )}
     </main>
+  );
+}
+
+/** The logo's mark (docs/brand/README.md): a K whose leg ends in a check, the same drawing as the favicon. */
+function KovruneMark() {
+  return (
+    <svg className="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect width="32" height="32" rx="7" />
+      <path d="M7.5 7.5v17M20.5 7.5 12.5 16l4.5 6.5 7.5-11" />
+    </svg>
   );
 }

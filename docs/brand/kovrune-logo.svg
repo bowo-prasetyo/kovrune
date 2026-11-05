@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 183.5 32" role="img" aria-label="Kovrune">
+  <rect width="32" height="32" rx="7" fill="#0f766e"/>
+  <g fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" stroke="#fff"><path d="M7.5 7.5v17"/><path d="M20.5 7.5 12.5 16l4.5 6.5 7.5-11"/></g>
+  <g stroke="#1c1917" transform="translate(44 0)" fill="none" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.8 3.8V28.2"/><path d="M13.5 13.8L1.8 23.8"/><path d="M7 19.8L14 28.2"/><path d="M27.6 13.8A7.2 7.2 0 1 0 27.6 28.2A7.2 7.2 0 1 0 27.6 13.8Z"/><path d="M41 13.8L47.7 28.2L56 13.8"/><path d="M62.6 13.8V28.2"/><path d="M62.6 21C62.6 15.5 66.3 13.8 72.3 13.8"/><path d="M79.7 13.8V21A7.2 7.2 0 0 0 94.1 21"/><path d="M94.1 13.8V28.2"/><path d="M101.1 28.2V13.8"/><path d="M101.1 21A7.2 7.2 0 0 1 115.5 21V28.2"/><path d="M122.3 21H136.7A7.2 7.2 0 1 0 134.85 25.82"/></g>
+</svg>

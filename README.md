@@ -1,4 +1,10 @@
-# Kovrune
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/kovrune-logo-dark.svg" />
+    <img src="docs/brand/kovrune-logo.svg" alt="Kovrune" height="56" />
+  </picture>
+</h1>
+
 Your documents. Your machine. Answers you can check.
 
 Kovrune is an open-source, local-first research app. Ask a question about your own documents, and optionally Wikipedia and scholarly papers, and get an answer that quotes its sources. Kovrune checks that every quote is really in the source. The AI model runs on your computer, in the browser or on a local model server, so nothing is sent to an online AI service.
