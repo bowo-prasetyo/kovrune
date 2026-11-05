@@ -17,7 +17,7 @@ Kovrune has no tokens, no blockchain and no central AI service. See [`docs/desig
 - **M0 (benchmark gate): provisional go.** See [`docs/m0-benchmark.md`](docs/m0-benchmark.md#m0-status). Help confirm it by running the benchmark on a 16 GB laptop: [issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9).
 - **M1 (local research agent): in progress.** See [`docs/m1-plan.md`](docs/m1-plan.md). The app runs a model in your browser or on a local model server, and answers questions about your own documents with verified quotes. It can also search Wikipedia, OpenAlex (scholarly papers, abstracts) and arXiv (preprints, read in full) when you choose to.
 - **First release: [v0.1.0](https://github.com/bowo-prasetyo/kovrune/releases/tag/v0.1.0), a technical preview, published 2 November 2026.** It fixes one signed build for the usability test; the browser path is experimental in it ([release notes](docs/release-notes/v0.1.0.md)). Security reports: [`SECURITY.md`](SECURITY.md).
-- **Report mode: available.** Long reports built from short, checked answers, one per section ([user guide](docs/user-guide.md#write-a-report), [design](docs/report-mode.md)). Measuring their quality (a report suite) is next.
+- **Report mode: available.** Long reports built from short, checked answers, one per section ([user guide](docs/user-guide.md#write-a-report), [design](docs/report-mode.md)). A report suite measures them (`npm run bench:report`). On it, Qwen3.5-4B's reports give the facts of 9 of 23 expected sections, mostly because the plan is written without seeing the sources, and the optional introduction and conclusion are off by default ([results](eval/field/README.md#the-report-suite-0510)).
 
 ## Running the app
 
@@ -43,7 +43,7 @@ Either way, the wizard then tests the model (about a minute on capable hardware)
 
 Then add documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV, text, Markdown or HTML), or tick Wikipedia, OpenAlex, arXiv or DataCite to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document:
 - **Quotes found**: every quote is word for word in your documents, and every sentence of the answer shares most of its words with a quote, with no number, unit, month or "not" that the quotes don't back. A short answer, such as a number, is too short to compare word by word, so it gets the label only when the model's check below confirms it; only Qwen3.5-4B is asked about short answers so far. The model then checks that the quoted passages state what the answer says, and with Qwen3.5-4B, reads the answer in the passages without seeing its own and must find the same one. This proves the quotes are real, not that the answer is right; check that they support the whole answer.
-- **Quotes found, answer not confirmed**: the quotes are real, but asked whether they state what the answer says, the model said only partly, or not at all, or gave no clear reply; or, reading the passages without seeing the answer, it found a different one, which is shown. A number or a condition may differ, or part of the answer may be missing.
+- **Quotes found, answer not confirmed**: the quotes are real, but asked whether they state what the answer says, the model said only partly, or not at all, or gave no clear reply; or, reading the passages without seeing the answer, it found a different one, which is shown; or, with Qwen3.5-2B, asked which parts of the question the answer gives, it found one left out. A number or a condition may differ, or part of the answer may be missing.
 - **Quotes found, answer too short to check**: with models other than Qwen3.5-4B, and on answers saved by earlier versions of Kovrune, the quotes are real, but the answer (such as a name or a number) is too short to compare with them. Short answers are often wrong even with real quotes, so check that the quotes answer your question.
 - **3 of 5 sentences backed by a quote**: the quotes are real, but the sentences marked ⚠ share few words with them, or have a number, unit, month or "not" that the quotes don't back, or rest on a quote that leaves out more than a few words with "...", so they may come from the model's memory.
 - **Some quotes not found**, **Quotes not found** or **No quotes**: the answer isn't fully backed by its sources, so check it yourself. For a quote that is nearly right, the closest passage in the source is shown with the differences marked.
@@ -68,11 +68,15 @@ npm run bench:compare -- a.json b.json   # two runs task by task, with how sure 
 npm run bench:rescore -- a.json          # recorded answers checked and labelled again, without a model
 npm run bench:rereview -- --model m a.json   # the model's check of recorded answers asked again, with a chosen prompt
 npm run bench:crosscheck -- --model m a.json # the cross-check of recorded answers: the answer read in the passages, compared
+npm run bench:completeness -- --model m a.json # the completeness check of recorded answers: every part of the question given
+npm run bench:report      # the report suite: reports planned and written as the app does, then scored
+npm run pin:browser-models   # re-pin the browser models' files and SHA-256 (a deliberate model update)
+npm run build:redirect    # the page that forwards the old GitHub Pages address
 ```
 
 Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
 
-Product code lives in `src/` (`agent/`, `tools/`, `models/`, `app/`); the benchmark in `eval/` imports it, so benchmark results measure the code the app runs.
+Product code lives in `src/` (`agent/`, `tools/`, `models/`, `sources/`, `documents/`, `app/`); the benchmark in `eval/` imports it, so benchmark results measure the code the app runs.
 
 ## License
 

@@ -120,7 +120,7 @@ All five were agreed by the project owner as proposed. R1 is in the design's pri
     - the questions not written, when the report was stopped;
     - one list of references for the whole report, numbered in the order they are first quoted, with a document's parts counted as one source and open sources linked with their retrieval date;
     - the steps, by section.
-  - **Export papers as BibTeX** collects the OpenAlex papers of every section, each once. Files are named after the report's title.
+  - **Export papers as BibTeX** collects the OpenAlex papers of every section, each once. Files are named after the report's title. (arXiv and DataCite works, from the sources added later, are exported too.)
   - With export in place, the `?report` gate is removed: **Write a report** is shown to everyone. The user guide has a section on it ([Write a report](user-guide.md#write-a-report)).
 - **Slice 4, the report suite: built and run** ([field README](../eval/field/README.md#the-report-suite-0510)).
   - Nine report requests over the field documents (`eval/field/reports.ts`), three held out, each with the sections a good report covers: keywords and facts.

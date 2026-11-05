@@ -91,7 +91,7 @@ npm run release:sign -- path/to/SHA256SUMS --key ~/.ssh/kovrune-release
 
 ## Content Security Policy
 
-Built pages carry a Content Security Policy ([`src/app/csp.ts`](../src/app/csp.ts)). It is a `<meta>` tag, because GitHub Pages can't send headers.
+Built pages carry a Content Security Policy ([`src/app/csp.ts`](../src/app/csp.ts)), as a `<meta>` tag, so it applies on any host, including those that can't send headers. On Cloudflare Pages it is also sent as a header ([below](#content-security-policy)).
 
 **Scripts:** only the app's own. No inline scripts, no scripts from other sites, no `eval`. WebAssembly is allowed (`'wasm-unsafe-eval'`), because WebLLM and pdf.js need it. Plugins (`object-src`), `<base>` and form submissions are blocked.
 
@@ -102,6 +102,6 @@ Built pages carry a Content Security Policy ([`src/app/csp.ts`](../src/app/csp.t
 
 **As a header:** on Cloudflare Pages, the build's `_headers` file sends the same policy as a header, with `frame-ancestors 'none'` so no other site can show the app in a frame. A header policy also applies inside workers, such as the one WebLLM downloads models from. The deploy workflow checks that the served page carries it.
 
-**On hosts that ignore `_headers`,** such as the GitHub Pages preview, only the `<meta>` tag applies. It can't set `frame-ancestors` and doesn't cover workers; WebLLM's downloads are still checked against their SHA-256 ([design §3.4](design.md#34-catalog-entries-and-downloads)).
+**On hosts that ignore `_headers`,** such as GitHub Pages (which served the preview until M2 slice 5) or a plain file server for a release you host yourself, only the `<meta>` tag applies. It can't set `frame-ancestors` and doesn't cover workers; WebLLM's downloads are still checked against their SHA-256 ([design §3.4](design.md#34-catalog-entries-and-downloads)).
 
 `npm run dev` has no policy, because Vite's hot reloading needs inline scripts. To try the policy locally, run `npm run build && npm run preview`.

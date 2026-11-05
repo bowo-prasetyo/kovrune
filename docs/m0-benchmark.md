@@ -156,7 +156,13 @@ npm run bench:endpoint -- --base-url http://localhost:11434/v1 --model hf.co/uns
 
 Notes for Ollama: set `OLLAMA_CONTEXT_LENGTH=4096` and `OLLAMA_NUM_PARALLEL=1` for the service. Without `reasoning_effort`, Qwen3.5 thinks first, and Ollama returns the thinking separately with an empty answer until it finishes, which the harness sees as invalid replies. In WSL, give WSL enough memory (`memory=6GB` in `.wslconfig` on an 8 GB machine); with the default of half the RAM, Ollama was killed by the out-of-memory killer during coding tasks.
 
-Options: `--preset full|quick`, `--suites research,unanswerable,pdf,coding` (the default), `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--ignore-self-check`, `--notes "..."`. Press Ctrl+C to stop early; the report still includes the completed tasks.
+Options:
+- **What runs:** `--preset full|quick`, `--suites research,unanswerable,pdf,coding` (the default; the field suites below are added by name), `--modes constrained,unconstrained`, `--tasks r01-lumen-maintainer,c01-slugify`, `--ignore-self-check`.
+- **The server:** `--base-url`, `--model`, `--context` (default 4096), `--api-key`, `--extra-body '{...}'` (merged into every request).
+- **The record:** `--hardware-class 1|2|3|other`, `--build "..."` (the llama.cpp commit and flags, harness 0.31.0), `--notes "..."`, `--out <file>`.
+- **Settings being measured,** off or at the app's value unless given ([`eval/field/README.md`](../eval/field/README.md)): `--fit-headroom <share>` (0.54.0), `--long-reply-room always|when-answering` (0.55.0), `--forced-read-passage` and `--as-source` (0.56.0).
+
+Press Ctrl+C to stop early; the report still includes the completed tasks.
 
 ### What happens during a run
 
@@ -174,7 +180,7 @@ Options: `--preset full|quick`, `--suites research,unanswerable,pdf,coding` (the
 | --- | --- | --- |
 | Full | All 46 (34 before harness 0.5.0) | Gate results. Only a complete full run of all suites can pass the gate. |
 | Quick | 8: `r01`, `r03`, `r10`, `r16`, `r17`, `r20`, `c01`, `c03` | First checks and slow machines. Covers every task kind; not enough for the gate. |
-| Field | 24 over real documents, plus any local ones (`--suites field`) | Judging prompt and guard changes on real text; reported separately and not part of the gate. See [`eval/field/README.md`](../eval/field/README.md). |
+| Field | `field` (89 questions over seven real documents, plus any local ones), `holdout` (37), `multi` (13, questions that need more than one passage), `multiholdout` (8), `office` (15, over Word, Excel and CSV files) and `officeholdout` (7), each named in `--suites` | Judging prompt and guard changes on real text; reported separately and not part of the gate. The held-out suites are read only as totals. See [`eval/field/README.md`](../eval/field/README.md). |
 
 On slow machines, start with the Quick set in constrained mode only. Use the self-check's time estimate to decide whether a full run is practical.
 
@@ -367,3 +373,36 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.23.0 | The reply-language guard also compares languages in Latin script (English, French, German, Spanish, Italian, Portuguese, Dutch), by their function words, so an English answer to a French question is sent back once. A language is named only with at least 3 function words and twice the runner-up's. None of the 1,033 final answers in the recorded reports would be sent back, so runs are as in 0.21.0 |
 | 0.24.0 | Search across languages. The field suite adds six tasks asked in another language than the document that answers them (`f37`–`f42`), for 42. For each document language written in another script than a search, the research model translates the search terms, and search adds the best match in that language. On the field suite, cross-language tasks rise from 2 to 5 of 6 on both models; 4B's other 36 tasks are unchanged, and 2B keeps 25 of 36, with four gained and four lost. A prompt line and a guard asking the model to search in other languages were measured first and not adopted ([`eval/field/README.md`](../eval/field/README.md#results)). Research, unanswerable and pdf runs are unchanged, because their documents are all in English, so nothing is translated |
 | 0.25.0 | The field suite adds five tasks across English and French, which share an alphabet (`f43`–`f47`), for 47. Before any change, 4B passes 4 of the 5 and 2B passes 3. Translating searches into languages sharing the query's alphabet, when the question's language is known, was measured in two versions and not adopted: 4B stays at 41 of 47 with both, and 2B goes from 33 to 32 and 31 ([`eval/field/README.md`](../eval/field/README.md#results)). Search is unchanged, so research, unanswerable and pdf runs are too |
+| 0.26.0 | The sentence check: each number in a backed sentence must be quoted (or be in a cited title or the question, or the sum or difference of two quoted numbers), a sentence that says "not" needs a quote that does, and a "…" in a quote may not leave out a negation. Five search results instead of three were measured and not adopted ([field README](../eval/field/README.md#five-search-results)) |
+| 0.27.0 | New `holdout` suite (16 questions over the field documents), read only as totals. From here, a change is run on it too and compared with its baseline by `npm run bench:compare`, task by task, with tasks gained, lost and a p-value ([held-out suite](../eval/field/README.md#held-out-suite)) |
+| 0.28.0 | The model checks its answer: an answer the word checks would label **Quotes found** is shown back with its quoted passages, and keeps the label only if the model says they state it (`src/agent/review.ts`) |
+| 0.29.0 | Search fixes (a final "s" kept after another, words joined by "-" or "." also indexed by their parts), measured and not adopted at first ([search ranking](../eval/field/README.md#search-ranking)). From here, quality runs use a portable llama.cpp build |
+| 0.30.0 | The 0.29.0 search fixes adopted as defect fixes, with a guard: an answer quoting a document seen only as a search snippet is sent back once to read it ([read before answering](../eval/field/README.md#read-before-answering)) |
+| 0.31.0 | `--build` records the llama.cpp build in the report's environment, and `bench:compare` warns about different CPUs only when the two runs do not share a portable build ([field README](../eval/field/README.md#runs-repeat-on-one-machine-not-across-machines)) |
+| 0.32.0 | The field suite grows from 47 to 89 tasks and the held-out suite from 16 to 37, over the same documents. Results before 0.32.0 are on the smaller suites ([growing the suites](../eval/field/README.md#growing-the-suites)) |
+| 0.33.0 | Quotes are compared with a Markdown source as it reads: a link or image counts as its text, a backslash escape as the character it escapes. Measured by re-scoring |
+| 0.34.0 | The model's check fails closed: no readable verdict reads **Quotes found, answer not confirmed**. Short answers, too short for the sentence check, are asked about too |
+| 0.35.0 | The check of short answers is limited to Qwen3.5-4B; other models' short answers keep **Quotes found, answer too short to check** |
+| 0.36.0 | From the AI/ML audit: cut-off replies detected from the finish reason; each call records the tool results removed to fit the context; source requests time out after 20 s and retry once on HTTP 429; the model server fails after 5 minutes of silence. The sentence check also needs a "not" to come from a quote making the same claim, and a date's month and a number's unit to match the quotes |
+| 0.37.0 | A quote that leaves out more than five words in one place is found but backs no sentence; search no longer indexes a part's label ("part 4 of 12"); a comma is a decimal mark where it can't be a thousands separator ("1,5"); a resumed task replays a cut-off reply as cut off. Measured by re-scoring: no recorded label changes |
+| 0.38.0 | Ollama's context is read after the model test (`/api/ps`, `/api/show`); "not" and "no" are search stop words. Run on Qwen3.5-4B to measure the 0.34.0 short-answer check |
+| 0.39.0 | Used only on the branch of [pull request #85](https://github.com/bowo-prasetyo/kovrune/pull/85), a new stemmer, measured and not adopted; `main` went from 0.38.0 to 0.40.0 |
+| 0.40.0 | The cross-check, for Qwen3.5-4B: the model reads the quoted passages without seeing the answer, and an answer it reads differently loses **Quotes found** (`src/agent/crosscheck.ts`). Measured on recorded answers with `npm run bench:crosscheck` |
+| 0.41.0 | A quote's `\n`, `\r` and `\t` written out as text count as whitespace. Measured by re-scoring: two answers change |
+| 0.42.0 | Reports record the cross-check's result (`support.crossCheck`), and `bench:rescore` uses it. Qwen3.5-4B run live with the cross-check |
+| 0.43.0 | An action whose result was removed to fit the context is no longer a repeat, so the model can read a document again |
+| 0.44.0 | A read result that has to leave the context keeps its document's ID, title and the two sentences that best match the question |
+| 0.45.0 | Used only on an unmerged branch: a dropped search keeping its results' IDs and titles, measured and not adopted |
+| 0.46.0 | New `multi` (13) and `multiholdout` (8) suites: questions that need more than one passage |
+| 0.47.0 | Reports keep final answers up to 8,000 characters (`FINAL_CHARS`), instead of 600 |
+| 0.48.0 | The completeness check, for Qwen3.5-2B: the model lists the parts the question asks for, and an answer that leaves one out loses **Quotes found** (`src/agent/completeness.ts`). Measured with `npm run bench:completeness` |
+| 0.49.0 | After a reply is cut off, the raised token limit (1,024) is kept for the rest of the question |
+| 0.50.0 | The read-first guard asks only for as many reads as the calls left allow, keeping two for the answer and a retry |
+| 0.51.0 | The report suite (`reports`, 6 requests; `reportsholdout`, 3) and `npm run bench:report` ([report-mode.md](report-mode.md)) |
+| 0.52.0 | The report planner's source overview, measured and not adopted (`plansFromSources` off; `bench:report --overview`) |
+| 0.53.0 | A report's introduction and conclusion (`src/agent/synthesis.ts`), measured and off by default |
+| 0.54.0 | Reports record the prompt tokens the server took from its cache, and its prompt time. `--fit-headroom`, measured and not adopted |
+| 0.55.0 | `--long-reply-room`, measured on the report suite: no effect, not adopted. `bench:report` records cut-off replies and cache use per section |
+| 0.56.0 | `--as-source` serves the field documents as an open source, and reports record the objections that sent the model on. `--forced-read-passage`, measured and not adopted |
+| 0.57.0 | The chunker keeps a heading with what it introduces. Adopted as a defect fix before its model runs; the retrieval floors in `tests/retrieval.test.ts` lowered by one passage |
+| 0.58.0 | New `office` (15) and `officeholdout` (7) suites, over a Word report card, an Excel workbook and a Shift_JIS CSV file. Not yet run on a model ([office documents](../eval/field/README.md#office-documents-0580)) |

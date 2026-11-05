@@ -124,7 +124,7 @@ Later milestones are compared with different alternatives:
 | 7-day and 30-day retention | Tracked with opt-in, privacy-preserving telemetry only |
 | Trusted-circle usage (after M4) | Number of circles with at least one delegated task per week |
 
-**Quotes found** is the label a reader is most likely to take as "the answer is right", so the false reassurance rate is the measure of Kovrune's core promise. The label means every quote is in its source, at least one sentence of the answer is long enough to judge, every judged sentence is backed by one, and the model, asked whether the quoted passages state what the answer says, replies yes (`src/agent/review.ts`, since harness 0.28.0). A judged sentence is backed when it shares at least half of its content words with the verified quotes, each of its numbers is quoted (or in a cited title or the question, or the sum or difference of two quoted numbers), and it says "not" only if a quote does; an answer too short to judge counts as backed when it is word for word in a verified quote that, with its title, shares more than two thirds of the question's content words (`labelledQuotesFound` in `src/agent/support.ts`); the benchmark and the app use the same rule.
+**Quotes found** is the label a reader is most likely to take as "the answer is right", so the false reassurance rate is the measure of Kovrune's core promise. The label means every quote is in its source, every judged sentence of the answer is backed by one, and the model, asked whether the quoted passages state what the answer says, replies yes (`src/agent/review.ts`, since harness 0.28.0; a check that gives no readable verdict counts as not confirmed, since 0.34.0). An answer with no sentence long enough to judge, and not backed by the short-answer rule below, is asked about only with Qwen3.5-4B (0.35.0); other models' such answers read **Quotes found, answer too short to check**. Two more checks, each for the model it was measured on, can still withhold the label: with Qwen3.5-4B, the model reads the quoted passages without seeing its answer and must find the same one (`src/agent/crosscheck.ts`, 0.40.0); with Qwen3.5-2B, the model lists the parts the question asks for, and the answer must give each (`src/agent/completeness.ts`, 0.48.0). A judged sentence is backed when it shares at least half of its content words with the verified quotes, each of its numbers is quoted (or in a cited title or the question, or the sum or difference of two quoted numbers), and it says "not" only if a quote does; an answer too short to judge counts as backed when it is word for word in a verified quote that, with its title, shares more than two thirds of the question's content words (`sentenceSupport` in `src/agent/support.ts`). `labelledQuotesFound` there combines these checks; the benchmark and the app use the same rule.
 
 Telemetry is **off by default** and opt-in only. Without it, these metrics come from voluntary reports and the evaluation set.
 
@@ -171,7 +171,7 @@ The central architectural rule: **the agent engine does not depend directly on a
 | P2P (if adopted) | js-libp2p with WebRTC, WebTransport, and circuit relay | Production transport, community relays | Decided in M4 |
 | Data validation | Zod | Validate every external message and tool input | Used |
 | Testing | Vitest and Playwright | Unit, integration, cross-browser end-to-end | Node's built-in test runner for unit tests; end-to-end checks in headless Chromium are run by hand, not in CI |
-| Hosting | Cloudflare Pages or Netlify (custom headers), with signed, reproducible builds | See §7.4 | An unsigned preview on GitHub Pages; the target host and signed builds are M2 (§7.4) |
+| Hosting | Cloudflare Pages or Netlify (custom headers), with signed, reproducible builds | See §7.4 | M1 published an unsigned preview on GitHub Pages. Since M2 slice 5, the app is on Cloudflare Pages with a header CSP, and releases are signed (§7.3–7.4) |
 
 These are starting choices. Package versions and browser compatibility are verified at the start of each milestone.
 
@@ -419,6 +419,8 @@ The research agent searches accessible sources, extracts passages and metadata, 
 - CORS-friendly scholarly and technical APIs, for example Wikipedia, OpenAlex, Crossref, arXiv metadata where reachable, the GitHub API, and the Hugging Face Hub.
 - Search providers that allow browser access with the user's own API key, where available.
 
+**Built so far:** the user's documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV and TSV, text, Markdown and HTML; [`office-formats.md`](office-formats.md)), and four open sources, each off until the user ticks it: Wikipedia, OpenAlex (abstracts), arXiv (found through DataCite, papers read in full from arxiv.org), and DataCite (repository works, read in full from Zenodo's PDFs where available, otherwise as abstracts).
+
 The product is positioned as **scholarly and technical research**, not general web browsing. Each source adapter declares what it can reach, and the UI explains when a URL cannot be fetched and offers to import it manually.
 
 **Later, optional:** a self-hostable retrieval companion that the user (or a trusted circle) runs, for general web fetching. Kovrune does not operate one centrally.
@@ -546,7 +548,7 @@ The deployed app can read every user's identity keys and private data, so its in
 **Since M2 slice 4** ([`releases.md`](releases.md)):
 - **Reproducible builds:** a release built from a tag can be rebuilt byte for byte, and CI checks this on every pull request.
 - **Release checksums:** a tag produces a draft release with `SHA256SUMS`.
-- **Content Security Policy:** in place as above. Because the configured endpoint is only known once setup is saved, `connect-src` is open during setup and narrowed to Hugging Face, GitHub's raw files, Wikipedia, OpenAlex and the saved model server afterwards.
+- **Content Security Policy:** in place as above. Because the configured endpoint is only known once setup is saved, `connect-src` is open during setup and narrowed afterwards to Hugging Face, GitHub's raw files, Wikipedia, OpenAlex, DataCite, arXiv, Zenodo and the saved model server (`CONNECT_HOSTS` in `src/app/csp.ts`).
 - **Since slice 5:** releases are signed with an SSH key the owner holds, never CI: the owner rebuilds the tag, `npm run release:sign` checks the rebuild against CI's `SHA256SUMS` and signs it, and a workflow unpublishes any release whose signature doesn't verify against `release-signers`. The app is hosted on Cloudflare Pages, which sends the policy as a header (§7.4).
 
 ### 7.4 Hosting requirements
@@ -615,7 +617,7 @@ Reference hardware classes for benchmarks:
 
 ## 10. Repository structure
 
-Modules are added when their responsibilities become concrete; empty directories are not created in advance. The tree below is the full design. In M1, `src/` has `app/`, `agent/`, `models/`, `tools/`, `sources/` (Wikipedia and OpenAlex) and `documents/` (text extraction and chunking); `p2p/`, `storage/`, `security/` and `workers/` arrive with their milestones.
+Modules are added when their responsibilities become concrete; empty directories are not created in advance. The tree below is the full design. Today, `src/` has `app/`, `agent/`, `models/`, `tools/`, `sources/` (Wikipedia, OpenAlex, arXiv and DataCite) and `documents/` (text extraction from PDF, Office, OpenDocument and CSV files, and chunking); `p2p/`, `storage/`, `security/` and `workers/` arrive with their milestones.
 
 ```
 kovrune/
