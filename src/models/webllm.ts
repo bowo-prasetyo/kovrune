@@ -96,8 +96,19 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
   return new WebLLMModel(engine, worker, { id: options.modelId, runtime: "webllm", contextLength });
 }
 
+/**
+ * What a generation fails with once the GPU device is lost. WebLLM then unloads the model
+ * in its worker, and the request in flight fails with whatever touched the freed memory
+ * first: on the class 1 laptop (Intel Iris Xe, Windows) the driver reset with
+ * DXGI_ERROR_DEVICE_HUNG and the model test showed "BindingError: Cannot pass deleted
+ * object as a pointer of type GrammarMatcher". Later requests fail with "Model not loaded".
+ */
+const GPU_LOST = /deleted object|Device was lost|device.{0,20}lost|Model not loaded/i;
+
 export class WebLLMModel implements LanguageModel {
   readonly info: ModelInfo;
+  /** True once the GPU device was lost; the model must be loaded again before use. */
+  lost = false;
   private readonly engine: WebWorkerMLCEngine;
   private readonly worker: Worker;
 
@@ -159,6 +170,11 @@ export class WebLLMModel implements LanguageModel {
       // interruptGenerate can end the stream quietly; report the stop like a cancelled fetch.
       signal?.throwIfAborted();
       yield { text: "", done: true, usage, ...(finishReason ? { finishReason } : {}) };
+    } catch (error) {
+      if (signal?.aborted || !GPU_LOST.test(String(error))) throw error;
+      this.lost = true;
+      // "device lost" is what describeModelError recognises; the original error is kept for the console.
+      throw new Error("The GPU device was lost (the graphics driver reset or ran out of memory), so the model was unloaded", { cause: error });
     } finally {
       signal?.removeEventListener("abort", onAbort);
     }

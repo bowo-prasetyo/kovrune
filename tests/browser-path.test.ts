@@ -120,6 +120,41 @@ describe("load progress", () => {
 });
 
 describe("WebLLM adapter", () => {
+  it("reports a lost GPU plainly and marks the model for reloading", async () => {
+    // Class 1 laptop (Intel Iris Xe, Windows): the driver reset with DXGI_ERROR_DEVICE_HUNG during the
+    // model test, WebLLM unloaded the model, and the test showed "BindingError: Cannot pass deleted
+    // object as a pointer of type GrammarMatcher".
+    const { WebLLMModel } = await import("../src/models/webllm.ts");
+    const failing = (message: string) => ({
+      chat: {
+        completions: {
+          create: async () => ({
+            async *[Symbol.asyncIterator]() {
+              throw Object.assign(new Error(message), { name: "BindingError" });
+            },
+          }),
+        },
+      },
+      interruptGenerate: () => {},
+    });
+    const settings = { path: "browser" as const, modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 };
+    for (const message of ["Cannot pass deleted object as a pointer of type GrammarMatcher", "Model not loaded before trying to complete ChatCompletionRequest."]) {
+      const model = new WebLLMModel(failing(message) as never, {} as Worker, { id: "Qwen3.5-4B-q4f16_1-MLC", runtime: "webllm", contextLength: 4096 });
+      const error = await (async () => {
+        for await (const _ of model.generate({ messages: [], maxTokens: 8 }));
+      })().catch((e) => e);
+      assert.equal(model.lost, true);
+      assert.match(describeModelError(error, settings), /^The GPU stopped responding or ran out of memory, so the model was unloaded\. On Windows[\s\S]*DXGI_ERROR_DEVICE_HUNG/);
+    }
+    // Other errors pass through unchanged and leave the model usable.
+    const other = new WebLLMModel(failing("JSON parse error") as never, {} as Worker, { id: "x", runtime: "webllm", contextLength: 4096 });
+    const error = await (async () => {
+      for await (const _ of other.generate({ messages: [], maxTokens: 8 }));
+    })().catch((e) => e);
+    assert.equal(other.lost, false);
+    assert.equal(error.message, "JSON parse error");
+  });
+
   it("stops at once, without waiting for the engine's next token", async () => {
     const { WebLLMModel } = await import("../src/models/webllm.ts");
     let interrupted = false;

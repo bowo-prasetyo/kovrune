@@ -53,6 +53,8 @@ interface LoadedBrowserModel {
   promise: Promise<LanguageModel>;
   listeners: Set<(progress: LoadProgress) => void>;
   last?: LoadProgress;
+  /** Set once loaded: whether the model's GPU device has since been lost. */
+  lost?: () => boolean;
 }
 
 let browserModel: LoadedBrowserModel | undefined;
@@ -63,6 +65,8 @@ export function loadBrowserModel(
   contextLength: number,
   onProgress?: (progress: LoadProgress) => void,
 ): { promise: Promise<LanguageModel>; unsubscribe: () => void } {
+  // A model whose GPU device was lost is unusable; the next use loads it again (from the browser's storage).
+  if (browserModelLost()) releaseBrowserModel();
   if (browserModel?.modelId !== modelId) {
     releaseBrowserModel();
     const downloadMB = browserModelFor(modelId)?.model.downloadMB ?? 0;
@@ -78,9 +82,12 @@ export function loadBrowserModel(
       }),
     );
     // A failed load is forgotten, so the next attempt starts again.
-    entry.promise.catch(() => {
-      if (browserModel === entry) browserModel = undefined;
-    });
+    entry.promise.then(
+      (model) => (entry.lost = () => (model as { lost?: boolean }).lost === true),
+      () => {
+        if (browserModel === entry) browserModel = undefined;
+      },
+    );
     browserModel = entry;
   }
   const entry = browserModel;
@@ -89,6 +96,11 @@ export function loadBrowserModel(
     if (entry.last) onProgress(entry.last);
   }
   return { promise: entry.promise, unsubscribe: () => onProgress && entry.listeners.delete(onProgress) };
+}
+
+/** Whether the loaded browser model's GPU device was lost, so it must be loaded again. */
+export function browserModelLost(): boolean {
+  return browserModel?.lost?.() === true;
 }
 
 /** Unloads the browser model, freeing GPU memory. */
@@ -240,7 +252,7 @@ export function describeModelError(error: unknown, settings: Settings): string {
   if (settings.path === "local-server") return describeConnectionError(error, settings.baseUrl);
   const message = error instanceof Error ? error.message : String(error);
   if (/device.*lost|out of memory|OOM|allocation/i.test(message)) {
-    return `The GPU ran out of memory or stopped responding (${message}). Try the lighter model, close other tabs, or use a local model server.`;
+    return "The GPU stopped responding or ran out of memory, so the model was unloaded. On Windows this shows in the console as DXGI_ERROR_DEVICE_HUNG: the GPU took too long and the graphics driver was reset. Close other tabs and programs and try again, or use the lighter model. On integrated graphics a local model server usually works better.";
   }
   if (isQuotaError(error)) {
     return "The browser has no more storage for this site, so the model could not be stored. Free disk space, or delete a model or documents you don't need (under Storage and backup on the research screen), and try again.";

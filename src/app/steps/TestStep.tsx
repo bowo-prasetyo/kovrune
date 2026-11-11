@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { describeSelfCheck, runSelfCheck, type SelfCheckResult } from "../../agent/self-check.ts";
 import { ollamaContextLength } from "../../models/local-endpoint.ts";
 import { LoadProgressView } from "../LoadProgressView.tsx";
-import { describeModelError, describeSetup, openModel, slowModelAdvice } from "../models.ts";
+import { browserModelLost, describeModelError, describeSetup, openModel, slowModelAdvice } from "../models.ts";
 import { contextFromServer, SERVER_PRESETS } from "../servers.ts";
 import type { Settings } from "../settings.ts";
 import { useModelLoad } from "../useModelLoad.ts";
@@ -124,7 +124,16 @@ export function TestStep({
       <div className="actions">
         <button onClick={onBack}>Back</button>
         {(state.phase === "done" || state.phase === "error") && (
-          <button onClick={() => setAttempt((n) => n + 1)}>Test again</button>
+          <button
+            onClick={() => {
+              // After a lost GPU the model is loaded again, with its progress shown; the test
+              // then starts once loading is done. Otherwise only the test runs again.
+              if (browserModelLost()) load.retry();
+              else setAttempt((n) => n + 1);
+            }}
+          >
+            Test again
+          </button>
         )}
         {state.phase === "done" && state.result.passed && !state.context?.tooSmall && (
           <button className="primary" onClick={() => onPassed(state.result, state.context?.contextLength)}>

@@ -202,6 +202,12 @@ Still open for the slice:
   - A worker that fails to start now ends the load at once with "Part of Kovrune, the model runner, could not be downloaded…", what to try, and **Try again**. Checked in Chromium by cutting off the worker's download: the message appeared in 1.4 s.
   - The step before WebLLM's first report is named: "Starting the model runner and connecting to the GPU…", then "Starting the download…".
   - When loading shows the same progress for a minute, a hint says what to check for that step: the connection and network filters, a stalled download, or the GPU preparing, which can take minutes the first time.
+- After the reload, the 2.4 GB download and loading finished. The model test then failed with "BindingError: Cannot pass deleted object as a pointer of type GrammarMatcher".
+  - The console showed the cause: `DXGI_ERROR_DEVICE_HUNG`, then WebLLM's "Device was lost". The GPU took too long on the model's work, Windows reset the graphics driver, and WebLLM unloaded the model while the request was still running.
+  - This is the outcome the device step warns about for integrated Intel graphics, and supports keeping that advice.
+  - Fixes:
+    - A generation that fails this way, or with "Model not loaded" afterwards, now reports that the GPU stopped responding or ran out of memory, names the Windows message, and suggests closing other programs, the 2B model, or a local server.
+    - The model is marked lost. **Test again** loads it again from the browser's storage, with progress shown, instead of reusing the unloaded engine.
 
 Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work. Done in M2 slice 1: both are pinned and every file is checked against its SHA-256 ([design §3.4](design.md#34-catalog-entries-and-downloads)).
 
