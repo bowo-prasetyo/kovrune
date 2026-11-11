@@ -16,6 +16,20 @@ import type { GenerationChunk, GenerationRequest, LanguageModel, ModelInfo } fro
 
 /** Progress text while the downloaded files are checked; the app's progress line recognises it. */
 export const CHECKING_DOWNLOAD = "Checking the downloaded files";
+/** Progress text from creating the worker until WebLLM's first report; the app's progress line recognises it. */
+export const STARTING_RUNNER = "Starting the model runner";
+
+/**
+ * The worker that runs the model could not start, usually because its script did not
+ * download. WebLLM would wait for it forever: on the class 1 laptop the script's download
+ * was cut off (ERR_CONNECTION_RESET) and the page said "Starting…" for over five minutes.
+ */
+export class RunnerLoadError extends Error {
+  constructor() {
+    super("The model runner could not be loaded");
+    this.name = "RunnerLoadError";
+  }
+}
 
 export interface WebLLMOptions {
   /** A WebLLM prebuilt model ID, e.g. "Qwen3-4B-q4f16_1-MLC". */
@@ -36,15 +50,26 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
     toVerify = await filesToVerify(pinned, caches, verified);
   }
 
+  options.onProgress?.({ progress: 0, timeElapsed: 0, text: STARTING_RUNNER });
   const worker = new Worker(new URL("./webllm.worker.ts", import.meta.url), { type: "module" });
+  const runnerFailed = new Promise<never>((_, reject) =>
+    worker.addEventListener("error", (event) => {
+      event.preventDefault();
+      reject(new RunnerLoadError());
+    }),
+  );
+  runnerFailed.catch(() => {});
   let engine: WebWorkerMLCEngine;
   try {
-    engine = await CreateWebWorkerMLCEngine(
-      worker,
-      options.modelId,
-      { appConfig: pinnedAppConfig(prebuiltAppConfig), initProgressCallback: options.onProgress },
-      { context_window_size: contextLength },
-    );
+    engine = await Promise.race([
+      CreateWebWorkerMLCEngine(
+        worker,
+        options.modelId,
+        { appConfig: pinnedAppConfig(prebuiltAppConfig), initProgressCallback: options.onProgress },
+        { context_window_size: contextLength },
+      ),
+      runnerFailed,
+    ]);
   } catch (error) {
     worker.terminate();
     // A file that failed WebLLM's own check stays in the cache; delete it so the next attempt downloads it again.

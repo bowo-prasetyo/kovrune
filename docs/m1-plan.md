@@ -194,6 +194,15 @@ Still open for the slice:
 - **Class 2 check.** The same research task works in the browser on a class 2 machine (issue #9 or a tester).
 - ~~**Class 1 check.** On the class 1 laptop, the advisor recommends the local server.~~ Done: the device step recommended a local server because of the integrated Intel graphics.
 
+**Browser path on the class 1 laptop** (Chrome 157, Windows, Intel Iris Xe "gen-12lp", 16 GB; preview `25c2069`). Not the class 2 check: the device step rightly recommended a local server, and the owner chose "Run in this browser anyway".
+- The model test stayed on "Starting…" for over five minutes, with nothing in the console.
+- The Network tab showed the cause: the model runner's script (`webllm.worker-….js`) had been cut off after 37 s (`net::ERR_CONNECTION_RESET`). WebLLM waits for its worker forever, and Kovrune did not notice that the worker never started.
+- Reloading the page fixed it, and the download started.
+- Fixes:
+  - A worker that fails to start now ends the load at once with "Part of Kovrune, the model runner, could not be downloaded…", what to try, and **Try again**. Checked in Chromium by cutting off the worker's download: the message appeared in 1.4 s.
+  - The step before WebLLM's first report is named: "Starting the model runner and connecting to the GPU…", then "Starting the download…".
+  - When loading shows the same progress for a minute, a hint says what to check for that step: the connection and network filters, a stalled download, or the GPU preparing, which can take minutes the first time.
+
 Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work. Done in M2 slice 1: both are pinned and every file is checked against its SHA-256 ([design §3.4](design.md#34-catalog-entries-and-downloads)).
 
 ### Slice 4: open sources and polish (built; usability test pending)

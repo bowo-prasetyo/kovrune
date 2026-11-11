@@ -27,8 +27,25 @@ export function describeLoadProgress(report: { progress: number; text: string },
   else if (report.text.startsWith("Finish loading")) text = "Model loaded.";
   // CHECKING_DOWNLOAD in models/webllm.ts, not imported so WebLLM stays out of the main bundle.
   else if (report.text.startsWith("Checking the downloaded files")) text = `Checking the download against its published checksums (${percent}%)`;
+  // STARTING_RUNNER: the worker starts, then WebLLM fetches the model's settings, program and tokenizer and opens the GPU.
+  else if (report.text.startsWith("Starting the model runner")) text = "Starting the model runner and connecting to the GPU…";
+  else if (report.text.startsWith("Start to fetch params")) text = "Starting the download…";
   else text = "Starting…";
   return { fraction: report.progress, text };
+}
+
+/** After this long without progress, the load screen says what may be wrong. */
+export const STALLED_LOAD_MS = 60_000;
+
+/** What to tell the user when loading has shown the same progress for a minute. */
+export function stalledLoadHint(progressText: string | undefined): string {
+  if (progressText?.startsWith("Preparing the GPU")) {
+    return "Still preparing the GPU. On some graphics chips this takes several minutes the first time; please wait. If nothing changes for 10 minutes, reload the page and try again.";
+  }
+  if (progressText?.startsWith("Downloading")) {
+    return "The download has not moved for a minute. Check your internet connection. If it stays stuck, reload the page and try again; finished parts are kept.";
+  }
+  return "Nothing has changed for a minute. Reload the page and try again. If it stops here again, a VPN, antivirus web protection or a network filter may be blocking part of the download: try with it turned off, or on another network.";
 }
 
 interface LoadedBrowserModel {
@@ -227,6 +244,9 @@ export function describeModelError(error: unknown, settings: Settings): string {
   }
   if (isQuotaError(error)) {
     return "The browser has no more storage for this site, so the model could not be stored. Free disk space, or delete a model or documents you don't need (under Storage and backup on the research screen), and try again.";
+  }
+  if (error instanceof Error && error.name === "RunnerLoadError") {
+    return "Part of Kovrune, the model runner, could not be downloaded, so the model cannot start. Reload the page and try again. If it keeps failing, a VPN, antivirus web protection or a network filter may be cutting the connection: try with it turned off, or on another network.";
   }
   if (/Integrity verification failed/i.test(message)) {
     return "The downloaded model did not match its published checksums, so it was deleted and not used. This usually means the download was damaged; it can also mean a file on the server was changed. Try again, and if it fails again, please report it at https://github.com/bowo-prasetyo/kovrune/issues.";
