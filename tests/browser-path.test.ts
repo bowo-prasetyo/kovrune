@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { checkBrowserModel, recommendBrowserModel, type DeviceCapabilities } from "../src/app/device.ts";
-import { describeLoadProgress, describeSetup, modelCaution } from "../src/app/models.ts";
+import { describeLoadProgress, describeModelError, describeSetup, modelCaution, stalledLoadHint } from "../src/app/models.ts";
 import { parseSettings } from "../src/app/settings.ts";
 import { BROWSER_MODELS, browserModelFor, DEFAULT_BROWSER_MODEL } from "../src/models/catalog.ts";
 
@@ -101,11 +101,60 @@ describe("load progress", () => {
     assert.match(text(0.2, "Loading model from cache[3/86]: 300MB loaded."), /from this browser's storage \(20%\)/);
     assert.equal(text(1, "Loading GPU shader modules[10/20]: 50% completed"), "Preparing the GPU…");
     assert.equal(text(1, "Finish loading on WebGPU - nvidia"), "Model loaded.");
-    assert.equal(text(0, "Start to fetch params"), "Starting…");
+    assert.equal(text(0, "Start to fetch params"), "Starting the download…");
+    assert.equal(text(0, "Starting the model runner"), "Starting the model runner and connecting to the GPU…");
+  });
+
+  it("says what may be wrong when loading stalls", () => {
+    // Class 1 preview check: the model runner's download was cut off and the page said "Starting…" for over five minutes.
+    assert.match(stalledLoadHint("Starting the model runner and connecting to the GPU…"), /Reload the page[\s\S]*VPN, antivirus web protection or a network filter/);
+    assert.match(stalledLoadHint("Downloading the model: 214 of 2,390 MB (9%)"), /finished parts are kept/);
+    assert.match(stalledLoadHint("Preparing the GPU…"), /several minutes the first time/);
+  });
+
+  it("explains a model runner that could not be downloaded", () => {
+    const error = Object.assign(new Error("The model runner could not be loaded"), { name: "RunnerLoadError" });
+    const settings = { path: "browser" as const, modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 };
+    assert.match(describeModelError(error, settings), /^Part of Kovrune, the model runner, could not be downloaded[\s\S]*Reload the page/);
   });
 });
 
 describe("WebLLM adapter", () => {
+  it("reports a lost GPU plainly and marks the model for reloading", async () => {
+    // Class 1 laptop (Intel Iris Xe, Windows): the driver reset with DXGI_ERROR_DEVICE_HUNG during the
+    // model test, WebLLM unloaded the model, and the test showed "BindingError: Cannot pass deleted
+    // object as a pointer of type GrammarMatcher".
+    const { WebLLMModel } = await import("../src/models/webllm.ts");
+    const failing = (message: string) => ({
+      chat: {
+        completions: {
+          create: async () => ({
+            async *[Symbol.asyncIterator]() {
+              throw Object.assign(new Error(message), { name: "BindingError" });
+            },
+          }),
+        },
+      },
+      interruptGenerate: () => {},
+    });
+    const settings = { path: "browser" as const, modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 };
+    for (const message of ["Cannot pass deleted object as a pointer of type GrammarMatcher", "Model not loaded before trying to complete ChatCompletionRequest."]) {
+      const model = new WebLLMModel(failing(message) as never, {} as Worker, { id: "Qwen3.5-4B-q4f16_1-MLC", runtime: "webllm", contextLength: 4096 });
+      const error = await (async () => {
+        for await (const _ of model.generate({ messages: [], maxTokens: 8 }));
+      })().catch((e) => e);
+      assert.equal(model.lost, true);
+      assert.match(describeModelError(error, settings), /^The GPU stopped responding or ran out of memory, so the model was unloaded\. On Windows[\s\S]*DXGI_ERROR_DEVICE_HUNG/);
+    }
+    // Other errors pass through unchanged and leave the model usable.
+    const other = new WebLLMModel(failing("JSON parse error") as never, {} as Worker, { id: "x", runtime: "webllm", contextLength: 4096 });
+    const error = await (async () => {
+      for await (const _ of other.generate({ messages: [], maxTokens: 8 }));
+    })().catch((e) => e);
+    assert.equal(other.lost, false);
+    assert.equal(error.message, "JSON parse error");
+  });
+
   it("stops at once, without waiting for the engine's next token", async () => {
     const { WebLLMModel } = await import("../src/models/webllm.ts");
     let interrupted = false;

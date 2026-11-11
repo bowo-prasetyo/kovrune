@@ -447,6 +447,8 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 | "Integrity verification failed: … did not match their published SHA-256" | A file was damaged or changed on the way; it was deleted and not used | Try again. If it happens again, open an issue (below) |
 | "This device reports about … GB of memory … It may fail to load", or "This GPU allows buffers of only … MiB" | The GPU or the device may have too little memory for the model | Choose Qwen3.5-2B, or use a local model server |
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
+| "The GPU stopped responding or ran out of memory" (the console may show `DXGI_ERROR_DEVICE_HUNG` or "Device was lost") | The GPU took too long on the model's work and the graphics driver reset it, or it ran out of memory. Seen on integrated Intel graphics with Qwen3.5-4B | Close other tabs and programs and press **Test again** (the model loads again from the browser's storage), or try Qwen3.5-2B. On integrated graphics, a local model server usually works better |
+| "Part of Kovrune, the model runner, could not be downloaded", or loading stays on its first step | The connection was cut while downloading part of the app (seen as `ERR_CONNECTION_RESET` in the browser's Network tab) | Reload the page and try again. If it keeps happening, try with a VPN or antivirus web protection turned off, or on another network |
 
 ### The model test and speed
 

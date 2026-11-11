@@ -16,6 +16,20 @@ import type { GenerationChunk, GenerationRequest, LanguageModel, ModelInfo } fro
 
 /** Progress text while the downloaded files are checked; the app's progress line recognises it. */
 export const CHECKING_DOWNLOAD = "Checking the downloaded files";
+/** Progress text from creating the worker until WebLLM's first report; the app's progress line recognises it. */
+export const STARTING_RUNNER = "Starting the model runner";
+
+/**
+ * The worker that runs the model could not start, usually because its script did not
+ * download. WebLLM would wait for it forever: on the class 1 laptop the script's download
+ * was cut off (ERR_CONNECTION_RESET) and the page said "Starting…" for over five minutes.
+ */
+export class RunnerLoadError extends Error {
+  constructor() {
+    super("The model runner could not be loaded");
+    this.name = "RunnerLoadError";
+  }
+}
 
 export interface WebLLMOptions {
   /** A WebLLM prebuilt model ID, e.g. "Qwen3-4B-q4f16_1-MLC". */
@@ -36,15 +50,26 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
     toVerify = await filesToVerify(pinned, caches, verified);
   }
 
+  options.onProgress?.({ progress: 0, timeElapsed: 0, text: STARTING_RUNNER });
   const worker = new Worker(new URL("./webllm.worker.ts", import.meta.url), { type: "module" });
+  const runnerFailed = new Promise<never>((_, reject) =>
+    worker.addEventListener("error", (event) => {
+      event.preventDefault();
+      reject(new RunnerLoadError());
+    }),
+  );
+  runnerFailed.catch(() => {});
   let engine: WebWorkerMLCEngine;
   try {
-    engine = await CreateWebWorkerMLCEngine(
-      worker,
-      options.modelId,
-      { appConfig: pinnedAppConfig(prebuiltAppConfig), initProgressCallback: options.onProgress },
-      { context_window_size: contextLength },
-    );
+    engine = await Promise.race([
+      CreateWebWorkerMLCEngine(
+        worker,
+        options.modelId,
+        { appConfig: pinnedAppConfig(prebuiltAppConfig), initProgressCallback: options.onProgress },
+        { context_window_size: contextLength },
+      ),
+      runnerFailed,
+    ]);
   } catch (error) {
     worker.terminate();
     // A file that failed WebLLM's own check stays in the cache; delete it so the next attempt downloads it again.
@@ -71,8 +96,19 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
   return new WebLLMModel(engine, worker, { id: options.modelId, runtime: "webllm", contextLength });
 }
 
+/**
+ * What a generation fails with once the GPU device is lost. WebLLM then unloads the model
+ * in its worker, and the request in flight fails with whatever touched the freed memory
+ * first: on the class 1 laptop (Intel Iris Xe, Windows) the driver reset with
+ * DXGI_ERROR_DEVICE_HUNG and the model test showed "BindingError: Cannot pass deleted
+ * object as a pointer of type GrammarMatcher". Later requests fail with "Model not loaded".
+ */
+const GPU_LOST = /deleted object|Device was lost|device.{0,20}lost|Model not loaded/i;
+
 export class WebLLMModel implements LanguageModel {
   readonly info: ModelInfo;
+  /** True once the GPU device was lost; the model must be loaded again before use. */
+  lost = false;
   private readonly engine: WebWorkerMLCEngine;
   private readonly worker: Worker;
 
@@ -134,6 +170,11 @@ export class WebLLMModel implements LanguageModel {
       // interruptGenerate can end the stream quietly; report the stop like a cancelled fetch.
       signal?.throwIfAborted();
       yield { text: "", done: true, usage, ...(finishReason ? { finishReason } : {}) };
+    } catch (error) {
+      if (signal?.aborted || !GPU_LOST.test(String(error))) throw error;
+      this.lost = true;
+      // "device lost" is what describeModelError recognises; the original error is kept for the console.
+      throw new Error("The GPU device was lost (the graphics driver reset or ran out of memory), so the model was unloaded", { cause: error });
     } finally {
       signal?.removeEventListener("abort", onAbort);
     }
