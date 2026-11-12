@@ -152,7 +152,7 @@ export function describeStatus(
         ? {
             label: coverage!,
             detail:
-              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with the quotes, or have a number, unit, month or a \"not\" that the quotes don't back, or rest on a quote that leaves out many words. They may come from the model's memory; check them against the sources.",
+              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with the quotes, or have a number, unit, month, a \"not\", a direction such as \"higher\", or \"significant\" that the quotes don't back, or rest on a quote that leaves out many words. They may come from the model's memory; check them against the sources.",
             tone: "unverified",
             severity: "check",
           }

@@ -290,3 +290,63 @@ describe("elided quotes and decimal commas (harness 0.37.0)", () => {
     assert.equal(marks("The context holds 4096 tokens.", [{ docId: "d", quote: "The context holds 4,096 tokens." }]), "+");
   });
 });
+
+describe("clinical units, directions and significance (harness 0.59.0)", () => {
+  const q = (quote: string, docId = "trial") => ({ docId, quote });
+  const RESULT = q("All-cause mortality was lower in the intervention group than in the control group (hazard ratio 0.82; 95% CI 0.71 to 0.95).");
+
+  it("gives a dose or a reading only the clinical unit the quotes give it", () => {
+    assert.equal(marks("The dose was 500 mg daily.", [q("The dose was 500 µg daily.")]), "-");
+    assert.equal(marks("The dose was 500 mcg daily.", [q("The dose was 500 µg daily.")]), "+", "µg and mcg are one unit");
+    assert.equal(marks("Mean fasting glucose was 7.2 mg/dL.", [q("Mean fasting glucose was 7.2 mmol/L.")]), "-");
+    assert.equal(marks("Mean fasting glucose was 7.2 mmol per litre.", [q("Mean fasting glucose was 7.2 mmol/L.")]), "+");
+    assert.equal(marks("Systolic pressure fell to 120 mmHg.", [q("Systolic pressure fell to 120 mm Hg.")]), "+", "mm Hg and mmHg are one unit");
+    assert.equal(marks("Patients received 2 g of the drug.", [q("Patients received 2 mg of the drug.")]), "-");
+  });
+
+  it("does not back a direction the quotes state only the opposite of", () => {
+    assert.equal(marks("All-cause mortality was lower in the intervention group (hazard ratio 0.82).", [RESULT]), "+");
+    assert.equal(marks("All-cause mortality was higher in the intervention group (hazard ratio 0.82).", [RESULT]), "-");
+    assert.equal(marks("Fever was absent in 62% of patients.", [q("Fever was present in 62% of patients.")]), "-");
+    assert.equal(marks("Statin therapy increased LDL cholesterol by 40 percent.", [q("Statin therapy reduced LDL cholesterol by 40 percent.")]), "-");
+    assert.equal(marks("Weight gain averaged 3 kg over the trial.", [q("Weight loss averaged 3 kg over the trial.")]), "-");
+  });
+
+  it("leaves a direction to the other checks when the quotes state neither side", () => {
+    // "Lower" paraphrases a hazard ratio below 1; the quotes say neither "lower" nor "higher".
+    assert.equal(marks("Mortality was lower with the intervention (hazard ratio 0.82).", [q("Mortality with the intervention: hazard ratio 0.82 (95% CI 0.71 to 0.95).")]), "+");
+    // A quote that says both sides backs either.
+    const both = q("Costs were higher in the intervention group, while mortality was lower.");
+    assert.equal(marks("Costs were higher in the intervention group.", [both]), "+");
+  });
+
+  it("does not let a sentence drop the quotes' \"no significant\"", () => {
+    const none = q("There was no significant difference in the primary outcome between groups (P=0.41).");
+    assert.equal(marks("There was a significant difference in the primary outcome between groups.", [none]), "-");
+    assert.equal(marks("There was no significant difference in the primary outcome between groups.", [none]), "+");
+    for (const quote of [
+      "The difference in the primary outcome was not statistically significant.",
+      "The difference in the primary outcome did not reach statistical significance.",
+      "The difference in the primary outcome failed to reach significance.",
+      "The difference in the primary outcome was non-significant.",
+    ]) {
+      assert.equal(marks("The difference in the primary outcome was statistically significant.", [q(quote)]), "-", quote);
+    }
+    // A negation in another clause does not reach the significance: this quote says something was significant.
+    const mixed = q("There was no change in weight, but a significant fall in blood pressure.");
+    assert.equal(marks("There was a significant fall in blood pressure.", [mixed]), "+");
+    // Quotes that never speak of significance leave it to the other checks.
+    assert.equal(marks("All-cause mortality was significantly lower in the intervention group (hazard ratio 0.82).", [RESULT]), "+");
+  });
+
+  it("reads a middle dot between digits as a decimal point (The Lancet's \"0·82\")", () => {
+    const source = "Mortality was lower in the intervention group (hazard ratio 0·82, 95% CI 0·71–0·95; p=0·008).";
+    const retyped = checkEvidence([{ docId: "lancet", quote: "Mortality was lower in the intervention group (hazard ratio 0.82, 95% CI 0.71-0.95" }], () => source);
+    assert.equal(retyped[0]!.verified, true, "a quote typed with full stops is found");
+    const asPrinted = checkEvidence([{ docId: "lancet", quote: "Mortality was lower in the intervention group (hazard ratio 0·82, 95% CI 0·71–0·95" }], () => source);
+    assert.equal(sentenceSupport("Mortality was lower in the intervention group, with a hazard ratio of 0.82.", asPrinted).backed, 1);
+    assert.equal(sentenceSupport("Mortality was lower in the intervention group, with a hazard ratio of 82.", asPrinted).backed, 0);
+    // Between letters, or standing alone as a list marker, it is not a decimal point.
+    assert.equal(checkEvidence([{ docId: "c", quote: "la col·lecció del museu és gran" }], () => "La col·lecció del museu és gran.")[0]!.verified, true);
+  });
+});

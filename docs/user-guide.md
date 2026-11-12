@@ -321,14 +321,17 @@ Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the doc
 - **Show in the source,** under each quote that was found, opens the passage around it, as it is in the document, with the quoted words highlighted.
 - **The closest passage:** for a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the closest passage with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did.
 - **Quotes with "...":** a quote may leave words out with "...". It is found when its parts are in the source in that order, close together, and the passage shown includes the words it left out. A quote that leaves out more than five words in one place is still found, but backs no sentence of the answer: joining distant words can change what the source says.
-- **What counts as a match:** quotes must match whole words; capitals, quote marks, list bullets, the bars between table cells, hyphens inside words and line breaks written out as "\n" don't matter.
+- **What counts as a match:** quotes must match whole words; capitals, quote marks, list bullets, the bars between table cells, hyphens inside words and line breaks written out as "\n" don't matter. A middle dot between digits, as some journals print decimals ("0·82"), counts as a decimal point.
 
 ### How the checks work
 
 You don't need this to use Kovrune; it says what the labels rest on.
 
 1. **The quotes.** Each quote must be in the source it cites, as above.
-2. **The sentences.** Each sentence of the answer must share most of its words with the quotes, with no number, unit, month or "not" that the quotes don't back, and not rest on a quote that leaves out more than five words in one place. Sentences that fail are marked ⚠.
+2. **The sentences.** Each sentence of the answer must share most of its words with the quotes, with no number, unit, month, "not", direction such as "higher", or "significant" that the quotes don't back, and not rest on a quote that leaves out more than five words in one place. Sentences that fail are marked ⚠.
+   - **Units** include clinical ones (mg, µg, g, mL, mmol, IU, mmHg): "500 mg" is not backed by "500 µg". Only a unit's first part is compared, so "mg/kg" and "mg/day" count as one.
+   - **Directions:** a sentence that says "higher", "increased", "present" or "superior" is not backed by quotes that say only the opposite ("lower", "reduced", "absent", "inferior"). An answer that turns a comparison round ("higher in the control group" for "lower in the treated group") is marked too, so check it against the quote.
+   - **Significance:** a sentence that calls a result significant is not backed by quotes that call it only "not significant", "non-significant" or "did not reach significance".
 3. **The model's check.** The model reads the quoted passages again and is asked whether they state what the answer says. Only a clear yes keeps **Quotes found**.
 4. **Short answers,** such as "4 KiB" or "1987年", are too short to compare word by word, so they get **Quotes found** only when the model confirms them in step 3. So far only Qwen3.5-4B is asked about them: Qwen3.5-2B confirms nearly every answer, right or wrong, so its short answers read **Quotes found, answer too short to check**.
 5. **With Qwen3.5-4B,** the model also reads the passages without seeing its answer, and must find the same answer there.

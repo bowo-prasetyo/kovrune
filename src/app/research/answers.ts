@@ -125,7 +125,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
     if (answer.answer) {
       const unbacked = support?.sentences.some((s) => s.backed === false);
       lines.push(markedAnswer(answer), "");
-      if (unbacked) lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or \"not\" that the quotes don't back.", "");
+      if (unbacked) lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month, \"not\", direction such as \"higher\", or \"significant\" that the quotes don't back.", "");
     }
     if (answer.evidence.length) {
       lines.push("## Evidence", "");
@@ -253,7 +253,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
   }
   const synthesisMarked = report.synthesis && [report.synthesis.introduction, report.synthesis.conclusion].some((p) => p.support.sentences.some((t) => t.backed === false));
   if (synthesisMarked || report.sections.some((s) => shownSupport(s)?.sentences.some((t) => t.backed === false))) {
-    lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or \"not\" that the quotes don't back.", "");
+    lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month, \"not\", direction such as \"higher\", or \"significant\" that the quotes don't back.", "");
   }
   lines.push("---", "", EXPORT_NOTE, "");
   return lines.join("\n");

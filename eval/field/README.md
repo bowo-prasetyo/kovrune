@@ -791,6 +791,32 @@ npm run bench:endpoint -- --model <model> --suites office,officeholdout --modes 
     --suites research,unanswerable,pdf,field,holdout,office,officeholdout --out eval/results/office-0.58-qwen3.5-4b-q4km.json
   ```
 
+### Clinical units, directions and significance (0.59.0, defect fix)
+
+An audit from a health sciences researcher's point of view ran the sentence check (`src/agent/support.ts`) on sentences from trial reports. With a real quote, these wrong sentences were all marked backed, so only the model's own review stood between them and **Quotes found**, and that review catches few wrong answers ([audit F2](../../docs/ai-ml-audit.md#f2-high-the-word-checks-pass-contradictions-and-the-self-review-rarely-catches-them)):
+
+| The quote says | The answer says | Before | After |
+| --- | --- | --- | --- |
+| mortality was **lower** (HR 0.82) | mortality was **higher** (HR 0.82) | backed | **not backed** |
+| 500 **µg** daily | 500 **mg** daily | backed | **not backed** |
+| 7.2 **mmol/L** | 7.2 **mg/dL** | backed | **not backed** |
+| **no** significant difference (P=0.41) | a significant difference | backed | **not backed** |
+| fever was **present** in 62% | fever was **absent** in 62% | backed | **not backed** |
+| HR **0·82** (as The Lancet prints it) | HR 0.82 | not backed | **backed** |
+| HR 0.82 (a quote of "0·82" typed with a full stop) | | quote not found | **found** |
+
+What changed:
+- **Clinical units** (`UNITS`): mg, µg (also "mcg", "ug"), ng, g, kg, mL, L, mmol, µmol, nmol, mEq, IU, mm (with "mmHg", since sources write "mm Hg" too), cm and kcal. Only a unit's first word is compared, so "mg/kg" and "mg/day" are one unit here.
+- **Directions** (`OPPOSITES`): ten pairs of opposites (higher/lower, increased/reduced, improved/worsened, greater/smaller, longer/shorter, gain/loss, present/absent, positive/negative, superior/inferior, above/below). A sentence that says one side is not backed when the quotes and titles say only the other. Quotes that say neither leave it to the other checks, so "lower risk" may still paraphrase a hazard ratio. A right answer that turns a comparison round is marked too; that is the cheaper mistake.
+- **Significance** (`significance`): a sentence that says something was significant is not backed when the quotes speak of significance only to deny it ("no significant", "not statistically significant", "non-significant", "did not reach" or "failed to reach significance"). A negation reaches four words and stops at a comma or "but", so "no change in weight, but a significant fall in blood pressure" still says something was significant. The "not" rule (0.36.0) checks only a "not" the sentence adds, not one it drops, and this is the drop that matters most in a trial report.
+- **Middle-dot decimals** (`normalizeForMatch`): "0·82" between digits reads as 0.82, in quotes and sources alike, one character for one so offsets hold.
+
+**Effect on recorded runs: none.** Sentence support runs after the model's final answer, and decides only the label and whether the review is asked, so `bench:rescore` gives the exact effect. Over every report it can re-score (4,836 answers, 2,090 labelled **Quotes found**), no label and no count of backed or judged sentences changed. So it costs no right answer its label on these suites; but these suites have no clinical text, so they cannot show what it gains either. That needs a biomedical suite: openly licensed trial and cohort reports with questions on effect sizes, units, negative results and table values, a third held out.
+
+`tests/support.test.ts` ("clinical units, directions and significance") fails on four of its five tests before the change and passes after. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): the model runs the clause asks for would repeat their recorded actions, since nothing before the final answer changed.
+
+**Limits:** English words only for directions and significance; a quote that says both sides of a pair backs either ("costs were higher, while mortality was lower" backs "mortality was higher"); compound units are compared by their first part.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

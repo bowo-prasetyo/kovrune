@@ -97,6 +97,9 @@ export function normalizeForMatch(text: string): string {
     // trust', which the article gives in double quotes.
     .replace(/[‘’‚‛“”„‟"]/g, "'")
     .replace(/[‐-―−]/g, "-")
+    // A middle dot between digits is a decimal point: The Lancet and other journals print "0·82" for
+    // 0.82, and models quoting them type a full stop. One character for one, so offsets hold.
+    .replace(/(?<=\p{Nd})·(?=\p{Nd})/gu, ".")
     // A hyphen between letters is ignored, with any line break after it, so "financial" matches a
     // PDF's "finan-\ncial" or "finan-cial", and "JSON- schema" (a quote of a line break) matches "JSON-schema".
     .replace(/(\p{L})-\s*(?=\p{L})/gu, "$1")
