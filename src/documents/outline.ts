@@ -31,8 +31,12 @@ export function partHeadings(text: string): string[] {
     if (!first) continue;
     const markdown = /^#{1,6}\s+(.+)$/.exec(first);
     const table = /^\*{0,2}(Table\s+\d+[A-Za-z]?)\.?\*{0,2}\.?\s*(.*)$/.exec(first);
+    // A Setext heading: a line underlined by "===" or "---" (the MPL-2.0's "5. Termination").
+    const lines = paragraph.trim().split("\n");
+    const setext = lines.length >= 2 && /^\s*(=+|-+)\s*$/.test(lines[1]!) && lines[1]!.trim().length >= 3;
     let heading: string | undefined;
     if (markdown) heading = markdown[1];
+    else if (setext) heading = first;
     else if (table) {
       const caption = table[2]!.replace(/^[\s:.*–—-]+/, "");
       heading = `${table[1]}${caption ? `: ${caption}` : ""}`;

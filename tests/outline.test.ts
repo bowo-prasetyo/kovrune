@@ -12,6 +12,11 @@ describe("a long document's outline", () => {
     assert.deepEqual(partHeadings(text), ["Findings", "Table 1: Baseline characteristics", "Table 2: Outcomes", "Methods"]);
   });
 
+  it("takes Setext headings, underlined by === or ---, as the MPL-2.0 has them", () => {
+    const text = "Mozilla Public License Version 2.0\n==================================\n\n5. Termination\n--------------\n\n5.1. The rights granted under this License will terminate automatically\nif You fail to comply.\n\nExhibit A - Source Code Form License Notice\n-------------------------------------------";
+    assert.deepEqual(partHeadings(text), ["Mozilla Public License Version 2.0", "5. Termination", "Exhibit A - Source Code Form License Notice"]);
+  });
+
   it("lists the parts that have headings, at most two each, and is cut at its length limit", () => {
     const parts = [1, 2, 3, 4].map((n) => ({ id: `doc#${n}`, text: n === 2 ? "No heading here, just a sentence." : `## Part ${n} title\n\nText.\n\n## Second ${n}\n\nText.\n\n## Third ${n}\n\nText.` }));
     assert.equal(outlineOf(parts), "#1 Part 1 title / Second 1; #3 Part 3 title / Second 3; #4 Part 4 title / Second 4");
