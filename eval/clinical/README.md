@@ -207,6 +207,49 @@ The field and protected suites' runs the rule asks for were not made: with `benc
 
 **What `c02`, `c05` and `c06` share.** The model cannot see where in a paper a part is. In `c06` it read the Discussion without knowing the Findings were part 3; in `c02` and `c05`, Table 1 was a part it did not know to ask for. Re-ranking helps one of these and hurts the other. Showing the model a long document's outline (its section headings and table captions, with their part numbers) could let it read the Findings or Table 1 directly. That is the next change to measure on these suites.
 
+### A long document's outline (#144, measured, not adopted)
+
+Measured on an unmerged branch ([#144](https://github.com/bowo-prasetyo/kovrune/pull/144), closed), whose harness was numbered 0.65.0 before `main` gave that number to the [0.8B browser model](../../docs/m0-benchmark.md); its reports say 0.65.0. Its one defect fix, the overflow retry below, is adopted as 0.66.0.
+
+The idea from the lead-weight experiment above: let the model see where in a paper each part is, instead of ranking parts by position. Reading a part of a document in four or more parts now appends, once per document and question, its outline: the parts that hold headings or table captions, with their first two (`src/documents/outline.ts`, `tools/research.ts`). For the IPTp trial, after reading part 44 the model sees "… #2 Methods; #3 Findings; … #18 Results; #19 Table 1: Baseline characteristics by study group; … #33 Discussion …". Reading the whole document gives the outline instead of a bare list of part IDs. An outline is cut at about 150 tokens; for the field suite's user guide it is about 120. Search is unchanged, so `bench:retrieval` is too.
+
+**Models** (same machine and build as the 0.60.0 runs, re-scored with the current harness):
+
+| Model | `clinical` | `clinicalholdout` | Labelled **Quotes found**, wrong | Report |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 19/23 → **21/23** | 7/10 → **8/10** | 1 of 19 → 1 of 21 | [json](../results/clinical-outline-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 13/23 → 12/23 | 4/10 → 5/10 | 4 of 13 → 3 of 12 | [json](../results/clinical-outline-qwen3.5-2b-q4km.json) |
+
+- **4B uses the outline.**
+  - It gains `c05` (Table 1's mean age: it read parts 31, 19, 22, 21, 20, 23 and answered 22.2), `c06` (it read part 46, then part 3, the Findings, and answered 0.45) and `c21`.
+  - It loses `c11`: it read six parts of the COPCOV paper, an earlier result had to be dropped, and its last reply was not valid JSON.
+  - `c02`, which the lead weight lost, passes: it read part 8, then part 16, which holds Table 1.
+  - Over `clinical`, it read 46 parts, against 82 for 2B.
+- **2B does not use it.** It reads the same part again and again (`c02`: part 16 three times; `c06`: part 46 three times), with or without the outline: of its reads, 57 follow another read of the same document in both runs.
+  - It loses `c02` with the right answer, 6.1 years, because its quote was not word for word in the paper.
+  - The held-out suite gains one task.
+  - Both look like run-to-run variation.
+
+**A defect it found: the server refused a prompt as too long.** In the first 4B run, one held-out task's prompt reached 4,111 tokens against llama.cpp's 4,096, and the task ended in an error.
+- **The cause:** the agent fits prompts by `estimateTokens` (3.5 characters a token), which counts ordinary text short. On a trial report's part it estimated 476 tokens where the model's tokenizer counted 549, and on the user guide's 507 where it counted 622. The outlines themselves are estimated close: 167 for 149, 118 for 119. The outline used up the slack that had hidden the estimate's error; no earlier recorded run met the error.
+- **The fix:** on llama.cpp's `exceed_context_size_error`, the agent now fits the conversation to as much less as the prompt was over and asks the step again, up to three times (`contextOverflow` in `src/agent/agent.ts`). Only a task that would end in that error takes this path.
+- **Measured with `bench:replay`:** replaying the 4B run on the fixed code called 32 tasks "same" and the errored one undecidable. That one was run again, finished without an error, and was merged into the report. 2B ran with the fix and met no error.
+
+**Not adopted: the rule's runs.** By [the rule](../field/README.md#rule-for-prompt-and-guard-changes), the outline changes what the model reads, so research, unanswerable, pdf, field and holdout were run on both models: the change once with replies recorded, then `main` (`f274fdd`) on the tasks `bench:replay` said differ (76 of 160 on 2B, 74 on 4B), on the same machine and build.
+
+- **First run: a defect in the outline.** On 4B, field fell from 80/89 to 78/89 (lost `f75`, `f83`, none gained). The MPL-2.0 underlines its headings ("5. Termination" over a line of dashes, Setext style), which `partHeadings` did not take, so its outline stopped at part 10 and left out Termination, Litigation and Exhibit A. The model took the outline as the whole document: it read parts 1 to 6 in order and answered "not found". These reports are kept as `field-outline-nosetext-*`.
+- **The fix:** `partHeadings` takes Setext headings (a unit test). Of the 14 documents in the field and clinical libraries, only the MPL-2.0's outline changes, so the clinical results above stand. `bench:replay` against the first run found 19 tasks on 4B and 20 on 2B whose requests the fix changes, all about the licence; they were run again and merged with the others' recorded results.
+- **With the fix:**
+
+| Model | research | unanswerable | pdf | field | holdout |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 19/22 → 19/22 | 8/8 → 8/8 | 4/4 → 4/4 | 80/89 → 80/89 (0 gained, 0 lost) | 34/37 → 34/37 |
+| Qwen3.5-2B | 15/22 → 15/22 | 5/8 → 5/8 | 3/4 → 3/4 | 63/89 → 63/89 (+`f11`, `f52`; −`f51`, `f61`; p = 1) | 24/37 → 25/37 |
+
+Reports: [4B base](../results/field-outline-base-qwen3.5-4b-q4km.json), [4B outline](../results/field-outline-qwen3.5-4b-q4km.json), [2B base](../results/field-outline-base-qwen3.5-2b-q4km.json), [2B outline](../results/field-outline-qwen3.5-2b-q4km.json).
+
+Nothing regresses, but the field suite does not improve on either model, so the rule does not adopt the outline. Its gains are on the clinical suites, where long papers are what the questions are about; the field suite's long documents are a user guide, a licence and a design document, whose questions 4B already answers by search. The overflow retry is a defect fix in its own right, a unit test showing the error it handles, and is adopted on its own under the rule's defect clause as harness 0.66.0 ([field suite](../field/README.md#a-prompt-the-server-refuses-as-too-long-0660-defect-fix)).
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.
