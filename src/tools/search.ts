@@ -62,8 +62,10 @@ function tokenize(text: string): string[] {
  * co-trimoxazole pregnant women HIV malaria risk ratio"; the three results were Discussion parts, which
  * repeat those terms, and not the abstract's Findings (part 3), which give the ratio. It read them and
  * the parts around them and answered "not found" (clinical suite, c06, 0.60.0 run). With the weight,
- * the same search shows parts 1, 3 and 2. Chosen from six settings measured with `bench:retrieval` and
+ * the same search shows parts 1, 3 and 2. Chosen from the settings measured with `bench:retrieval` and
  * the models' recorded searches (eval/clinical/README.md); judged by the model runs the rule asks for.
+ * The weight orders only a document's own parts (search): weighting every document's first parts
+ * let other documents' abstracts push out the one that answers, in a library of hundreds.
  */
 export const LEAD_WEIGHT = 0.3;
 export const LEAD_DECAY = 3;

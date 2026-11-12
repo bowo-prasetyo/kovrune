@@ -160,7 +160,48 @@ Both models' wrong answers to `c09` were labelled **Quotes found**. They had tak
 
 **A fix to `bench:rescore` with it.** Rescoring had reused every recorded review. But the app asks the review only when the word checks pass, or, for Qwen3.5-4B, for a short answer. So 2B's "25", no longer backed, kept the label in a rescore, though the app would not ask its review and would not label it. `eval/rescore.ts` now uses a recorded review only where the app would ask for one. In the 4,902 answers, this changes one more label: a right short answer from `field-0.39-stemmer-qwen3.5-2b-q4km.json`, a measured experiment that was not adopted. Its review was recorded, but since 0.35.0 the app does not review 2B's short answers.
 
-**Next, measured on this suite.** Search could offer the abstract's Findings, or more than three results, for questions about a paper's main result (`c06`). That is a change to judge on `clinical`, `clinicalholdout` and the field suites by [the usual rule](../field/README.md#rule-for-prompt-and-guard-changes).
+### A paper's first parts first (0.63.0, measured, not yet adopted)
+
+In `c06`, 4B searched "monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria risk ratio". The three results were Discussion parts of the right paper (#44, #46, #33), which repeat those terms. The abstract's Findings (#3), which give the risk ratio, were not among them. The model read the Discussion and the parts around it, and answered "not found".
+
+**Showing five results instead of three** was measured in 0.26.0 and not adopted: 2B's field suite fell. So this change ranks a long document's parts by position as well as relevance: a paper's abstract, a report's summary and a manual's overview say briefly what later parts say at length.
+
+**First design: a weight on every first part, across documents. Rejected.** Part n's score was multiplied by 1 + 0.3 × e^(−(n−1)/3): ×1.30 for part 1, ×1.15 for part 3, ×1.04 by part 7. With 300 generated documents added to the field library, cited documents found fell from 93.5% to 88.3%, and complete tasks from 68 to 65. The first parts of documents that do not answer took the place of the one that does. A researcher's library is many papers, so this is the wrong way to fail.
+
+**Adopted design: the weight orders only a document's own parts** (`leadWeight` and `search` in `src/tools/search.ts`). Relevance alone still decides which documents the results come from, and how many parts of each. Within a document, its parts are ranked by relevance times the weight. So a paper's abstract can take a slot from its own Discussion, but not from another paper.
+
+**Search alone** (`bench:retrieval`; and the models' own searches recorded in the 0.60.0 runs, each re-run, counting the tasks where some search shows every fact):
+
+| | Before | After |
+| --- | --- | --- |
+| `c06`'s recorded search | #44, #46, #33 | **#1, #3, #2** (the Findings) |
+| Clinical: the models' recorded searches show every fact | 46 of 58 tasks | **52 of 58** |
+| Clinical, the question as query: complete | 24 of 30 | 25 of 30 (`c08`, `c11` gain; `c04` loses its passage) |
+| Field, the question as query | passages 93.3%, 69 complete | 92.1%, 68 complete (`f46` loses its passage) |
+| Field, 4B's recorded searches (0.54.0) | 101 of 111 | 102 of 111 |
+| Field + 300 or 1,000 generated documents | cited 93.5% / 92.2% | **unchanged**; one passage fewer (`f46`) |
+| Research, pdf, holdout, multi, office | | unchanged |
+
+The weight (0.3) and decay (3 parts) were chosen from six settings for the first design, and four for this one, on these measures. Heavier weights helped the clinical suite more but cost the multi and office suites. The retrieval floors in `tests/retrieval.test.ts` are lowered by the one field passage lost (`f46`, the French question that headings also cost in 0.57.0).
+
+**Models, on the clinical suites** (same machine and build as the 0.60.0 runs; both runs re-scored with the current harness, so the 0.61.0 and 0.62.0 changes count on both sides):
+
+| Model | `clinical` | `clinicalholdout` | Labelled **Quotes found**, wrong | Report |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 19/23 → 20/23 | 7/10 → 6/10 | 1 of 19 → 1 of 18 | [json](../results/clinical-lead-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 13/23 → 14/23 | 4/10 → 4/10 | 4 of 13 → 4 of 14 | [json](../results/clinical-lead-qwen3.5-2b-q4km.json) |
+
+- **`c06` passes on both models.** 4B searched as before, read part 3, the Findings, and answered 0.45. That is what the change was for.
+- **`c02` fails on both:** the mean age in the Vi-TT group, given only in Table 1. 4B read the abstract (#2) instead and answered "not found". This is the change's cost: a value that only a later part gives is shown less often.
+- **The other changes vary from run to run:**
+  - 4B gains `c09` and `c21` and loses `c20`, where it read the abstract's "similar" and answered "differed".
+  - 2B gains `c03` and `c08` and loses `c15`.
+  - Only 10 of 4B's 23 tasks took the same actions as before.
+- **`clinicalholdout`** is one task lower on 4B, and the same on 2B.
+
+**Not yet adopted.** The change helps the question it was made for, and costs about as much as it gains elsewhere in this suite. By [the rule for search changes](../field/README.md#rule-for-prompt-and-guard-changes), it is adopted only if it improves the field suite without regressing research, unanswerable, pdf and holdout, on both models, against a baseline run on the same machine. Those runs take about 13 hours of CPU here:
+- research, unanswerable, pdf, field and holdout, before and after, on both models;
+- the clinical suites' "before" is the 0.60.0 runs.
 
 ## Limits
 
