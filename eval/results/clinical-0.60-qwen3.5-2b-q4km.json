@@ -1,0 +1,1788 @@
+{
+  "harnessVersion": "0.60.0",
+  "createdAt": "2026-11-12T08:54:14.920Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "build": "llama.cpp 09338b8, -DGGML_NATIVE=OFF, AVX2",
+    "notes": "First clinical suite baseline, harness 0.60.0, code ff8b447."
+  },
+  "config": {
+    "suites": [
+      "clinical",
+      "clinicalholdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full"
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+    "seconds": 5.9,
+    "decodeTokensPerSecond": 15.9,
+    "maxResearchTaskMinutes": 4.7,
+    "minutesPerSource": 1.1
+  },
+  "summary": [
+    {
+      "suite": "clinical",
+      "mode": "constrained",
+      "tasks": 23,
+      "passed": 13,
+      "successRate": 0.565,
+      "successInterval": [
+        0.368,
+        0.744
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 15.2,
+      "prefillTokensPerSecond": 388.1,
+      "medianTaskSeconds": 35,
+      "maxPromptTokens": 3090,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 43676,
+      "promptSeconds": 416.1,
+      "falseReassurance": {
+        "labelled": 10,
+        "wrong": 2
+      }
+    },
+    {
+      "suite": "clinicalholdout",
+      "mode": "constrained",
+      "tasks": 10,
+      "passed": 4,
+      "successRate": 0.4,
+      "successInterval": [
+        0.168,
+        0.687
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 16.1,
+      "prefillTokensPerSecond": 374.2,
+      "medianTaskSeconds": 29,
+      "maxPromptTokens": 2522,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 15999,
+      "promptSeconds": 147.2,
+      "falseReassurance": {
+        "labelled": 4,
+        "wrong": 3
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "clinical",
+      "taskId": "c01-typhoid-efficacy",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5860,
+      "completionTokens": 277,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1810,
+      "cachedTokens": 4251,
+      "promptMs": 15333,
+      "modelMs": 35144,
+      "ttftMs": 15387,
+      "wallMs": 35315,
+      "actions": [
+        "read {\"docId\":\"typhoid-vaccine-malawi\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#1\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#1\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"The efficacy of Vi-TT against blood culture-confirmed typhoid fever in the intention-to-treat population was 98.7% (95% con"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The efficacy of Vi-TT against blood culture-confirmed typhoid fever in the intention-to-treat population was 98.7% (95% confidence interval: 97.3% to 99.9%) in the final analysis of the 4-year, phase 3, randomised controlled trial in Malawian children.\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#1\",\"quote\":\"The efficacy of the vaccine against blood culture-confirmed typhoid fever in the intention-to-treat population was 98.7% (95% CI 97.3% to 99.9%) in the final analysis of the 4-year, phase 3, randomised controlled trial in Malawian children.\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#1",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c02-typhoid-mean-age",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 6338,
+      "completionTokens": 160,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2014,
+      "cachedTokens": 4525,
+      "promptMs": 18582,
+      "modelMs": 30700,
+      "ttftMs": 18660,
+      "wallMs": 30761,
+      "actions": [
+        "search {\"query\":\"Malawi typhoid conjugate vaccine trial mean age enrolment Vi-TT group\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
+        "final_answer {\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#16",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c03-iron-anaemia-36-weeks",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7922,
+      "completionTokens": 297,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2212,
+      "cachedTokens": 5907,
+      "promptMs": 19698,
+      "modelMs": 40016,
+      "ttftMs": 19796,
+      "wallMs": 40078,
+      "actions": [
+        "search {\"query\":\"REVAMP trial ferric carboxymaltose anaemia 36 weeks\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#32\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#32\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#39\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#39\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, ferric carboxymaltose did not reduce the prevalence of anaemia at 36 weeks' gestation compared with standard of care in"
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, ferric carboxymaltose did not reduce the prevalence of anaemia at 36 weeks' gestation compared with standard of care in the REVAMP trial.\",\"evidence\":[{\"docId\":\"iv-iron-pregnancy-malawi#39\",\"quote\":\"Ferric carboxymaltose did not reduce the prevalence of anaemia at this post-hoc composite timepoint compared with standard of care (ferric carboxymaltose: 187 [52%] of 357 vs standard of care: 200 [56%] of 354, PR 0·93 [95% CI 0·81–1·06)).\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "iv-iron-pregnancy-malawi#39",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c04-iron-oral-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7702,
+      "completionTokens": 143,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2026,
+      "cachedTokens": 5873,
+      "promptMs": 17707,
+      "modelMs": 28383,
+      "ttftMs": 17823,
+      "wallMs": 28410,
+      "actions": [
+        "read {\"docId\":\"betamethasone-50-years\"}",
+        "read {\"docId\":\"betamethasone-50-years#1\"}",
+        "read {\"docId\":\"betamethasone-50-years#1\"}",
+        "read {\"docId\":\"betamethasone-50-years#2\"}",
+        "read {\"docId\":\"betamethasone-50-years#2\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c05-iron-mean-age",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7966,
+      "completionTokens": 146,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2188,
+      "cachedTokens": 5975,
+      "promptMs": 19154,
+      "modelMs": 28843,
+      "ttftMs": 19261,
+      "wallMs": 28869,
+      "actions": [
+        "search {\"query\":\"REVAMP trial ferric carboxymaltose mean age women\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#31\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#31\"}",
+        "search {\"query\":\"REVAMP trial ferric carboxymaltose women mean age\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#31\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c06-ipt-risk-ratio",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5551,
+      "completionTokens": 175,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1772,
+      "cachedTokens": 3980,
+      "promptMs": 15881,
+      "modelMs": 28268,
+      "ttftMs": 15961,
+      "wallMs": 36785,
+      "actions": [
+        "search {\"query\":\"monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria infection risk ratio\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
+        "final_answer {\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxa"
+      ],
+      "final": "{\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection during pregnancy or delivery.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ipt-malaria-pregnancy#46",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "risk ratio for any malaria infection during pregnancy or delivery",
+              "answer": "15%"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c07-ipt-piperaquine-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 8274,
+      "completionTokens": 247,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2265,
+      "cachedTokens": 5989,
+      "promptMs": 22919,
+      "modelMs": 40567,
+      "ttftMs": 23004,
+      "wallMs": 50290,
+      "actions": [
+        "search {\"query\":\"dihydroartemisinin piperaquine tablet pregnant women HIV Kenya Malawi trial amount\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#11\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#11\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#2\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"Each dihydroartemisinin–piperaquine tablet contained 40 mg of dihydroartemisinin and 320 mg of piperaquine.\",\"evidence\":[{\""
+      ],
+      "final": "{\"found\":true,\"answer\":\"Each dihydroartemisinin–piperaquine tablet contained 40 mg of dihydroartemisinin and 320 mg of piperaquine.\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#11\",\"quote\":\"Each monthly dihydroartemisinin–piperaquine course consisted of a fixed dose of three tablets of 40 mg dihydroartemisinin and 320 mg piperaquine (D-Artepp, Fosun Pharma, Shanghai, China) given daily for 3 days until delivery.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ipt-malaria-pregnancy#11",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "How much piperaquine did each tablet contain?",
+              "answer": "320 mg"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c08-veg-systolic",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7313,
+      "completionTokens": 216,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1990,
+      "cachedTokens": 5303,
+      "promptMs": 19152,
+      "modelMs": 33556,
+      "ttftMs": 19241,
+      "wallMs": 33606,
+      "actions": [
+        "search {\"query\":\"VESSEL crossover trial cruciferous vegetable diet root squash vegetable diet brachial systolic blood pressure\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#2\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#2\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#5\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"Cruciferous vegetable diet resulted in lower 24-hour brachial systolic blood pressure compared to the root and squash veget"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Cruciferous vegetable diet resulted in lower 24-hour brachial systolic blood pressure compared to the root and squash vegetable diet in the VESSEL crossover trial.\",\"evidence\":[{\"docId\":\"cruciferous-blood-pressure#2\",\"quote\":\"Cruciferous vegetables lower blood pressure in adults with mildly elevated blood pressure in a randomized, controlled, crossover trial: the VESSEL study\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "cruciferous-blood-pressure#2",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c09-veg-participants",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5082,
+      "completionTokens": 161,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1601,
+      "cachedTokens": 3682,
+      "promptMs": 13705,
+      "modelMs": 24200,
+      "ttftMs": 13784,
+      "wallMs": 33058,
+      "actions": [
+        "search {\"query\":\"VESSEL trial cruciferous vegetables blood pressure participants recruited\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#39\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#39\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#39\"}",
+        "final_answer {\"found\":true,\"answer\":\"25\",\"evidence\":[{\"docId\":\"cruciferous-blood-pressure#39\",\"quote\":\"As we were unable to recruit the desired sample size of 2"
+      ],
+      "final": "{\"found\":true,\"answer\":\"25\",\"evidence\":[{\"docId\":\"cruciferous-blood-pressure#39\",\"quote\":\"As we were unable to recruit the desired sample size of 25 participants (28 to account for participant drop-out) due to the COVID-19 pandemic\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "cruciferous-blood-pressure#39",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "How many participants were recruited to the VESSEL trial of cruciferous vegetables and blood pressure?",
+              "answer": "25"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c10-copcov-primary",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2208,
+      "completionTokens": 208,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1161,
+      "cachedTokens": 1039,
+      "promptMs": 10845,
+      "modelMs": 24755,
+      "ttftMs": 10888,
+      "wallMs": 36107,
+      "actions": [
+        "search {\"query\":\"COPCOV trial hydroxychloroquine chloroquine symptomatic COVID-19 risk ratio 95% confidence interval\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#4\"}",
+        "final_answer {\"found\":true,\"answer\":\"0.85 [95% confidence interval, 0.72 to 1.00]\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#4\",\"quote\":\"For the primary e"
+      ],
+      "final": "{\"found\":true,\"answer\":\"0.85 [95% confidence interval, 0.72 to 1.00]\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#4\",\"quote\":\"For the primary endpoint the incidence of symptomatic COVID-19 was 240/2,320 in the HCQ/CQ versus 284/2,332 in the placebo arms (risk ratio (RR) 0.85 [95% confidence interval, 0.72 to 1.00; p = 0.05]).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "copcov-hydroxychloroquine#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "risk ratio for symptomatic COVID-19 with hydroxychloroquine or chloroquine compared with placebo",
+              "answer": "0.85 [95% confidence interval, 0.72 to 1.00]"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c11-copcov-asymptomatic",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 8317,
+      "completionTokens": 346,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2387,
+      "cachedTokens": 5910,
+      "promptMs": 22144,
+      "modelMs": 44894,
+      "ttftMs": 22218,
+      "wallMs": 44943,
+      "actions": [
+        "search {\"query\":\"COPCOV trial hydroxychloroquine chloroquine asymptomatic SARS-CoV-2\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#12\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#12\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#1\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#1\"}",
+        "final_answer {\"found\":true,\"answer\":\": No, hydroxychloroquine or chloroquine did not reduce asymptomatic SARS-CoV-2 infections in the COPCOV trial.\",\"evidence\":"
+      ],
+      "final": "{\"found\":true,\"answer\":\": No, hydroxychloroquine or chloroquine did not reduce asymptomatic SARS-CoV-2 infections in the COPCOV trial.\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#12\",\"quote\":\"The primary outcome was symptomatic laboratory-confirmed COVID-19 defined as symptoms consistent with COVID-19 and laboratory evidence of SARS-CoV-2 infection (S1 Appendix). Laboratory evidence was defined by a prespecified hierarchy: first by a nose and/or throat swab PCR positive for SARS-CoV-2; second, if the PCR was negative, failed, or not done, by seroconversion (S-protein IgG antibody) based on baseline and end of study paired sera [28]; and third, only if paired sera were unavailable or uninterpretable, by seroconversion from the contingency DBS in an adapted assay. The prespecified primary endpoint determination algorithm code is provided in the GitHub repository.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "copcov-hydroxychloroquine#12",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c12-copcov-adverse-events",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 8926,
+      "completionTokens": 200,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2676,
+      "cachedTokens": 6447,
+      "promptMs": 22359,
+      "modelMs": 34926,
+      "ttftMs": 22450,
+      "wallMs": 34970,
+      "actions": [
+        "search {\"query\":\"COPCOV trial chloroquine hydroxychloroquine adverse event participants\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#16\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#16\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#24\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#24\"}",
+        "final_answer {\"found\":true,\"answer\":\"218\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#24\",\"quote\":\"Number of subjects with at least 1 AE, n (%)Total adverse"
+      ],
+      "final": "{\"found\":true,\"answer\":\"218\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#24\",\"quote\":\"Number of subjects with at least 1 AE, n (%)Total adverse events, nE (%) | 218 (9.4)578 (24.9)\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "copcov-hydroxychloroquine#24",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c13-folic-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 9114,
+      "completionTokens": 226,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2036,
+      "cachedTokens": 7271,
+      "promptMs": 17608,
+      "modelMs": 31606,
+      "ttftMs": 17722,
+      "wallMs": 31630,
+      "actions": [
+        "search {\"query\":\"FASSTT trial folic acid daily dose intervention group\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#18\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#19\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#34\"}",
+        "search {\"query\":\"FASSTT trial folic acid daily dose intervention group\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#18\"}",
+        "final_answer {\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the intervention group of the FASSTT trial received. They only confirm that the intervention group received folic acid supplementation and that their children showed cognitive benefits from it, but the dosage information is not present in the provided text snippets.\",\"evidence\":[]}",
+      "status": "unverified",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c14-azi-doses",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5698,
+      "completionTokens": 211,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1841,
+      "cachedTokens": 4058,
+      "promptMs": 15583,
+      "modelMs": 29050,
+      "ttftMs": 15664,
+      "wallMs": 38230,
+      "actions": [
+        "search {\"query\":\"TABS-PKPD trial azithromycin Ugandan children severe malaria doses\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#2\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#2\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"10, 15 and 20 mg/kg\",\"evidence\":[{\"docId\":\"azithromycin-severe-malaria#2\",\"quote\":\"We conducted a phase I/II trial in Ugand"
+      ],
+      "final": "{\"found\":true,\"answer\":\"10, 15 and 20 mg/kg\",\"evidence\":[{\"docId\":\"azithromycin-severe-malaria#2\",\"quote\":\"We conducted a phase I/II trial in Ugandan children with severe malaria comparing a 5-day course of azithromycin: 10, 15 and 20 mg/kg of azithromycin (prescribed by weight bands) spanning the dose-range effective for other salmonellae infection.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "azithromycin-severe-malaria#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "Which doses of azithromycin were compared in the TABS-PKPD trial in Ugandan children with severe malaria?",
+              "answer": "10, 15 and 20 mg/kg"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c15-azi-smallest-crp",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 10928,
+      "completionTokens": 240,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2689,
+      "cachedTokens": 8215,
+      "promptMs": 26265,
+      "modelMs": 42884,
+      "ttftMs": 26355,
+      "wallMs": 52944,
+      "actions": [
+        "search {\"query\":\"TABS-PKPD trial azithromycin C-reactive protein 72 hours\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#12\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#12\"}",
+        "search {\"query\":\"TABS-PKPD trial azithromycin dose arm C-reactive protein 72 hours\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#2\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"15 mg/kg\",\"evidence\":[{\"docId\":\"azithromycin-severe-malaria#2\",\"quote\":\"a smaller reduction 51.2 mg/L (95% CI 42.9, 59.5; p"
+      ],
+      "final": "{\"found\":true,\"answer\":\"15 mg/kg\",\"evidence\":[{\"docId\":\"azithromycin-severe-malaria#2\",\"quote\":\"a smaller reduction 51.2 mg/L (95% CI 42.9, 59.5; p = 0.02) in the 15 mg/kg arm.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "azithromycin-severe-malaria#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "Which azithromycin dose arm had the smallest mean reduction in C-reactive protein at 72 hours?",
+              "answer": "15 mg/kg"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c16-carrageenan-insulin",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6959,
+      "completionTokens": 229,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1842,
+      "cachedTokens": 5097,
+      "promptMs": 17510,
+      "modelMs": 31960,
+      "ttftMs": 17586,
+      "wallMs": 32005,
+      "actions": [
+        "search {\"query\":\"carrageenan insulin sensitivity placebo cross-over trial healthy men\"}",
+        "read {\"docId\":\"carrageenan-insulin#6\"}",
+        "read {\"docId\":\"carrageenan-insulin#6\"}",
+        "read {\"docId\":\"carrageenan-insulin#28\"}",
+        "read {\"docId\":\"carrageenan-insulin#28\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. Th"
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. The study found that short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants.\",\"evidence\":[{\"docId\":\"carrageenan-insulin#6\",\"quote\":\"Although short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants, interactions with BMI suggest effects of carrageenan treatment on insulin sensitivity …\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "carrageenan-insulin#6",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c17-beta-fracture",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4708,
+      "completionTokens": 208,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1465,
+      "cachedTokens": 3444,
+      "promptMs": 12622,
+      "modelMs": 25952,
+      "ttftMs": 12702,
+      "wallMs": 34829,
+      "actions": [
+        "search {\"query\":\"50-year follow-up antenatal betamethasone trial osteoporotic site fracture adjusted relative risk\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"1.57\",\"evidence\":[{\"docId\":\"betamethasone-50-years#3\",\"quote\":\"osteoporotic site fracture in adulthood was more likely to h"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1.57\",\"evidence\":[{\"docId\":\"betamethasone-50-years#3\",\"quote\":\"osteoporotic site fracture in adulthood was more likely to have occurred in the betamethasone group compared with placebo (adjusted relative risk 1.57, 95% CI 1.00, 2.48, p = 0.05).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "betamethasone-50-years#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "What was the adjusted relative risk of osteoporotic site fracture in the betamethasone group compared with placebo?",
+              "answer": "1.57"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c18-beta-first-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5309,
+      "completionTokens": 215,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1621,
+      "cachedTokens": 3672,
+      "promptMs": 16070,
+      "modelMs": 29528,
+      "ttftMs": 16131,
+      "wallMs": 38611,
+      "actions": [
+        "search {\"query\":\"antenatal betamethasone trial injection contents first 717 mothers\"}",
+        "read {\"docId\":\"betamethasone-50-years#2\"}",
+        "read {\"docId\":\"betamethasone-50-years#2\"}",
+        "read {\"docId\":\"betamethasone-50-years#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"Each injection contained 6 mg of betamethasone sodium phosphate and 6 mg of betamethasone acetate.\",\"evidence\":[{\"docId\":\"b"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Each injection contained 6 mg of betamethasone sodium phosphate and 6 mg of betamethasone acetate.\",\"evidence\":[{\"docId\":\"betamethasone-50-years#2\",\"quote\":\"The first 717 mothers received two intramuscular injections of betamethasone (6 mg betamethasone sodium phosphate and 6 mg betamethasone acetate) or placebo given 24 h apart\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "betamethasone-50-years#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "what did each injection contain",
+              "answer": "6 mg of betamethasone sodium phosphate and 6 mg of betamethasone acetate"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c19-crp-odds-ratio",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4873,
+      "completionTokens": 192,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1517,
+      "cachedTokens": 3340,
+      "promptMs": 12821,
+      "modelMs": 23096,
+      "ttftMs": 12884,
+      "wallMs": 30553,
+      "actions": [
+        "search {\"query\":\"C-reactive protein testing community health workers Uganda stepped wedge trial odds ratio antibiotic prescription\"}",
+        "read {\"docId\":\"crp-community-health-workers#27\"}",
+        "read {\"docId\":\"crp-community-health-workers#27\"}",
+        "read {\"docId\":\"crp-community-health-workers#27\"}",
+        "final_answer {\"found\":true,\"answer\":\"0.18\",\"evidence\":[{\"docId\":\"crp-community-health-workers#27\",\"quote\":\"After adjusting for month of visit and stratum, the o"
+      ],
+      "final": "{\"found\":true,\"answer\":\"0.18\",\"evidence\":[{\"docId\":\"crp-community-health-workers#27\",\"quote\":\"After adjusting for month of visit and stratum, the odds of antibiotic prescription by the CHW were over 80% lower in the intervention as compared to the control periods (OR 0.18, 95% CI: 0.06 to 0.49).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "crp-community-health-workers#27",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "odds ratio",
+              "answer": "0.18"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c20-crp-clinical-failure",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 7756,
+      "completionTokens": 335,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2076,
+      "cachedTokens": 5660,
+      "promptMs": 18479,
+      "modelMs": 39415,
+      "ttftMs": 18553,
+      "wallMs": 51885,
+      "actions": [
+        "search {\"query\":\"Ugandan trial C-reactive protein community health workers clinical failure intervention control\"}",
+        "read {\"docId\":\"crp-community-health-workers#29\"}",
+        "read {\"docId\":\"crp-community-health-workers#29\"}",
+        "read {\"docId\":\"crp-community-health-workers#5\"}",
+        "read {\"docId\":\"crp-community-health-workers#5\"}",
+        "final_answer {\"found\":true,\"answer\":\": No, clinical failure did not differ significantly between the intervention and control periods in the Ugandan trial of C-"
+      ],
+      "final": "{\"found\":true,\"answer\":\": No, clinical failure did not differ significantly between the intervention and control periods in the Ugandan trial of C-reactive protein testing by community health workers.\",\"evidence\":[{\"docId\":\"crp-community-health-workers#29\",\"quote\":\"Specifically, clinical failure was uncommon and occurred at a slightly lower frequency in the intervention group (control 3.9% (23/585) v. intervention 1.8% (11/630); OR 0.41, 95% CI: 0.09 to 1.83). There was no statistical difference in the risk of hospitalization or persistence of fever, both of which were rare events.\"},{\"docId\":\"crp-community-health-workers#5\",\"quote\":\"There was no statistical difference in rates of clinical failure, perceived improvement by the caregiver, or other safety outcomes at day 7, although the number of these events in both groups was small, and therefore, our estimates are imprecise.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "crp-community-health-workers#29",
+          "verified": true
+        },
+        {
+          "docId": "crp-community-health-workers#5",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "Did clinical failure differ between the intervention and control periods?",
+              "answer": "No, clinical failure did not differ significantly between the intervention and control periods in the Ugandan trial of C-reactive protein testing by community health workers."
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c21-malawi-largest",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 10606,
+      "completionTokens": 234,
+      "estimatedTokens": false,
+      "maxPromptTokens": 3090,
+      "cachedTokens": 7496,
+      "promptMs": 28934,
+      "modelMs": 44479,
+      "ttftMs": 29011,
+      "wallMs": 44525,
+      "actions": [
+        "search {\"query\":\"typhoid conjugate vaccine trial Malawian children enrolled participants\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#33\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#33\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#19\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#19\"}",
+        "final_answer {\"found\":true,\"answer\":\"The typhoid conjugate vaccine trial enrolled 14,069 participants, while the REVAMP trial enrolled 14,061 participants. Ther"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The typhoid conjugate vaccine trial enrolled 14,069 participants, while the REVAMP trial enrolled 14,061 participants. Therefore, the typhoid conjugate vaccine trial enrolled more participants.\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#19\",\"quote\":\"Intention-to-treat population\\nVi-TT | 14 069\\nMenA | 14 061\"}]}",
+      "status": "unverified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#19",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c22-typhoid-adults",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5934,
+      "completionTokens": 215,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1860,
+      "cachedTokens": 4275,
+      "promptMs": 15337,
+      "modelMs": 29896,
+      "ttftMs": 15417,
+      "wallMs": 29936,
+      "actions": [
+        "search {\"query\":\"Vi-TT typhoid conjugate vaccine Malawi trial efficacy adults 18 to 45 years\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#5\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#5\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"80·7%\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#5\",\"quote\":\"The TCV efficacy trials conducted in Malawi, Nepal, and Ban"
+      ],
+      "final": "{\"found\":true,\"answer\":\"80·7%\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#5\",\"quote\":\"The TCV efficacy trials conducted in Malawi, Nepal, and Bangladesh used single-dose Vi-TT and reported vaccine efficacy against blood culture-confirmed typhoid fever of 80·7% (95% CI 64·2–89·6) at 18–24 months in Malawi,\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#5",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c23-veg-hba1c",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 8885,
+      "completionTokens": 157,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1934,
+      "cachedTokens": 7144,
+      "promptMs": 17355,
+      "objections": [
+        "About to conclude that the sources don't answer this; reading what the search found first"
+      ],
+      "modelMs": 28267,
+      "ttftMs": 17460,
+      "wallMs": 28292,
+      "actions": [
+        "search {\"query\":\"VESSEL trial cruciferous vegetable diet HbA1c\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#36\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#36\"}",
+        "search {\"query\":\"VESSEL trial HbA1c cruciferous vegetable diet\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+        "read {\"docId\":\"cruciferous-blood-pressure#36\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch01-typhoid-under-2",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 6156,
+      "completionTokens": 182,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1931,
+      "cachedTokens": 4426,
+      "promptMs": 15535,
+      "modelMs": 27076,
+      "ttftMs": 15606,
+      "wallMs": 35988,
+      "actions": [
+        "search {\"query\":\"Vi-TT efficacy children aged 9 months to 2 years Malawi typhoid vaccine trial final analysis\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#2\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#2\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"78.3%\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#2\",\"quote\":\"In the intention-to-treat population, efficacy of Vi-TT was"
+      ],
+      "final": "{\"found\":true,\"answer\":\"78.3%\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#2\",\"quote\":\"In the intention-to-treat population, efficacy of Vi-TT was 78·3% (95% CI 66·3–86·1)\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "efficacy",
+              "answer": "78.3%"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch02-iron-birthweight",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 6087,
+      "completionTokens": 195,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2005,
+      "cachedTokens": 4066,
+      "promptMs": 18656,
+      "modelMs": 31671,
+      "ttftMs": 18723,
+      "wallMs": 31712,
+      "actions": [
+        "search {\"query\":\"REVAMP trial ferric carboxymaltose birthweight\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#29\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#29\"}",
+        "read {\"docId\":\"iv-iron-pregnancy-malawi#29\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, birthweight did not differ between the ferric carboxymaltose and standard-of-care groups in the REVAMP trial.\",\"evidenc"
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, birthweight did not differ between the ferric carboxymaltose and standard-of-care groups in the REVAMP trial.\",\"evidence\":[{\"docId\":\"iv-iron-pregnancy-malawi#29\",\"quote\":\"Compared with standard of care, ferric carboxymaltose did not change birthweight or incidence of low birthweight (table 3).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "iv-iron-pregnancy-malawi#29",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch03-ipt-nnt",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2052,
+      "completionTokens": 124,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1175,
+      "cachedTokens": 1086,
+      "promptMs": 8964,
+      "modelMs": 16643,
+      "ttftMs": 9007,
+      "wallMs": 26386,
+      "actions": [
+        "search {\"query\":\"number needed to treat monthly dihydroartemisinin–piperaquine avert one malaria infection per pregnancy women living with HIV\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#23\"}",
+        "final_answer {\"found\":true,\"answer\":\"7\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#23\",\"quote\":\"The number needed to treat to avert one malaria infection was 7"
+      ],
+      "final": "{\"found\":true,\"answer\":\"7\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#23\",\"quote\":\"The number needed to treat to avert one malaria infection was 7 (95% CI 5–10).\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ipt-malaria-pregnancy#23",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "What was the number needed to treat with monthly dihydroartemisinin–piperaquine to avert one malaria infection per pregnancy in women living with HIV?",
+              "answer": "7"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch04-veg-triglycerides",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6662,
+      "completionTokens": 280,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1845,
+      "cachedTokens": 4797,
+      "promptMs": 17156,
+      "modelMs": 35683,
+      "ttftMs": 17223,
+      "wallMs": 48069,
+      "actions": [
+        "search {\"query\":\"VESSEL trial cruciferous vegetable diet serum triglycerides control diet\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#37\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#37\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#31\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#31\"}",
+        "final_answer {\"found\":true,\"answer\":\"Serum triglycerides were significantly lower after the active intervention (cruciferous vegetable diet) compared with the c"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Serum triglycerides were significantly lower after the active intervention (cruciferous vegetable diet) compared with the control intervention in the VESSEL trial.\",\"evidence\":[{\"docId\":\"cruciferous-blood-pressure#31\",\"quote\":\"Serum triglycerides were significantly lower in the active intervention compared to the control intervention (mean difference active vs. control: − 0.2 mmol/L, 95% CI − 0.4, − 0.0, P = 0.047)\"},{\"docId\":\"cruciferous-blood-pressure#37\",\"quote\":\"We also found that serum triglycerides were significantly lower after the active intervention compared with the control intervention.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "cruciferous-blood-pressure#31",
+          "verified": true
+        },
+        {
+          "docId": "cruciferous-blood-pressure#37",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "How did serum triglycerides change after the cruciferous vegetable diet compared with the control diet in the VESSEL trial?",
+              "answer": "Serum triglycerides were significantly lower after the active intervention (cruciferous vegetable diet) compared with the control intervention in the VESSEL trial."
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch05-copcov-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5506,
+      "completionTokens": 180,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1747,
+      "cachedTokens": 3743,
+      "promptMs": 15835,
+      "modelMs": 26321,
+      "ttftMs": 15885,
+      "wallMs": 33291,
+      "actions": [
+        "search {\"query\":\"COPCOV trial hydroxychloroquine chloroquine daily dose\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#11\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#11\"}",
+        "read {\"docId\":\"copcov-hydroxychloroquine#11\"}",
+        "final_answer {\"found\":true,\"answer\":\"155 mg daily\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#11\",\"quote\":\"155 mg daily (equivalent to 250 mg chloroquine p"
+      ],
+      "final": "{\"found\":true,\"answer\":\"155 mg daily\",\"evidence\":[{\"docId\":\"copcov-hydroxychloroquine#11\",\"quote\":\"155 mg daily (equivalent to 250 mg chloroquine phosphate or 200 mg hydroxychloroquine sulphate) for 3 months.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "copcov-hydroxychloroquine#11",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "daily dose",
+              "answer": "155 mg daily"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch06-carrageenan-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6650,
+      "completionTokens": 131,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1758,
+      "cachedTokens": 4872,
+      "promptMs": 16133,
+      "modelMs": 23987,
+      "ttftMs": 16198,
+      "wallMs": 24009,
+      "actions": [
+        "search {\"query\":\"carrageenan insulin resistance trial participants dose\"}",
+        "read {\"docId\":\"carrageenan-insulin#26\"}",
+        "read {\"docId\":\"carrageenan-insulin#26\"}",
+        "search {\"query\":\"carrageenan insulin resistance trial participants dose per dose\"}",
+        "read {\"docId\":\"carrageenan-insulin#26\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch07-beta-mental-health",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1775,
+      "completionTokens": 188,
+      "estimatedTokens": false,
+      "maxPromptTokens": 935,
+      "cachedTokens": 1049,
+      "promptMs": 6507,
+      "modelMs": 17961,
+      "ttftMs": 6551,
+      "wallMs": 17989,
+      "actions": [
+        "search {\"query\":\"antenatal betamethasone mental health outcomes 50 years age\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, exposure to antenatal betamethasone did not affect mental health outcomes at 50 years of age.\",\"evidence\":[{\"docId\":\"be"
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, exposure to antenatal betamethasone did not affect mental health outcomes at 50 years of age.\",\"evidence\":[{\"docId\":\"betamethasone-50-years#3\",\"quote\":\"There is no evidence that antenatal corticosteroids have clinically important effects on general health and social outcomes up to 50 years of age.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "betamethasone-50-years#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch08-beta-oral-health",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4577,
+      "completionTokens": 178,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1435,
+      "cachedTokens": 3343,
+      "promptMs": 11462,
+      "modelMs": 21834,
+      "ttftMs": 11521,
+      "wallMs": 21872,
+      "actions": [
+        "search {\"query\":\"50-year follow-up antenatal betamethasone adjusted relative risk oral health\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "read {\"docId\":\"betamethasone-50-years#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"1.57\",\"evidence\":[{\"docId\":\"betamethasone-50-years#3\",\"quote\":\"adjusted relative risk 1.57, 95% CI 1.00, 2.48, p = 0.05\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1.57\",\"evidence\":[{\"docId\":\"betamethasone-50-years#3\",\"quote\":\"adjusted relative risk 1.57, 95% CI 1.00, 2.48, p = 0.05\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "betamethasone-50-years#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch09-folic-placebo-n",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5444,
+      "completionTokens": 186,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1788,
+      "cachedTokens": 3857,
+      "promptMs": 14374,
+      "modelMs": 25602,
+      "ttftMs": 14438,
+      "wallMs": 25647,
+      "actions": [
+        "search {\"query\":\"FASSTT trial folic acid women randomised placebo second third trimester\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#10\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#10\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#10\"}",
+        "final_answer {\"found\":true,\"answer\":\"94\",\"evidence\":[{\"docId\":\"folic-acid-pregnancy#10\",\"quote\":\"Eligible participants were randomised at the end of their first"
+      ],
+      "final": "{\"found\":true,\"answer\":\"94\",\"evidence\":[{\"docId\":\"folic-acid-pregnancy#10\",\"quote\":\"Eligible participants were randomised at the end of their first trimester to receive either 400 µg/day of FA (n = 96) or placebo (n = 94) until the end of pregnancy.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "folic-acid-pregnancy#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    },
+    {
+      "suite": "clinicalholdout",
+      "taskId": "ch10-azi-ferritin",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 10419,
+      "completionTokens": 164,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2522,
+      "cachedTokens": 8090,
+      "promptMs": 22588,
+      "modelMs": 33379,
+      "ttftMs": 22691,
+      "wallMs": 33406,
+      "actions": [
+        "search {\"query\":\"median serum ferritin children TABS-PKPD azithromycin trial\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#36\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#36\"}",
+        "search {\"query\":\"median serum ferritin TABS-PKPD\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#21\"}",
+        "read {\"docId\":\"azithromycin-severe-malaria#21\"}",
+        "final_answer {\"found\":false,\"answer\":\"\",\"evidence\":[]}"
+      ],
+      "final": "{\"found\":false,\"answer\":\"\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false
+    }
+  ]
+}

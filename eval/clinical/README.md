@@ -85,19 +85,56 @@ The questions where search falls short:
 
 These are the gaps a researcher meets: tables, and questions that span papers. Search is lexical, with no synonyms. A question about a "heart attack" would not find "myocardial infarction". So every question here uses the papers' own terms, which flatters search.
 
-**Models: not yet run.** A model could not be run where the suite was written: llama.cpp could not be built there. The plan, on the project owner's machine or a cloud container:
+### The first model runs (0.60.0)
+
+Both models ran on llama.cpp `09338b8`, built portably (`-DGGML_NATIVE=OFF`), on CPU in a 4-core cloud container, at 4,096 tokens of context, in constrained mode, with the same Q4_K_M files as the field suite:
 
 ```bash
 llama-server -m Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
-npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b --context 4096 \
+npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b-q4km --context 4096 \
   --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --modes constrained \
   --suites clinical,clinicalholdout --out eval/results/clinical-0.60-qwen3.5-4b-q4km.json
 ```
 
-Then the same with Qwen3.5-2B. Record, for each model:
-- **Passed,** in total and by kind.
-- **False reassurance:** answers labelled **Quotes found** that are wrong, against the design's 10% target (`docs/design.md` §1.6). This is the number the clinical checks of 0.59.0 exist to lower. `bench:rescore` on the same report with `src/agent/support.ts` as it was at 0.58.0 shows how many wrong answers they caught.
-- **Negative results:** how many answers turned a negative into a positive, and with which label.
+| Model | `clinical` | `clinicalholdout` | Labelled **Quotes found**, wrong | Median time per question | Report |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 17/23 (74%) | 7/10 | 3 of 20 (15%): 2 of 15 and 1 of 5 | 101 s | [json](../results/clinical-0.60-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 13/23 (57%) | 4/10 | 5 of 14 (36%): 2 of 10 and 3 of 4 | 35 s | [json](../results/clinical-0.60-qwen3.5-2b-q4km.json) |
+
+For comparison, the field suite's latest 4B baseline passes 80 of 89. On trial reports, both models are wrong more often under a green label than the design's 10% target allows. The 2B model is wrong more than a third of the time.
+
+`clinical` by kind (`clinicalholdout` is read only as totals):
+
+| Kind | 4B | 2B |
+| --- | --- | --- |
+| Effect | 6/7 | 4/7 |
+| Negative | 2/4 | 3/4 |
+| Dose | 5/5 | 3/5 |
+| Table | 2/3 | 2/3 |
+| Design | 0/1 | 0/1 |
+| Two papers | 0/1 | 0/1 |
+| Not in the papers | 2/2 | 1/2 |
+
+**What went wrong.** The questions in `clinical`, answer by answer:
+
+- **The planned sample size, given as the enrolled one (`c09`).** Both models answered that the VESSEL trial recruited 25 participants. They quoted "a desired sample size of 25 participants was calculated" (4B) and "we were unable to recruit the desired sample size of 25 participants" (2B). The trial recruited 18. Both quotes are real, the model's own review said yes, and both answers were labelled **Quotes found**. The 4B sentence passes the word check because "25" and "participants" are in the quote; the 2B answer, a bare "25", is inside a quote that covers the question. This is the error a researcher extracting data would most need caught. No check catches it today.
+- **A short answer to another question (`c06`, 2B).** Asked for a risk ratio, 2B answered "15%". Its quote was "approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection". That is a proportion, from one arm. The model's review said yes, and its completeness check found the question's one part answered. So the answer was labelled **Quotes found**.
+- **The answer not found, because search did not offer it (`c06` 4B, `c05`, `c21`).** For `c06`, the model's search returned three parts of the Discussion, which repeat its terms more often than the abstract's Findings, where the risk ratio is. The model read those parts and the ones around them, never the Findings, and answered "not found". `c05` (a value only in Table 1) and `c21` (two papers) were the questions search alone missed too.
+- **Numbers made up, or taken from the wrong paper, caught by the quote check (2B).** In `c01`, 2B gave the vaccine's efficacy as 98.7%; the paper says 78·3%. In `c21`, it gave the typhoid trial's two arms, 14,069 and 14,061, as the sizes of the two trials. Their quotes were not in the papers, so neither answer was labelled.
+- **A population the trial did not study (`c22`, 2B).** Asked about adults, 2B answered "80·7%": the children's efficacy at the earlier analysis. It was not labelled.
+- **Negative results:** no answer turned a negative result into a positive one. Both models said "did not reduce" where the papers do.
+
+**What the clinical checks of 0.59.0 changed in these runs.** These reports were re-scored with `src/agent/support.ts` as it was at 0.58.0 (`bench:rescore` in a worktree of `44cce55`). Two labels change, both on 4B:
+- The right answer to `c01`, which quotes "78·3% (95% CI 66·3–86·1)", gains **Quotes found**: the "·" decimal.
+- One held-out answer the scorer marks wrong gains it too, for the same reason. Held-out tasks are read only as totals, so it was not looked at.
+
+The unit, direction and significance checks marked nothing: no model made those errors here.
+
+**Two questions the runs showed are wrong** (not changed: the rule above is that questions are not changed to fit a run, so this is for the project owner to decide):
+- **`c03` asks for more than it says.** It asks "did ferric carboxymaltose reduce the prevalence of anaemia…?", and its facts also require the prevalence ratio, 0·92. Both models answered rightly that it did not, with the paper's sentence as their quote, and failed. 4B's answer was labelled **Quotes found**, so it counts as one of 4B's three wrong labelled answers, though it is right. Fix: drop the 0·92 group, or ask for the ratio in the question.
+- **`c20`'s ways to say "no difference" leave out "no statistical difference".** 4B wrote "Yes, clinical failure occurred at a slightly lower frequency … but there was no statistical difference". Its first word is wrong for "did clinical failure differ?", so the failure stands either way; but "no statistical" belongs in the list.
+
+**Next, measured on this suite.** A sentence that says how many were recruited, enrolled or randomised should not be backed by a quote about a desired, planned, target or calculated sample size (`c09`). Search could offer the abstract's Findings, or more than three results, for questions about a paper's main result (`c06`). Each is a change to judge on `clinical`, `clinicalholdout` and the field suites by [the usual rule](../field/README.md#rule-for-prompt-and-guard-changes).
 
 ## Limits
 
