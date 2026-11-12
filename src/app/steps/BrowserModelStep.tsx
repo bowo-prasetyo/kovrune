@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { BROWSER_MODELS, browserModelFor, type BrowserModel } from "../../models/catalog.ts";
 import {
   checkBrowserModel,
+  experimentalFallback,
+  experimentalWarning,
   OTHER_COMPUTER_ADVICE,
   OTHER_COMPUTER_HELP,
   OTHER_COMPUTER_SECTION,
@@ -35,6 +37,7 @@ export function BrowserModelStep({
   const recommended = recommendBrowserModel(caps);
   // Not "recommended" when even the lighter model is unlikely to fit: the warning below says so.
   const lowMemory = tooLittleMemory(caps);
+  const fallback = experimentalFallback(caps);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +67,7 @@ export function BrowserModelStep({
               <input type="radio" name="model" checked={chosen.key === model.key} onChange={() => setChosen(model)} />
               <strong>{model.label}</strong>
               {model.key === recommended.key && !lowMemory && <span className="badge supported">recommended for this device</span>}
+              {model.experimental && <span className="badge experimental">experimental</span>}
               {storage[model.key]?.downloaded && <span className="badge">downloaded</span>}
               <span className="hint">
                 {" "}
@@ -73,6 +77,12 @@ export function BrowserModelStep({
           );
         })}
       </fieldset>
+
+      {chosen.experimental && (
+        <p className="warning" role="status">
+          {experimentalWarning(chosen)}
+        </p>
+      )}
 
       {check.problems.map((problem) => (
         <p key={problem} className="error" role="alert">
@@ -92,6 +102,7 @@ export function BrowserModelStep({
             {OTHER_COMPUTER_SECTION}
           </a>
           .
+          {fallback && fallback.key !== chosen.key && ` Or choose the experimental ${fallback.label}, which fits this device's memory but answers fewer questions correctly.`}
         </p>
       )}
 

@@ -8,12 +8,16 @@
 //    it or answer, not search again. This catches servers that mishandle
 //    multi-turn tool conversations (seen with Ollama 0.40.10 and Qwen3.5 with
 //    thinking off), where every call repeats the first search.
+// 3. Only for Qwen3.5-0.8B (retriesRepeatedSearch), and only if step 2 repeated
+//    the same search: the model gets the reply a research task gives to a repeated
+//    action, and searching is no longer offered, as in a task (agent.ts). It must
+//    then read a document the result lists, or answer citing one.
 // Speed is measured on the second, warm call.
 
 import type { ChatMessage, LanguageModel } from "../models/types.ts";
 import { createResearchTools, RESEARCH_SYSTEM } from "../tools/research.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
-import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, systemPrompt } from "./agent.ts";
+import { actionJsonSchema, actionSchema, callForAction, OBSERVATION_PREFIX, observationText, repeatObservation, systemPrompt } from "./agent.ts";
 import { RESEARCH_LIMITS } from "./research.ts";
 import { checksCompleteness, COMPLETENESS_MAX_TOKENS } from "./completeness.ts";
 import { CROSSCHECK_MAX_TOKENS, crossChecksAnswers } from "./crosscheck.ts";
@@ -27,6 +31,8 @@ export interface SelfCheckResult {
    * valid second action that ignored the tool result.
    */
   failedStep?: "first-action" | "second-action" | "uses-tool-result";
+  /** Whether step 2 repeated the search, so step 3 ran (passed or not). */
+  repeatedSearch?: boolean;
   /** Start of the raw model output from the failing step, or from step 2 when passed. */
   output: string;
   error?: string;
@@ -69,7 +75,7 @@ export interface SelfCheckOptions {
   /** Documents to search in step 2. The benchmark passes its own corpus; the app uses the built-in sample. */
   documents?: SourceDocument[];
   /** Called as each step starts, for progress display. */
-  onStep?: (step: 1 | 2) => void;
+  onStep?: (step: 1 | 2 | 3) => void;
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -103,15 +109,48 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
 
   // Continue from a fixed search, whatever the model chose, so step 2 is the same for every model.
   const search = researchTools.find((t) => t.name === "search")!;
+  const searchResult = observationText(await search.execute!({ query: SELF_CHECK_QUERY }));
+  const listed = new Set([...searchResult.matchAll(/^\[([^\]]+)\]/gm)].map((m) => m[1]!));
   messages.push(
     { role: "assistant", content: JSON.stringify({ tool: "search", args: { query: SELF_CHECK_QUERY } }) },
-    { role: "user", content: `${OBSERVATION_PREFIX}${observationText(await search.execute!({ query: SELF_CHECK_QUERY }))}` },
+    { role: "user", content: `${OBSERVATION_PREFIX}${searchResult}` },
   );
   options.onStep?.(2);
   const second = await callForAction({ model, messages, schema, responseSchema, maxTokens: 96, signal });
   const record = second.record;
-  const usesResult = record.valid && (record.tool === "read" || record.tool === "final_answer");
-  const failedStep = usesResult ? undefined : record.valid ? "uses-tool-result" : "second-action";
+  let usesResult = record.valid && (record.tool === "read" || record.tool === "final_answer");
+  let failedStep: SelfCheckResult["failedStep"] = usesResult ? undefined : record.valid ? "uses-tool-result" : "second-action";
+  let output = second.text;
+  let error = usesResult ? undefined : (record.error ?? `searched again (${record.tool} ${JSON.stringify(record.args)}) instead of using the search result`);
+  let thirdMs = 0;
+
+  const repeatedSearch =
+    retriesRepeatedSearch(model.info.id) && record.valid && record.tool === "search" && second.action?.args.query === SELF_CHECK_QUERY;
+  if (repeatedSearch) {
+    options.onStep?.(3);
+    const hint = search.onRepeat?.(second.action!.args).hint ?? "";
+    messages.push(
+      { role: "assistant", content: JSON.stringify(second.action) },
+      { role: "user", content: `${OBSERVATION_PREFIX}${repeatObservation("final_answer", hint)}` },
+    );
+    const offered = researchTools.filter((t) => t.available?.() ?? true);
+    const third = await callForAction({
+      model,
+      messages,
+      schema: actionSchema(offered),
+      responseSchema: constrained ? actionJsonSchema(offered) : undefined,
+      maxTokens: 160,
+      signal,
+    });
+    thirdMs = third.record.totalMs;
+    output = third.text;
+    usesResult = third.record.valid && citesListedDocument(third.action, listed);
+    failedStep = usesResult ? undefined : "uses-tool-result";
+    error = usesResult
+      ? undefined
+      : (third.record.error ??
+        `searched again (search ${JSON.stringify(second.action!.args)}), then, told the result had not changed, did not read or cite a document it lists`);
+  }
 
   const decodeMs = Math.max(record.totalMs - record.ttftMs, 1);
   const decodeTokensPerSecond = (record.completionTokens / decodeMs) * 1000;
@@ -128,15 +167,34 @@ export async function runSelfCheck(model: LanguageModel, options: SelfCheckOptio
     passed: usesResult,
     constrained,
     failedStep,
-    output: second.text.slice(0, 200),
-    error: usesResult
-      ? undefined
-      : (record.error ?? `searched again (${record.tool} ${JSON.stringify(record.args)}) instead of using the search result`),
-    seconds: round1((first.record.totalMs + record.totalMs) / 1000),
+    ...(repeatedSearch ? { repeatedSearch } : {}),
+    output: output.slice(0, 200),
+    error,
+    seconds: round1((first.record.totalMs + record.totalMs + thirdMs) / 1000),
     decodeTokensPerSecond: round1(decodeTokensPerSecond),
     maxResearchTaskMinutes: round1((RESEARCH_LIMITS.maxCalls * secondsPerCall + reviewSeconds) / 60),
     minutesPerSource: round1((RESEARCH_LIMITS.callsPerSource * secondsPerCall) / 60),
   };
+}
+
+/**
+ * Whether the self-check gives a model a step 3 after it repeats the search: only Qwen3.5-0.8B, the
+ * experimental browser model. It repeats the search in step 2 every time (6 of 6 runs), but in the
+ * benchmark's research tasks, where a task never offers a second search before a result is read, it
+ * repeated its first search in 1 of 160 (docs/m0-benchmark.md, "A smaller model"). Other models keep
+ * the two-step check, which is stricter about servers that lose the conversation: with only two
+ * documents in the built-in sample, such a server could pass step 3 by chance.
+ */
+export function retriesRepeatedSearch(modelId: string): boolean {
+  return /qwen3\.5[-_:]0\.8b(?![\p{L}\p{N}])/iu.test(modelId);
+}
+
+/** Whether a step 3 action reads a document the search result lists, or answers citing one. */
+function citesListedDocument(action: { tool: string; args: Record<string, unknown> } | undefined, listed: Set<string>): boolean {
+  if (action?.tool === "read") return listed.has(String(action.args.docId));
+  if (action?.tool !== "final_answer") return false;
+  const evidence = Array.isArray(action.args.evidence) ? (action.args.evidence as { docId?: unknown }[]) : [];
+  return evidence.some((e) => listed.has(String(e.docId)));
 }
 
 /** Human-readable summary lines for logs. */
@@ -148,6 +206,9 @@ export function describeSelfCheck(result: SelfCheckResult): string[] {
     lines.push(
       `Speed: ${result.decodeTokensPerSecond} tokens/s. A research task can take up to ${result.maxResearchTaskMinutes} min at this speed, and up to ${result.minutesPerSource} min more for each of Wikipedia, OpenAlex and arXiv it searches.`,
     );
+  }
+  if (result.passed && result.repeatedSearch) {
+    lines.push("The model repeated its search once, then used the result when told it had not changed, as research tasks tell it.");
   }
   if (!result.passed) {
     lines.push(`Error: ${result.error}`);

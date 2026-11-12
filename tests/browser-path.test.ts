@@ -1,12 +1,20 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
-import { checkBrowserModel, recommendBrowserModel, recommendPath, tooLittleMemory, type DeviceCapabilities } from "../src/app/device.ts";
+import {
+  checkBrowserModel,
+  experimentalFallback,
+  experimentalWarning,
+  recommendBrowserModel,
+  recommendPath,
+  tooLittleMemory,
+  type DeviceCapabilities,
+} from "../src/app/device.ts";
 import { describeLoadProgress, describeModelError, describeSetup, modelCaution, stalledLoadHint } from "../src/app/models.ts";
 import { parseSettings } from "../src/app/settings.ts";
-import { BROWSER_MODELS, browserModelFor, DEFAULT_BROWSER_MODEL } from "../src/models/catalog.ts";
+import { BROWSER_MODELS, browserModelFor, DEFAULT_BROWSER_MODEL, STANDARD_BROWSER_MODELS } from "../src/models/catalog.ts";
 
-const [qwen4b, qwen2b] = BROWSER_MODELS as [(typeof BROWSER_MODELS)[0], (typeof BROWSER_MODELS)[0]];
+const [qwen4b, qwen2b, qwen08b] = BROWSER_MODELS as [(typeof BROWSER_MODELS)[0], (typeof BROWSER_MODELS)[0], (typeof BROWSER_MODELS)[0]];
 const capable: DeviceCapabilities = { webgpu: true, shaderF16: true, vendor: "nvidia", maxBufferMiB: 4096, ramGiB: 16 };
 
 describe("browser model catalog", () => {
@@ -72,6 +80,26 @@ describe("browser compatibility check", () => {
     assert.deepEqual(checkBrowserModel(phone, qwen2b).problems, []);
   });
 
+  it("offers the experimental model, never recommended, where only it fits (Android phone, 4 GB)", () => {
+    const phone: DeviceCapabilities = { webgpu: true, shaderF16: true, vendor: "arm", architecture: "valhall", maxBufferMiB: 2048, ramGiB: 4 };
+    assert.equal(qwen08b.experimental, true);
+    assert.deepEqual(STANDARD_BROWSER_MODELS.map((m) => m.key), ["qwen3.5-4b", "qwen3.5-2b"]);
+    // 1.6 GB plus 2 GB for the system fits 4 GB; the advice still points to another computer first.
+    assert.equal(experimentalFallback(phone)?.key, "qwen3.5-0.8b");
+    assert.equal(recommendBrowserModel(phone).key, "qwen3.5-2b");
+    const advice = recommendPath(phone);
+    assert.equal(advice.path, "local-server");
+    assert.match(advice.reason, /another computer[\s\S]*experimental Qwen3\.5-0\.8B, which needs about 1\.6 GB[\s\S]*check every one/);
+    assert.deepEqual(checkBrowserModel(phone, qwen08b).warnings.filter((w) => /may fail to load/.test(w)), []);
+    assert.match(experimentalWarning(qwen08b), /experimental and the weakest model[\s\S]*Check every answer/);
+    // Its 32-bit version (1.9 GB) fits 4 GB too. Not mentioned where a standard model fits, nor where
+    // even it does not (3 GB).
+    assert.equal(experimentalFallback({ ...phone, shaderF16: false })?.key, "qwen3.5-0.8b");
+    assert.equal(experimentalFallback(capable), undefined);
+    assert.equal(experimentalFallback({ ...phone, ramGiB: 3 }), undefined);
+    assert.doesNotMatch(recommendPath({ ...phone, ramGiB: 3 }).reason, /0\.8B/);
+  });
+
   it("counts the lighter model as fitting from 8 GB, or when the browser does not say", () => {
     assert.equal(tooLittleMemory({ ...capable, ramGiB: 8 }), false);
     assert.equal(tooLittleMemory({ ...capable, ramGiB: undefined }), false);
@@ -106,6 +134,8 @@ describe("browser settings", () => {
       /Qwen3\.5-4B when accuracy matters/,
     );
     assert.equal(modelCaution({ path: "browser", modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 }), undefined);
+    assert.match(modelCaution({ path: "browser", modelId: "Qwen3.5-0.8B-q4f16_1-MLC", contextLength: 4096 })!, /experimental and the weakest model[\s\S]*Check every answer/);
+    assert.equal(describeSetup({ path: "browser", modelId: "Qwen3.5-0.8B-q4f32_1-MLC", contextLength: 4096 }), "Qwen3.5-0.8B (32-bit) in this browser");
     assert.equal(
       modelCaution({ path: "local-server", serverKind: "ollama", baseUrl: "http://127.0.0.1:11434/v1", model: "qwen3.5:4b", contextLength: 4096 }),
       undefined,

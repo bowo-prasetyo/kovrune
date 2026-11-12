@@ -9,13 +9,15 @@ import { useModelLoad } from "../useModelLoad.ts";
 
 type TestState =
   | { phase: "waiting" }
-  | { phase: "running"; step: 1 | 2 }
+  | { phase: "running"; step: 1 | 2 | 3 }
   | { phase: "done"; result: SelfCheckResult; context?: ReturnType<typeof contextFromServer> }
   | { phase: "error"; message: string };
 
-const STEP_TEXT: Record<1 | 2, string> = {
+const STEP_TEXT: Record<1 | 2 | 3, string> = {
   1: "Step 1 of 2: asking the model for a first action…",
   2: "Step 2 of 2: checking that the model uses a search result…",
+  // Only for the experimental model, after it repeated its search (self-check.ts).
+  3: "Step 2 of 2: the model searched again; checking that it uses the result when told it has not changed…",
 };
 
 export function TestStep({

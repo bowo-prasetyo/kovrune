@@ -169,6 +169,11 @@ export function describeSetup(settings: Settings): string {
  */
 export function modelCaution(settings: Settings): string | undefined {
   const id = settings.path === "browser" ? settings.modelId : settings.model;
+  // The experimental model (docs/m0-benchmark.md, "A smaller model"): about 1 in 5 of its answers
+  // labelled Quotes found were wrong, against 1 in 15 for Qwen3.5-2B.
+  if (/qwen3\.5[-_:]0\.8b(?![\p{L}\p{N}])/iu.test(id)) {
+    return "Qwen3.5-0.8B is experimental and the weakest model: about 1 in 5 of its answers labelled Quotes found were wrong in testing. Check every answer against its quoted passages, and use a larger model on another computer when accuracy matters.";
+  }
   if (!/qwen3\.5[-_:]2b(?![\p{L}\p{N}])/iu.test(id)) return undefined;
   return "Qwen3.5-2B is faster, but its answers are wrong more often, even with real quotes, and it sometimes answers questions your documents don't answer. Read the quoted passages before relying on an answer, or use Qwen3.5-4B when accuracy matters.";
 }

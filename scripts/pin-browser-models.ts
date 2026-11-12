@@ -2,16 +2,18 @@
 // WebLLM downloads for them (docs/design.md §3.4). Writes src/models/browser-manifest.ts.
 //
 //   npm run pin:browser-models
+//   npm run pin:browser-models -- Qwen3.5-0.8B-q4f16_1-MLC Qwen3.5-0.8B-q4f32_1-MLC
 //
 // It pins the current head of each repository. Re-running it is a deliberate model
 // update: review the new revisions, and re-run the benchmark on the pinned models.
+// With model IDs, it pins only those, and keeps the other models' pins as they are.
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { BROWSER_MODELS } from "../src/models/catalog.ts";
-import type { PinnedBrowserModel, PinnedFile } from "../src/models/browser-manifest.ts";
+import { PINNED_BROWSER_MODELS, type PinnedBrowserModel, type PinnedFile } from "../src/models/browser-manifest.ts";
 
 const OUTPUT = new URL("../src/models/browser-manifest.ts", import.meta.url);
 
@@ -102,10 +104,20 @@ async function pinModel(modelId: string, libRevisions: Map<string, string>): Pro
   };
 }
 
+const only = new Set(process.argv.slice(2));
+const catalogIds = new Set(BROWSER_MODELS.flatMap((m) => [m.f16.modelId, m.f32.modelId]));
+for (const id of only) if (!catalogIds.has(id)) throw new Error(`${id} is not in src/models/catalog.ts`);
 const libRevisions = new Map<string, string>();
 const pinned: PinnedBrowserModel[] = [];
 for (const model of BROWSER_MODELS) {
   for (const variant of [model.f16, model.f32]) {
+    const kept = only.size && !only.has(variant.modelId) ? PINNED_BROWSER_MODELS.find((m) => m.modelId === variant.modelId) : undefined;
+    if (only.size && !only.has(variant.modelId) && !kept) throw new Error(`${variant.modelId} has no pin to keep: name it too`);
+    if (kept) {
+      console.log(`Keeping ${variant.modelId} at ${kept.revision}`);
+      pinned.push(kept);
+      continue;
+    }
     console.log(`Pinning ${variant.modelId}…`);
     pinned.push(await pinModel(variant.modelId, libRevisions));
   }
