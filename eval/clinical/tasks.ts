@@ -63,6 +63,8 @@ const NO_EFFECT = [
   "not significant",
   "not statistically",
   "no statistically",
+  // Since 0.61.0: "there was no statistical difference" (task defect found on c20, eval/clinical/README.md).
+  "no statistical",
   "no difference",
   "no differences",
   "no evidence",
@@ -99,11 +101,13 @@ export const clinicalTasks: ResearchTask[] = [
   // Intravenous iron in pregnancy, Malawi (REVAMP).
   {
     // negative: the primary outcome did not differ; anaemia was numerically lower, and lower at 4 weeks.
+    // Until 0.61.0 its facts also required the prevalence ratio (0·92), which the question does not ask
+    // for, so right answers failed (task defect, eval/clinical/README.md).
     id: "c03-iron-anaemia-36-weeks",
     kind: "lookup",
     question: "In the REVAMP trial, did ferric carboxymaltose reduce the prevalence of anaemia at 36 weeks' gestation compared with standard of care?",
     answerable: true,
-    facts: [NO_EFFECT, lancet("0·92")],
+    facts: [NO_EFFECT],
     citations: [IRON],
   },
   {

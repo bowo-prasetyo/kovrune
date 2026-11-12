@@ -819,7 +819,7 @@ What changed:
 
 ### Clinical trial reports (0.60.0)
 
-The `clinical` and `clinicalholdout` suites ask 33 questions over ten open-access trial reports: effect sizes, negative results, doses and table values. They have their own documents, library and README: [`eval/clinical/README.md`](../clinical/README.md). Search alone finds the cited paper for 29 of 30 answerable questions and 84.1% of answer passages. The first runs: Qwen3.5-4B passes 17/23 and 7/10, Qwen3.5-2B 13/23 and 4/10, and answers labelled **Quotes found** are wrong 3 of 20 and 5 of 14 times ([results](../clinical/README.md#the-first-model-runs-0600)).
+The `clinical` and `clinicalholdout` suites ask 33 questions over ten open-access trial reports: effect sizes, negative results, doses and table values. They have their own documents, library and README: [`eval/clinical/README.md`](../clinical/README.md). Search alone finds the cited paper for 29 of 30 answerable questions and 84.1% of answer passages. The first runs: Qwen3.5-4B passes 17/23 and 7/10, Qwen3.5-2B 13/23 and 4/10, and answers labelled **Quotes found** are wrong 3 of 20 and 5 of 14 times. Re-scored at 0.61.0, with two task defects fixed, 4B passes 19/23 and is wrong 2 of 20 times under the label ([results](../clinical/README.md#the-first-model-runs-0600)).
 
 ## Results
 
