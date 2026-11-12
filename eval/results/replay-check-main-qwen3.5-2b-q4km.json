@@ -1,0 +1,1083 @@
+{
+  "harnessVersion": "0.64.0",
+  "createdAt": "2026-11-12T12:45:15.946Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "notes": "Validation of bench:replay: recorded on main's search, harness 0.64.0."
+  },
+  "config": {
+    "suites": [
+      "research",
+      "field",
+      "clinical"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "r01-lumen-maintainer",
+      "r05-max-key-size",
+      "f01-preview-permission",
+      "f28-fuji-last-eruption",
+      "c02-typhoid-mean-age",
+      "c06-ipt-risk-ratio",
+      "c13-folic-dose",
+      "c16-carrageenan-insulin"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+    "seconds": 3.5,
+    "decodeTokensPerSecond": 18.3,
+    "maxResearchTaskMinutes": 4.1,
+    "minutesPerSource": 1
+  },
+  "field": {
+    "committedTasks": 89,
+    "localTasks": 0,
+    "localDocuments": 0
+  },
+  "summary": [
+    {
+      "suite": "research",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 2,
+      "successRate": 1,
+      "successInterval": [
+        0.342,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 16.6,
+      "prefillTokensPerSecond": 354.4,
+      "medianTaskSeconds": 12.5,
+      "maxPromptTokens": 679,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 876,
+      "promptSeconds": 8.8,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "field",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 1,
+      "successRate": 0.5,
+      "successInterval": [
+        0.095,
+        0.905
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 17.4,
+      "prefillTokensPerSecond": 592.9,
+      "medianTaskSeconds": 14.6,
+      "maxPromptTokens": 1338,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 1221,
+      "promptSeconds": 11.7,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "clinical",
+      "mode": "constrained",
+      "tasks": 4,
+      "passed": 2,
+      "successRate": 0.5,
+      "successInterval": [
+        0.15,
+        0.85
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 16.8,
+      "prefillTokensPerSecond": 440.8,
+      "medianTaskSeconds": 28.7,
+      "maxPromptTokens": 2036,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 6872,
+      "promptSeconds": 63.2,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 1
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Research task success (constrained)",
+        "threshold": ">= 60%",
+        "actual": "100%",
+        "passed": true
+      },
+      {
+        "name": "Valid action rate (constrained, all suites)",
+        "threshold": ">= 95%",
+        "actual": "100%",
+        "passed": true
+      },
+      {
+        "name": "Decode speed",
+        "threshold": ">= 10 tokens/s",
+        "actual": "16.6 tokens/s",
+        "passed": true
+      },
+      {
+        "name": "Median research task time",
+        "threshold": "<= 60 s",
+        "actual": "12.5 s",
+        "passed": true
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "research",
+      "taskId": "r01-lumen-maintainer",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1906,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "maxPromptTokens": 679,
+      "cachedTokens": 1432,
+      "promptMs": 4902,
+      "modelMs": 11838,
+      "ttftMs": 4929,
+      "wallMs": 11862,
+      "actions": [
+        "search {\"query\":\"LumenDB organization maintain\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "read {\"docId\":\"lumen-overview\"}",
+        "final_answer {\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project a"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project and has been maintained by the Tessel Foundation since 2022.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-overview",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "902c13e3",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"LumenDB organization maintain\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 236,
+            "completionTokens": 16,
+            "cachedTokens": 217,
+            "promptMs": 347.041
+          }
+        },
+        {
+          "input": "a8ef6fb8",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 377,
+            "completionTokens": 16,
+            "cachedTokens": 232,
+            "promptMs": 1466.31
+          }
+        },
+        {
+          "input": "cc16b7f5",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 614,
+            "completionTokens": 16,
+            "cachedTokens": 373,
+            "promptMs": 2286.933
+          }
+        },
+        {
+          "input": "13056874",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project and has been maintained by the Tessel Foundation since 2022.\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 679,
+            "completionTokens": 69,
+            "cachedTokens": 610,
+            "promptMs": 802.159
+          }
+        }
+      ]
+    },
+    {
+      "suite": "research",
+      "taskId": "r05-max-key-size",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1242,
+      "completionTokens": 99,
+      "estimatedTokens": false,
+      "maxPromptTokens": 611,
+      "cachedTokens": 840,
+      "promptMs": 3928,
+      "modelMs": 10032,
+      "ttftMs": 3953,
+      "wallMs": 13052,
+      "actions": [
+        "search {\"query\":\"LumenDB 3.2 maximum key size\"}",
+        "read {\"docId\":\"lumen-3-2-release\"}",
+        "final_answer {\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "lumen-3-2-release",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "maximum key size",
+              "answer": "4 KiB"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "f4ce12a6",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"LumenDB 3.2 maximum key size\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 244,
+            "completionTokens": 25,
+            "cachedTokens": 217,
+            "promptMs": 406.286
+          }
+        },
+        {
+          "input": "cb130d5d",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-3-2-release\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 387,
+            "completionTokens": 19,
+            "cachedTokens": 240,
+            "promptMs": 1427.425
+          }
+        },
+        {
+          "input": "f5aaf957",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 611,
+            "completionTokens": 55,
+            "cachedTokens": 383,
+            "promptMs": 2094.732
+          }
+        },
+        {
+          "input": "eb33aeeb",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 337,
+            "completionTokens": 7,
+            "cachedTokens": 333,
+            "promptMs": 108.925
+          }
+        },
+        {
+          "input": "de779ad4",
+          "output": "{\n  \"parts\": [\n    {\n      \"asks\": \"maximum key size\",\n      \"answer\": \"4 KiB\"\n    }\n  ]\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 130,
+            "completionTokens": 39,
+            "cachedTokens": 126,
+            "promptMs": 100.328
+          }
+        }
+      ]
+    },
+    {
+      "suite": "field",
+      "taskId": "f01-preview-permission",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1368,
+      "completionTokens": 103,
+      "estimatedTokens": false,
+      "maxPromptTokens": 680,
+      "cachedTokens": 926,
+      "promptMs": 4142,
+      "modelMs": 10027,
+      "ttftMs": 4179,
+      "wallMs": 11012,
+      "actions": [
+        "search {\"query\":\"Chrome permission model server\"}",
+        "read {\"docId\":\"kovrune-user-guide#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#5\",\"quote\":\"That permission is called Apps on device (\\\"Access oth"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#5\",\"quote\":\"That permission is called Apps on device (\\\"Access other apps and services on this device\\\"). When the browser asks, choose Allow.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#5",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "7c50cbe1",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"Chrome permission model server\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 250,
+            "completionTokens": 19,
+            "cachedTokens": 246,
+            "promptMs": 143.926
+          }
+        },
+        {
+          "input": "98beb488",
+          "output": "Chrome 权限模型服务器",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 43,
+            "completionTokens": 6,
+            "cachedTokens": 39,
+            "promptMs": 98.311
+          }
+        },
+        {
+          "input": "aa8674a2",
+          "output": "Chrome 許可モデル サーバー",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 43,
+            "completionTokens": 7,
+            "cachedTokens": 39,
+            "promptMs": 104.159
+          }
+        },
+        {
+          "input": "4f8218ac",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kovrune-user-guide#5\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 438,
+            "completionTokens": 19,
+            "cachedTokens": 246,
+            "promptMs": 1764.646
+          }
+        },
+        {
+          "input": "d93fc66b",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#5\",\"quote\":\"That permission is called Apps on device (\\\"Access other apps and services on this device\\\"). When the browser asks, choose Allow.\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 680,
+            "completionTokens": 65,
+            "cachedTokens": 434,
+            "promptMs": 2232.538
+          }
+        }
+      ]
+    },
+    {
+      "suite": "field",
+      "taskId": "f28-fuji-last-eruption",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 5624,
+      "completionTokens": 169,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1338,
+      "cachedTokens": 4845,
+      "promptMs": 7536,
+      "modelMs": 17390,
+      "ttftMs": 7613,
+      "wallMs": 18260,
+      "actions": [
+        "search {\"query\":\"富士山 噴火 最後 年\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "c25036b3",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"富士山 噴火 最後 年\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 240,
+            "completionTokens": 20,
+            "cachedTokens": 217,
+            "promptMs": 409.888
+          }
+        },
+        {
+          "input": "9852df65",
+          "output": "Mount Fuji eruption last year",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 48,
+            "completionTokens": 6,
+            "cachedTokens": 44,
+            "promptMs": 96.519
+          }
+        },
+        {
+          "input": "058ff623",
+          "output": "Mont Fuji éruption dernière année",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 48,
+            "completionTokens": 7,
+            "cachedTokens": 44,
+            "promptMs": 94.389
+          }
+        },
+        {
+          "input": "ef78041a",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 602,
+            "completionTokens": 21,
+            "cachedTokens": 598,
+            "promptMs": 97.332
+          }
+        },
+        {
+          "input": "a44802d2",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 990,
+            "completionTokens": 21,
+            "cachedTokens": 598,
+            "promptMs": 3429.518
+          }
+        },
+        {
+          "input": "1486b4a6",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1184,
+            "completionTokens": 21,
+            "cachedTokens": 986,
+            "promptMs": 1795.753
+          }
+        },
+        {
+          "input": "4a179c38",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1270,
+            "completionTokens": 21,
+            "cachedTokens": 1180,
+            "promptMs": 915.349
+          }
+        },
+        {
+          "input": "46210eaf",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1338,
+            "completionTokens": 65,
+            "cachedTokens": 1266,
+            "promptMs": 888.309
+          }
+        }
+      ]
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c02-typhoid-mean-age",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 6338,
+      "completionTokens": 160,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2014,
+      "cachedTokens": 4525,
+      "promptMs": 16455,
+      "modelMs": 25832,
+      "ttftMs": 16526,
+      "wallMs": 25975,
+      "actions": [
+        "search {\"query\":\"Malawi typhoid conjugate vaccine trial mean age enrolment Vi-TT group\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
+        "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
+        "final_answer {\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#16",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "f611cb00",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Malawi typhoid conjugate vaccine trial mean age enrolment Vi-TT group\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 259,
+            "completionTokens": 28,
+            "cachedTokens": 217,
+            "promptMs": 556.154
+          }
+        },
+        {
+          "input": "7d8e4de6",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 666,
+            "completionTokens": 23,
+            "cachedTokens": 255,
+            "promptMs": 3582.05
+          }
+        },
+        {
+          "input": "ebdb5efb",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1455,
+            "completionTokens": 23,
+            "cachedTokens": 662,
+            "promptMs": 6918.369
+          }
+        },
+        {
+          "input": "1905cee1",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1944,
+            "completionTokens": 23,
+            "cachedTokens": 1451,
+            "promptMs": 4364.906
+          }
+        },
+        {
+          "input": "f0d615b3",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2014,
+            "completionTokens": 63,
+            "cachedTokens": 1940,
+            "promptMs": 1034.434
+          }
+        }
+      ]
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c06-ipt-risk-ratio",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5551,
+      "completionTokens": 175,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1772,
+      "cachedTokens": 3980,
+      "promptMs": 13831,
+      "modelMs": 24148,
+      "ttftMs": 13878,
+      "wallMs": 28398,
+      "actions": [
+        "search {\"query\":\"monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria infection risk ratio\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
+        "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
+        "final_answer {\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxa"
+      ],
+      "final": "{\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection during pregnancy or delivery.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "ipt-malaria-pregnancy#46",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "completeness": {
+          "parts": [
+            {
+              "asks": "risk ratio for any malaria infection during pregnancy or delivery",
+              "answer": "15%"
+            }
+          ],
+          "complete": true
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "f87428ff",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria infection risk ratio\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 271,
+            "completionTokens": 38,
+            "cachedTokens": 217,
+            "promptMs": 611.662
+          }
+        },
+        {
+          "input": "d8b57117",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 667,
+            "completionTokens": 21,
+            "cachedTokens": 267,
+            "promptMs": 3432.949
+          }
+        },
+        {
+          "input": "f395213f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1137,
+            "completionTokens": 21,
+            "cachedTokens": 663,
+            "promptMs": 3953.856
+          }
+        },
+        {
+          "input": "b47a454a",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1704,
+            "completionTokens": 21,
+            "cachedTokens": 1133,
+            "promptMs": 4893.99
+          }
+        },
+        {
+          "input": "0aa2d6a9",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection during pregnancy or delivery.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1772,
+            "completionTokens": 74,
+            "cachedTokens": 1700,
+            "promptMs": 938.357
+          }
+        },
+        {
+          "input": "632c256e",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 413,
+            "completionTokens": 7,
+            "cachedTokens": 409,
+            "promptMs": 103.324
+          }
+        },
+        {
+          "input": "efc7ccbc",
+          "output": "{\n  \"parts\": [\n    {\n      \"asks\": \"risk ratio for any malaria infection during pregnancy or delivery\",\n      \"answer\": \"15%\"\n    }\n  ]\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 157,
+            "completionTokens": 45,
+            "cachedTokens": 28,
+            "promptMs": 1184.555
+          }
+        }
+      ]
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c13-folic-dose",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 7,
+      "validCalls": 7,
+      "promptTokens": 9114,
+      "completionTokens": 226,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2036,
+      "cachedTokens": 7271,
+      "promptMs": 17815,
+      "modelMs": 31415,
+      "ttftMs": 17910,
+      "wallMs": 31442,
+      "actions": [
+        "search {\"query\":\"FASSTT trial folic acid daily dose intervention group\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#18\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#19\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#34\"}",
+        "search {\"query\":\"FASSTT trial folic acid daily dose intervention group\"}",
+        "read {\"docId\":\"folic-acid-pregnancy#18\"}",
+        "final_answer {\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the intervention group of the FASSTT trial received. They only confirm that the intervention group received folic acid supplementation and that their children showed cognitive benefits from it, but the dosage information is not present in the provided text snippets.\",\"evidence\":[]}",
+      "status": "unverified",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "fbcda21c",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"FASSTT trial folic acid daily dose intervention group\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 251,
+            "completionTokens": 23,
+            "cachedTokens": 217,
+            "promptMs": 445.229
+          }
+        },
+        {
+          "input": "74fc847e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#18\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 592,
+            "completionTokens": 22,
+            "cachedTokens": 247,
+            "promptMs": 3172.608
+          }
+        },
+        {
+          "input": "50c0251c",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#19\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 975,
+            "completionTokens": 22,
+            "cachedTokens": 588,
+            "promptMs": 3492.812
+          }
+        },
+        {
+          "input": "4556c612",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#34\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1404,
+            "completionTokens": 22,
+            "cachedTokens": 971,
+            "promptMs": 3982.535
+          }
+        },
+        {
+          "input": "5e696b58",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"FASSTT trial folic acid daily dose intervention group\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1889,
+            "completionTokens": 23,
+            "cachedTokens": 1400,
+            "promptMs": 4542.353
+          }
+        },
+        {
+          "input": "d156c21b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#18\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1967,
+            "completionTokens": 22,
+            "cachedTokens": 1885,
+            "promptMs": 1068.518
+          }
+        },
+        {
+          "input": "95b34bab",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the intervention group of the FASSTT trial received. They only confirm that the intervention group received folic acid supplementation and that their children showed cognitive benefits from it, but the dosage information is not present in the provided text snippets.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2036,
+            "completionTokens": 92,
+            "cachedTokens": 1963,
+            "promptMs": 1110.219
+          }
+        }
+      ]
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c16-carrageenan-insulin",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 6959,
+      "completionTokens": 229,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1842,
+      "cachedTokens": 5314,
+      "promptMs": 15060,
+      "modelMs": 29020,
+      "ttftMs": 15123,
+      "wallMs": 29059,
+      "actions": [
+        "search {\"query\":\"carrageenan insulin sensitivity placebo cross-over trial healthy men\"}",
+        "read {\"docId\":\"carrageenan-insulin#6\"}",
+        "read {\"docId\":\"carrageenan-insulin#6\"}",
+        "read {\"docId\":\"carrageenan-insulin#28\"}",
+        "read {\"docId\":\"carrageenan-insulin#28\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. Th"
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. The study found that short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants.\",\"evidence\":[{\"docId\":\"carrageenan-insulin#6\",\"quote\":\"Although short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants, interactions with BMI suggest effects of carrageenan treatment on insulin sensitivity …\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "carrageenan-insulin#6",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "c647a52a",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"carrageenan insulin sensitivity placebo cross-over trial healthy men\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 249,
+            "completionTokens": 27,
+            "cachedTokens": 217,
+            "promptMs": 430.927
+          }
+        },
+        {
+          "input": "cacb4658",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#6\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 600,
+            "completionTokens": 20,
+            "cachedTokens": 245,
+            "promptMs": 3128.217
+          }
+        },
+        {
+          "input": "8883d70b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#6\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1083,
+            "completionTokens": 20,
+            "cachedTokens": 596,
+            "promptMs": 4195.842
+          }
+        },
+        {
+          "input": "5e37534e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#28\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1411,
+            "completionTokens": 21,
+            "cachedTokens": 1079,
+            "promptMs": 3059.352
+          }
+        },
+        {
+          "input": "d9b6112e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#28\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1774,
+            "completionTokens": 21,
+            "cachedTokens": 1407,
+            "promptMs": 3243.04
+          }
+        },
+        {
+          "input": "0a338b28",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. The study found that short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants.\",\"evidence\":[{\"docId\":\"carrageenan-insulin#6\",\"quote\":\"Although short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants, interactions with BMI suggest effects of carrageenan treatment on insulin sensitivity …\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1842,
+            "completionTokens": 120,
+            "cachedTokens": 1770,
+            "promptMs": 1002.789
+          }
+        }
+      ]
+    }
+  ]
+}
