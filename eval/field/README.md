@@ -844,9 +844,11 @@ A search change, measured on the clinical suites and not adopted ([#141](https:/
 
 Details: [the clinical suite](../clinical/README.md#a-papers-first-parts-first-0630-measured-not-adopted).
 
-### A long document's outline (0.65.0, measured on the clinical suites, field runs pending)
+### A long document's outline (0.65.0, measured, not adopted)
 
-Reading a part of a long document shows the model its outline, once: the parts with their headings and table captions (`src/documents/outline.ts`). On the clinical suites, Qwen3.5-4B passes 21/23 instead of 19/23 and 8/10 instead of 7/10, reading the Findings and Table 1 by their part IDs; Qwen3.5-2B, which re-reads the parts it has read, does not use it (12/23 and 5/10, against 13/23 and 4/10). The change also brings a fix: when llama.cpp refuses a prompt as too long, the agent fits it again and retries the step, since `estimateTokens` counts ordinary text up to a fifth short. The field and protected suites are to be run. Details: [the clinical suite](../clinical/README.md#a-long-documents-outline-0650-measured-on-the-clinical-suites).
+Reading a part of a long document shows the model its outline, once: the parts with their headings and table captions (`src/documents/outline.ts`). On the clinical suites, Qwen3.5-4B passes 21/23 instead of 19/23 and 8/10 instead of 7/10, reading the Findings and Table 1 by their part IDs; Qwen3.5-2B, which re-reads the parts it has read, does not use it (12/23 and 5/10, against 13/23 and 4/10).
+
+By the rule, both models ran research, unanswerable, pdf, field and holdout, the base only on the tasks `bench:replay` said differ. The first 4B run lost `f75` and `f83`: the MPL-2.0's underlined (Setext) headings were not taken, so its outline left out its last sections and the model read parts 1 to 6 in order. With that fixed, and the 19 and 20 licence tasks the fix changes run again, nothing regresses but field does not improve: 4B 80/89 → 80/89, 2B 63/89 → 63/89 (2 gained, 2 lost), holdout 34/37 → 34/37 and 24/37 → 25/37. So the outline is not adopted. The change also brings a defect fix: when llama.cpp refuses a prompt as too long, the agent fits it again and retries the step, since `estimateTokens` counts ordinary text up to a fifth short. Details: [the clinical suite](../clinical/README.md#a-long-documents-outline-0650-measured-not-adopted).
 
 ### Replaying recorded runs (0.64.0)
 

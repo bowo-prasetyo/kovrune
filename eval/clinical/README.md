@@ -207,7 +207,7 @@ The field and protected suites' runs the rule asks for were not made: with `benc
 
 **What `c02`, `c05` and `c06` share.** The model cannot see where in a paper a part is. In `c06` it read the Discussion without knowing the Findings were part 3; in `c02` and `c05`, Table 1 was a part it did not know to ask for. Re-ranking helps one of these and hurts the other. Showing the model a long document's outline (its section headings and table captions, with their part numbers) could let it read the Findings or Table 1 directly. That is the next change to measure on these suites.
 
-### A long document's outline (0.65.0, measured on the clinical suites)
+### A long document's outline (0.65.0, measured, not adopted)
 
 The idea from the lead-weight experiment above: let the model see where in a paper each part is, instead of ranking parts by position. Reading a part of a document in four or more parts now appends, once per document and question, its outline: the parts that hold headings or table captions, with their first two (`src/documents/outline.ts`, `tools/research.ts`). For the IPTp trial, after reading part 44 the model sees "… #2 Methods; #3 Findings; … #18 Results; #19 Table 1: Baseline characteristics by study group; … #33 Discussion …". Reading the whole document gives the outline instead of a bare list of part IDs. An outline is cut at about 150 tokens; for the field suite's user guide it is about 120. Search is unchanged, so `bench:retrieval` is too.
 
@@ -233,7 +233,20 @@ The idea from the lead-weight experiment above: let the model see where in a pap
 - **The fix:** on llama.cpp's `exceed_context_size_error`, the agent now fits the conversation to as much less as the prompt was over and asks the step again, up to three times (`contextOverflow` in `src/agent/agent.ts`). Only a task that would end in that error takes this path.
 - **Measured with `bench:replay`:** replaying the 4B run on the fixed code called 32 tasks "same" and the errored one undecidable. That one was run again, finished without an error, and was merged into the report. 2B ran with the fix and met no error.
 
-**Not yet adopted: the field and protected suites are to be run.** By [the rule](../field/README.md#rule-for-prompt-and-guard-changes), the outline changes what the model reads, so research, unanswerable, pdf, field and holdout are run on both models: the change once with replies recorded, then the code before it on the tasks `bench:replay` says differ. The field suite's user guide, licence and design PDF are long documents, so many of its tasks will differ.
+**Not adopted: the rule's runs.** By [the rule](../field/README.md#rule-for-prompt-and-guard-changes), the outline changes what the model reads, so research, unanswerable, pdf, field and holdout were run on both models: the change once with replies recorded, then `main` (`f274fdd`) on the tasks `bench:replay` said differ (76 of 160 on 2B, 74 on 4B), on the same machine and build.
+
+- **First run: a defect in the outline.** On 4B, field fell from 80/89 to 78/89 (lost `f75`, `f83`, none gained). The MPL-2.0 underlines its headings ("5. Termination" over a line of dashes, Setext style), which `partHeadings` did not take, so its outline stopped at part 10 and left out Termination, Litigation and Exhibit A. The model took the outline as the whole document: it read parts 1 to 6 in order and answered "not found". These reports are kept as `field-0.65-outline-nosetext-*`.
+- **The fix:** `partHeadings` takes Setext headings (a unit test). Of the 14 documents in the field and clinical libraries, only the MPL-2.0's outline changes, so the clinical results above stand. `bench:replay` against the first run found 19 tasks on 4B and 20 on 2B whose requests the fix changes, all about the licence; they were run again and merged with the others' recorded results.
+- **With the fix:**
+
+| Model | research | unanswerable | pdf | field | holdout |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 19/22 → 19/22 | 8/8 → 8/8 | 4/4 → 4/4 | 80/89 → 80/89 (0 gained, 0 lost) | 34/37 → 34/37 |
+| Qwen3.5-2B | 15/22 → 15/22 | 5/8 → 5/8 | 3/4 → 3/4 | 63/89 → 63/89 (+`f11`, `f52`; −`f51`, `f61`; p = 1) | 24/37 → 25/37 |
+
+Reports: [4B base](../results/field-0.65-base-qwen3.5-4b-q4km.json), [4B outline](../results/field-0.65-outline-qwen3.5-4b-q4km.json), [2B base](../results/field-0.65-base-qwen3.5-2b-q4km.json), [2B outline](../results/field-0.65-outline-qwen3.5-2b-q4km.json).
+
+Nothing regresses, but the field suite does not improve on either model, so the rule does not adopt the outline. Its gains are on the clinical suites, where long papers are what the questions are about; the field suite's long documents are a user guide, a licence and a design document, whose questions 4B already answers by search. The overflow retry is a defect fix in its own right (a unit test shows the error it handles) and can be adopted under the rule's defect clause on its own.
 
 ## Limits
 
