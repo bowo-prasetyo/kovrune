@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
-import { checkBrowserModel, recommendBrowserModel, type DeviceCapabilities } from "../src/app/device.ts";
+import { checkBrowserModel, recommendBrowserModel, recommendPath, tooLittleMemory, type DeviceCapabilities } from "../src/app/device.ts";
 import { describeLoadProgress, describeModelError, describeSetup, modelCaution, stalledLoadHint } from "../src/app/models.ts";
 import { parseSettings } from "../src/app/settings.ts";
 import { BROWSER_MODELS, browserModelFor, DEFAULT_BROWSER_MODEL } from "../src/models/catalog.ts";
@@ -59,6 +59,25 @@ describe("browser compatibility check", () => {
     assert.equal(recommendBrowserModel(capable).key, "qwen3.5-4b");
     assert.equal(recommendBrowserModel({ ...capable, ramGiB: 8 }).key, "qwen3.5-2b");
     assert.equal(recommendBrowserModel({ ...capable, ramGiB: undefined }).key, "qwen3.5-4b");
+  });
+
+  it("recommends a model server on another computer when even the lighter model won't fit (Android phone, 4 GB)", () => {
+    const phone: DeviceCapabilities = { webgpu: true, shaderF16: true, vendor: "arm", architecture: "valhall", maxBufferMiB: 2048, ramGiB: 4 };
+    assert.equal(tooLittleMemory(phone), true);
+    const advice = recommendPath(phone);
+    assert.equal(advice.path, "local-server");
+    assert.match(advice.reason, /about 4 GB of memory, and even the lighter browser model needs about 2\.2 GB[\s\S]*another computer/);
+    assert.match(checkBrowserModel(phone, qwen2b).warnings.join(), /may fail to load, near the end; on a phone the page may just reload/);
+    // Lets the user try anyway: a warning, not a problem.
+    assert.deepEqual(checkBrowserModel(phone, qwen2b).problems, []);
+  });
+
+  it("counts the lighter model as fitting from 8 GB, or when the browser does not say", () => {
+    assert.equal(tooLittleMemory({ ...capable, ramGiB: 8 }), false);
+    assert.equal(tooLittleMemory({ ...capable, ramGiB: undefined }), false);
+    assert.equal(recommendPath({ ...capable, ramGiB: 8 }).path, "browser");
+    // Without 16-bit shaders the 32-bit variant (2.6 GB) is what has to fit; 4 GB is still too little.
+    assert.equal(tooLittleMemory({ ...capable, shaderF16: false, ramGiB: 4 }), true);
   });
 });
 
