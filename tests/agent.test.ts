@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import { z } from "zod";
-import { estimateTokens, extractJson, runAgent } from "../src/agent/agent.ts";
+import { contextOverflow, estimateTokens, extractJson, runAgent } from "../src/agent/agent.ts";
 import { evaluateGate, falseReassurance, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
 import { formatCall, formatReport } from "../eval/harness/format.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
@@ -804,5 +804,64 @@ describe("helpers", () => {
     const index = new DocumentIndex([...handbook, { id: "notes", title: "Release notes", text: "Kovrune 4 adds a scale test." }]);
     assert.deepEqual(index.search("What does Kovrune 4 add?").map((hit) => hit.docId), ["notes"]);
     assert.deepEqual(index.search("staff handbook kitchen").length, 3, "the title without its label is still indexed");
+  });
+});
+
+describe("a prompt the server refuses as too long (harness 0.65.0)", () => {
+  // llama.cpp's answer when a prompt is over the context, as the clinical suite's outline run met it.
+  const refusal = (prompt: number) =>
+    new Error(`Endpoint returned 400: {"error":{"code":400,"message":"request (${prompt} tokens) exceeds the available context size (4096 tokens), try increasing it","type":"exceed_context_size_error","n_prompt_tokens":${prompt},"n_ctx":4096}}`);
+  // Two long tool results: the conversation fits by the estimate, but the server counts more.
+  const big = "word ".repeat(1400);
+  const agent = (refusals: number[]) => {
+    const requests: GenerationRequest[] = [];
+    const replies = [`{"tool":"search","args":{"query":"a"}}`, `{"tool":"search","args":{"query":"b"}}`, `{"tool":"final_answer","args":{"answer":"done"}}`];
+    const model: LanguageModel = {
+      info: { id: "m", runtime: "scripted", contextLength: 4096 },
+      supportsConstrainedDecoding: () => true,
+      dispose: async () => {},
+      async *generate(request: GenerationRequest) {
+        requests.push(request);
+        // The third step is refused while its prompt is as long as it first was.
+        if (requests.length >= 3 && refusals.length && request.messages.some((m) => m.content.includes("word word") && m.content.length > 6000)) {
+          throw refusal(refusals.shift()!);
+        }
+        const text = replies.shift()!;
+        yield { text, done: false };
+        yield { text: "", done: true, usage: { promptTokens: 100, completionTokens: 10 } };
+      },
+    };
+    const run = runAgent({
+      model,
+      system: "s",
+      task: "t",
+      tools: [
+        { name: "search", usage: "", args: z.object({ query: z.string() }).strict(), execute: async () => big },
+        { name: "final_answer", usage: "", args: z.object({ answer: z.string() }).strict() },
+      ],
+      finalTool: "final_answer",
+      config: { constrained: true, maxCalls: 6, maxTokensPerCall: 64 },
+    });
+    return { run, requests };
+  };
+
+  it("fits the conversation to as much less as the prompt was over, and asks the step again", async () => {
+    const { run, requests } = agent([4111]);
+    const done = await run;
+    assert.equal(done.stopReason, "final");
+    assert.equal(done.calls.length, 3, "the refused step is not counted");
+    assert.equal(requests.length, 4, "it is asked again");
+    assert.ok(done.calls[2]!.droppedResults! >= 1, "an earlier result made room");
+  });
+
+  it("gives up after OVERFLOW_RETRIES refusals, with the server's message", async () => {
+    const done = await agent([4111, 4111, 4111, 4111]).run;
+    assert.equal(done.stopReason, "error");
+    assert.match(done.error!, /exceed_context_size_error/);
+  });
+
+  it("reads the sizes from llama.cpp's message, and nothing from other errors", () => {
+    assert.deepEqual(contextOverflow(refusal(4111)), { prompt: 4111, context: 4096 });
+    assert.equal(contextOverflow(new Error("Endpoint returned 500: internal error")), undefined);
   });
 });

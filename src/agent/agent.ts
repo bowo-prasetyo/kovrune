@@ -160,6 +160,23 @@ export function estimateTokens(text: string): number {
   return Math.ceil(textWeight(text) / 3.5);
 }
 
+/**
+ * The prompt's real size and the context's, when a model server refused a prompt as too long. llama.cpp
+ * answers 400 with "exceed_context_size_error", "n_prompt_tokens" and "n_ctx". Prompts are fitted by
+ * estimateTokens, which can fall short: on a trial report's text it counted 476 tokens where the model's
+ * tokenizer counted 549 (eval/clinical/README.md, "A long document's outline").
+ */
+export function contextOverflow(error: unknown): { prompt: number; context: number } | undefined {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!/exceed_context_size|exceeds the available context/.test(message)) return undefined;
+  const prompt = /"n_prompt_tokens"\s*:\s*(\d+)/.exec(message)?.[1];
+  const context = /"n_ctx"\s*:\s*(\d+)/.exec(message)?.[1];
+  return prompt && context ? { prompt: Number(prompt), context: Number(context) } : undefined;
+}
+
+/** How many times a step is fitted again and retried after the server refused its prompt as too long. */
+export const OVERFLOW_RETRIES = 3;
+
 /** Extracts the first JSON object from model text that may include fences or prose. */
 export function extractJson(text: string): unknown {
   const cleaned = stripThinking(text).replace(/```(?:json)?/g, "");
@@ -303,6 +320,10 @@ export async function runAgent(options: {
   // True for the call right after a cut-off reply, which is the long answer asked for again.
   let retrying = false;
   const reserve = config.contextReserve ?? 128;
+  // Tokens the estimate fell short by, from prompts the server refused as too long (contextOverflow):
+  // later prompts are fitted to that much less, for the rest of the task.
+  let overflowShrink = 0;
+  let overflowRetries = 0;
   const raisedLimit = config.cutOffMaxTokens ?? config.maxTokensPerCall;
 
   while (calls.length < config.maxCalls) {
@@ -314,7 +335,7 @@ export async function runAgent(options: {
       transcript.at(-1)!.content += `\n\nThis is your last step. Finish now with ${finalTool}, using what you have found so far.`;
     }
     const keepRaisedRoom = longReplies && (config.longReplyRoom !== "when-answering" || retrying || forceFinal);
-    const budget = model.info.contextLength - (keepRaisedRoom ? raisedLimit : config.maxTokensPerCall) - reserve;
+    const budget = model.info.contextLength - (keepRaisedRoom ? raisedLimit : config.maxTokensPerCall) - reserve - overflowShrink;
     // A result's shorter form comes from the tool that gave it, named by the action before it.
     const fitted = fitToContext(
       transcript,
@@ -361,6 +382,14 @@ export async function runAgent(options: {
         signal,
       });
     } catch (error) {
+      // A prompt the server refused as too long is fitted again, to as much less as it was over, and the
+      // step is asked again: it was never answered, so it is not counted. A task that fits never comes here.
+      const overflow = contextOverflow(error);
+      if (overflow && overflowRetries < OVERFLOW_RETRIES) {
+        overflowRetries++;
+        overflowShrink += Math.max(1, overflow.prompt - (overflow.context - maxTokens - reserve));
+        continue;
+      }
       return { stopReason: "error", error: error instanceof Error ? error.message : String(error), calls, transcript };
     }
     const { record, text, action } = result;
