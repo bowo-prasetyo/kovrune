@@ -1,26 +1,23 @@
-// Record and replay a model's replies, to tell without a model which tasks a code change can affect.
+// Replaying a recorded run, to tell without a model which tasks a code change can affect.
 //
-// A benchmark run records every reply the model gave in each task, in order: the agent's steps, and the
-// short calls for translating search terms, reviewing the answer, the cross-check and the completeness
-// check (RecordingModel). Replaying a task runs a version of the code with a model that gives those
-// replies back (ReplayModel), and logs every request the code makes of it: the messages, the token limit,
-// the temperature and the JSON schema. Two versions that make the same requests, in the same order, give
-// the real model the same input at every step; runs repeat on one machine (eval/field/README.md, "Runs
-// repeat on one machine"), so the model would reply the same, and the task would end the same. A task
-// whose requests differ has to be run again; one whose requests are all the same need not be.
+// A benchmark run records every call the model answered in each task, in order, as the app records a
+// question to resume it (src/agent/replay.ts, RecordedCall): a fingerprint of the conversation, the
+// reply, why it stopped and its token counts. That covers the agent's steps and the short calls for
+// translating search terms and checking the answer. Replaying a task runs a version of the code with a
+// model that gives those replies back (ReplayModel), and logs every request the code makes of it: the
+// messages, the token limit, the temperature and the JSON schema. Two versions that make the same
+// requests, in the same order, give the real model the same input at every step; runs repeat on one
+// machine (eval/field/README.md, "Runs repeat on one machine"), so the model would reply the same, and
+// the task would end the same. A task whose requests differ has to be run again; one whose requests are
+// all the same need not be.
 //
 // The tasks are run by each version's own runBenchmark, so whatever a change touches before the model's
 // input (search, reading, prompts, guards, context fitting, translation) is compared, and nothing in the
-// agent loop is re-implemented here.
+// agent loop is re-implemented here. Unlike the app's ReplayingModel, ReplayModel never calls a real
+// model, and it compares whole requests, not only the conversation's fingerprint.
 
+import { fingerprint, type RecordedCall } from "../../src/agent/replay.ts";
 import type { GenerationChunk, GenerationRequest, LanguageModel, ModelInfo } from "../../src/models/types.ts";
-
-/** One reply as the model gave it: what a replay needs to give it back. */
-export interface RecordedReply {
-  text: string;
-  usage?: GenerationChunk["usage"];
-  finishReason?: string;
-}
 
 /** The part of a request that reaches the model: what two versions must agree on. */
 export interface LoggedRequest {
@@ -39,50 +36,21 @@ function logged(request: GenerationRequest): LoggedRequest {
   };
 }
 
-/** Passes requests to a model, and keeps each reply it gives. */
-export class RecordingModel implements LanguageModel {
-  readonly replies: RecordedReply[] = [];
-  private readonly model: LanguageModel;
-  constructor(model: LanguageModel) {
-    this.model = model;
-  }
-  get info(): ModelInfo {
-    return this.model.info;
-  }
-  supportsConstrainedDecoding(): boolean {
-    return this.model.supportsConstrainedDecoding();
-  }
-  dispose(): Promise<void> {
-    return this.model.dispose();
-  }
-  async *generate(request: GenerationRequest): AsyncIterable<GenerationChunk> {
-    const reply: RecordedReply = { text: "" };
-    // Kept as it streams, so a reply cut short by an error or an abort is recorded as far as it came.
-    this.replies.push(reply);
-    for await (const chunk of this.model.generate(request)) {
-      reply.text += chunk.text;
-      if (chunk.usage) reply.usage = chunk.usage;
-      if (chunk.finishReason) reply.finishReason = chunk.finishReason;
-      yield chunk;
-    }
-  }
-}
-
 /** Gives recorded replies back in order, and logs every request. Past the recording, it replies "{}". */
 export class ReplayModel implements LanguageModel {
   readonly requests: LoggedRequest[] = [];
   readonly info: ModelInfo;
-  private readonly replies: RecordedReply[];
+  private readonly calls: readonly RecordedCall[];
   private readonly constrained: boolean;
   private next = 0;
-  constructor(info: ModelInfo, replies: RecordedReply[], constrained: boolean) {
+  constructor(info: ModelInfo, calls: readonly RecordedCall[], constrained: boolean) {
     this.info = info;
-    this.replies = replies;
+    this.calls = calls;
     this.constrained = constrained;
   }
   /** Whether the code asked for more replies than were recorded: then it did not follow the recorded run. */
   get overran(): boolean {
-    return this.next > this.replies.length;
+    return this.next > this.calls.length;
   }
   supportsConstrainedDecoding(): boolean {
     return this.constrained;
@@ -90,10 +58,19 @@ export class ReplayModel implements LanguageModel {
   async dispose(): Promise<void> {}
   async *generate(request: GenerationRequest): AsyncIterable<GenerationChunk> {
     this.requests.push(logged(request));
-    const reply = this.replies[this.next++] ?? { text: "{}" };
-    if (reply.text) yield { text: reply.text, done: false };
-    yield { text: "", done: true, ...(reply.usage ? { usage: reply.usage } : {}), ...(reply.finishReason ? { finishReason: reply.finishReason } : {}) };
+    const call = this.calls[this.next++] ?? { input: "", output: "{}" };
+    if (call.output) yield { text: call.output, done: false };
+    yield { text: "", done: true, ...(call.usage ? { usage: call.usage } : {}), ...(call.finishReason ? { finishReason: call.finishReason } : {}) };
   }
+}
+
+/**
+ * Whether a replay asked for each recorded call's conversation exactly: as many requests as calls, each
+ * with the fingerprint recorded for it. A recording replayed on the code that made it must, or it does not
+ * stand for that run (another version of the code made it, or a tool's result changed in between).
+ */
+export function replaysRecording(requests: LoggedRequest[], calls: readonly RecordedCall[]): boolean {
+  return requests.length === calls.length && requests.every((request, i) => fingerprint(request) === calls[i]!.input);
 }
 
 /** The index of the first request two versions made differently, or undefined when they made the same ones. */

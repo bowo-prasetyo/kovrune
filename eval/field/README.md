@@ -839,10 +839,10 @@ In the clinical suite's first runs, both models gave a trial's planned sample si
 The rule asks for both models' runs of research, unanswerable, pdf, field and holdout before and after a change, on one machine: about 13 hours on the 4-core container where the clinical suite was written. Most of those runs repeat: in the lead-weight experiment (0.63.0, [#141](https://github.com/bowo-prasetyo/kovrune/pull/141)), re-running every search recorded in the 0.42.0 and 0.30.0 runs through both versions of search changed none of research's, unanswerable's or pdf's, and 34 of field's 101 (29 of 89 tasks). Those runs are where the time goes, and they cannot change.
 
 `bench:replay` (`eval/replay.ts`, `eval/harness/replay.ts`) tells them apart without a model:
-- **Recording:** `runBenchmark` records each task's replies, in order: the agent's steps, and the calls for translating search terms and checking the answer (`RecordingModel`; `replies` in each task's result).
+- **Recording:** `runBenchmark` records each task's model calls, in order, as the app records a question to resume it (`ReplayingModel`, `RecordedCall` in `src/agent/replay.ts`): the agent's steps, and the calls for translating search terms and checking the answer, each with the conversation's fingerprint (`replies` in each task's result).
 - **Replay:** each version's own `runBenchmark` runs the task with a model that gives the replies back and logs every request (`ReplayModel`): messages, token limit, temperature, JSON schema.
 - **Comparison:** whatever a change touches before the model's input is compared, from search and reading to prompts, guards, context fitting and translation, by running the code itself; nothing in the agent loop is re-implemented.
-- **Self-check:** a recording must replay on the code that made it with exactly one request per reply, or the task is "undecidable" and run.
+- **Self-check:** a recording must replay on the code that made it, each request the very conversation its fingerprint recorded, or the task is "undecidable" and run.
 
 **Checked against real runs.** Qwen3.5-2B ran eight tasks on `main` (0.62.0's search), with replies recorded ([json](../results/replay-check-main-qwen3.5-2b-q4km.json)).
 - **Against `main`:** replaying them on `main` called all eight "same".
@@ -850,7 +850,7 @@ The rule asks for both models' runs of research, unanswerable, pdf, field and ho
 - **The real run:** 2B then ran the same eight tasks with the lead weight ([json](../results/replay-check-lead-qwen3.5-2b-q4km.json)). The three "same" tasks took the same actions and gave the same final answers; the five "differs" did not.
 - **Merge:** merging the three replayed results with the five re-run ones gave a complete report that `bench:compare` read as a whole.
 
-Both reports say harness 0.62.0: they were run on the branch before its version was raised.
+The recording of `main` was made with this version's harness (0.64.0); the run with the lead weight was made on its branch, at 0.63.0, which records no replies, and is compared by its actions and answers. Recording the eight tasks twice on `main` gave the same actions and answers both times.
 
 **Limits:**
 - **"Same" holds for the machine, model file and server build that recorded the run.** Runs do not repeat across machines, so the baseline must be run where the change was.

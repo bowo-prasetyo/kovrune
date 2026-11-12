@@ -32,7 +32,7 @@ import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 import type { Report, TaskResult } from "./harness/benchmark.ts";
-import { firstDifference, ReplayModel, type Verdict } from "./harness/replay.ts";
+import { firstDifference, ReplayModel, replaysRecording, type Verdict } from "./harness/replay.ts";
 
 const REPO = fileURLToPath(new URL("..", import.meta.url));
 
@@ -153,8 +153,8 @@ async function verdict(base: Version, head: Version, report: Report, result: Tas
   if (result.suite === "coding") return { kind: "undecidable", why: "coding tasks are not replayed" };
   const [b, h] = [await replay(base, report, result), await replay(head, report, result)];
   if ("error" in h) return { kind: "undecidable", why: h.error };
-  if (h.overran || h.requests.length !== result.replies.length) {
-    return { kind: "undecidable", why: `the recording does not replay on ${head.name}: ${h.requests.length} requests for ${result.replies.length} replies` };
+  if (h.overran || !replaysRecording(h.requests, result.replies)) {
+    return { kind: "undecidable", why: `the recording does not replay on ${head.name}: its requests are not the recorded conversations` };
   }
   if ("error" in b) return { kind: "undecidable", why: b.error };
   const at = firstDifference(b.requests, h.requests);

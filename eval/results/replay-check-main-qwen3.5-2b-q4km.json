@@ -1,6 +1,6 @@
 {
-  "harnessVersion": "0.62.0",
-  "createdAt": "2026-11-12T12:34:59.062Z",
+  "harnessVersion": "0.64.0",
+  "createdAt": "2026-11-12T12:45:15.946Z",
   "complete": true,
   "environment": {
     "runtime": "local-endpoint",
@@ -14,12 +14,12 @@
       "cpuCores": 4,
       "memoryGb": 16,
       "endpoint": "http://127.0.0.1:8080/v1"
-    }
+    },
+    "notes": "Validation of bench:replay: recorded on main's search, harness 0.64.0."
   },
   "config": {
     "suites": [
       "research",
-      "pdf",
       "field",
       "clinical"
     ],
@@ -30,7 +30,6 @@
     "taskIds": [
       "r01-lumen-maintainer",
       "r05-max-key-size",
-      "p01-pdf-port",
       "f01-preview-permission",
       "f28-fuji-last-eruption",
       "c02-typhoid-mean-age",
@@ -43,10 +42,10 @@
     "passed": true,
     "constrained": true,
     "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
-    "seconds": 5.8,
-    "decodeTokensPerSecond": 16.7,
-    "maxResearchTaskMinutes": 4.5,
-    "minutesPerSource": 1.1
+    "seconds": 3.5,
+    "decodeTokensPerSecond": 18.3,
+    "maxResearchTaskMinutes": 4.1,
+    "minutesPerSource": 1
   },
   "field": {
     "committedTasks": 89,
@@ -65,13 +64,13 @@
         1
       ],
       "validActionRate": 1,
-      "decodeTokensPerSecond": 15.8,
-      "prefillTokensPerSecond": 348.4,
-      "medianTaskSeconds": 15,
+      "decodeTokensPerSecond": 16.6,
+      "prefillTokensPerSecond": 354.4,
+      "medianTaskSeconds": 12.5,
       "maxPromptTokens": 679,
       "tasksWithDroppedResults": 0,
       "processedPromptTokens": 876,
-      "promptSeconds": 9,
+      "promptSeconds": 8.8,
       "falseReassurance": {
         "labelled": 1,
         "wrong": 0
@@ -88,13 +87,13 @@
         0.905
       ],
       "validActionRate": 1,
-      "decodeTokensPerSecond": 16.1,
-      "prefillTokensPerSecond": 438.8,
-      "medianTaskSeconds": 18.4,
+      "decodeTokensPerSecond": 17.4,
+      "prefillTokensPerSecond": 592.9,
+      "medianTaskSeconds": 14.6,
       "maxPromptTokens": 1338,
       "tasksWithDroppedResults": 0,
-      "processedPromptTokens": 1612,
-      "promptSeconds": 15.8,
+      "processedPromptTokens": 1221,
+      "promptSeconds": 11.7,
       "falseReassurance": {
         "labelled": 0,
         "wrong": 0
@@ -111,13 +110,13 @@
         0.85
       ],
       "validActionRate": 1,
-      "decodeTokensPerSecond": 16.3,
-      "prefillTokensPerSecond": 423,
-      "medianTaskSeconds": 31,
+      "decodeTokensPerSecond": 16.8,
+      "prefillTokensPerSecond": 440.8,
+      "medianTaskSeconds": 28.7,
       "maxPromptTokens": 2036,
       "tasksWithDroppedResults": 0,
       "processedPromptTokens": 6872,
-      "promptSeconds": 65.7,
+      "promptSeconds": 63.2,
       "falseReassurance": {
         "labelled": 1,
         "wrong": 1
@@ -148,13 +147,13 @@
       {
         "name": "Decode speed",
         "threshold": ">= 10 tokens/s",
-        "actual": "15.8 tokens/s",
+        "actual": "16.6 tokens/s",
         "passed": true
       },
       {
         "name": "Median research task time",
         "threshold": "<= 60 s",
-        "actual": "15 s",
+        "actual": "12.5 s",
         "passed": true
       }
     ]
@@ -182,10 +181,10 @@
       "estimatedTokens": false,
       "maxPromptTokens": 679,
       "cachedTokens": 1432,
-      "promptMs": 5013,
-      "modelMs": 12530,
-      "ttftMs": 5044,
-      "wallMs": 12557,
+      "promptMs": 4902,
+      "modelMs": 11838,
+      "ttftMs": 4929,
+      "wallMs": 11862,
       "actions": [
         "search {\"query\":\"LumenDB organization maintain\"}",
         "read {\"docId\":\"lumen-overview\"}",
@@ -207,44 +206,48 @@
       "quotesFound": false,
       "replies": [
         {
-          "text": "{\"tool\":\"search\",\"args\":{\"query\":\"LumenDB organization maintain\"}}",
+          "input": "902c13e3",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"LumenDB organization maintain\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 236,
             "completionTokens": 16,
             "cachedTokens": 217,
-            "promptMs": 393.016
-          },
-          "finishReason": "stop"
+            "promptMs": 347.041
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+          "input": "a8ef6fb8",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 377,
             "completionTokens": 16,
             "cachedTokens": 232,
-            "promptMs": 1510.695
-          },
-          "finishReason": "stop"
+            "promptMs": 1466.31
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+          "input": "cc16b7f5",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 614,
             "completionTokens": 16,
             "cachedTokens": 373,
-            "promptMs": 2320.35
-          },
-          "finishReason": "stop"
+            "promptMs": 2286.933
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project and has been maintained by the Tessel Foundation since 2022.\"}]}}",
+          "input": "13056874",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Tessel Foundation\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"It was created in 2019 by Mira Okafor as a side project and has been maintained by the Tessel Foundation since 2022.\"}]}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 679,
             "completionTokens": 69,
             "cachedTokens": 610,
-            "promptMs": 789.125
-          },
-          "finishReason": "stop"
+            "promptMs": 802.159
+          }
         }
       ]
     },
@@ -270,10 +273,10 @@
       "estimatedTokens": false,
       "maxPromptTokens": 611,
       "cachedTokens": 840,
-      "promptMs": 3951,
-      "modelMs": 10206,
-      "ttftMs": 3991,
-      "wallMs": 17372,
+      "promptMs": 3928,
+      "modelMs": 10032,
+      "ttftMs": 3953,
+      "wallMs": 13052,
       "actions": [
         "search {\"query\":\"LumenDB 3.2 maximum key size\"}",
         "read {\"docId\":\"lumen-3-2-release\"}",
@@ -304,54 +307,59 @@
       "quotesFound": true,
       "replies": [
         {
-          "text": "{\"tool\": \"search\", \"args\": {\"query\": \"LumenDB 3.2 maximum key size\"}}",
+          "input": "f4ce12a6",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"LumenDB 3.2 maximum key size\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 244,
             "completionTokens": 25,
             "cachedTokens": 217,
-            "promptMs": 450.961
-          },
-          "finishReason": "stop"
+            "promptMs": 406.286
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-3-2-release\"}}",
+          "input": "cb130d5d",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-3-2-release\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 387,
             "completionTokens": 19,
             "cachedTokens": 240,
-            "promptMs": 1378.296
-          },
-          "finishReason": "stop"
+            "promptMs": 1427.425
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]} }",
+          "input": "f5aaf957",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"4 KiB\",\"evidence\":[{\"docId\":\"lumen-3-2-release\",\"quote\":\"The maximum key size is raised from 1 KiB to 4 KiB.\"}]} }",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 611,
             "completionTokens": 55,
             "cachedTokens": 383,
-            "promptMs": 2122.261
-          },
-          "finishReason": "stop"
+            "promptMs": 2094.732
+          }
         },
         {
-          "text": "{\"verdict\":\"yes\"}",
+          "input": "eb33aeeb",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 337,
             "completionTokens": 7,
-            "cachedTokens": 0,
-            "promptMs": 2992.646
-          },
-          "finishReason": "stop"
+            "cachedTokens": 333,
+            "promptMs": 108.925
+          }
         },
         {
-          "text": "{\n  \"parts\": [\n    {\n      \"asks\": \"maximum key size\",\n      \"answer\": \"4 KiB\"\n    }\n  ]\n}",
+          "input": "de779ad4",
+          "output": "{\n  \"parts\": [\n    {\n      \"asks\": \"maximum key size\",\n      \"answer\": \"4 KiB\"\n    }\n  ]\n}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 130,
             "completionTokens": 39,
-            "cachedTokens": 0,
-            "promptMs": 1319.167
-          },
-          "finishReason": "stop"
+            "cachedTokens": 126,
+            "promptMs": 100.328
+          }
         }
       ]
     },
@@ -376,11 +384,11 @@
       "completionTokens": 103,
       "estimatedTokens": false,
       "maxPromptTokens": 680,
-      "cachedTokens": 897,
-      "promptMs": 4637,
-      "modelMs": 11268,
-      "ttftMs": 4693,
-      "wallMs": 13180,
+      "cachedTokens": 926,
+      "promptMs": 4142,
+      "modelMs": 10027,
+      "ttftMs": 4179,
+      "wallMs": 11012,
       "actions": [
         "search {\"query\":\"Chrome permission model server\"}",
         "read {\"docId\":\"kovrune-user-guide#5\"}",
@@ -401,54 +409,59 @@
       "quotesFound": false,
       "replies": [
         {
-          "text": "{\"tool\": \"search\", \"args\": {\"query\": \"Chrome permission model server\"}}",
+          "input": "7c50cbe1",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"Chrome permission model server\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 250,
             "completionTokens": 19,
-            "cachedTokens": 217,
-            "promptMs": 467.105
-          },
-          "finishReason": "stop"
+            "cachedTokens": 246,
+            "promptMs": 143.926
+          }
         },
         {
-          "text": "Chrome 权限模型服务器",
+          "input": "98beb488",
+          "output": "Chrome 权限模型服务器",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 43,
             "completionTokens": 6,
-            "cachedTokens": 0,
-            "promptMs": 582.938
-          },
-          "finishReason": "stop"
+            "cachedTokens": 39,
+            "promptMs": 98.311
+          }
         },
         {
-          "text": "Chrome 許可モデル サーバー",
+          "input": "aa8674a2",
+          "output": "Chrome 許可モデル サーバー",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 43,
             "completionTokens": 7,
-            "cachedTokens": 0,
-            "promptMs": 556.793
-          },
-          "finishReason": "stop"
+            "cachedTokens": 39,
+            "promptMs": 104.159
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"kovrune-user-guide#5\"}}",
+          "input": "4f8218ac",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kovrune-user-guide#5\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 438,
             "completionTokens": 19,
             "cachedTokens": 246,
-            "promptMs": 1804.371
-          },
-          "finishReason": "stop"
+            "promptMs": 1764.646
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#5\",\"quote\":\"That permission is called Apps on device (\\\"Access other apps and services on this device\\\"). When the browser asks, choose Allow.\"}]}}",
+          "input": "d93fc66b",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Apps on device\",\"evidence\":[{\"docId\":\"kovrune-user-guide#5\",\"quote\":\"That permission is called Apps on device (\\\"Access other apps and services on this device\\\"). When the browser asks, choose Allow.\"}]}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 680,
             "completionTokens": 65,
             "cachedTokens": 434,
-            "promptMs": 2365.855
-          },
-          "finishReason": "stop"
+            "promptMs": 2232.538
+          }
         }
       ]
     },
@@ -470,11 +483,11 @@
       "completionTokens": 169,
       "estimatedTokens": false,
       "maxPromptTokens": 1338,
-      "cachedTokens": 4483,
-      "promptMs": 11151,
-      "modelMs": 21565,
-      "ttftMs": 11240,
-      "wallMs": 23528,
+      "cachedTokens": 4845,
+      "promptMs": 7536,
+      "modelMs": 17390,
+      "ttftMs": 7613,
+      "wallMs": 18260,
       "actions": [
         "search {\"query\":\"富士山 噴火 最後 年\"}",
         "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
@@ -498,84 +511,92 @@
       "quotesFound": false,
       "replies": [
         {
-          "text": "{\"tool\":\"search\",\"args\":{\"query\":\"富士山 噴火 最後 年\"}}",
+          "input": "c25036b3",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"富士山 噴火 最後 年\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 240,
             "completionTokens": 20,
             "cachedTokens": 217,
-            "promptMs": 382.68
-          },
-          "finishReason": "stop"
+            "promptMs": 409.888
+          }
         },
         {
-          "text": "Mount Fuji eruption last year",
+          "input": "9852df65",
+          "output": "Mount Fuji eruption last year",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 48,
             "completionTokens": 6,
-            "cachedTokens": 0,
-            "promptMs": 623.015
-          },
-          "finishReason": "stop"
+            "cachedTokens": 44,
+            "promptMs": 96.519
+          }
         },
         {
-          "text": "Mont Fuji éruption dernière année",
+          "input": "058ff623",
+          "output": "Mont Fuji éruption dernière année",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 48,
             "completionTokens": 7,
-            "cachedTokens": 0,
-            "promptMs": 588.028
-          },
-          "finishReason": "stop"
+            "cachedTokens": 44,
+            "promptMs": 94.389
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "input": "ef78041a",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 602,
             "completionTokens": 21,
-            "cachedTokens": 236,
-            "promptMs": 3118.691
-          },
-          "finishReason": "stop"
+            "cachedTokens": 598,
+            "promptMs": 97.332
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "input": "a44802d2",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 990,
             "completionTokens": 21,
             "cachedTokens": 598,
-            "promptMs": 3709.576
-          },
-          "finishReason": "stop"
+            "promptMs": 3429.518
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "input": "1486b4a6",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1184,
             "completionTokens": 21,
             "cachedTokens": 986,
-            "promptMs": 1986.221
-          },
-          "finishReason": "stop"
+            "promptMs": 1795.753
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "input": "4a179c38",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1270,
             "completionTokens": 21,
             "cachedTokens": 1180,
-            "promptMs": 994.9
-          },
-          "finishReason": "stop"
+            "promptMs": 915.349
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}}",
+          "input": "46210eaf",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"1936年\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"1936年（昭和11年）には富士箱根伊豆国立公園に指定されている。\"}]}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1338,
             "completionTokens": 65,
             "cachedTokens": 1266,
-            "promptMs": 958.399
-          },
-          "finishReason": "stop"
+            "promptMs": 888.309
+          }
         }
       ]
     },
@@ -601,10 +622,10 @@
       "estimatedTokens": false,
       "maxPromptTokens": 2014,
       "cachedTokens": 4525,
-      "promptMs": 16596,
-      "modelMs": 26343,
-      "ttftMs": 16680,
-      "wallMs": 26487,
+      "promptMs": 16455,
+      "modelMs": 25832,
+      "ttftMs": 16526,
+      "wallMs": 25975,
       "actions": [
         "search {\"query\":\"Malawi typhoid conjugate vaccine trial mean age enrolment Vi-TT group\"}",
         "read {\"docId\":\"typhoid-vaccine-malawi#16\"}",
@@ -627,54 +648,59 @@
       "quotesFound": false,
       "replies": [
         {
-          "text": "{\"tool\":\"search\",\"args\":{\"query\":\"Malawi typhoid conjugate vaccine trial mean age enrolment Vi-TT group\"}}",
+          "input": "f611cb00",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Malawi typhoid conjugate vaccine trial mean age enrolment Vi-TT group\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 259,
             "completionTokens": 28,
             "cachedTokens": 217,
-            "promptMs": 562.226
-          },
-          "finishReason": "stop"
+            "promptMs": 556.154
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "input": "7d8e4de6",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 666,
             "completionTokens": 23,
             "cachedTokens": 255,
-            "promptMs": 3593.469
-          },
-          "finishReason": "stop"
+            "promptMs": 3582.05
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "input": "ebdb5efb",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1455,
             "completionTokens": 23,
             "cachedTokens": 662,
-            "promptMs": 6948.201
-          },
-          "finishReason": "stop"
+            "promptMs": 6918.369
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "input": "1905cee1",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#16\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1944,
             "completionTokens": 23,
             "cachedTokens": 1451,
-            "promptMs": 4462.882
-          },
-          "finishReason": "stop"
+            "promptMs": 4364.906
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}}",
+          "input": "f0d615b3",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"6.1 years\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#16\",\"quote\":\"Age at enrolment (years) Mean (SD) 6·1 (3·3)\"}]}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 2014,
             "completionTokens": 63,
             "cachedTokens": 1940,
-            "promptMs": 1030.231
-          },
-          "finishReason": "stop"
+            "promptMs": 1034.434
+          }
         }
       ]
     },
@@ -700,10 +726,10 @@
       "estimatedTokens": false,
       "maxPromptTokens": 1772,
       "cachedTokens": 3980,
-      "promptMs": 15260,
-      "modelMs": 26261,
-      "ttftMs": 15341,
-      "wallMs": 34821,
+      "promptMs": 13831,
+      "modelMs": 24148,
+      "ttftMs": 13878,
+      "wallMs": 28398,
       "actions": [
         "search {\"query\":\"monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria infection risk ratio\"}",
         "read {\"docId\":\"ipt-malaria-pregnancy#46\"}",
@@ -736,74 +762,81 @@
       "quotesFound": true,
       "replies": [
         {
-          "text": "{\"tool\": \"search\", \"args\": {\"query\": \"monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria infection risk ratio\"}}",
+          "input": "f87428ff",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"monthly dihydroartemisinin–piperaquine daily co-trimoxazole pregnant women HIV malaria infection risk ratio\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 271,
             "completionTokens": 38,
             "cachedTokens": 217,
-            "promptMs": 643.575
-          },
-          "finishReason": "stop"
+            "promptMs": 611.662
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "input": "d8b57117",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 667,
             "completionTokens": 21,
             "cachedTokens": 267,
-            "promptMs": 3725.928
-          },
-          "finishReason": "stop"
+            "promptMs": 3432.949
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "input": "f395213f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1137,
             "completionTokens": 21,
             "cachedTokens": 663,
-            "promptMs": 4438.322
-          },
-          "finishReason": "stop"
+            "promptMs": 3953.856
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "input": "b47a454a",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ipt-malaria-pregnancy#46\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1704,
             "completionTokens": 21,
             "cachedTokens": 1133,
-            "promptMs": 5445.231
-          },
-          "finishReason": "stop"
+            "promptMs": 4893.99
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection during pregnancy or delivery.\"}]} }",
+          "input": "0aa2d6a9",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"15%\",\"evidence\":[{\"docId\":\"ipt-malaria-pregnancy#46\",\"quote\":\"After enrolment, approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection during pregnancy or delivery.\"}]} }",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1772,
             "completionTokens": 74,
             "cachedTokens": 1700,
-            "promptMs": 1007.341
-          },
-          "finishReason": "stop"
+            "promptMs": 938.357
+          }
         },
         {
-          "text": "{\"verdict\":\"yes\"}",
+          "input": "632c256e",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 413,
             "completionTokens": 7,
-            "cachedTokens": 0,
-            "promptMs": 3685.074
-          },
-          "finishReason": "stop"
+            "cachedTokens": 409,
+            "promptMs": 103.324
+          }
         },
         {
-          "text": "{\n  \"parts\": [\n    {\n      \"asks\": \"risk ratio for any malaria infection during pregnancy or delivery\",\n      \"answer\": \"15%\"\n    }\n  ]\n}",
+          "input": "efc7ccbc",
+          "output": "{\n  \"parts\": [\n    {\n      \"asks\": \"risk ratio for any malaria infection during pregnancy or delivery\",\n      \"answer\": \"15%\"\n    }\n  ]\n}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 157,
             "completionTokens": 45,
-            "cachedTokens": 0,
-            "promptMs": 1547.726
-          },
-          "finishReason": "stop"
+            "cachedTokens": 28,
+            "promptMs": 1184.555
+          }
         }
       ]
     },
@@ -829,10 +862,10 @@
       "estimatedTokens": false,
       "maxPromptTokens": 2036,
       "cachedTokens": 7271,
-      "promptMs": 17900,
-      "modelMs": 31703,
-      "ttftMs": 18008,
-      "wallMs": 31733,
+      "promptMs": 17815,
+      "modelMs": 31415,
+      "ttftMs": 17910,
+      "wallMs": 31442,
       "actions": [
         "search {\"query\":\"FASSTT trial folic acid daily dose intervention group\"}",
         "read {\"docId\":\"folic-acid-pregnancy#18\"}",
@@ -852,74 +885,81 @@
       "quotesFound": false,
       "replies": [
         {
-          "text": "{\"tool\":\"search\",\"args\":{\"query\":\"FASSTT trial folic acid daily dose intervention group\"}}",
+          "input": "fbcda21c",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"FASSTT trial folic acid daily dose intervention group\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 251,
             "completionTokens": 23,
             "cachedTokens": 217,
-            "promptMs": 491.458
-          },
-          "finishReason": "stop"
+            "promptMs": 445.229
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#18\"}}",
+          "input": "74fc847e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#18\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 592,
             "completionTokens": 22,
             "cachedTokens": 247,
-            "promptMs": 2921.751
-          },
-          "finishReason": "stop"
+            "promptMs": 3172.608
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#19\"}}",
+          "input": "50c0251c",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#19\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 975,
             "completionTokens": 22,
             "cachedTokens": 588,
-            "promptMs": 3555.532
-          },
-          "finishReason": "stop"
+            "promptMs": 3492.812
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#34\"}}",
+          "input": "4556c612",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#34\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1404,
             "completionTokens": 22,
             "cachedTokens": 971,
-            "promptMs": 4192.192
-          },
-          "finishReason": "stop"
+            "promptMs": 3982.535
+          }
         },
         {
-          "text": "{\"tool\":\"search\",\"args\":{\"query\":\"FASSTT trial folic acid daily dose intervention group\"}}",
+          "input": "5e696b58",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"FASSTT trial folic acid daily dose intervention group\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1889,
             "completionTokens": 23,
             "cachedTokens": 1400,
-            "promptMs": 4555.165
-          },
-          "finishReason": "stop"
+            "promptMs": 4542.353
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#18\"}}",
+          "input": "d156c21b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"folic-acid-pregnancy#18\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1967,
             "completionTokens": 22,
             "cachedTokens": 1885,
-            "promptMs": 1156.622
-          },
-          "finishReason": "stop"
+            "promptMs": 1068.518
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the intervention group of the FASSTT trial received. They only confirm that the intervention group received folic acid supplementation and that their children showed cognitive benefits from it, but the dosage information is not present in the provided text snippets.\",\"evidence\":[]}}",
+          "input": "95b34bab",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The documents do not explicitly state the specific daily dose of folic acid (in micrograms or milligrams) that women in the intervention group of the FASSTT trial received. They only confirm that the intervention group received folic acid supplementation and that their children showed cognitive benefits from it, but the dosage information is not present in the provided text snippets.\",\"evidence\":[]}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 2036,
             "completionTokens": 92,
             "cachedTokens": 1963,
-            "promptMs": 1026.52
-          },
-          "finishReason": "stop"
+            "promptMs": 1110.219
+          }
         }
       ]
     },
@@ -945,10 +985,10 @@
       "estimatedTokens": false,
       "maxPromptTokens": 1842,
       "cachedTokens": 5314,
-      "promptMs": 15984,
-      "modelMs": 30258,
-      "ttftMs": 16081,
-      "wallMs": 30304,
+      "promptMs": 15060,
+      "modelMs": 29020,
+      "ttftMs": 15123,
+      "wallMs": 29059,
       "actions": [
         "search {\"query\":\"carrageenan insulin sensitivity placebo cross-over trial healthy men\"}",
         "read {\"docId\":\"carrageenan-insulin#6\"}",
@@ -972,64 +1012,70 @@
       "quotesFound": false,
       "replies": [
         {
-          "text": "{\"tool\": \"search\", \"args\": {\"query\": \"carrageenan insulin sensitivity placebo cross-over trial healthy men\"}}",
+          "input": "c647a52a",
+          "output": "{\"tool\": \"search\", \"args\": {\"query\": \"carrageenan insulin sensitivity placebo cross-over trial healthy men\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 249,
             "completionTokens": 27,
             "cachedTokens": 217,
-            "promptMs": 437.774
-          },
-          "finishReason": "stop"
+            "promptMs": 430.927
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#6\"}}",
+          "input": "cacb4658",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#6\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 600,
             "completionTokens": 20,
             "cachedTokens": 245,
-            "promptMs": 3360.706
-          },
-          "finishReason": "stop"
+            "promptMs": 3128.217
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#6\"}}",
+          "input": "8883d70b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#6\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1083,
             "completionTokens": 20,
             "cachedTokens": 596,
-            "promptMs": 4332.154
-          },
-          "finishReason": "stop"
+            "promptMs": 4195.842
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#28\"}}",
+          "input": "5e37534e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#28\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1411,
             "completionTokens": 21,
             "cachedTokens": 1079,
-            "promptMs": 3088.851
-          },
-          "finishReason": "stop"
+            "promptMs": 3059.352
+          }
         },
         {
-          "text": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#28\"}}",
+          "input": "d9b6112e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"carrageenan-insulin#28\"}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1774,
             "completionTokens": 21,
             "cachedTokens": 1407,
-            "promptMs": 3773.08
-          },
-          "finishReason": "stop"
+            "promptMs": 3243.04
+          }
         },
         {
-          "text": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. The study found that short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants.\",\"evidence\":[{\"docId\":\"carrageenan-insulin#6\",\"quote\":\"Although short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants, interactions with BMI suggest effects of carrageenan treatment on insulin sensitivity …\"}]}}",
+          "input": "0a338b28",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"No, carrageenan did not change overall insulin sensitivity compared with placebo in the cross-over trial in healthy men. The study found that short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants.\",\"evidence\":[{\"docId\":\"carrageenan-insulin#6\",\"quote\":\"Although short-term carrageenan treatment did not impact whole-body insulin sensitivity in young, metabolically healthy participants, interactions with BMI suggest effects of carrageenan treatment on insulin sensitivity …\"}]}}",
+          "finishReason": "stop",
           "usage": {
             "promptTokens": 1842,
             "completionTokens": 120,
             "cachedTokens": 1770,
-            "promptMs": 990.501
-          },
-          "finishReason": "stop"
+            "promptMs": 1002.789
+          }
         }
       ]
     }

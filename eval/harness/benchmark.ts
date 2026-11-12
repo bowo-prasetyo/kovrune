@@ -15,7 +15,7 @@ import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { labelledQuotesFound } from "../../src/agent/support.ts";
-import { RecordingModel, type RecordedReply } from "./replay.ts";
+import { ReplayingModel, type RecordedCall } from "../../src/agent/replay.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
@@ -119,11 +119,12 @@ export interface TaskResult {
   /** Each call's action, abbreviated, e.g. 'search {"query":"LumenDB"}' or 'invalid: ...'. */
   actions: string[];
   /**
-   * Since harness 0.64.0: every reply the model gave in the task, in order, with its usage and why it
-   * stopped (harness/replay.ts), so `bench:replay` can tell which tasks a code change can affect
-   * without a model. Absent in earlier reports.
+   * Since harness 0.64.0: every call the model answered in the task, in order, as the app records a
+   * question to resume it (src/agent/replay.ts): the conversation's fingerprint, the reply, why it stopped
+   * and its token counts. `bench:replay` (harness/replay.ts) replays them to tell which tasks a code change
+   * can affect without a model. Absent in earlier reports.
    */
-  replies?: RecordedReply[];
+  replies?: RecordedCall[];
   /** The final answer as JSON, cut at FINAL_CHARS characters (600 before harness 0.47.0). */
   final?: string;
   /** Research tasks: the answer's status (verified, unverified, not-found, no-answer). */
@@ -429,11 +430,12 @@ export async function runBenchmark(options: {
     if (signal?.aborted) break;
     const started = performance.now();
     // Each task's replies are recorded, so a later change can be replayed against them (harness/replay.ts).
-    const recording = new RecordingModel(model);
+    let replies: RecordedCall[] = [];
+    const recording = new ReplayingModel(model, { onRecord: (calls) => (replies = calls) });
     const run = await item.run({ constrained: item.mode === "constrained" }, recording);
     // A task interrupted by the abort is incomplete, so it is left out of the report.
     if (signal?.aborted) break;
-    results.push({ ...toResult(run, item.mode, performance.now() - started), replies: recording.replies });
+    results.push({ ...toResult(run, item.mode, performance.now() - started), replies });
     options.onResult?.(results.at(-1)!, results.length, total);
   }
 
