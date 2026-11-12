@@ -337,6 +337,27 @@ What these runs show:
 
 These are Quick-set observations, not gate results: a gate result needs a complete full run.
 
+### A smaller model for low-memory devices (0.65.0)
+
+On an Android phone reporting 4 GB of memory (Arm Mali GPU), Qwen3.5-2B always failed near the end of loading. Qwen3.5-0.8B needs about 1.6 GB of GPU memory in the browser (0.4 GB download), so it fits. These runs measure what it costs in answer quality. Both models ran on the same 4-core cloud container, CPU only, with llama.cpp server, thinking off, 4,096-token context and constrained decoding, over the five research suites. Speeds are not representative of any hardware class.
+
+| Suite | Qwen3.5-0.8B | Qwen3.5-2B |
+| --- | --- | --- |
+| research | 12/22 | 14/22 |
+| unanswerable | 5/8 | 5/8 |
+| pdf | 3/4 | 3/4 |
+| field | 49/89 (55%) | 67/89 (75%) |
+| holdout | 21/37 | 23/37 |
+| Wrong under **Quotes found** | 9 of 43 (21%) | 4 of 59 (7%) |
+
+Reports: [0.8B](../eval/results/small-qwen3.5-0.8b-q4km.json) (harness 0.64.0; a 0.62.0 run gave the same result on every task), [2B](../eval/results/small-qwen3.5-2b-q4km.json) (harness 0.62.0).
+
+What these runs show:
+
+- **0.8B is clearly weaker, and its labels are less trustworthy.** It fails 36 tasks that 2B passes and passes 14 that 2B fails. About 1 in 5 of its **Quotes found** answers is wrong, against 1 in 15 for 2B. So it is offered in the browser only as an experimental model: never selected first or shown as recommended, mentioned only on a device with too little memory for Qwen3.5-2B, and with a warning to check every answer when chosen. Its answers carry the same caution.
+- **It failed the self-check every time, but not because of the server.** Given a search result in step 2, it searched again (6 of 6 runs). In research tasks, where searching is not offered again before a result is read, it repeated its first search in 1 of 160 runs. So for this model only, the self-check gives it the reply a task gives to a repeated action and takes away the search; it then read a document the result lists in 6 of 6 runs. Other models keep the two-step check, which is stricter about servers that lose the conversation.
+- **The completeness check Qwen3.5-2B gets (`completeness.ts`) does nothing for 0.8B.** With it, no task changed result and 8 of 40 answers under **Quotes found** were wrong ([report](../eval/results/small-qwen3.5-0.8b-q4km-completeness.json)), so it is not adopted for this model.
+
 ### Harness smoke test (not a gate result)
 
 To prove the browser path works end to end, the harness was run in headless Chromium on a 4-core cloud container with no GPU, using wllama and the 0.8B smoke-test model on two research tasks. The model loaded in 31 s, produced 100% valid actions under constrained decoding, and failed both tasks (0/2) at about 5 tokens/s, using the container's software-emulated WebGPU.
@@ -413,3 +434,4 @@ Results are only comparable within a harness version (`harnessVersion` in each r
 | 0.62.0 | Sentence support: a count of people recruited, enrolled or randomised is not backed by a quote that gives the number only as a target (planned, desired, calculated sample size). Adopted as a defect fix: of every recorded answer, only the clinical suite's two `c09` labels change. `bench:rescore` uses a recorded review only where the app would ask for one ([clinical suite](../eval/clinical/README.md#a-target-is-not-a-count-0620)) |
 | 0.63.0 | Used only on an unmerged branch ([#141](https://github.com/bowo-prasetyo/kovrune/pull/141), closed): search ordering a long document's own parts by position as well as relevance. Measured on the clinical suites, not adopted: it found the abstract's Findings and lost Table 1 ([write-up](../eval/clinical/README.md#a-papers-first-parts-first-0630-measured-not-adopted)) |
 | 0.64.0 | Reports record every reply the model gave in each task (`replies`), and `npm run bench:replay` tells, without a model, which tasks a code change can affect: those whose requests to the model differ between two versions. The rule's runs can skip the rest ([replaying recorded runs](../eval/field/README.md#replaying-recorded-runs-0640)) |
+| 0.65.0 | The experimental browser model Qwen3.5-0.8B, and a third self-check step for it alone: after repeating its search, it must use the result once told it has not changed. `npm run pin:browser-models` can pin only the models it is given. Measured against Qwen3.5-2B ([a smaller model](#a-smaller-model-for-low-memory-devices-0650)) |

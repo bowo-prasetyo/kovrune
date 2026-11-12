@@ -170,7 +170,7 @@ export function describeSetup(settings: Settings): string {
 export function modelCaution(settings: Settings): string | undefined {
   const id = settings.path === "browser" ? settings.modelId : settings.model;
   // The experimental model (docs/m0-benchmark.md, "A smaller model"): about 1 in 5 of its answers
-  // labelled Quotes found were wrong, against 1 in 14 for Qwen3.5-2B.
+  // labelled Quotes found were wrong, against 1 in 15 for Qwen3.5-2B.
   if (/qwen3\.5[-_:]0\.8b(?![\p{L}\p{N}])/iu.test(id)) {
     return "Qwen3.5-0.8B is experimental and the weakest model: about 1 in 5 of its answers labelled Quotes found were wrong in testing. Check every answer against its quoted passages, and use a larger model on another computer when accuracy matters.";
   }

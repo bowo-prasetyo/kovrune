@@ -109,7 +109,7 @@ The browser option is **experimental**. In testing it has answered questions end
 | **Qwen3.5-4B** (recommended) | Better answers. Choose it when a question needs several sources (for example your PDF and Wikipedia), when you write reports, or when accuracy matters more than speed |
 | **Qwen3.5-2B** | Faster and lighter, for devices with 8 GB of memory or less. Good for questions one of your documents answers; it often answers from one source only, and more of its answers need checking |
 
-The browser path also offers **Qwen3.5-0.8B**, marked **experimental**: the weakest model, for devices with too little memory for Qwen3.5-2B, such as a phone with 4 GB. In testing it answered about 55% of the field questions, against 75% for Qwen3.5-2B, and about 1 in 5 of its answers labelled **Quotes found** were wrong, against 1 in 14. Check every answer against its quoted passages. Kovrune never suggests it; where it fits, a model server on another computer still gives better answers.
+The browser path also offers **Qwen3.5-0.8B**, marked **experimental**: the weakest model, for devices with too little memory for Qwen3.5-2B, such as a phone with 4 GB. In testing it answered about 55% of the field questions, against 75% for Qwen3.5-2B, and about 1 in 5 of its answers labelled **Quotes found** were wrong, against 1 in 15. Check every answer against its quoted passages. Kovrune never selects or recommends it, and mentions it only on a device with too little memory for Qwen3.5-2B; a model server on another computer still gives better answers.
 
 On a laptop with 8 GB of memory and integrated Intel graphics, both run on the processor:
 
