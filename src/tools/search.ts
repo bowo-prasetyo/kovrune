@@ -2,7 +2,7 @@
 // uses it so results depend on the model and not on a retrieval model; the
 // app uses the same search over the user's documents.
 
-import { withoutPartLabel } from "../documents/chunk.ts";
+import { parentId, withoutPartLabel } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
 
 export interface SourceDocument {
@@ -50,6 +50,28 @@ function tokenize(text: string): string[] {
     }
   }
   return terms;
+}
+
+/**
+ * How much more a long document's first parts weigh in ranking: a paper's abstract, a report's summary,
+ * a manual's overview say briefly what later parts say at length. Part n's score is multiplied by
+ * 1 + LEAD_WEIGHT × e^(−(n−1)/LEAD_DECAY): ×1.30 for part 1, ×1.21 for part 2, ×1.15 for part 3,
+ * ×1.04 by part 7. A document in one part is not weighted.
+ *
+ * Asked for a trial's risk ratio, Qwen3.5-4B searched "monthly dihydroartemisinin–piperaquine daily
+ * co-trimoxazole pregnant women HIV malaria risk ratio"; the three results were Discussion parts, which
+ * repeat those terms, and not the abstract's Findings (part 3), which give the ratio. It read them and
+ * the parts around them and answered "not found" (clinical suite, c06, 0.60.0 run). With the weight,
+ * the same search shows parts 1, 3 and 2. Chosen from six settings measured with `bench:retrieval` and
+ * the models' recorded searches (eval/clinical/README.md); judged by the model runs the rule asks for.
+ */
+export const LEAD_WEIGHT = 0.3;
+export const LEAD_DECAY = 3;
+
+/** The ranking weight of a document or part by its position (LEAD_WEIGHT): 1 for a document in one part. */
+export function leadWeight(docId: string): number {
+  const part = /#(\d+)$/.exec(docId);
+  return part ? 1 + LEAD_WEIGHT * Math.exp(-(Number(part[1]) - 1) / LEAD_DECAY) : 1;
 }
 
 export class DocumentIndex {
@@ -148,11 +170,21 @@ export class DocumentIndex {
       }
       return { doc, score };
     });
-    return scored
-      .filter((s) => s.score > 0)
-      .sort((x, y) => y.score - x.score)
-      .slice(0, limit)
-      .map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
+    const ranked = scored.filter((s) => s.score > 0).sort((x, y) => y.score - x.score);
+    // Relevance decides which documents the results come from, and how many of each document's parts;
+    // the parts themselves are each document's best by relevance and position (leadWeight), so a
+    // paper's abstract can take a slot from its Discussion, but not from another document.
+    const top = ranked.slice(0, limit);
+    const chosen = new Map<string, Array<(typeof ranked)[number]>>();
+    for (const { doc } of top) {
+      const parent = parentId(doc.id);
+      if (chosen.has(parent)) continue;
+      const slots = top.filter((s) => parentId(s.doc.id) === parent).length;
+      const parts = ranked.filter((s) => parentId(s.doc.id) === parent).sort((x, y) => y.score * leadWeight(y.doc.id) - x.score * leadWeight(x.doc.id));
+      chosen.set(parent, parts.slice(0, slots));
+    }
+    const shown = top.map(({ doc }) => chosen.get(parentId(doc.id))!.shift()!);
+    return shown.map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
   }
 }
 

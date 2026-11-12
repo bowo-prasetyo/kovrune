@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ResearchLibrary } from "../src/agent/research.ts";
+import { DocumentIndex, leadWeight } from "../src/tools/search.ts";
 import { loadFieldSuite } from "../eval/harness/field.ts";
 import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { appSearch, measureRetrieval, summarizeRetrieval } from "../eval/harness/retrieval.ts";
@@ -87,7 +88,10 @@ describe("retrieval on the evaluation set", () => {
   });
 });
 
-const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };
+// Since 0.63.0, a document's first parts weigh more among its own parts (search.ts leadWeight), which
+// loses one answer passage here (f46: the user guide's paragraph on the permission, read in French) and
+// gains the clinical suite's; see eval/clinical/README.md, "A paper's first parts first".
+const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.921, complete: 68 };
 
 // A user's library can hold hundreds of documents; the field library has seven. With 300 generated
 // documents near its topics added (eval/harness/distractors.ts), search still has to find what it
@@ -115,4 +119,45 @@ describe("retrieval in a library of hundreds of documents", () => {
 
 // Since 0.57.0, headings kept with what they introduce lose one answer passage here (f46), on every
 // size and seed measured; see eval/field/README.md, "Headings kept with what they introduce".
-const SCALE_FLOOR = { documentRecall: 0.935, passageRecall: 0.899, complete: 68 };
+// Since 0.63.0, the lead weight loses the same passage (f46) here; cited documents are unchanged, since
+// it orders only a document's own parts.
+const SCALE_FLOOR = { documentRecall: 0.935, passageRecall: 0.888, complete: 67 };
+
+describe("a document's first parts first, among its own parts (harness 0.63.0)", () => {
+  // A paper in four parts: its abstract gives the result once; its Discussion repeats the query's terms.
+  const paper = [
+    { id: "trial#1", title: "Malaria trial (part 1 of 4)", text: "Findings: the risk ratio for any malaria infection was 0.45 with monthly dihydroartemisinin-piperaquine." },
+    { id: "trial#2", title: "Malaria trial (part 2 of 4)", text: "Methods: women were randomly assigned to co-trimoxazole with or without monthly treatment." },
+    { id: "trial#3", title: "Malaria trial (part 3 of 4)", text: "Discussion: monthly dihydroartemisinin-piperaquine malaria malaria pregnant women risk HIV malaria." },
+    { id: "trial#4", title: "Malaria trial (part 4 of 4)", text: "Discussion: dihydroartemisinin-piperaquine malaria pregnant women HIV malaria malaria monthly risk." },
+  ];
+  const other = { id: "other", title: "Another paper", text: "Monthly malaria chemoprevention with dihydroartemisinin-piperaquine in pregnant women: malaria risk." };
+  const query = "monthly dihydroartemisinin-piperaquine malaria risk ratio";
+
+  it("weighs a document's first parts more, and a document in one part not at all", () => {
+    assert.ok(leadWeight("trial#1") > leadWeight("trial#3") && leadWeight("trial#3") > leadWeight("trial#9") && leadWeight("trial#9") > 1);
+    assert.equal(leadWeight("other"), 1);
+  });
+
+  it("shows a document's early part in place of a later one it matches nearly as well", () => {
+    const shown = new DocumentIndex([...paper, other]).search(query, 2).map((h) => h.docId);
+    assert.ok(shown.includes("trial#1"), `the abstract is shown: ${shown.join(", ")}`);
+  });
+
+  it("does not let a document's first parts take a slot from another document", () => {
+    // By relevance alone: paper A's part 5, then paper B, then A's part 1. The two results are one of
+    // A's parts and B: A's part 1 may take its own paper's slot, not B's.
+    const filler = Array.from({ length: 20 }, (_, i) => `word${i}`).join(" ");
+    const malaria = (n: number) => `${"malaria ".repeat(n)}${filler}`;
+    const docs = [
+      { id: "a#1", title: "Paper A (part 1 of 5)", text: malaria(3) },
+      ...[2, 3, 4].map((n) => ({ id: `a#${n}`, title: `Paper A (part ${n} of 5)`, text: filler })),
+      { id: "a#5", title: "Paper A (part 5 of 5)", text: malaria(5) },
+      { id: "b", title: "Paper B", text: malaria(4) },
+    ];
+    const index = new DocumentIndex(docs);
+    assert.deepEqual(index.search("malaria", 2).map((h) => h.docId), ["a#1", "b"]);
+    assert.deepEqual(index.search("malaria", 3).map((h) => h.docId), ["a#1", "b", "a#5"]);
+  });
+});
+
