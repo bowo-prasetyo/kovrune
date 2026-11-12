@@ -321,6 +321,9 @@ describe("research with Wikipedia", () => {
       // Wikipedia's result was not read, so "not found" is sent back once (read before not-found).
       `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`,
       JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+      // Then once more, to search topic by topic before concluding (search again before not-found).
+      `{"tool":"search_openalex","args":{"query":"Lovelace"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
     ]);
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes)), openalex] });
     const tools = (i: number) => [...JSON.stringify(model.requests[i]!.responseSchema).matchAll(/"const":"([a-z_]+)"/g)].map((m) => m[1]);
@@ -330,7 +333,7 @@ describe("research with Wikipedia", () => {
     assert.equal(result.agent.stopReason, "final");
     assert.deepEqual(
       result.agent.calls.map((c) => [c.tool, Boolean(c.rejected)]),
-      [["search_wikipedia", false], ["search_openalex", false], ["final_answer", true], ["read", false], ["final_answer", false]],
+      [["search_wikipedia", false], ["search_openalex", false], ["final_answer", true], ["read", false], ["final_answer", true], ["search_openalex", false], ["final_answer", false]],
     );
     assert.match(model.requests[0]!.messages[0]!.content, /Search each of Wikipedia and OpenAlex/);
     assert.match(researchSystem({ documents: true, sources: ["Wikipedia"] }), /Then search Wikipedia too, and combine what you find: prefer the user's documents/);
@@ -373,9 +376,14 @@ describe("research with Wikipedia", () => {
       `{"tool":"read","args":{"docId":"wikiped:Ada_Lovelace"}}`,
       `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`,
       JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
+      `{"tool":"search_wikipedia","args":{"query":"Lovelace"}}`,
+      // The new search found results, so "not found" waits for a read of them.
+      `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace#2"}}`,
+      JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } }),
     ]);
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, constrained: false, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
-    assert.deepEqual(result.agent.calls.map((c) => c.valid), [true, false, true, true]);
+    assert.deepEqual(result.agent.calls.map((c) => c.valid), [true, false, true, true, true, true, true]);
+    assert.equal(result.agent.stopReason, "final");
     assert.match(result.agent.transcript[5]!.content, /not a valid action/);
   });
 
@@ -395,6 +403,40 @@ describe("research with Wikipedia", () => {
     const result = await runResearch({ question: "q", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
     assert.equal(result.status, "unverified");
     assert.equal(result.evidence[0]!.reason, "quote not found in the document");
+  });
+});
+
+describe("search again before not found", () => {
+  it("sends a not-found answer back once to search each topic on its own", async () => {
+    // Preview, class 1 laptop: asked "What is the difference between blockchain and DAG?", Qwen3.5-4B
+    // searched Wikipedia for "difference between blockchain and DAG", read "Version control" and
+    // concluded that Wikipedia had nothing, though it has an article on each.
+    const notFound = JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } });
+    const model = new ScriptedModel([
+      `{"tool":"search_wikipedia","args":{"query":"difference between blockchain and DAG"}}`,
+      `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace"}}`,
+      notFound,
+      `{"tool":"search_wikipedia","args":{"query":"Blockchain"}}`,
+      `{"tool":"read","args":{"docId":"wikipedia:Ada_Lovelace#2"}}`,
+      notFound,
+    ]);
+    const result = await runResearch({ question: "What is the difference between blockchain and DAG?", library: new ResearchLibrary([]), model, sources: [createWikipedia("en", fakeFetch(wikipediaRoutes))] });
+    assert.deepEqual(
+      result.agent.calls.map((c) => `${c.tool}${c.rejected ? " (rejected)" : ""}`),
+      ["search_wikipedia", "read", "final_answer (rejected)", "search_wikipedia", "read", "final_answer"],
+    );
+    assert.equal(result.agent.calls[2]!.rejected, "About to conclude that the sources don't answer this; searching for each topic on its own first");
+    assert.match(result.agent.transcript[7]!.content, /^Before concluding that the sources do not answer the question, search Wikipedia again with shorter terms: the name of each thing the question is about, on its own/);
+    assert.equal(result.status, "not-found", "asked once: after searching again the model may still conclude");
+    assert.match(model.requests[0]!.messages[0]!.content, /Search Wikipedia with short terms, such as the title an article would have, not the whole question\. For a question about two or more things, search for each of them on its own/);
+  });
+
+  it("does not ask when every search failed, or without open sources", async () => {
+    const notFound = JSON.stringify({ tool: "final_answer", args: { found: false, answer: "", evidence: [] } });
+    const offline = new ScriptedModel([`{"tool":"search_wikipedia","args":{"query":"Blockchain"}}`, notFound]);
+    const failed = await runResearch({ question: "q", library: new ResearchLibrary([]), model: offline, sources: [createWikipedia("en", fakeFetch([]))] });
+    assert.equal(failed.agent.calls.at(-1)!.rejected, undefined);
+    assert.equal(researchSystem({ documents: true, sources: [] }), RESEARCH_SYSTEM, "the benchmark's prompt is unchanged");
   });
 });
 

@@ -30,7 +30,11 @@ export function researchSystem(options: { documents: boolean; sources: string[] 
   const where = options.documents
     ? `You can also search ${sources}. Look in the user's documents first: search them and read what you find. Then search ${sources} too, and combine what you find: prefer the user's documents for anything specific to them, use the other sources for background and for what the documents do not cover, and say so when sources disagree.`
     : `Search ${options.sources.length > 1 ? `each of ${sources}` : sources} to find documents.`;
-  return `${RESEARCH_SYSTEM}\n${where}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
+  // Search the topics, not the question: asked "What is the difference between blockchain and DAG?",
+  // Qwen3.5-4B searched Wikipedia for "difference between blockchain and DAG", read "Version
+  // control", and concluded that Wikipedia had nothing, though it has an article on each.
+  const how = `Search ${sources} with short terms, such as the title an article would have, not the whole question. For a question about two or more things, search for each of them on its own and read about each before answering.`;
+  return `${RESEARCH_SYSTEM}\n${where}\n${how}\nSearch snippets can be cut off; quote only complete text, preferably from what you read. Keep each quote to one sentence.`;
 }
 
 /**
@@ -102,6 +106,10 @@ export function createResearchTools(
   // or to answer in the question's language. Each is asked once.
   let askedToRead = false;
   let askedForLanguage = false;
+  // Whether final_answer has sent the model back, once, to search the open sources again topic by topic,
+  // and the sources that answered a search: searching again is no use when they all failed.
+  let askedToSearchAgain = false;
+  const answeredSources = new Set<string>();
   // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
   const readIds = new Set<string>();
   let askedToReadCited = false;
@@ -123,6 +131,7 @@ export function createResearchTools(
       searchedSources.add(source.name);
       try {
         const hits = await source.search(query, session?.signal);
+        answeredSources.add(source.name);
         session?.noteHits(hits.map((h) => h.id));
         if (!hits.length) return { text: `No matching ${source.label} results.`, resultCount: 0 };
         unread.add(`search_${source.name}`);
@@ -263,6 +272,15 @@ export function createResearchTools(
             message:
               "Before concluding that the documents do not answer the question, read what your search found: each snippet is only one sentence of its document. Read the most relevant result with read.",
             step: "About to conclude that the sources don't answer this; reading what the search found first",
+          };
+        }
+        // Search again before "not found" in the open sources, once, topic by topic: see researchSystem.
+        // Three calls are needed: a search, a read and the answer.
+        if (!found && answeredSources.size && !askedToSearchAgain && callsLeft >= 3) {
+          askedToSearchAgain = true;
+          return {
+            message: `Before concluding that the sources do not answer the question, search ${joinNames((session?.sources ?? []).map((s) => s.label))} again with shorter terms: the name of each thing the question is about, on its own, as an article title would be. Read what fits, then answer.`,
+            step: "About to conclude that the sources don't answer this; searching for each topic on its own first",
           };
         }
         // Read before answering, the same guard for an answer: a snippet is one sentence and can cut a
