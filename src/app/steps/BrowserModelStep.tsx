@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { BROWSER_MODELS, browserModelFor, type BrowserModel } from "../../models/catalog.ts";
-import { checkBrowserModel, recommendBrowserModel, type DeviceCapabilities, type StorageInfo } from "../device.ts";
+import {
+  checkBrowserModel,
+  OTHER_COMPUTER_ADVICE,
+  OTHER_COMPUTER_HELP,
+  OTHER_COMPUTER_SECTION,
+  recommendBrowserModel,
+  tooLittleMemory,
+  type DeviceCapabilities,
+  type StorageInfo,
+} from "../device.ts";
+import { HELP_URL } from "../help.ts";
 import { browserStorage, confirmModelDeletion, deleteBrowserModel, requestPersistentStorage } from "../models.ts";
 import { BROWSER_CONTEXT_LENGTH, type BrowserSettings } from "../settings.ts";
 
@@ -23,6 +33,8 @@ export function BrowserModelStep({
   const [storage, setStorage] = useState<Record<string, StorageInfo>>({});
   const [refresh, setRefresh] = useState(0);
   const recommended = recommendBrowserModel(caps);
+  // Not "recommended" when even the lighter model is unlikely to fit: the warning below says so.
+  const lowMemory = tooLittleMemory(caps);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +63,7 @@ export function BrowserModelStep({
             <label key={model.key} className="choice">
               <input type="radio" name="model" checked={chosen.key === model.key} onChange={() => setChosen(model)} />
               <strong>{model.label}</strong>
-              {model.key === recommended.key && <span className="badge supported">recommended for this device</span>}
+              {model.key === recommended.key && !lowMemory && <span className="badge supported">recommended for this device</span>}
               {storage[model.key]?.downloaded && <span className="badge">downloaded</span>}
               <span className="hint">
                 {" "}
@@ -72,6 +84,16 @@ export function BrowserModelStep({
           {warning}
         </p>
       ))}
+
+      {lowMemory && (
+        <p className="warning">
+          {OTHER_COMPUTER_ADVICE}{" "}
+          <a href={HELP_URL + OTHER_COMPUTER_HELP} target="_blank" rel="noreferrer">
+            {OTHER_COMPUTER_SECTION}
+          </a>
+          .
+        </p>
+      )}
 
       <p className="hint">
         {downloaded

@@ -31,6 +31,38 @@ export const MIN_BUFFER_MIB = 1024;
 
 const CAPABLE_VENDORS = new Set(["apple", "nvidia", "amd"]);
 
+/** Decimal gigabytes, as Hugging Face and most download dialogs show sizes. */
+const gb = (mb: number) => `${(mb / 1000).toFixed(1)} GB`;
+
+/**
+ * Whether the device reports enough memory for a model variant: its GPU memory plus about 2 GB
+ * for the system and the browser. Phones and integrated graphics share one memory. Unknown
+ * memory counts as enough.
+ */
+export function memoryFits(caps: DeviceCapabilities, variant: BrowserModelVariant): boolean {
+  return caps.ramGiB === undefined || caps.ramGiB * 1024 >= variant.vramMB + 2048;
+}
+
+/** The variant of the lightest browser model this device would load. */
+function lightestVariant(caps: DeviceCapabilities): BrowserModelVariant {
+  const lightest = BROWSER_MODELS[BROWSER_MODELS.length - 1]!;
+  return caps.shaderF16 === false ? lightest.f32 : lightest.f16;
+}
+
+/**
+ * Whether the device reports too little memory for even the lightest browser model. On an
+ * Android phone reporting 4 GB, Qwen3.5-2B (2.2 GB of GPU memory) always failed near the end
+ * of loading.
+ */
+export function tooLittleMemory(caps: DeviceCapabilities): boolean {
+  return !memoryFits(caps, lightestVariant(caps));
+}
+
+/** What to do on a device with too little memory for the browser models. */
+export const OTHER_COMPUTER_ADVICE = "To use Kovrune from this device, run the model on a computer on the same network:";
+export const OTHER_COMPUTER_SECTION = "Use a model server on another computer";
+export const OTHER_COMPUTER_HELP = "#use-a-model-server-on-another-computer";
+
 export function recommendPath(caps: DeviceCapabilities): Recommendation {
   if (!caps.webgpu) {
     return { path: "local-server", reason: "This browser does not offer WebGPU, which browser models need." };
@@ -39,6 +71,12 @@ export function recommendPath(caps: DeviceCapabilities): Recommendation {
     return {
       path: "local-server",
       reason: "This GPU lacks 16-bit shader support, so browser models would need their slower 32-bit versions.",
+    };
+  }
+  if (tooLittleMemory(caps)) {
+    return {
+      path: "local-server",
+      reason: `This device reports about ${caps.ramGiB} GB of memory, and even the lighter browser model needs about ${gb(lightestVariant(caps).vramMB)} of GPU memory, so it would likely fail to load. A model server on another computer on your network works from this device (${OTHER_COMPUTER_SECTION}, in the user guide).`,
     };
   }
   const vendor = caps.vendor?.toLowerCase() ?? "";
@@ -87,7 +125,10 @@ export async function detectCapabilities(): Promise<DeviceCapabilities> {
   }
 }
 
-/** The browser model to suggest: the lighter one on devices reporting 8 GB of memory or less. */
+/**
+ * The browser model to select first: the lighter one on devices reporting 8 GB of memory or less.
+ * It is shown as recommended only when it fits (tooLittleMemory).
+ */
 export function recommendBrowserModel(caps: DeviceCapabilities): BrowserModel {
   return caps.ramGiB !== undefined && caps.ramGiB <= 8 ? BROWSER_MODELS[1]! : BROWSER_MODELS[0]!;
 }
@@ -108,8 +149,6 @@ export interface BrowserModelCheck {
   warnings: string[];
 }
 
-/** Decimal gigabytes, as Hugging Face and most download dialogs show sizes. */
-const gb = (mb: number) => `${(mb / 1000).toFixed(1)} GB`;
 
 /** The compatibility check for running one model in this browser. */
 export function checkBrowserModel(caps: DeviceCapabilities, model: BrowserModel, storage?: StorageInfo): BrowserModelCheck {
@@ -139,8 +178,10 @@ export function checkBrowserModel(caps: DeviceCapabilities, model: BrowserModel,
   } else if (!CAPABLE_VENDORS.has(vendor)) {
     warnings.push("The browser path has not been tested on this GPU. The model test will show whether it works here.");
   }
-  if (caps.ramGiB !== undefined && caps.ramGiB * 1024 < variant.vramMB + 2048) {
-    warnings.push(`This device reports about ${caps.ramGiB} GB of memory, and the model needs about ${gb(variant.vramMB)} of GPU memory. It may fail to load.`);
+  if (!memoryFits(caps, variant)) {
+    warnings.push(
+      `This device reports about ${caps.ramGiB} GB of memory, and the model needs about ${gb(variant.vramMB)} of GPU memory. It may fail to load, near the end; on a phone the page may just reload.`,
+    );
   }
   return { variant, problems, warnings };
 }

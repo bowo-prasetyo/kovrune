@@ -192,7 +192,7 @@ In the app: **Use a local model server** → keep the address `http://127.0.0.1:
 
 The browser path needs WebGPU, which lets a web page use the GPU; recent Chrome and Edge have it. Without WebGPU, the device step offers only the local server.
 
-Pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. **Download and test** downloads it once and stores it in the browser; the next time, the button reads **Load and test**. **Delete the download** frees the space again, after asking, since using the model again means downloading it again.
+Pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. On a device that reports less memory than even Qwen3.5-2B needs (2.2 GB of GPU memory, plus about 2 GB for the system and the browser), such as a phone with 4 GB, neither model is recommended: loading usually fails near the end, and on a phone the page may just reload without an error. Use [a model server on another computer](#use-a-model-server-on-another-computer) instead. **Download and test** downloads it once and stores it in the browser; the next time, the button reads **Load and test**. **Delete the download** frees the space again, after asking, since using the model again means downloading it again.
 
 Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used.
 
@@ -200,7 +200,7 @@ If the GPU lacks 16-bit shader support (a feature of newer GPUs that the faster 
 
 ### Use a model server on another computer
 
-If your laptop is slow but you have a faster computer on the same network, such as a desktop with a GPU or more memory, run the server there and use Kovrune on the laptop. Answers come at the desktop's speed, and the desktop can run the bigger Qwen3.5-4B even when the laptop can't.
+If your laptop is slow but you have a faster computer on the same network, such as a desktop with a GPU or more memory, run the server there and use Kovrune on the laptop. Answers come at the desktop's speed, and the desktop can run the bigger Qwen3.5-4B even when the laptop can't. The same works from a phone or tablet, whose memory is too small for the browser models: follow the laptop steps below in its browser.
 
 **On the desktop:**
 1. Set up llama.cpp and start the server as above, with `--host 0.0.0.0` so other computers can reach it, and with an API key so that only you can use it. Make a key and note it, then pass it to the server:
