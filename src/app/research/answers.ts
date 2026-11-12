@@ -1,6 +1,7 @@
 // Past answers (issue #34): what the result view needs to show an answer again after a
 // reload, and its export as Markdown or, for scholarly works, BibTeX.
 
+import { formatDateTime } from "../locale.ts";
 import type { CheckedEvidence } from "../../agent/evidence.ts";
 import type { ResearchLibrary, ResearchResult } from "../../agent/research.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
@@ -106,7 +107,7 @@ export function quotePages(answer: SavedAnswer, item: SavedAnswer["evidence"][nu
   return describePages(item.context.pages, pageUnit(detectKind(fileName)));
 }
 
-export const formatTime = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+export const formatTime = formatDateTime;
 
 const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
 

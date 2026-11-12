@@ -7,7 +7,7 @@ import { answeredSections, MIN_SYNTHESIS_SECTIONS, writeSynthesis, writesSynthes
 import { joinNames } from "../../tools/research.ts";
 import type { Navigate } from "../links.ts";
 import { describeModelError, describeSetup, openModel } from "../models.ts";
-import type { Settings } from "../settings.ts";
+import { answerTimeTip, type Settings } from "../settings.ts";
 import { toSavedAnswer, type SavedAnswer } from "./answers.ts";
 import { RecentAnswers } from "./AnswersScreen.tsx";
 import { ExportButtons, ResultView } from "./AnswerView.tsx";
@@ -327,8 +327,8 @@ export function ResearchPanel({
               "What does this report say about income in 2024?" or "How do I create a new project?".
             </p>
             <p>
-              Questions about one document work best. With a small model, an answer takes a minute or two; you can watch
-              each step below and stop at any time.
+              Questions about one document work best. {answerTimeTip(settings.lastTest)}; you can watch each step below
+              and stop at any time.
             </p>
           </div>
         )}
