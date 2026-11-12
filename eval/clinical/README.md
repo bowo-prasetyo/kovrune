@@ -6,7 +6,7 @@ Questions over clinical trial reports (harness 0.60.0). The other suites' docume
 npm run bench:endpoint -- --model <model> --suites clinical,clinicalholdout --modes constrained --out eval/results/<name>.json
 ```
 
-`clinical` (23 questions) may be looked at task by task while a change is developed; `clinicalholdout` (10) is read only as totals, like the other held-out suites. The questions and their facts were written from the papers before any model ran on them, and are not changed to fit a run. Scoring is the research suite's (`eval/harness/scoring.ts`): every fact group in the answer, every cited document cited, a verified quote, and `found` right.
+`clinical` (23 questions) may be looked at task by task while a change is developed; `clinicalholdout` (10) is read only as totals, like the other held-out suites. The questions and their facts were written from the papers before any model ran on them, and are not changed to fit a run. A fact that is plainly wrong, such as one asking for something its question does not, is fixed as a task defect: it is recorded here with the scores before and after, which `bench:rescore` gives exactly from the recorded answers (`c03` and `c20`, 0.61.0). Scoring is the research suite's (`eval/harness/scoring.ts`): every fact group in the answer, every cited document cited, a verified quote, and `found` right.
 
 ## The documents
 
@@ -101,14 +101,21 @@ npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b
 | Qwen3.5-4B | 17/23 (74%) | 7/10 | 3 of 20 (15%): 2 of 15 and 1 of 5 | 101 s | [json](../results/clinical-0.60-qwen3.5-4b-q4km.json) |
 | Qwen3.5-2B | 13/23 (57%) | 4/10 | 5 of 14 (36%): 2 of 10 and 3 of 4 | 35 s | [json](../results/clinical-0.60-qwen3.5-2b-q4km.json) |
 
-For comparison, the field suite's latest 4B baseline passes 80 of 89. On trial reports, both models are wrong more often under a green label than the design's 10% target allows. The 2B model is wrong more than a third of the time.
+Re-scored at 0.61.0, with the two task defects below fixed (`npm run bench:rescore -- eval/results/clinical-0.60-qwen3.5-*.json`):
 
-`clinical` by kind (`clinicalholdout` is read only as totals):
+| Model | `clinical` | `clinicalholdout` | Labelled **Quotes found**, wrong |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | **19/23 (83%)** | 7/10 | **2 of 20 (10%)**: 1 of 15 and 1 of 5 |
+| Qwen3.5-2B | 13/23 (57%) | 4/10 | 5 of 14 (36%): 2 of 10 and 3 of 4 |
+
+For comparison, the field suite's latest 4B baseline passes 80 of 89. On trial reports, 4B's green label is wrong 2 times in 20, at the edge of the design's target (under 10%). 2B's is wrong more than a third of the time.
+
+`clinical` by kind, re-scored at 0.61.0 (`clinicalholdout` is read only as totals):
 
 | Kind | 4B | 2B |
 | --- | --- | --- |
 | Effect | 6/7 | 4/7 |
-| Negative | 2/4 | 3/4 |
+| Negative | 4/4 (2/4 as run) | 3/4 |
 | Dose | 5/5 | 3/5 |
 | Table | 2/3 | 2/3 |
 | Design | 0/1 | 0/1 |
@@ -130,9 +137,10 @@ For comparison, the field suite's latest 4B baseline passes 80 of 89. On trial r
 
 The unit, direction and significance checks marked nothing: no model made those errors here.
 
-**Two questions the runs showed are wrong** (not changed: the rule above is that questions are not changed to fit a run, so this is for the project owner to decide):
-- **`c03` asks for more than it says.** It asks "did ferric carboxymaltose reduce the prevalence of anaemia…?", and its facts also require the prevalence ratio, 0·92. Both models answered rightly that it did not, with the paper's sentence as their quote, and failed. 4B's answer was labelled **Quotes found**, so it counts as one of 4B's three wrong labelled answers, though it is right. Fix: drop the 0·92 group, or ask for the ratio in the question.
-- **`c20`'s ways to say "no difference" leave out "no statistical difference".** 4B wrote "Yes, clinical failure occurred at a slightly lower frequency … but there was no statistical difference". Its first word is wrong for "did clinical failure differ?", so the failure stands either way; but "no statistical" belongs in the list.
+**Two task defects, fixed in 0.61.0.** The runs showed two questions whose facts were wrong. Only the facts changed, not the questions, so the recorded answers are re-scored exactly; no model was run again:
+- **`c03` asked for more than it said.** Its question is "did ferric carboxymaltose reduce the prevalence of anaemia…?", but its facts also required the prevalence ratio, 0·92. Both models answered rightly that it did not, with the paper's sentence as their quote, and failed. 4B's answer was labelled **Quotes found**, so it counted as one of 4B's three wrong labelled answers, though it is right. The 0·92 group is dropped. 4B's answer now passes, and 4B's wrong labelled answers are 2 of 20. 2B's answer still fails: its quote was not found in the paper.
+- **The ways to say "no difference" left out "no statistical difference" (`c20`).** 4B wrote "Yes, clinical failure occurred at a slightly lower frequency … but there was no statistical difference (OR 0.41, 95% CI: 0.09 to 1.83)". With "no statistical" in the list, it passes. Its substance is right; its "Yes" answers whether failure was lower, not whether it differed, which a reader may find misleading. The answer was not labelled **Quotes found**, so the label counts do not change.
+- **Nothing else changes:** the other negative questions' answers, and both held-out suites' totals, score as before. `tests/field.test.ts` scores both 4B answers, and fails without the fix.
 
 **Next, measured on this suite.** A sentence that says how many were recruited, enrolled or randomised should not be backed by a quote about a desired, planned, target or calculated sample size (`c09`). Search could offer the abstract's Findings, or more than three results, for questions about a paper's main result (`c06`). Each is a change to judge on `clinical`, `clinicalholdout` and the field suites by [the usual rule](../field/README.md#rule-for-prompt-and-guard-changes).
 

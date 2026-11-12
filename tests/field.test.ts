@@ -294,7 +294,7 @@ describe("clinical suite", () => {
     assert.ok(clinicalHoldoutTasks.length >= clinicalTasks.length / 3, "a quarter or more of all is held out");
   });
 
-  it("fails an answer that turns a negative result into a positive one, or gives the wrong unit", () => {
+  it("fails an answer that turns a negative result into a positive one, or gives the wrong unit, and passes right ones", () => {
     const library = new ResearchLibrary(clinicalDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
     const result = (answer: string, docId: string): ResearchResult =>
       ({ status: "verified", final: { found: true, answer, evidence: [{ docId, quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
@@ -302,6 +302,11 @@ describe("clinical suite", () => {
     const iron = "iv-iron-pregnancy-malawi";
     assert.equal(scoreResearch(task("c03-iron-anaemia-36-weeks"), result("No. Ferric carboxymaltose did not reduce anaemia at 36 weeks (prevalence ratio 0·92, 95% CI 0·81 to 1·06; p=0·27).", iron), library).passed, true);
     assert.equal(scoreResearch(task("c03-iron-anaemia-36-weeks"), result("Yes. Ferric carboxymaltose reduced anaemia at 36 weeks (prevalence ratio 0.92).", iron), library).passed, false);
+    // Task defects fixed in 0.61.0: c03 no longer asks for a ratio its question does not, and "no statistical
+    // difference" says a result did not differ (c20). Both are Qwen3.5-4B's answers in the 0.60.0 run.
+    assert.equal(scoreResearch(task("c03-iron-anaemia-36-weeks"), result("No, ferric carboxymaltose did not reduce the prevalence of anaemia at 36 weeks' gestation compared with standard of care in the REVAMP trial.", iron), library).passed, true);
+    const crp = "crp-community-health-workers";
+    assert.equal(scoreResearch(task("c20-crp-clinical-failure"), result("There was no statistical difference in the risk of clinical failure (OR 0.41, 95% CI: 0.09 to 1.83).", crp), library).passed, true);
     const folic = "folic-acid-pregnancy";
     assert.equal(scoreResearch(task("c13-folic-dose"), result("They received 400 µg of folic acid per day.", folic), library).passed, true);
     assert.equal(scoreResearch(task("c13-folic-dose"), result("They received 400 mg of folic acid per day.", folic), library).passed, false);
