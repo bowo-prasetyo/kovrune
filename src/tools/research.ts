@@ -8,6 +8,7 @@ import type { SourceSession } from "../sources/session.ts";
 import { SourceError } from "../sources/types.ts";
 import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
+import { outlineOf } from "../documents/outline.ts";
 import type { DocumentIndex, SearchHit } from "./search.ts";
 
 /** "A", "A and B", "A, B and C": one or two names read as before arXiv made three possible. */
@@ -113,6 +114,9 @@ export function createResearchTools(
   // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
   const readIds = new Set<string>();
   let askedToReadCited = false;
+  // Long documents whose outline the model has been shown (outline.ts), once per document and question.
+  const outlined = new Set<string>();
+  const outlineFor = (docId: string) => outlineOf(index.partsOf(docId).map((id) => ({ id, text: index.get(id)?.text ?? "" })));
   // What the answer quoted from each open-source document it was sent to read, so the read gives the
   // part holding the quote rather than the part matching the question (SourceSession.read).
   const quotedFrom = new Map<string, string[]>();
@@ -223,14 +227,21 @@ export function createResearchTools(
         const doc = index.get(docId);
         if (!doc) {
           const parts = index.partsOf(docId);
-          return parts.length
-            ? `Document "${docId}" is long and split into parts: ${parts.join(", ")}. Read the part you need, or search to find it.`
-            : `No document with ID "${docId}". Use an ID returned by search.`;
+          if (!parts.length) return `No document with ID "${docId}". Use an ID returned by search.`;
+          // A long document's outline says which part holds what (outline.ts); its part IDs alone do not.
+          const outline = outlineFor(docId);
+          if (!outline) return `Document "${docId}" is long and split into parts: ${parts.join(", ")}. Read the part you need, or search to find it.`;
+          outlined.add(docId);
+          return `Document "${docId}" is long and split into ${parts.length} parts, ${parts[0]} to ${parts.at(-1)}. What they hold: ${outline}. Read the part you need, by its ID, or search to find it.`;
         }
         readDocument = true;
         readIds.add(doc.id);
         unread.clear();
-        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`);
+        const parent = parentId(doc.id);
+        const outline = parent !== doc.id && !outlined.has(parent) ? outlineFor(parent) : undefined;
+        if (outline) outlined.add(parent);
+        const where = outline ? `\n\n[Outline of ${parent}, to read another part by its ID such as ${parent}#1: ${outline}]` : "";
+        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}${where}`);
       },
       // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
       // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
@@ -238,7 +249,8 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         const [header, ...rest] = observation.split("\n");
-        const sentences = index.bestSentences(rest.join("\n"), question, 2);
+        // The outline (outline.ts) is a map of the document, not what it says: it is left out.
+        const sentences = index.bestSentences(rest.join("\n").replace(/\n*\[Outline of [^\n]*\]$/, ""), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },
       onRepeat: ({ docId }: { docId: string }) => {
