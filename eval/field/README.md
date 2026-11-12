@@ -834,6 +834,16 @@ The `clinical` and `clinicalholdout` suites ask 33 questions over ten open-acces
 
 In the clinical suite's first runs, both models gave a trial's planned sample size (25) as the number it recruited (18), quoting the sample size calculation, and both answers were labelled **Quotes found** (`c09`). A sentence that says how many were recruited, enrolled, randomised or included is no longer backed by a quote that gives that number only as a target: a planning word ("desired", "planned", "target", "calculated", …) just before it, or "was calculated" just after. `tests/support.test.ts` fails before and passes after. Re-scoring every recorded report changes only those two labels: 4B's wrong answers under the label go from 2 of 20 to 1 of 19, 2B's from 5 of 14 to 4 of 13. `bench:rescore` now uses a recorded review only where the app would ask for one, which changes one more label in an experiment that was not adopted. Details: [the clinical suite](../clinical/README.md#a-target-is-not-a-count-0620).
 
+### A document's first parts first (0.63.0, measured, not adopted)
+
+A search change, measured on the clinical suites and not adopted ([#141](https://github.com/bowo-prasetyo/kovrune/pull/141), closed unmerged). Search ranked a long document's own parts by relevance times a weight for their position (1 + 0.3 × e^(−(n−1)/3)), so a paper's abstract could take a slot from its own Discussion:
+- **A first design was rejected:** it weighted every document's first parts, and lost cited documents in a larger library (93.5% to 88.3% with 300 generated documents).
+- **Search alone, the second design:** the clinical suite's recorded searches showed every fact for 52 of 58 tasks instead of 46. The field suite lost one answer passage (`f46`).
+- **Models:** on the clinical suites, `c06` passed on both models and `c02`, a value only in a table, failed on both; the totals moved by one task either way.
+- **Why not adopted:** the field and protected suites were not run. The change helps the abstract and costs the tables, by its design, for about even in total.
+
+Details: [the clinical suite](../clinical/README.md#a-papers-first-parts-first-0630-measured-not-adopted).
+
 ### Replaying recorded runs (0.64.0)
 
 The rule asks for both models' runs of research, unanswerable, pdf, field and holdout before and after a change, on one machine: about 13 hours on the 4-core container where the clinical suite was written. Most of those runs repeat: in the lead-weight experiment (0.63.0, [#141](https://github.com/bowo-prasetyo/kovrune/pull/141)), re-running every search recorded in the 0.42.0 and 0.30.0 runs through both versions of search changed none of research's, unanswerable's or pdf's, and 34 of field's 101 (29 of 89 tasks). Those runs are where the time goes, and they cannot change.
