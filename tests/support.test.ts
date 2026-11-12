@@ -350,3 +350,35 @@ describe("clinical units, directions and significance (harness 0.59.0)", () => {
     assert.equal(checkEvidence([{ docId: "c", quote: "la col·lecció del museu és gran" }], () => "La col·lecció del museu és gran.")[0]!.verified, true);
   });
 });
+
+describe("counts of people recruited, not planned (harness 0.62.0)", () => {
+  const q = (quote: string, docId = "vessel") => ({ docId, quote });
+  // Both Qwen3.5 models' answers to the clinical suite's c09 in the 0.60.0 runs, with their quotes. The trial recruited 18.
+  const CALCULATED = q("Based on 24-h ambulatory SBP as the primary outcome, a desired sample size of 25 participants was calculated");
+  const UNABLE = q("As we were unable to recruit the desired sample size of 25 participants (28 to account for participant drop-out) due to the COVID-19 pandemic");
+  const QUESTION = "How many participants were recruited to the VESSEL trial of cruciferous vegetables and blood pressure?";
+
+  it("does not back a count of people recruited with a quote that gives the number as a target", () => {
+    assert.equal(marks("25 participants were recruited to the VESSEL trial.", [CALCULATED]), "-");
+    assert.equal(marks("25 participants were enrolled.", [UNABLE]), "-");
+    assert.equal(marks("A total of 25 participants were randomised.", [q("The target sample size was 25 participants.")]), "-");
+  });
+
+  it("does not let a bare count answer a question about recruitment from a target", () => {
+    const evidence = [{ ...UNABLE, verified: true }];
+    // The paper's own title, which supplies the question's words, as in the run.
+    const title = "Cruciferous vegetables lower blood pressure in adults with mildly elevated blood pressure in a randomized, controlled, crossover trial: the VESSEL study (BMC Medicine 2024, PMC11367748)";
+    const support = sentenceSupport("25", evidence, () => title, QUESTION);
+    assert.deepEqual([support.judged, support.backed, support.answerInQuote], [0, 0, undefined], "too short to check, not backed");
+    assert.equal(labelledQuotesFound("verified", evidence, support), false);
+  });
+
+  it("still backs a count the quotes give, a number after \"the planned\", and a sentence about the plan", () => {
+    assert.equal(marks("18 participants were enrolled in the trial.", [q("In all, 18 of the planned 25 participants were enrolled in the trial.")]), "+");
+    assert.equal(marks("904 women were enrolled and randomly assigned.", [q("From Nov 11, 2019, to Aug 3, 2021, 904 women were enrolled and randomly assigned")]), "+");
+    assert.equal(marks("A total of 200 patients were randomised.", [q("We aimed to randomise 200 patients; 200 patients were randomised by March.")]), "+");
+    assert.equal(marks("The planned sample size was 25 participants.", [CALCULATED]), "+", "a sentence about the plan is not a count");
+    // Any quote that gives the number as a count backs it, even next to one that gives it as a target.
+    assert.equal(marks("25 participants were recruited.", [CALCULATED, q("In the end, 25 participants were recruited.")]), "+");
+  });
+});

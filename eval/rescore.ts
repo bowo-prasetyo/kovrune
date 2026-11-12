@@ -7,15 +7,15 @@
 //
 // Only answers whose final answer was recorded whole can be re-scored; reports keep the first 600
 // characters. The model's own check (review.ts) and its cross-check (crosscheck.ts) are not asked again:
-// their recorded results are used.
+// their recorded results are used, where the app would still ask for them.
 // Whether an answer passes its task is scored again too, since it requires a verified quote.
 
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 import { checkEvidence, answerStatus, type EvidenceItem } from "../src/agent/evidence.ts";
 import { withoutPartLabels, type ResearchLibrary } from "../src/agent/research.ts";
-import type { ReviewVerdict } from "../src/agent/review.ts";
-import { labelledQuotesFound, sentenceSupport } from "../src/agent/support.ts";
+import { reviewsShortAnswers, type ReviewVerdict } from "../src/agent/review.ts";
+import { labelledQuotesFound, reviewAsked, sentenceSupport, wordChecksPass } from "../src/agent/support.ts";
 import type { Report } from "./harness/benchmark.ts";
 import { scoreResearch } from "./harness/scoring.ts";
 import { loadFieldSuite } from "./harness/field.ts";
@@ -79,7 +79,12 @@ for (const file of positionals) {
     const evidence = checkEvidence(final.evidence, (id) => library.textFor(id), (id) => library.pageStartsFor(id));
     const status = answerStatus(final.found, evidence);
     const support = sentenceSupport(answer, evidence, (id) => library.documentFor(id)?.title, task.question);
-    const review = result.support?.review as ReviewVerdict | undefined;
+    // The recorded review counts only where the app would still ask for it (research.ts): an answer the
+    // word checks no longer pass, and too short for the models whose short answers are reviewed, is not
+    // reviewed, so its recorded "yes" does not label it. The cross-check and completeness check follow it.
+    const asked =
+      wordChecksPass(status, evidence, support) || (reviewsShortAnswers(report.environment.modelId) && reviewAsked(status, evidence, support));
+    const review = asked ? (result.support?.review as ReviewVerdict | undefined) : undefined;
     const crossCheck = result.support?.crossCheck;
     const completeness = result.support?.completeness;
     const labelled = labelledQuotesFound(
