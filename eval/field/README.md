@@ -817,6 +817,10 @@ What changed:
 
 **Limits:** English words only for directions and significance; a quote that says both sides of a pair backs either ("costs were higher, while mortality was lower" backs "mortality was higher"); compound units are compared by their first part.
 
+### Clinical trial reports (0.60.0)
+
+The `clinical` and `clinicalholdout` suites ask 33 questions over ten open-access trial reports: effect sizes, negative results, doses and table values. They have their own documents, library and README: [`eval/clinical/README.md`](../clinical/README.md). Search alone finds the cited paper for 29 of 30 answerable questions and 84.1% of answer passages; no model has run them yet.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

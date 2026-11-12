@@ -11,6 +11,9 @@ import { fieldDocuments, fieldTasks } from "../eval/field/tasks.ts";
 import { holdoutTasks } from "../eval/field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../eval/field/multi.ts";
 import { officeDocuments, officeHoldoutTasks, officeTasks } from "../eval/field/office.ts";
+import { clinicalDocuments, clinicalHoldoutTasks, clinicalTasks } from "../eval/clinical/tasks.ts";
+import { scoreResearch } from "../eval/harness/scoring.ts";
+import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
 const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
@@ -199,7 +202,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -247,6 +250,83 @@ describe("office suite", () => {
     });
     assert.equal(report.results.length, 1);
     assert.equal(report.results[0]!.suite, "office");
+    assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
+  });
+});
+
+describe("clinical suite", () => {
+  it("reads ten CC BY trial reports as published, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(clinicalDocuments.length, 10);
+    for (const doc of clinicalDocuments) {
+      const text = suite.clinicalLibrary.documentFor(doc.id)?.text ?? "";
+      assert.match(text, /CC BY|Creative Commons Attribution/, `${doc.id}: its licence is in the document`);
+      assert.match(doc.title, /PMC\d+\)$/, `${doc.id}: its title names the article`);
+      assert.ok(text.length > 30_000, `${doc.id}: the whole article, not its abstract`);
+    }
+    assert.equal(suite.clinicalLibrary.documents.length, clinicalDocuments.length, "only the trial reports");
+    assert.equal(suite.library.documentFor("copcov-hydroxychloroquine"), undefined, "the field suite's library is unchanged");
+    // The Lancet's decimals and thousands are kept as printed, which the quote check must handle.
+    const typhoid = suite.clinicalLibrary.documentFor("typhoid-vaccine-malawi")!.text;
+    assert.match(typhoid, /efficacy of Vi-TT was 78·3% \(95% CI 66·3–86·1\)/);
+    assert.match(typhoid, /14 069 were assigned to receive Vi-TT/);
+    // Tables are kept as rows, with each value in its own column.
+    assert.match(suite.clinicalLibrary.documentFor("iv-iron-pregnancy-malawi")!.text, /\| Age, years \| 22·2 \(6·0\) \| 22·5 \(6·3\) \|/);
+    assert.match(suite.clinicalLibrary.documentFor("folic-acid-pregnancy")!.text, /400 µg\/day of FA \(n = 96\) or placebo \(n = 94\)/);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with a third held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...clinicalTasks, ...clinicalHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.clinicalLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    const cited = new Set(clinicalTasks.flatMap((t) => t.citations.flat()));
+    assert.deepEqual([...cited].sort(), clinicalDocuments.map((d) => d.id).sort(), "every document is asked about");
+    for (const tasks of [clinicalTasks, clinicalHoldoutTasks]) {
+      assert.ok(tasks.some((t) => !t.answerable), "a question the papers do not answer");
+      assert.ok(tasks.some((t) => t.facts.some((group) => group.includes("did not"))), "a negative result");
+    }
+    assert.ok(clinicalHoldoutTasks.length >= clinicalTasks.length / 3, "a quarter or more of all is held out");
+  });
+
+  it("fails an answer that turns a negative result into a positive one, or gives the wrong unit", () => {
+    const library = new ResearchLibrary(clinicalDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
+    const result = (answer: string, docId: string): ResearchResult =>
+      ({ status: "verified", final: { found: true, answer, evidence: [{ docId, quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
+    const task = (id: string) => [...clinicalTasks, ...clinicalHoldoutTasks].find((t) => t.id === id)!;
+    const iron = "iv-iron-pregnancy-malawi";
+    assert.equal(scoreResearch(task("c03-iron-anaemia-36-weeks"), result("No. Ferric carboxymaltose did not reduce anaemia at 36 weeks (prevalence ratio 0·92, 95% CI 0·81 to 1·06; p=0·27).", iron), library).passed, true);
+    assert.equal(scoreResearch(task("c03-iron-anaemia-36-weeks"), result("Yes. Ferric carboxymaltose reduced anaemia at 36 weeks (prevalence ratio 0.92).", iron), library).passed, false);
+    const folic = "folic-acid-pregnancy";
+    assert.equal(scoreResearch(task("c13-folic-dose"), result("They received 400 µg of folic acid per day.", folic), library).passed, true);
+    assert.equal(scoreResearch(task("c13-folic-dose"), result("They received 400 mg of folic acid per day.", folic), library).passed, false);
+    const veg = "cruciferous-blood-pressure";
+    assert.equal(scoreResearch(task("c08-veg-systolic"), result("It was 2.5 mmHg lower after the cruciferous diet.", veg), library).passed, true);
+    assert.equal(scoreResearch(task("c08-veg-systolic"), result("It rose by 2.5 mmHg after the cruciferous diet.", veg), library).passed, false);
+  });
+
+  it("runs as its own suite, over its own library", async () => {
+    const suite = await loadFieldSuite();
+    const quote = "Eligible participants were randomised at the end of their first trimester to receive either 400 µg/day of FA (n = 96) or placebo (n = 94) until the end of pregnancy";
+    const answer = JSON.stringify({
+      tool: "final_answer",
+      args: { found: true, answer: "Women in the intervention group received 400 µg/day of folic acid until the end of pregnancy.", evidence: [{ docId: "folic-acid-pregnancy", quote }] },
+    });
+    const model = new ScriptedModel([`{"tool":"search","args":{"query":"FASSTT folic acid dose"}}`, `{"tool":"read","args":{"docId":"folic-acid-pregnancy"}}`, answer, answer]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      field: suite,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["clinical"], modes: ["constrained"], taskIds: ["c13-folic-dose"] },
+    });
+    assert.equal(report.results.length, 1);
+    assert.equal(report.results[0]!.suite, "clinical");
     assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
   });
 });

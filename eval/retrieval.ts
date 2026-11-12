@@ -14,6 +14,7 @@ import { appSearch, measureRetrieval, summarizeRetrieval } from "./harness/retri
 import { ResearchLibrary } from "../src/agent/research.ts";
 import { baseLibrary } from "./harness/suites.ts";
 import { pdfTasks } from "./tasks/pdf.ts";
+import { clinicalHoldoutTasks, clinicalTasks } from "./clinical/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "./field/office.ts";
 import { researchTasks } from "./tasks/research.ts";
 
@@ -37,6 +38,7 @@ const suites = [
   { name: "field", library: field.library, tasks: field.tasks },
   // The held-out questions' search is measured too: it involves no model, so it tunes nothing.
   { name: "office (and officeholdout)", library: field.officeLibrary, tasks: [...officeTasks, ...officeHoldoutTasks] },
+  { name: "clinical (and clinicalholdout)", library: field.clinicalLibrary, tasks: [...clinicalTasks, ...clinicalHoldoutTasks] },
   ...(distractors
     ? [
         {
