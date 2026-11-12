@@ -2,6 +2,7 @@
 // saved separately (research/store.ts); tasks are not persisted until M2.
 
 import { browserModelFor } from "../models/catalog.ts";
+import { APP_LOCALE } from "./locale.ts";
 import { MIN_CONTEXT_LENGTH, SERVER_PRESETS, type ServerKind } from "./servers.ts";
 
 /** The model test's result when the setup was saved, so it can be checked later without testing again. */
@@ -154,8 +155,20 @@ export function setChangingSetup(changing: boolean): void {
 }
 
 /** "tested 26 Oct, 1.6 tokens/s (a question can take up to 24 min)". */
-export function describeLastTest(test: LastTest, locale?: string): string {
+export function describeLastTest(test: LastTest, locale: string = APP_LOCALE): string {
   const date = new Date(test.at).toLocaleDateString(locale, { day: "numeric", month: "short" });
   const longest = test.maxTaskMinutes < 1 ? "under a minute" : `up to ${Math.round(test.maxTaskMinutes)} min`;
   return `tested ${date}, ${test.tokensPerSecond} tokens/s (a question can take ${longest})`;
+}
+
+/** Above this, the research screen's tip gives the measured time instead of "a minute or two". */
+const QUICK_ANSWER_MINUTES = 3;
+
+/**
+ * How long an answer takes, for the research screen's tip. On the class 1 laptop's browser
+ * path the tip said "a minute or two" under a header saying "up to 26 min".
+ */
+export function answerTimeTip(test: LastTest | undefined): string {
+  if (!test || test.maxTaskMinutes <= QUICK_ANSWER_MINUTES) return "With a small model, an answer takes a minute or two";
+  return `On this setup an answer can take up to ${Math.round(test.maxTaskMinutes)} minutes, as measured by the model test`;
 }

@@ -1,6 +1,7 @@
 // How a saved answer or report is shown: its label, the answer, the label's meaning, and the evidence,
 // on the research screen as it arrives and on the Past answers page (AnswersScreen.tsx).
 
+import { formatDateTime } from "../locale.ts";
 import type { DiffPart, QuoteContext } from "../../agent/evidence.ts";
 import type { SentenceSupport } from "../../agent/support.ts";
 import type { SynthesisPart } from "../../agent/synthesis.ts";
@@ -142,7 +143,7 @@ function Answer({ text, support, explainMarks = true }: { text: string; support?
 function SourceName({ docId, answer }: { docId: string; answer: SavedAnswer }) {
   const citation = answer.citations[docId];
   if (!citation) return <span className="source">{sourceTitle(answer, docId)}</span>;
-  const retrieved = new Date(citation.retrievedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const retrieved = formatDateTime(citation.retrievedAt);
   return (
     <span className="source">
       <a href={citation.url} target="_blank" rel="noreferrer">

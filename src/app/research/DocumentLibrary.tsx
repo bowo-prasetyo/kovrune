@@ -1,3 +1,4 @@
+import { APP_LOCALE } from "../locale.ts";
 import { useState } from "react";
 import { KIND_LABELS, pageUnit, readByEarlierVersion } from "../../documents/extract.ts";
 import { ACCEPT, formatBytes, readDocument } from "./library.ts";
@@ -114,7 +115,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
                 <span className="doc-meta">
                   {KIND_LABELS[doc.kind]}
                   {doc.pages ? `, ${doc.pages} ${pageUnit(doc.kind)}${doc.pages === 1 ? "" : "s"}` : ""}, {formatBytes(doc.bytes)},{" "}
-                  {doc.text.length.toLocaleString()} characters
+                  {doc.text.length.toLocaleString(APP_LOCALE)} characters
                 </span>
                 <span className="doc-actions">
                   <button

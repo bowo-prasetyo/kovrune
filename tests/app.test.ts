@@ -8,7 +8,8 @@ import { accessState, addressSpaceOf, describeBlockedAccess } from "../src/app/l
 import { describeConnectionError, describeMissingModel, describeServerTimeout, modelLabel, SERVER_PRESETS } from "../src/app/servers.ts";
 import { CRASH_RECOVERY } from "../src/app/help.ts";
 import { slowModelAdvice } from "../src/app/models.ts";
-import { describeLastTest, parseSettings } from "../src/app/settings.ts";
+import { answerTimeTip, describeLastTest, parseSettings } from "../src/app/settings.ts";
+import { formatDateTime } from "../src/app/locale.ts";
 import { listModels, LocalEndpointModel } from "../src/models/local-endpoint.ts";
 
 describe("device advisor", () => {
@@ -250,6 +251,20 @@ describe("the last model test", () => {
   it("is described for the setup summary", () => {
     assert.equal(describeLastTest(lastTest, "en-GB"), "tested 26 Oct, 1.6 tokens/s (a question can take up to 24 min)");
     assert.match(describeLastTest({ ...lastTest, maxTaskMinutes: 0.4 }, "en-GB"), /can take under a minute\)$/);
+    // The page is English, so the date is too, whatever the browser's language (the owner's showed "11月12日").
+    assert.equal(describeLastTest(lastTest), "tested 26 Oct, 1.6 tokens/s (a question can take up to 24 min)");
+  });
+
+  it("gives the measured answer time in the research tip when it is long", () => {
+    // Class 1 laptop, browser path: the tip said "a minute or two" under a header saying "up to 26 min".
+    const at = "2026-11-12T04:20:00Z";
+    assert.equal(answerTimeTip({ at, tokensPerSecond: 3, maxTaskMinutes: 25.8 }), "On this setup an answer can take up to 26 minutes, as measured by the model test");
+    assert.equal(answerTimeTip({ at, tokensPerSecond: 40, maxTaskMinutes: 1.5 }), "With a small model, an answer takes a minute or two");
+    assert.equal(answerTimeTip(undefined), "With a small model, an answer takes a minute or two");
+  });
+
+  it("writes dates the English way whatever the browser's language", () => {
+    assert.match(formatDateTime("2026-11-12T04:26:00Z"), /^12 Nov 2026, \d\d:26$/);
   });
 });
 
