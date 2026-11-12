@@ -160,7 +160,96 @@ const UNITS: Array<[string, RegExp]> = [
   ["km", /^(?:km|kilometres?|kilometers?)$/],
   ["m", /^(?:m|metres?|meters?)$/],
   ["token", /^tokens?$/],
+  // Clinical units (harness 0.59.0), where a swapped unit is a wrong dose or a wrong reading: "500 mg"
+  // is not backed by "500 µg", nor "7.2 mg/dL" by "7.2 mmol/L". Only the unit's first word is compared,
+  // so "mg/kg" and "mg/day" are one unit here. "µ" is "μ" after normalizing (NFKC). Millimetres of
+  // mercury are millimetres: sources write "120 mm Hg" and "120 mmHg" alike.
+  ["mg", /^(?:mg|milligrams?)$/],
+  ["μg", /^(?:μg|ug|mcg|micrograms?)$/],
+  ["ng", /^(?:ng|nanograms?)$/],
+  ["g", /^(?:g|grams?)$/],
+  ["kg", /^(?:kg|kilograms?)$/],
+  ["mL", /^(?:ml|millilit(?:re|er)s?)$/],
+  ["L", /^(?:l|lit(?:re|er)s?)$/],
+  ["mmol", /^(?:mmol|millimoles?)$/],
+  ["μmol", /^(?:μmol|umol|micromoles?)$/],
+  ["nmol", /^(?:nmol|nanomoles?)$/],
+  ["mEq", /^meq$/],
+  ["IU", /^(?:iu|ui)$/],
+  ["mm", /^(?:mm|mmhg|millimet(?:re|er)s?)$/],
+  ["cm", /^(?:cm|centimet(?:re|er)s?)$/],
+  ["kcal", /^(?:kcal|kilocalories?)$/],
 ];
+
+/** Words that end what a negation before them reaches: "no change in A, but a significant fall in B". */
+const CLAUSE_BREAK = /^(?:but|while|whereas|although|however|yet)$/;
+/** Words that negate a statement of significance before it: "not significant", "did not reach statistical significance". */
+const SIGNIFICANCE_NEGATOR = /^(?:not|no|never|neither|nor|without|cannot|fail\p{L}*|\p{L}+n't)$/u;
+/** How many words before "significant" a negation may stand: "no statistically significant", "not differ significantly". */
+const SIGNIFICANCE_REACH = 4;
+
+/**
+ * How a text speaks of statistical significance: whether it says something was significant
+ * ("asserted"), and whether it says something was not ("negated": "no significant difference", "not
+ * statistically significant", "nonsignificant", "did not reach significance"). A text can do both.
+ */
+export function significance(text: string): { asserted: boolean; negated: boolean } {
+  const raw = normalizeForMatch(text).split(" ");
+  const tokens = raw.map((t) => t.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, ""));
+  let asserted = false;
+  let negated = false;
+  tokens.forEach((token, i) => {
+    if (!/significan/.test(token)) return;
+    let isNegated = /^(?:non|in)significan/.test(token);
+    for (let j = i - 1; !isNegated && j >= Math.max(0, i - SIGNIFICANCE_REACH); j--) {
+      if (CLAUSE_BREAK.test(tokens[j]!) || /[,;:]$/.test(raw[j]!)) break;
+      if (SIGNIFICANCE_NEGATOR.test(tokens[j]!)) isNegated = true;
+    }
+    if (isNegated) negated = true;
+    else asserted = true;
+  });
+  return { asserted, negated };
+}
+
+/**
+ * Words that state a direction, in pairs of opposites. A sentence that says one side is not backed by
+ * quotes that say only the other: "mortality was higher" is not backed by "mortality was lower", which
+ * shares every other word. A sentence the quotes say neither side of is left to the other checks, so
+ * "lower risk" may still paraphrase "hazard ratio 0.82". A correct answer that turns a comparison round
+ * ("higher in the control group" for "lower in the treated group") is marked too: it asks the reader to
+ * check, which is the cheaper mistake.
+ */
+const OPPOSITES: Array<[string[], string[]]> = [
+  [["higher", "highest"], ["lower", "lowest"]],
+  [
+    ["increase", "increased", "increases", "increasing"],
+    ["decrease", "decreased", "decreases", "decreasing", "reduce", "reduced", "reduces", "reducing", "reduction", "reductions"],
+  ],
+  [["improve", "improved", "improves", "improving", "improvement", "improvements"], ["worsen", "worsened", "worsens", "worsening", "worse", "deteriorated", "deterioration"]],
+  [["greater", "greatest", "larger", "largest"], ["smaller", "smallest"]],
+  [["longer", "longest"], ["shorter", "shortest"]],
+  [["gain", "gained", "gains"], ["loss", "losses", "lost"]],
+  [["present"], ["absent"]],
+  [["positive"], ["negative"]],
+  [["superior"], ["inferior"]],
+  [["above"], ["below"]],
+];
+
+/** The sides of OPPOSITES a text says, as "pair:side" keys. */
+function directions(text: string): Set<string> {
+  const said = new Set(words(normalizeForMatch(text)));
+  const found = new Set<string>();
+  OPPOSITES.forEach((pair, i) => pair.forEach((side, s) => side.some((w) => said.has(w)) && found.add(`${i}:${s}`)));
+  return found;
+}
+
+/** Whether every direction a sentence states is one the quotes state, or one they state neither side of. */
+function directionsBacked(text: string, quoted: Set<string>): boolean {
+  return [...directions(text)].every((key) => {
+    const [pair, side] = key.split(":");
+    return quoted.has(key) || !quoted.has(`${pair}:${side === "0" ? 1 : 0}`);
+  });
+}
 
 /**
  * The units a text gives its numbers, as "number unit" pairs ("8 GB" is "8 GB"; "4,096 tokens" is
@@ -255,6 +344,10 @@ export function sentenceSupport(
   const context = [...verified.flatMap((e) => [e.quote, titleFor(e.docId) ?? ""]), question ?? ""].join("\n");
   const months = new Set(datedMonths(context));
   const quotedMeasures = measures(context);
+  // Directions and significance come from the quotes and titles only: a question asking "was it higher?" backs neither.
+  const backing = verified.flatMap((e) => [e.quote, titleFor(e.docId) ?? ""]).join("\n");
+  const quotedDirections = directions(backing);
+  const quotedSignificance = verified.map((e) => significance(e.quote));
   let judged = 0;
   let backed = 0;
   const sentences = splitSentences(answer).map((text): AnswerSentence => {
@@ -277,7 +370,9 @@ export function sentenceSupport(
       numbers(text).every(numberBacked) &&
       negationBacked &&
       datedMonths(text).every((month) => months.has(month)) &&
-      unitsBacked(text, quotedMeasures);
+      unitsBacked(text, quotedMeasures) &&
+      directionsBacked(text, quotedDirections) &&
+      significanceBacked(text, quotedSignificance);
     judged++;
     if (isBacked) backed++;
     return { text, backed: isBacked };
@@ -295,6 +390,17 @@ function unitsBacked(text: string, quoted: { pairs: Set<string>; bare: Set<strin
     const quotedWithUnit = [...quoted.pairs].some((p) => p.startsWith(`${number} `));
     return quoted.pairs.has(pair) || quoted.bare.has(number) || !quotedWithUnit;
   });
+}
+
+/**
+ * Whether a sentence that says something was significant may: unless the quotes speak of significance
+ * only to deny it. "There was a significant difference" is not backed by "There was no significant
+ * difference", which the "not" rule does not catch, since that rule checks a "not" the sentence adds,
+ * not one it drops. A sentence the quotes say nothing of significance for is left to the other checks.
+ */
+function significanceBacked(text: string, quoted: Array<{ asserted: boolean; negated: boolean }>): boolean {
+  if (!significance(text).asserted) return true;
+  return quoted.some((q) => q.asserted) || !quoted.some((q) => q.negated);
 }
 
 /** Whether a short answer is word for word in a verified quote that, with its title, covers most of the question. */

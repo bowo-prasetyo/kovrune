@@ -130,7 +130,7 @@ function Answer({ text, support, explainMarks = true }: { text: string; support?
       </p>
       {explainMarks && (
         <p className="hint">
-          ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month or "not" that the
+          ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month, "not", direction such as "higher", or "significant" that the
           quotes don't back. This is a word check, not a proof: a marked sentence can still be right, and an unmarked one can still
           be wrong.
         </p>
