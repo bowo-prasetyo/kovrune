@@ -235,6 +235,72 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["above"], ["below"]],
 ];
 
+/**
+ * Words saying how many people a study actually took in: "25 participants were recruited", "904 women
+ * were enrolled and randomly assigned". Matched at the start of a word, so "recruited", "enrollment" and
+ * "randomised" count.
+ */
+const ACTUAL_COUNT = /^(?:recruit|enrol|enroll|randomi[sz]|included|participated|underwent|took)/;
+/**
+ * Words that make a number a target, not a count, when they stand just before it: "a desired sample
+ * size of 25 participants", "the planned 40 patients", "a target of 200 women".
+ */
+const PLANNED_BEFORE = /^(?:desired|planned|plan|target|targeted|intended|anticipated|required|needed|calculated|projected|aimed|aim|goal)$/;
+/**
+ * Words that make a number a target when they follow it as a verb: "25 participants was calculated",
+ * "40 were required". Only after "was", "were" and the like, so "18 of the planned 25" stays a count.
+ */
+const PLANNED_AFTER = /^(?:calculated|required|needed|planned|targeted|intended|anticipated)$/;
+/** How many words before a number, or after it, a planning word may stand and still describe it. */
+const PLANNED_BEFORE_REACH = 5;
+const PLANNED_AFTER_REACH = 3;
+
+/** Whether a text says how many were recruited, enrolled, randomised or included, and not how many were planned. */
+function saysActualCount(text: string): boolean {
+  const said = words(normalizeForMatch(text));
+  return said.some((w) => ACTUAL_COUNT.test(w)) && !said.some((w) => PLANNED_BEFORE.test(w) || PLANNED_AFTER.test(w));
+}
+
+/**
+ * Whether a quote gives a number only as a target: every time the number appears, a planning word
+ * stands just before it in the same clause ("a desired sample size of 25"), or follows it as a verb
+ * ("25 … was calculated"). The words before are what describe a number; "18 of the planned 25 participants
+ * were enrolled" gives 18 as a count and 25 as a target.
+ */
+function plannedOnly(n: string, quote: string): boolean {
+  const tokens = normalizeForMatch(quote).split(" ");
+  const bare = (t: string) => t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+  const ends = (t: string) => /[.;:,)(]$/.test(t);
+  const at = tokens.flatMap((t, i) => (numbers(t).includes(n) ? [i] : []));
+  if (!at.length) return false;
+  return at.every((i) => {
+    for (let j = i - 1; j >= Math.max(0, i - PLANNED_BEFORE_REACH); j--) {
+      if (ends(tokens[j]!)) break;
+      if (PLANNED_BEFORE.test(bare(tokens[j]!))) return true;
+    }
+    for (let j = i + 1; j <= Math.min(tokens.length - 1, i + PLANNED_AFTER_REACH); j++) {
+      if (PLANNED_AFTER.test(bare(tokens[j]!)) && /^(?:was|were|is|are|be|been)$/.test(bare(tokens[j - 1]!))) return true;
+      if (ends(tokens[j]!)) break;
+    }
+    return false;
+  });
+}
+
+/**
+ * Whether each number a sentence gives as a count of people recruited, enrolled or randomised is in some
+ * quote as more than a target. "25 participants were recruited" is not backed by "a desired sample size
+ * of 25 participants was calculated", when the trial recruited 18: both Qwen3.5 models answered so in
+ * the clinical suite's 0.60.0 runs (c09), and both answers were labelled "Quotes found". A sentence
+ * that says the number was planned ("the planned sample size was 25") is not a count, and passes.
+ */
+function countsBacked(text: string, quotes: string[]): boolean {
+  if (!saysActualCount(text)) return true;
+  return numbers(text).every((n) => {
+    const giving = quotes.filter((q) => numbers(q).includes(n));
+    return !giving.length || giving.some((q) => !plannedOnly(n, q));
+  });
+}
+
 /** The sides of OPPOSITES a text says, as "pair:side" keys. */
 function directions(text: string): Set<string> {
   const said = new Set(words(normalizeForMatch(text)));
@@ -372,7 +438,8 @@ export function sentenceSupport(
       datedMonths(text).every((month) => months.has(month)) &&
       unitsBacked(text, quotedMeasures) &&
       directionsBacked(text, quotedDirections) &&
-      significanceBacked(text, quotedSignificance);
+      significanceBacked(text, quotedSignificance) &&
+      countsBacked(text, verified.map((e) => e.quote));
     judged++;
     if (isBacked) backed++;
     return { text, backed: isBacked };
@@ -412,8 +479,12 @@ function answerInQuote(
 ): boolean {
   const asked = contentWords(question);
   if (!asked.length) return false;
+  // A bare count ("25") answers a question about how many were recruited only from a quote that gives
+  // it as more than a target (countsBacked).
+  const count = saysActualCount(question);
   return verified.some((e) => {
     if (!quoteHas(e.quote, answer)) return false;
+    if (count && numbers(answer).some((n) => plannedOnly(n, e.quote))) return false;
     const covered = contentWords(`${e.quote} ${titleFor(e.docId) ?? ""}`);
     return asked.filter((w) => covered.some((c) => sameWord(w, c))).length > asked.length * SHORT_ANSWER_QUESTION_SHARE;
   });

@@ -124,7 +124,7 @@ For comparison, the field suite's latest 4B baseline passes 80 of 89. On trial r
 
 **What went wrong.** The questions in `clinical`, answer by answer:
 
-- **The planned sample size, given as the enrolled one (`c09`).** Both models answered that the VESSEL trial recruited 25 participants. They quoted "a desired sample size of 25 participants was calculated" (4B) and "we were unable to recruit the desired sample size of 25 participants" (2B). The trial recruited 18. Both quotes are real, the model's own review said yes, and both answers were labelled **Quotes found**. The 4B sentence passes the word check because "25" and "participants" are in the quote; the 2B answer, a bare "25", is inside a quote that covers the question. This is the error a researcher extracting data would most need caught. No check catches it today.
+- **The planned sample size, given as the enrolled one (`c09`).** Both models answered that the VESSEL trial recruited 25 participants. They quoted "a desired sample size of 25 participants was calculated" (4B) and "we were unable to recruit the desired sample size of 25 participants" (2B). The trial recruited 18. Both quotes are real, the model's own review said yes, and both answers were labelled **Quotes found**. The 4B sentence passes the word check because "25" and "participants" are in the quote; the 2B answer, a bare "25", is inside a quote that covers the question. This is the error a researcher extracting data would most need caught. Since 0.62.0, a check does ([below](#a-target-is-not-a-count-0620)).
 - **A short answer to another question (`c06`, 2B).** Asked for a risk ratio, 2B answered "15%". Its quote was "approximately 15% of women in the co-trimoxazole plus placebo group had evidence of at least one malaria infection". That is a proportion, from one arm. The model's review said yes, and its completeness check found the question's one part answered. So the answer was labelled **Quotes found**.
 - **The answer not found, because search did not offer it (`c06` 4B, `c05`, `c21`).** For `c06`, the model's search returned three parts of the Discussion, which repeat its terms more often than the abstract's Findings, where the risk ratio is. The model read those parts and the ones around them, never the Findings, and answered "not found". `c05` (a value only in Table 1) and `c21` (two papers) were the questions search alone missed too.
 - **Numbers made up, or taken from the wrong paper, caught by the quote check (2B).** In `c01`, 2B gave the vaccine's efficacy as 98.7%; the paper says 78·3%. In `c21`, it gave the typhoid trial's two arms, 14,069 and 14,061, as the sizes of the two trials. Their quotes were not in the papers, so neither answer was labelled.
@@ -142,7 +142,25 @@ The unit, direction and significance checks marked nothing: no model made those 
 - **The ways to say "no difference" left out "no statistical difference" (`c20`).** 4B wrote "Yes, clinical failure occurred at a slightly lower frequency … but there was no statistical difference (OR 0.41, 95% CI: 0.09 to 1.83)". With "no statistical" in the list, it passes. Its substance is right; its "Yes" answers whether failure was lower, not whether it differed, which a reader may find misleading. The answer was not labelled **Quotes found**, so the label counts do not change.
 - **Nothing else changes:** the other negative questions' answers, and both held-out suites' totals, score as before. `tests/field.test.ts` scores both 4B answers, and fails without the fix.
 
-**Next, measured on this suite.** A sentence that says how many were recruited, enrolled or randomised should not be backed by a quote about a desired, planned, target or calculated sample size (`c09`). Search could offer the abstract's Findings, or more than three results, for questions about a paper's main result (`c06`). Each is a change to judge on `clinical`, `clinicalholdout` and the field suites by [the usual rule](../field/README.md#rule-for-prompt-and-guard-changes).
+### A target is not a count (0.62.0)
+
+Both models' wrong answers to `c09` were labelled **Quotes found**. They had taken the sample size the trial wanted for the number it recruited. Now a sentence that says how many were recruited, enrolled, randomised or included is not backed by a quote that gives that number only as a target (`countsBacked` in `src/agent/support.ts`). A bare count, such as "25", likewise no longer counts as found in such a quote for a question about recruitment.
+- **What makes a number a target:** a planning word ("desired", "planned", "target", "intended", "anticipated", "required", "needed", "calculated", "aim", "goal") up to five words before it in the same clause, or "was/were calculated (required, planned…)" just after it. So "a desired sample size of 25 participants was calculated" gives 25 as a target. "18 of the planned 25 participants were enrolled" gives 18 as a count and 25 as a target.
+- **What still passes:** a number that any quote gives as a count, and a sentence about the plan itself ("the planned sample size was 25").
+
+**Effect, re-scored from the 0.60.0 runs** (`bench:rescore`, exact, since the check runs after the final answer):
+
+| Model | `clinical` labelled, wrong | `clinicalholdout` labelled, wrong | Both |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | 1 of 15 → **0 of 14** | 1 of 5 | 2 of 20 → **1 of 19** |
+| Qwen3.5-2B | 2 of 10 → **1 of 9** | 3 of 4 | 5 of 14 → **4 of 13** |
+
+- **What changed:** both `c09` answers lose the label, and nothing else in the 4,902 recorded answers of every report changes. No task passes or fails differently.
+- **What 2B still gets wrong under the label:** 2B's remaining wrong labelled answer in `clinical` is `c06`, an arm's proportion given for a risk ratio.
+
+**A fix to `bench:rescore` with it.** Rescoring had reused every recorded review. But the app asks the review only when the word checks pass, or, for Qwen3.5-4B, for a short answer. So 2B's "25", no longer backed, kept the label in a rescore, though the app would not ask its review and would not label it. `eval/rescore.ts` now uses a recorded review only where the app would ask for one. In the 4,902 answers, this changes one more label: a right short answer from `field-0.39-stemmer-qwen3.5-2b-q4km.json`, a measured experiment that was not adopted. Its review was recorded, but since 0.35.0 the app does not review 2B's short answers.
+
+**Next, measured on this suite.** Search could offer the abstract's Findings, or more than three results, for questions about a paper's main result (`c06`). That is a change to judge on `clinical`, `clinicalholdout` and the field suites by [the usual rule](../field/README.md#rule-for-prompt-and-guard-changes).
 
 ## Limits
 
