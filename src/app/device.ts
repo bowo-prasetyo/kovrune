@@ -61,7 +61,9 @@ export function tooLittleMemory(caps: DeviceCapabilities): boolean {
 
 /**
  * The experimental model to mention on a device with too little memory for the standard ones,
- * when it fits; undefined otherwise. It is never selected first or shown as recommended.
+ * when it fits by memoryFits; undefined otherwise. It is never selected first or shown as
+ * recommended. Fitting by that rule is no promise: on an Android phone reporting 4 GB (Arm Mali),
+ * Qwen3.5-0.8B loaded, then the GPU connection was lost at its first answer, every time.
  */
 export function experimentalFallback(caps: DeviceCapabilities): BrowserModel | undefined {
   if (!tooLittleMemory(caps)) return undefined;
@@ -92,7 +94,7 @@ export function recommendPath(caps: DeviceCapabilities): Recommendation {
     const fallback = experimentalFallback(caps);
     return {
       path: "local-server",
-      reason: `This device reports about ${caps.ramGiB} GB of memory, and even the lighter browser model needs about ${gb(lightestVariant(caps).vramMB)} of GPU memory, so it would likely fail to load. A model server on another computer on your network works from this device (${OTHER_COMPUTER_SECTION}, in the user guide).${fallback ? ` The browser path also offers the experimental ${fallback.label}, which needs about ${gb(variantFor(caps, fallback).vramMB)}, but its answers are wrong more often: check every one.` : ""}`,
+      reason: `This device reports about ${caps.ramGiB} GB of memory, and even the lighter browser model needs about ${gb(lightestVariant(caps).vramMB)} of GPU memory, so it would likely fail to load. A model server on another computer on your network works from this device (${OTHER_COMPUTER_SECTION}, in the user guide).${fallback ? ` The browser path also offers the experimental ${fallback.label}, which needs about ${gb(variantFor(caps, fallback).vramMB)}. It may not run either (on a 4 GB Android phone it loaded, then the GPU stopped at its first answer), and its answers are wrong more often: check every one.` : ""}`,
     };
   }
   const vendor = caps.vendor?.toLowerCase() ?? "";

@@ -102,7 +102,7 @@ export function BrowserModelStep({
             {OTHER_COMPUTER_SECTION}
           </a>
           .
-          {fallback && fallback.key !== chosen.key && ` Or choose the experimental ${fallback.label}, which fits this device's memory but answers fewer questions correctly.`}
+          {fallback && fallback.key !== chosen.key && ` Or try the experimental ${fallback.label}, which may load on this device but answers fewer questions correctly.`}
         </p>
       )}
 

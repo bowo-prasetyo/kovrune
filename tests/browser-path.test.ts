@@ -84,12 +84,13 @@ describe("browser compatibility check", () => {
     const phone: DeviceCapabilities = { webgpu: true, shaderF16: true, vendor: "arm", architecture: "valhall", maxBufferMiB: 2048, ramGiB: 4 };
     assert.equal(qwen08b.experimental, true);
     assert.deepEqual(STANDARD_BROWSER_MODELS.map((m) => m.key), ["qwen3.5-4b", "qwen3.5-2b"]);
-    // 1.6 GB plus 2 GB for the system fits 4 GB; the advice still points to another computer first.
+    // 1.6 GB plus 2 GB for the system fits 4 GB by the rule; the advice still points to another
+    // computer first, and says it may not run (on this phone the GPU stopped at its first answer).
     assert.equal(experimentalFallback(phone)?.key, "qwen3.5-0.8b");
     assert.equal(recommendBrowserModel(phone).key, "qwen3.5-2b");
     const advice = recommendPath(phone);
     assert.equal(advice.path, "local-server");
-    assert.match(advice.reason, /another computer[\s\S]*experimental Qwen3\.5-0\.8B, which needs about 1\.6 GB[\s\S]*check every one/);
+    assert.match(advice.reason, /another computer[\s\S]*experimental Qwen3\.5-0\.8B, which needs about 1\.6 GB\. It may not run either \(on a 4 GB Android phone it loaded, then the GPU stopped at its first answer\)[\s\S]*check every one/);
     assert.deepEqual(checkBrowserModel(phone, qwen08b).warnings.filter((w) => /may fail to load/.test(w)), []);
     assert.match(experimentalWarning(qwen08b), /experimental and the weakest model[\s\S]*Check every answer/);
     // Its 32-bit version (1.9 GB) fits 4 GB too. Not mentioned where a standard model fits, nor where
@@ -187,13 +188,26 @@ describe("WebLLM adapter", () => {
       interruptGenerate: () => {},
     });
     const settings = { path: "browser" as const, modelId: "Qwen3.5-4B-q4f16_1-MLC", contextLength: 4096 };
-    for (const message of ["Cannot pass deleted object as a pointer of type GrammarMatcher", "Model not loaded before trying to complete ChatCompletionRequest."]) {
+    for (const message of [
+      "Cannot pass deleted object as a pointer of type GrammarMatcher",
+      "Model not loaded before trying to complete ChatCompletionRequest.",
+      // Android phone, Arm Mali, Qwen3.5-0.8B: the browser's GPU connection itself was gone.
+      "Failed to execute 'mapAsync' on 'GPUBuffer': A valid external Instance reference no longer exists.",
+    ]) {
       const model = new WebLLMModel(failing(message) as never, {} as Worker, { id: "Qwen3.5-4B-q4f16_1-MLC", runtime: "webllm", contextLength: 4096 });
       const error = await (async () => {
         for await (const _ of model.generate({ messages: [], maxTokens: 8 }));
       })().catch((e) => e);
       assert.equal(model.lost, true);
       assert.match(describeModelError(error, settings), /^The GPU stopped responding or ran out of memory, so the model was unloaded\. On Windows[\s\S]*DXGI_ERROR_DEVICE_HUNG/);
+    }
+    const lost = new Error("The GPU device was lost (the graphics driver reset or ran out of memory), so the model was unloaded");
+    assert.match(describeModelError(lost, settings), /use the lighter model, Qwen3\.5-2B\./);
+    // With the lightest standard model, or the experimental one, there is no lighter model to suggest.
+    for (const modelId of ["Qwen3.5-2B-q4f16_1-MLC", "Qwen3.5-0.8B-q4f16_1-MLC"]) {
+      const advice = describeModelError(lost, { ...settings, modelId });
+      assert.doesNotMatch(advice, /lighter model/);
+      assert.match(advice, /If it fails the same way every time, this device cannot run Qwen3\.5-(2B|0\.8B) in the browser: use a model server on another computer/);
     }
     // Other errors pass through unchanged and leave the model usable.
     const other = new WebLLMModel(failing("JSON parse error") as never, {} as Worker, { id: "x", runtime: "webllm", contextLength: 4096 });

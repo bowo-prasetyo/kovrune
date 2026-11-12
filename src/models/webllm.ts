@@ -102,8 +102,11 @@ export async function loadWebLLMModel(options: WebLLMOptions): Promise<LanguageM
  * first: on the class 1 laptop (Intel Iris Xe, Windows) the driver reset with
  * DXGI_ERROR_DEVICE_HUNG and the model test showed "BindingError: Cannot pass deleted
  * object as a pointer of type GrammarMatcher". Later requests fail with "Model not loaded".
+ * On an Android phone (Arm Mali, 4 GB) running Qwen3.5-0.8B, the first answer failed with
+ * "AbortError: Failed to execute 'mapAsync' on 'GPUBuffer': A valid external Instance reference
+ * no longer exists": the browser's whole GPU connection was gone, not just the model.
  */
-const GPU_LOST = /deleted object|Device was lost|device.{0,20}lost|Model not loaded/i;
+const GPU_LOST = /deleted object|Device was lost|device.{0,20}lost|Model not loaded|Instance reference no longer exists/i;
 
 export class WebLLMModel implements LanguageModel {
   readonly info: ModelInfo;
