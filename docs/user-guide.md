@@ -100,7 +100,7 @@ The first screen checks your device and recommends one of two options. You can c
 | **Local model server** | Everything, including laptops with integrated Intel graphics | llama.cpp, set up once ([below](#set-up-llamacpp)) |
 | **In this browser** (experimental) | Apple silicon Macs, computers with a recent NVIDIA or AMD GPU | Chrome or Edge with WebGPU, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B) |
 
-The browser option is **experimental**: it has passed its checks in testing, but has not yet answered a question end to end on a real GPU ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). If the model test is slow or the answers look broken, use a local model server.
+The browser option is **experimental**. In testing it has answered questions end to end on a laptop with integrated Intel graphics (Iris Xe, 16 GB), but slowly: Qwen3.5-4B ran at about 3 tokens/s, so a question can take up to half an hour, and once the GPU stopped responding. On the same laptop a local server ran the same model at 5.5 tokens/s. It has not yet been measured on an Apple silicon Mac or a dedicated NVIDIA or AMD GPU, where it should be much faster ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). If the model test is slow or the answers look broken, use a local model server.
 
 **Which model.** Kovrune is tested with two models, the same on both paths:
 

@@ -46,8 +46,9 @@ export function DeviceStep({ onChoose }: { onChoose: (path: ModelPath, caps: Dev
       <ul>
         <li>
           <strong>In this browser (experimental):</strong> the page downloads a model once (1–2.4 GB) and runs it on
-          your GPU. Nothing else to install. This path has not yet answered a question end to end on a real GPU in
-          testing; if the model test is slow or its answers look broken, use a local model server instead.
+          your GPU. Nothing else to install. In testing it has answered questions end to end on integrated Intel
+          graphics, slowly; it has not yet been measured on a dedicated GPU. If the model test is slow or its answers
+          look broken, use a local model server instead.
         </li>
         <li>
           <strong>Local model server:</strong> you install llama.cpp and run the model natively. Works on most
