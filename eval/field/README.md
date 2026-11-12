@@ -844,6 +844,10 @@ A search change, measured on the clinical suites and not adopted ([#141](https:/
 
 Details: [the clinical suite](../clinical/README.md#a-papers-first-parts-first-0630-measured-not-adopted).
 
+### A long document's outline (0.65.0, measured on the clinical suites, field runs pending)
+
+Reading a part of a long document shows the model its outline, once: the parts with their headings and table captions (`src/documents/outline.ts`). On the clinical suites, Qwen3.5-4B passes 21/23 instead of 19/23 and 8/10 instead of 7/10, reading the Findings and Table 1 by their part IDs; Qwen3.5-2B, which re-reads the parts it has read, does not use it (12/23 and 5/10, against 13/23 and 4/10). The change also brings a fix: when llama.cpp refuses a prompt as too long, the agent fits it again and retries the step, since `estimateTokens` counts ordinary text up to a fifth short. The field and protected suites are to be run. Details: [the clinical suite](../clinical/README.md#a-long-documents-outline-0650-measured-on-the-clinical-suites).
+
 ### Replaying recorded runs (0.64.0)
 
 The rule asks for both models' runs of research, unanswerable, pdf, field and holdout before and after a change, on one machine: about 13 hours on the 4-core container where the clinical suite was written. Most of those runs repeat: in the lead-weight experiment (0.63.0, [#141](https://github.com/bowo-prasetyo/kovrune/pull/141)), re-running every search recorded in the 0.42.0 and 0.30.0 runs through both versions of search changed none of research's, unanswerable's or pdf's, and 34 of field's 101 (29 of 89 tasks). Those runs are where the time goes, and they cannot change.
