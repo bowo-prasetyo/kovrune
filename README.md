@@ -72,6 +72,7 @@ npm run bench:endpoint    # M0 benchmark against a local model server
 npm run bench:retrieval   # the search on its own, no model needed
 npm run bench:compare -- a.json b.json   # two runs task by task, with how sure the difference is
 npm run bench:rescore -- a.json          # recorded answers checked and labelled again, without a model
+npm run bench:replay -- --base main a.json   # which tasks a code change can affect: those to run again with a model
 npm run bench:rereview -- --model m a.json   # the model's check of recorded answers asked again, with a chosen prompt
 npm run bench:crosscheck -- --model m a.json # the cross-check of recorded answers: the answer read in the passages, compared
 npm run bench:completeness -- --model m a.json # the completeness check of recorded answers: every part of the question given

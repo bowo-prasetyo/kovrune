@@ -15,10 +15,11 @@ import type { CallRecord } from "../../src/agent/agent.ts";
 import type { CodeRunner } from "./sandbox.ts";
 import type { SelfCheckResult } from "../../src/agent/self-check.ts";
 import { labelledQuotesFound } from "../../src/agent/support.ts";
+import { RecordingModel, type RecordedReply } from "./replay.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.62.0";
+export const HARNESS_VERSION = "0.64.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -117,6 +118,12 @@ export interface TaskResult {
   wallMs: number;
   /** Each call's action, abbreviated, e.g. 'search {"query":"LumenDB"}' or 'invalid: ...'. */
   actions: string[];
+  /**
+   * Since harness 0.64.0: every reply the model gave in the task, in order, with its usage and why it
+   * stopped (harness/replay.ts), so `bench:replay` can tell which tasks a code change can affect
+   * without a model. Absent in earlier reports.
+   */
+  replies?: RecordedReply[];
   /** The final answer as JSON, cut at FINAL_CHARS characters (600 before harness 0.47.0). */
   final?: string;
   /** Research tasks: the answer's status (verified, unverified, not-found, no-answer). */
@@ -413,18 +420,20 @@ export async function runBenchmark(options: {
     ...researchSuites.flatMap(({ suite, tasks, library }) =>
       tasks.map((task) => ({
         mode,
-        run: (o: { constrained: boolean }) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, longReplyRoom: config.longReplyRoom, forcedReadPassage: config.forcedReadPassage, asSource: config.asSource, signal, onCall }),
+        run: (o: { constrained: boolean }, model: LanguageModel) => runResearchTask(task, suite, library, model, { ...o, fitHeadroom: config.fitHeadroom, longReplyRoom: config.longReplyRoom, forcedReadPassage: config.forcedReadPassage, asSource: config.asSource, signal, onCall }),
       })),
     ),
-    ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),
+    ...coding.map((task) => ({ mode, run: (o: { constrained: boolean }, model: LanguageModel) => runCodingTask(task, model, runner, { ...o, signal, onCall }) })),
   ]);
   for (const item of queue) {
     if (signal?.aborted) break;
     const started = performance.now();
-    const run = await item.run({ constrained: item.mode === "constrained" });
+    // Each task's replies are recorded, so a later change can be replayed against them (harness/replay.ts).
+    const recording = new RecordingModel(model);
+    const run = await item.run({ constrained: item.mode === "constrained" }, recording);
     // A task interrupted by the abort is incomplete, so it is left out of the report.
     if (signal?.aborted) break;
-    results.push(toResult(run, item.mode, performance.now() - started));
+    results.push({ ...toResult(run, item.mode, performance.now() - started), replies: recording.replies });
     options.onResult?.(results.at(-1)!, results.length, total);
   }
 

@@ -20,6 +20,15 @@ Since harness 0.27.0, the baseline and the change are also run on the [held-out 
 
 **Defect fixes (since harness 0.30.0).** The rule above is for heuristics, prompts and guards, which risk being tuned to the suite. A fix for behaviour that is plainly wrong, shown by a unit test that fails before it and passes after (a word that does not match its own plural, a document that cannot be found by its file name), is not a bet on the suite, and holding it back over one task in a suite of four or sixteen lets chance override correctness. Such a fix is adopted unless, on either model, a protected suite (research, unanswerable, pdf, held out) loses at least two more tasks than it gains, or loses with a p-value below 0.25. It is still run on both models and recorded like any other change. This clause was written after the [0.29.0 search fixes](#search-ranking) were measured, at the project owner's request, and is first applied to them.
 
+**Fewer model runs for the same rule (since harness 0.64.0).** A change can only alter a task's result by changing what the model is shown. Since 0.64.0, a report records every reply the model gave, and `npm run bench:replay` runs each task again on two versions of the code with those replies, comparing every request the code makes of the model. Where every request is the same, the run would repeat (runs repeat on one machine, [below](#runs-repeat-on-one-machine-not-across-machines)), so the recorded result stands for both versions, and only the other tasks need a model:
+
+1. Run the change on the suites the rule names, on the machine that will run the baseline: `npm run bench:endpoint -- … --out change.json`.
+2. `npm run bench:replay -- --base <the code before the change> --write base-same.json change.json` lists the tasks that differ, as `--tasks` for `bench:endpoint`.
+3. Run the code before the change on those tasks only, with the same model file and server: `--tasks … --out base-rest.json`.
+4. `npm run bench:replay -- --merge base-same.json base-rest.json --out base.json`, then `npm run bench:compare -- base.json change.json`, and judge by the rule as before.
+
+The criteria are unchanged; only the runs that could not change are skipped. A task is run when it cannot be replayed: a report from before 0.64.0, a suite one version lacks, a recording that does not replay on its own code. [Replaying recorded runs](#replaying-recorded-runs-0640) checks the replay against real runs.
+
 ## Retrieval
 
 Task success measures search, reading and answering together. `npm run bench:retrieval` measures search alone: for each answerable task, it searches with the question as the query, as the app's search tool does, and counts:
@@ -824,6 +833,29 @@ The `clinical` and `clinicalholdout` suites ask 33 questions over ten open-acces
 ### A target is not a count (0.62.0, defect fix)
 
 In the clinical suite's first runs, both models gave a trial's planned sample size (25) as the number it recruited (18), quoting the sample size calculation, and both answers were labelled **Quotes found** (`c09`). A sentence that says how many were recruited, enrolled, randomised or included is no longer backed by a quote that gives that number only as a target: a planning word ("desired", "planned", "target", "calculated", …) just before it, or "was calculated" just after. `tests/support.test.ts` fails before and passes after. Re-scoring every recorded report changes only those two labels: 4B's wrong answers under the label go from 2 of 20 to 1 of 19, 2B's from 5 of 14 to 4 of 13. `bench:rescore` now uses a recorded review only where the app would ask for one, which changes one more label in an experiment that was not adopted. Details: [the clinical suite](../clinical/README.md#a-target-is-not-a-count-0620).
+
+### Replaying recorded runs (0.64.0)
+
+The rule asks for both models' runs of research, unanswerable, pdf, field and holdout before and after a change, on one machine: about 13 hours on the 4-core container where the clinical suite was written. Most of those runs repeat: in the lead-weight experiment (0.63.0, [#141](https://github.com/bowo-prasetyo/kovrune/pull/141)), re-running every search recorded in the 0.42.0 and 0.30.0 runs through both versions of search changed none of research's, unanswerable's or pdf's, and 34 of field's 101 (29 of 89 tasks). Those runs are where the time goes, and they cannot change.
+
+`bench:replay` (`eval/replay.ts`, `eval/harness/replay.ts`) tells them apart without a model:
+- **Recording:** `runBenchmark` records each task's replies, in order: the agent's steps, and the calls for translating search terms and checking the answer (`RecordingModel`; `replies` in each task's result).
+- **Replay:** each version's own `runBenchmark` runs the task with a model that gives the replies back and logs every request (`ReplayModel`): messages, token limit, temperature, JSON schema.
+- **Comparison:** whatever a change touches before the model's input is compared, from search and reading to prompts, guards, context fitting and translation, by running the code itself; nothing in the agent loop is re-implemented.
+- **Self-check:** a recording must replay on the code that made it with exactly one request per reply, or the task is "undecidable" and run.
+
+**Checked against real runs.** Qwen3.5-2B ran eight tasks on `main` (0.62.0's search), with replies recorded ([json](../results/replay-check-main-qwen3.5-2b-q4km.json)).
+- **Against `main`:** replaying them on `main` called all eight "same".
+- **Against the lead weight:** replaying them against the lead-weight branch ([#141](https://github.com/bowo-prasetyo/kovrune/pull/141)) called three "same" (`r01`, `r05`, `c13`) and five "differs" (`f01`, `f28`, `c02`, `c06`, `c16`, each from its second or fourth request).
+- **The real run:** 2B then ran the same eight tasks with the lead weight ([json](../results/replay-check-lead-qwen3.5-2b-q4km.json)). The three "same" tasks took the same actions and gave the same final answers; the five "differs" did not.
+- **Merge:** merging the three replayed results with the five re-run ones gave a complete report that `bench:compare` read as a whole.
+
+Both reports say harness 0.62.0: they were run on the branch before its version was raised.
+
+**Limits:**
+- **"Same" holds for the machine, model file and server build that recorded the run.** Runs do not repeat across machines, so the baseline must be run where the change was.
+- **Labels and scoring are not the model's input.** `bench:rescore` applies a version's to recorded answers.
+- **Reports from before 0.64.0 cannot be replayed.** They have no replies.
 
 ## Results
 
