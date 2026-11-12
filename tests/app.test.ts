@@ -23,6 +23,14 @@ describe("device advisor", () => {
     assert.match(advice.reason, /Intel/);
   });
 
+  it("says browser models work but run slowly on integrated Intel graphics (Iris Xe, gen-12lp)", () => {
+    // The owner's laptop answered end to end in the browser at 3 tokens/s, against 5.5 with llama.cpp.
+    const advice = recommendPath({ webgpu: true, shaderF16: true, vendor: "intel", architecture: "gen-12lp", maxBufferMiB: 2048 });
+    assert.equal(advice.path, "local-server");
+    assert.match(advice.reason, /worked but ran slowly[\s\S]*3 tokens\/s[\s\S]*5\.5 with a local server/);
+    assert.doesNotMatch(advice.reason, /broken output/);
+  });
+
   it("recommends the browser on capable GPUs", () => {
     for (const vendor of ["apple", "nvidia", "AMD"]) {
       assert.equal(recommendPath({ webgpu: true, shaderF16: true, vendor, maxBufferMiB: 4096 }).path, "browser", vendor);

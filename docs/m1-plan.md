@@ -191,7 +191,7 @@ Tested in the cloud container:
 - The local-server wizard and research flow were re-run end to end against llama.cpp, with the same results as slice 2.
 
 Still open for the slice:
-- **Class 2 check.** The same research task works in the browser on a class 2 machine (issue #9 or a tester).
+- **Class 2 check.** The same research task works in the browser on a class 2 machine (issue #9 or a tester). The browser path itself is now shown to work end to end on integrated Intel graphics; class 2 is where it should also be fast enough to recommend.
 - ~~**Class 1 check.** On the class 1 laptop, the advisor recommends the local server.~~ Done: the device step recommended a local server because of the integrated Intel graphics.
 
 **Browser path on the class 1 laptop** (Chrome 157, Windows, Intel Iris Xe "gen-12lp", 16 GB; preview `25c2069`). Not the class 2 check: the device step rightly recommended a local server, and the owner chose "Run in this browser anyway".
@@ -208,6 +208,11 @@ Still open for the slice:
   - Fixes:
     - A generation that fails this way, or with "Model not loaded" afterwards, now reports that the GPU stopped responding or ran out of memory, names the Windows message, and suggests closing other programs, the 2B model, or a local server.
     - The model is marked lost. **Test again** loads it again from the browser's storage, with progress shown, instead of reusing the unloaded engine.
+- **First answer end to end in the browser on a real GPU** (preview `a4aebe0`, the same laptop, Qwen3.5-4B q4f16).
+  - Loading from the browser's storage worked, and the model test passed: self-check in 54.5 s, **3 tokens/s**, "a research task can take up to 25.8 min".
+  - "What is blockchains?" with Wikipedia ticked: one search (5 results), one read of "Blockchain", and an answer whose one quote verified and whose sentence the quote fully backs.
+  - The same laptop ran Qwen3.5-4B at 5.5 tokens/s with llama.cpp, and Qwen3.5-2B at 8.4. So for integrated Intel graphics the device step keeps recommending the local server. Its wording now says browser models work but run slowly there, and that the GPU stopped responding once, instead of "too slow or gave broken output", which described wllama in M0.
+  - The device step and the user guide no longer say the browser path has never answered a question on a real GPU.
 
 Known limitation: WebLLM fetches its compiled model libraries from the `main` branch of `mlc-ai/binary-mlc-llm-libs` on GitHub, and model weights from the `main` revision on Hugging Face. Pinning both to fixed revisions belongs with the M2 build and hosting work. Done in M2 slice 1: both are pinned and every file is checked against its SHA-256 ([design §3.4](design.md#34-catalog-entries-and-downloads)).
 

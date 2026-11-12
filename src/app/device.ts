@@ -45,7 +45,8 @@ export function recommendPath(caps: DeviceCapabilities): Recommendation {
   if (vendor === "intel") {
     return {
       path: "local-server",
-      reason: "Integrated Intel graphics: in testing, browser models were too slow or gave broken output on this kind of GPU, while a local server worked well.",
+      // Measured on an Intel Iris Xe laptop (16 GB), docs/m1-plan.md slice 3.
+      reason: "Integrated Intel graphics: in testing, browser models worked but ran slowly on this kind of GPU (Qwen3.5-4B at about 3 tokens/s, against 5.5 with a local server), and the GPU sometimes stopped responding under the larger model.",
     };
   }
   if (!CAPABLE_VENDORS.has(vendor)) {
@@ -132,7 +133,9 @@ export function checkBrowserModel(caps: DeviceCapabilities, model: BrowserModel,
   }
   const vendor = caps.vendor?.toLowerCase() ?? "";
   if (vendor === "intel") {
-    warnings.push("On integrated Intel graphics, browser models were too slow or gave broken output in testing. The model test will show whether it works here.");
+    warnings.push(
+      "On integrated Intel graphics, browser models ran slowly in testing (Qwen3.5-4B at about 3 tokens/s, so a question can take up to half an hour), and the GPU sometimes stopped responding under the larger model. The model test will show the speed here.",
+    );
   } else if (!CAPABLE_VENDORS.has(vendor)) {
     warnings.push("The browser path has not been tested on this GPU. The model test will show whether it works here.");
   }
