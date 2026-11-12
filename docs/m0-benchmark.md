@@ -169,6 +169,7 @@ Press Ctrl+C to stop early; the report still includes the completed tasks.
 1. **Self-check.** After loading, two short calls check the setup before any task runs, in about a minute even on slow hardware:
    1. The model must reply to a research question with a valid action. This also warms the runtime up.
    2. Given a search result that names the right document, the model must read it or answer, not search again. This catches servers that mishandle multi-step tool conversations.
+   3. Only for the experimental Qwen3.5-0.8B, and only if it repeated the same search in step 2: it gets the reply a research task gives to a repeated action, searching is no longer offered, and it must read a document the result lists or answer citing one. It repeats the search in step 2 every time, but research tasks never offer it a second search before it has read a result, and in them it repeated its first search in 1 of 160 ([A smaller model](#a-smaller-model-for-low-memory-devices-0650)).
 
    Speed is measured on the second, warm call, along with the worst-case time for one research task. If either step fails, the run does not start, and the log shows the model's raw output and a hint. Tick **Run even if the self-check fails** (or pass `--ignore-self-check`) to run anyway.
 2. **Live progress.** Every model call is logged as it finishes, with its action (or, for an invalid reply, the error and the start of the output), time and speed. For example: `call 2: search {"query":"LumenDB license"} (14.2 s, 3.1 tok/s)`.

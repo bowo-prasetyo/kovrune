@@ -4,6 +4,9 @@
 // and a 32-bit fallback (q4f32) for GPUs without it. Both download the same
 // amount; the fallback needs more GPU memory and runs slower. IDs and memory
 // figures come from WebLLM's prebuilt config; tests check they still match.
+//
+// The last model is experimental: the weakest, for devices with too little memory for the
+// others. It is never recommended or selected first (app/device.ts).
 
 export interface BrowserModelVariant {
   /** WebLLM prebuilt model ID. */
@@ -13,8 +16,10 @@ export interface BrowserModelVariant {
 }
 
 export interface BrowserModel {
-  key: "qwen3.5-4b" | "qwen3.5-2b";
+  key: "qwen3.5-4b" | "qwen3.5-2b" | "qwen3.5-0.8b";
   label: string;
+  /** Offered with a warning and never recommended: its answers are wrong too often to rely on. */
+  experimental?: boolean;
   description: string;
   downloadMB: number;
   f16: BrowserModelVariant;
@@ -38,7 +43,21 @@ export const BROWSER_MODELS: BrowserModel[] = [
     f16: { modelId: "Qwen3.5-2B-q4f16_1-MLC", vramMB: 2245 },
     f32: { modelId: "Qwen3.5-2B-q4f32_1-MLC", vramMB: 2592 },
   },
+  {
+    // docs/m0-benchmark.md, "A smaller model": against Qwen3.5-2B on the same machine, 55% of the
+    // field suite against 75%, and 9 of 43 answers labelled "Quotes found" wrong against 4 of 59.
+    key: "qwen3.5-0.8b",
+    label: "Qwen3.5-0.8B",
+    experimental: true,
+    description: "Experimental, the weakest model: check every answer. For devices with too little memory for Qwen3.5-2B. In testing, about 1 in 5 of its answers labelled Quotes found were wrong.",
+    downloadMB: 443,
+    f16: { modelId: "Qwen3.5-0.8B-q4f16_1-MLC", vramMB: 1629 },
+    f32: { modelId: "Qwen3.5-0.8B-q4f32_1-MLC", vramMB: 1894 },
+  },
 ];
+
+/** The models offered without a warning, heaviest first. */
+export const STANDARD_BROWSER_MODELS = BROWSER_MODELS.filter((m) => !m.experimental);
 
 export const DEFAULT_BROWSER_MODEL = BROWSER_MODELS[0]!;
 

@@ -6,7 +6,7 @@ import { estimateTokens, extractJson, runAgent } from "../src/agent/agent.ts";
 import { evaluateGate, falseReassurance, QUICK_TASK_IDS, runBenchmark, summarize, type TaskResult } from "../eval/harness/benchmark.ts";
 import { formatCall, formatReport } from "../eval/harness/format.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
-import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
+import { describeSelfCheck, retriesRepeatedSearch, runSelfCheck } from "../src/agent/self-check.ts";
 import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { NodeCodeRunner } from "../eval/harness/sandbox.ts";
 import { RESEARCH_LIMITS, ResearchLibrary, runResearch } from "../src/agent/research.ts";
@@ -737,6 +737,59 @@ describe("self-check", () => {
     assert.equal(result.failedStep, "uses-tool-result");
     assert.match(result.error ?? "", /searched again/);
     assert.match(describeSelfCheck(result).join("\n"), /not acting on tool results[\s\S]*llama\.cpp server/);
+  });
+
+  describe("after a repeated search, for the experimental model only", () => {
+    // Qwen3.5-0.8B repeats the search in step 2 every time, but research tasks never offer it a
+    // second search before it reads a result, so step 3 checks what a task would do next.
+    const small = (replies: string[]) => {
+      const model = new ScriptedModel(replies);
+      (model as { info: LanguageModel["info"] }).info = { ...model.info, id: "Qwen3.5-0.8B-q4f16_1-MLC" };
+      return model;
+    };
+
+    it("passes when, told the result has not changed, the model reads a document the result lists", async () => {
+      const steps: number[] = [];
+      const model = small([search, search, `{"tool":"read","args":{"docId":"cobble-overview"}}`]);
+      const result = await runSelfCheck(model, { onStep: (step) => steps.push(step) });
+      assert.equal(result.passed, true);
+      assert.equal(result.repeatedSearch, true);
+      assert.deepEqual(steps, [1, 2, 3]);
+      // The research task's reply to a repeated action, and searching is no longer offered.
+      const third = model.requests[2]!;
+      assert.match(third.messages.at(-1)!.content, /already ran this exact action[\s\S]*Searching is no longer available/);
+      assert.doesNotMatch(JSON.stringify(third.responseSchema), /"search"/);
+      assert.match(JSON.stringify(third.responseSchema), /"read"/);
+      assert.match(describeSelfCheck(result).join("\n"), /repeated its search once/);
+    });
+
+    it("passes an answer citing a listed document, and fails one citing none", async () => {
+      const answer = (docId: string) =>
+        `{"tool":"final_answer","args":{"found":true,"answer":"MPL-2.0","evidence":[{"docId":"${docId}","quote":"MPL"}]}}`;
+      assert.equal((await runSelfCheck(small([search, search, answer("lumen-overview")]))).passed, true);
+      const none = await runSelfCheck(small([search, search, `{"tool":"final_answer","args":{"found":false,"answer":"","evidence":[]}}`]));
+      assert.equal(none.passed, false);
+      assert.equal(none.failedStep, "uses-tool-result");
+      assert.match(none.error ?? "", /did not read or cite a document it lists/);
+    });
+
+    it("keeps the two-step check for other models and for a different search", async () => {
+      const other = new ScriptedModel([search, search, `{"tool":"read","args":{"docId":"lumen-overview"}}`]);
+      const result = await runSelfCheck(other);
+      assert.equal(result.passed, false);
+      assert.equal(other.requests.length, 2);
+      assert.equal(result.repeatedSearch, undefined);
+      const different = small([search, `{"tool":"search","args":{"query":"LumenDB"}}`]);
+      assert.equal((await runSelfCheck(different)).passed, false);
+      assert.equal(different.requests.length, 2);
+    });
+
+    it("recognizes the model however it is named", () => {
+      for (const id of ["Qwen3.5-0.8B-q4f16_1-MLC", "Qwen3.5-0.8B-q4f32_1-MLC", "qwen3.5-0.8b-q4km", "Qwen3.5-0.8B-Q4_K_M.gguf", "qwen3.5:0.8b"]) {
+        assert.equal(retriesRepeatedSearch(id), true, id);
+      }
+      for (const id of ["Qwen3.5-2B-q4f16_1-MLC", "qwen3.5-4b-q4km", "Qwen3.5-0.8B0", "scripted"]) assert.equal(retriesRepeatedSearch(id), false, id);
+    });
   });
 
   it("logs invalid calls with the model's output", () => {
