@@ -98,7 +98,7 @@ The first screen checks your device and recommends one of two options. You can c
 | Option | Good for | What you need |
 | --- | --- | --- |
 | **Local model server** | Everything, including laptops with integrated Intel graphics | llama.cpp, set up once ([below](#set-up-llamacpp)) |
-| **In this browser** (experimental) | Apple silicon Macs, computers with a recent NVIDIA or AMD GPU | Chrome or Edge with WebGPU, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B) |
+| **In this browser** (experimental) | Apple silicon Macs, computers with a recent NVIDIA or AMD GPU | Chrome or Edge with WebGPU, and space for a one-time download (2.4 GB for Qwen3.5-4B, 1.1 GB for Qwen3.5-2B, 0.4 GB for the experimental Qwen3.5-0.8B) |
 
 The browser option is **experimental**. In testing it has answered questions end to end on a laptop with integrated Intel graphics (Iris Xe, 16 GB), but slowly: Qwen3.5-4B ran at about 3 tokens/s, so a question can take up to half an hour, and once the GPU stopped responding. On the same laptop a local server ran the same model at 5.5 tokens/s. It has not yet been measured on an Apple silicon Mac or a dedicated NVIDIA or AMD GPU, where it should be much faster ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)). If the model test is slow or the answers look broken, use a local model server.
 
@@ -108,6 +108,8 @@ The browser option is **experimental**. In testing it has answered questions end
 | --- | --- |
 | **Qwen3.5-4B** (recommended) | Better answers. Choose it when a question needs several sources (for example your PDF and Wikipedia), when you write reports, or when accuracy matters more than speed |
 | **Qwen3.5-2B** | Faster and lighter, for devices with 8 GB of memory or less. Good for questions one of your documents answers; it often answers from one source only, and more of its answers need checking |
+
+The browser path also offers **Qwen3.5-0.8B**, marked **experimental**: the weakest model, for devices with too little memory for Qwen3.5-2B, such as a phone with 4 GB. In testing it answered about 55% of the field questions, against 75% for Qwen3.5-2B, and about 1 in 5 of its answers labelled **Quotes found** were wrong, against 1 in 15. Check every answer against its quoted passages. Kovrune never selects or recommends it, and mentions it only on a device with too little memory for Qwen3.5-2B; a model server on another computer still gives better answers.
 
 On a laptop with 8 GB of memory and integrated Intel graphics, both run on the processor:
 
@@ -192,7 +194,7 @@ In the app: **Use a local model server** → keep the address `http://127.0.0.1:
 
 The browser path needs WebGPU, which lets a web page use the GPU; recent Chrome and Edge have it. Without WebGPU, the device step offers only the local server.
 
-Pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. On a device that reports less memory than even Qwen3.5-2B needs (2.2 GB of GPU memory, plus about 2 GB for the system and the browser), such as a phone with 4 GB, neither model is recommended: loading usually fails near the end, and on a phone the page may just reload without an error. Use [a model server on another computer](#use-a-model-server-on-another-computer) instead. **Download and test** downloads it once and stores it in the browser; the next time, the button reads **Load and test**. **Delete the download** frees the space again, after asking, since using the model again means downloading it again.
+Pick a model. Kovrune suggests Qwen3.5-2B on devices with 8 GB of memory or less. On a device that reports less memory than even Qwen3.5-2B needs (2.2 GB of GPU memory, plus about 2 GB for the system and the browser), such as a phone with 4 GB, neither model is recommended: loading usually fails near the end, and on a phone the page may just reload without an error. Use [a model server on another computer](#use-a-model-server-on-another-computer) instead, or, when the device has the memory for it, the experimental Qwen3.5-0.8B (1.6 GB of GPU memory; [its limits](#choose-where-the-model-runs)). **Download and test** downloads it once and stores it in the browser; the next time, the button reads **Load and test**. **Delete the download** frees the space again, after asking, since using the model again means downloading it again.
 
 Kovrune downloads a fixed version of each model and checks every file against its published SHA-256 checksum before using it, in a short **Checking the download** step at the end of the first load. If a file doesn't match, the download is deleted and the model isn't used.
 
@@ -449,7 +451,7 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 | "This browser does not offer WebGPU" | The browser is old, or WebGPU is off or unsupported on this system | Use a recent Chrome or Edge, or a local model server |
 | "Not enough browser storage: the download needs …" | The disk, or the browser's share of it, is too full | Free disk space, or delete a model you don't use under **Storage and backup** |
 | "Integrity verification failed: … did not match their published SHA-256" | A file was damaged or changed on the way; it was deleted and not used | Try again. If it happens again, open an issue (below) |
-| "This device reports about … GB of memory … It may fail to load", or "This GPU allows buffers of only … MiB" | The GPU or the device may have too little memory for the model | Choose Qwen3.5-2B, or use a local model server |
+| "This device reports about … GB of memory … It may fail to load", or "This GPU allows buffers of only … MiB" | The GPU or the device may have too little memory for the model | Choose Qwen3.5-2B, or use a local model server. On a phone, use [a model server on another computer](#use-a-model-server-on-another-computer), or try the experimental Qwen3.5-0.8B |
 | The model test fails with garbled output | The browser path on a GPU that runs models incorrectly | Use a local model server |
 | "The GPU stopped responding or ran out of memory" (the console may show `DXGI_ERROR_DEVICE_HUNG` or "Device was lost") | The GPU took too long on the model's work and the graphics driver reset it, or it ran out of memory. Seen on integrated Intel graphics with Qwen3.5-4B | Close other tabs and programs and press **Test again** (the model loads again from the browser's storage), or try Qwen3.5-2B. On integrated graphics, a local model server usually works better |
 | "Part of Kovrune, the model runner, could not be downloaded", or loading stays on its first step | The connection was cut while downloading part of the app (seen as `ERR_CONNECTION_RESET` in the browser's Network tab) | Reload the page and try again. If it keeps happening, try with a VPN or antivirus web protection turned off, or on another network |

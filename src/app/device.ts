@@ -5,7 +5,7 @@
 // Intel graphics were either broken (WebGPU) or far too slow (CPU), while a
 // native local server on the same laptop met the speed gate.
 
-import { BROWSER_MODELS, type BrowserModel, type BrowserModelVariant } from "../models/catalog.ts";
+import { BROWSER_MODELS, STANDARD_BROWSER_MODELS, type BrowserModel, type BrowserModelVariant } from "../models/catalog.ts";
 
 export type ModelPath = "browser" | "local-server";
 
@@ -43,19 +43,34 @@ export function memoryFits(caps: DeviceCapabilities, variant: BrowserModelVarian
   return caps.ramGiB === undefined || caps.ramGiB * 1024 >= variant.vramMB + 2048;
 }
 
-/** The variant of the lightest browser model this device would load. */
+const variantFor = (caps: DeviceCapabilities, model: BrowserModel) => (caps.shaderF16 === false ? model.f32 : model.f16);
+
+/** The variant of the lightest standard (not experimental) browser model this device would load. */
 function lightestVariant(caps: DeviceCapabilities): BrowserModelVariant {
-  const lightest = BROWSER_MODELS[BROWSER_MODELS.length - 1]!;
-  return caps.shaderF16 === false ? lightest.f32 : lightest.f16;
+  return variantFor(caps, STANDARD_BROWSER_MODELS[STANDARD_BROWSER_MODELS.length - 1]!);
 }
 
 /**
- * Whether the device reports too little memory for even the lightest browser model. On an
+ * Whether the device reports too little memory for even the lightest standard browser model. On an
  * Android phone reporting 4 GB, Qwen3.5-2B (2.2 GB of GPU memory) always failed near the end
  * of loading.
  */
 export function tooLittleMemory(caps: DeviceCapabilities): boolean {
   return !memoryFits(caps, lightestVariant(caps));
+}
+
+/**
+ * The experimental model to mention on a device with too little memory for the standard ones,
+ * when it fits; undefined otherwise. It is never selected first or shown as recommended.
+ */
+export function experimentalFallback(caps: DeviceCapabilities): BrowserModel | undefined {
+  if (!tooLittleMemory(caps)) return undefined;
+  return BROWSER_MODELS.find((m) => m.experimental && memoryFits(caps, variantFor(caps, m)));
+}
+
+/** Shown when an experimental model is chosen, and in the user guide's words. */
+export function experimentalWarning(model: BrowserModel): string {
+  return `${model.label} is experimental and the weakest model: it answers fewer questions correctly than Qwen3.5-2B, and in testing about 1 in 5 of its answers labelled Quotes found were wrong. Check every answer against its quoted passages. A model server on another computer gives better answers.`;
 }
 
 /** What to do on a device with too little memory for the browser models. */
@@ -74,9 +89,10 @@ export function recommendPath(caps: DeviceCapabilities): Recommendation {
     };
   }
   if (tooLittleMemory(caps)) {
+    const fallback = experimentalFallback(caps);
     return {
       path: "local-server",
-      reason: `This device reports about ${caps.ramGiB} GB of memory, and even the lighter browser model needs about ${gb(lightestVariant(caps).vramMB)} of GPU memory, so it would likely fail to load. A model server on another computer on your network works from this device (${OTHER_COMPUTER_SECTION}, in the user guide).`,
+      reason: `This device reports about ${caps.ramGiB} GB of memory, and even the lighter browser model needs about ${gb(lightestVariant(caps).vramMB)} of GPU memory, so it would likely fail to load. A model server on another computer on your network works from this device (${OTHER_COMPUTER_SECTION}, in the user guide).${fallback ? ` The browser path also offers the experimental ${fallback.label}, which needs about ${gb(variantFor(caps, fallback).vramMB)}, but its answers are wrong more often: check every one.` : ""}`,
     };
   }
   const vendor = caps.vendor?.toLowerCase() ?? "";
@@ -130,7 +146,7 @@ export async function detectCapabilities(): Promise<DeviceCapabilities> {
  * It is shown as recommended only when it fits (tooLittleMemory).
  */
 export function recommendBrowserModel(caps: DeviceCapabilities): BrowserModel {
-  return caps.ramGiB !== undefined && caps.ramGiB <= 8 ? BROWSER_MODELS[1]! : BROWSER_MODELS[0]!;
+  return caps.ramGiB !== undefined && caps.ramGiB <= 8 ? STANDARD_BROWSER_MODELS[1]! : STANDARD_BROWSER_MODELS[0]!;
 }
 
 export interface StorageInfo {
@@ -152,7 +168,7 @@ export interface BrowserModelCheck {
 
 /** The compatibility check for running one model in this browser. */
 export function checkBrowserModel(caps: DeviceCapabilities, model: BrowserModel, storage?: StorageInfo): BrowserModelCheck {
-  const variant = caps.shaderF16 === false ? model.f32 : model.f16;
+  const variant = variantFor(caps, model);
   const problems: string[] = [];
   const warnings: string[] = [];
   if (!caps.webgpu) {

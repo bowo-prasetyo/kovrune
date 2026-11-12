@@ -158,6 +158,11 @@ fieldset {
   border-color: var(--accent);
 }
 
+.badge.experimental {
+  border-color: var(--caution);
+  color: var(--caution);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
