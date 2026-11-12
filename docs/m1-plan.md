@@ -372,6 +372,16 @@ Checked in the container, with Wikipedia and OpenAlex mocked (five results each)
   - Qwen3.5-4B for questions that need several sources, or when accuracy matters more than speed.
   - The user guide gives both, with these timings and how to switch. The device step's advice is unchanged: it recommends the local server for this laptop.
 
+**Search the topics, not the question (preview `6acbb41`, class 1 laptop, browser path, Qwen3.5-4B).** "What is the diffeence between blockchain and DAG?" with Wikipedia ticked ended in **Not found in your sources**.
+- The refusal was honest, but premature. The model searched the whole question ("difference between blockchain and DAG"), read "Version control", searched "DAG blockchain vs DAG", and concluded. Wikipedia has an article on each topic.
+- Fixes:
+  - **Prompt, open sources only.** Search with short terms, such as the title an article would have, not the whole question. For a question about two or more things, search for each on its own and read about each before answering.
+  - **Search again before "not found".** A "not found" answer is sent back once, to search the open sources again topic by topic, when a source answered a search and at least three steps are left. This comes after the existing "read before not found" step. Without open sources nothing changes, so the benchmark's prompt and tasks are unaffected.
+- Checked in the container with a Wikipedia mock that answers each search by its words, as the real one does: a combined query finds "Version control" and "Git"; "blockchain", "DAG" and "directed acyclic graph" find their articles and IOTA's.
+  - **Qwen3.5-4B, before:** searched the whole question, read "Git", not found (33 s). **After:** searched "blockchain" and "DAG" separately, read both articles, and answered both halves with two verified quotes (52 s).
+  - **Qwen3.5-2B, before:** read "Version control" and "Git", and gave an empty not-found. **After:** searched "blockchain", read "Blockchain" and "IOTA", and answered with two verified quotes (24 s).
+  - **An unanswerable question** ("Who was the first person to use a DAG in a blockchain, and in which year?", Qwen3.5-4B) still ended in **Not found**, with a reason.
+
 **Known limit: real quotes that do not support the answer.** The evidence check proves that quotes exist in their sources, not that they support each sentence of the answer. Small models often add claims from memory next to real quotes. A candidate for M2 is to compare each answer sentence with the quotes and mark sentences that no quote shares much with. This is a heuristic, not a proof.
 
 **Built ahead of M2 ([issue #31](https://github.com/bowo-prasetyo/kovrune/issues/31)).** Each answer sentence with at least three content words is compared with the verified quotes. It counts as backed when at least half of its words appear in them. Words from the cited documents' titles are left out of the count: they name what the quotes are about, but they do not back a claim. Sentences that are not backed are marked ⚠. When every quote is found but some sentences are not backed, the label reads, for example, **1 of 3 sentences backed by a quote** instead of **Quotes found**.
