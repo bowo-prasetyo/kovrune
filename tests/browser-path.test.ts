@@ -199,10 +199,13 @@ describe("WebLLM adapter", () => {
         for await (const _ of model.generate({ messages: [], maxTokens: 8 }));
       })().catch((e) => e);
       assert.equal(model.lost, true);
-      assert.match(describeModelError(error, settings), /^The GPU stopped responding or ran out of memory, so the model was unloaded\. On Windows[\s\S]*DXGI_ERROR_DEVICE_HUNG/);
+      assert.match(describeModelError(error, settings, true), /^The GPU stopped responding or ran out of memory, so the model was unloaded\. On Windows[\s\S]*DXGI_ERROR_DEVICE_HUNG/);
     }
     const lost = new Error("The GPU device was lost (the graphics driver reset or ran out of memory), so the model was unloaded");
     assert.match(describeModelError(lost, settings), /use the lighter model, Qwen3\.5-2B\./);
+    // The Windows driver error is named only on Windows: it means nothing on a phone.
+    assert.doesNotMatch(describeModelError(lost, settings, false), /Windows|DXGI/);
+    assert.match(describeModelError(lost, settings, false), /^The GPU stopped responding or ran out of memory, so the model was unloaded\. Close other tabs/);
     // With the lightest standard model, or the experimental one, there is no lighter model to suggest.
     for (const modelId of ["Qwen3.5-2B-q4f16_1-MLC", "Qwen3.5-0.8B-q4f16_1-MLC"]) {
       const advice = describeModelError(lost, { ...settings, modelId });
