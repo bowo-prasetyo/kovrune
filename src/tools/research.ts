@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { AgentTool } from "../agent/agent.ts";
 import type { EvidenceItem } from "../agent/evidence.ts";
 import { parentId } from "../documents/chunk.ts";
-import type { SourceSession } from "../sources/session.ts";
+import { OUTLINE_LINE, type SourceSession } from "../sources/session.ts";
 import { SourceError } from "../sources/types.ts";
 import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
@@ -237,7 +237,8 @@ export function createResearchTools(
       // before and answered "not found" or with a fact from another passage (eval/field/README.md).
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
-        const [header, ...rest] = observation.split("\n");
+        // An open-source document's outline is left out: it says where the parts are, not what they say.
+        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },

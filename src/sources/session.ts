@@ -4,6 +4,7 @@
 
 import { quoteContext, quoteHas } from "../agent/evidence.ts";
 import { chunkDocument, parentId } from "../documents/chunk.ts";
+import { outlineOf } from "../documents/outline.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { SourceError, type FetchedDocument, type OpenSource, type WorkInfo } from "./types.ts";
 
@@ -41,6 +42,14 @@ export function partQuoted(parts: SourceDocument[], quotes: string[]): SourceDoc
   return parts.find((p) => p.id === best);
 }
 
+/** How an outline is shown after a read part, so that shortening an old read can leave it out (OUTLINE_LINE). */
+export function outlineNote(docId: string, outline: string): string {
+  return `[Outline of ${docId}, to read another part by its ID such as ${docId}#1: ${outline}]`;
+}
+
+/** An outline line at the end of a read (outlineNote). */
+export const OUTLINE_LINE = /\n*\[Outline of [^\n]*\]$/;
+
 export class SourceSession {
   readonly sources: OpenSource[];
   /** Stops source requests when the user stops the research. */
@@ -50,6 +59,8 @@ export class SourceSession {
   private readonly question: string;
   private readonly seen = new Set<string>();
   private readonly fetched = new Map<string, { doc: FetchedDocument; parts: SourceDocument[] }>();
+  /** Documents whose outline has been shown: once is enough, and it would crowd the context. */
+  private readonly outlined = new Set<string>();
 
   constructor(sources: OpenSource[], question: string, signal?: AbortSignal) {
     this.sources = sources;
@@ -85,9 +96,13 @@ export class SourceSession {
       parts.find((p) => p.id === new DocumentIndex(parts).search(this.question)[0]?.docId) ??
       parts[0]!;
     const number = parts.indexOf(part) + 1;
+    // The first time a long document is read, its outline: which parts hold its sections and tables.
+    const outline = this.outlined.has(doc.id) ? undefined : outlineOf(parts);
+    this.outlined.add(doc.id);
     return (
       `[${part.id}] ${doc.title} (part ${number} of ${parts.length})\n${part.text}\n\n` +
-      `Other parts: ${doc.id}#1 to ${doc.id}#${parts.length}.`
+      `Other parts: ${doc.id}#1 to ${doc.id}#${parts.length}.` +
+      (outline ? `\n${outlineNote(doc.id, outline)}` : "")
     );
   }
 
