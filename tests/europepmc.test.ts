@@ -150,6 +150,14 @@ describe("Europe PMC", () => {
     assert.deepEqual(rankHits([statistics, half], terms).map((r) => r.id), ["5", "4"], "citations do not lift a paper that matches little");
   });
 
+  it("ranks a trial's protocol below its report", () => {
+    const report: EuropePmcRecord = { ...CLOSED, id: "37088092", title: "Ferric carboxymaltose versus oral iron in pregnant women: a randomised controlled trial", abstractText: "", citedByCount: 120 };
+    const protocol: EuropePmcRecord = { ...report, id: "34815287", title: "Protocol for a randomised controlled trial of ferric carboxymaltose versus oral iron in pregnant women", citedByCount: 30 };
+    const other: EuropePmcRecord = { ...CLOSED, id: "1", title: "Ferric carboxymaltose and oral iron for pregnant women", abstractText: "", citedByCount: 0 };
+    const terms = ["ferric", "carboxymaltose", "oral", "iron", "pregnant", "women"];
+    assert.deepEqual(rankHits([protocol, report, other], terms).map((r) => r.id), ["37088092", "1", "34815287"]);
+  });
+
   it("names secondary analyses, substudies and protocols", async () => {
     const titled = (title: string, pubType: string[] = ["Journal Article"]) => relatedReport({ ...CLOSED, title, pubTypeList: { pubType } });
     assert.equal(titled("Prenatal Intravenous Iron and Child Growth: A Secondary Analysis of a Randomized Clinical Trial"), "secondary analysis");

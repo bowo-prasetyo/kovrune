@@ -35,6 +35,13 @@ const CANDIDATES = 25;
  * and added one hit matching under half the words in 135 (eval/clinical/README.md).
  */
 export const CITATION_WEIGHT = 0.3;
+/**
+ * How much a trial protocol's match counts. A protocol gives what a trial planned; its report gives what was
+ * done and found, its methods included, so a question answered by one is answered better by the other.
+ * Asked the REVAMP trial's oral iron dose, Qwen3.5-4B read the report, then the protocol, which ranked
+ * among the five results, and answered with the protocol's 65 mg instead of the report's 60 mg.
+ */
+export const PROTOCOL_WEIGHT = 0.5;
 /** A full text can take Europe PMC several seconds to give (18 s for a preprint in a check); the abstract is read if it takes longer. */
 export const FULL_TEXT_TIMEOUT_MS = 60_000;
 /** Only records with something to read: an abstract, or an open-access full text. */
@@ -159,7 +166,7 @@ const fold = (text: string) => text.toLowerCase().normalize("NFKD").replace(/[\u
 
 /**
  * The HITS records that best match the query: by the share of its words in a record's title and abstract,
- * raised by its citations (CITATION_WEIGHT); Europe PMC's order breaks ties.
+ * raised by its citations (CITATION_WEIGHT) and lowered for a protocol (PROTOCOL_WEIGHT); Europe PMC's order breaks ties.
  */
 export function rankHits(records: EuropePmcRecord[], terms: string[]): EuropePmcRecord[] {
   const words = terms.map(fold);
@@ -167,7 +174,8 @@ export function rankHits(records: EuropePmcRecord[], terms: string[]): EuropePmc
     .map((record, at) => {
       const text = fold(`${titleOf(record)} ${abstractOf(record)}`);
       const share = words.length ? words.filter((word) => text.includes(word)).length / words.length : 0;
-      return { record, at, score: share * (1 + CITATION_WEIGHT * Math.log10(1 + (record.citedByCount ?? 0))) };
+      const protocol = relatedReport(record) === "protocol" ? PROTOCOL_WEIGHT : 1;
+      return { record, at, score: protocol * share * (1 + CITATION_WEIGHT * Math.log10(1 + (record.citedByCount ?? 0))) };
     })
     .sort((a, b) => b.score - a.score || a.at - b.at)
     .slice(0, HITS)
