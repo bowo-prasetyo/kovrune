@@ -25,13 +25,16 @@ const HITS = 5;
  */
 const CANDIDATES = 25;
 /**
- * How much a paper's citations count against the share of the query's words in its title and abstract:
- * a paper cited 100 times gains as much as 40% of the words. A trial's own report is cited more than the
- * papers that followed it. On the clinical suite's questions, weights from 0 to 0.25 found as many papers
- * (16 of 21 in the top five), and 0.4 fewer; 0.15 and 0.25 put the report asked about higher for the
- * model's own queries.
+ * How much a paper's citations raise its match: its share of the query's words in its title and abstract
+ * is multiplied by 1 + CITATION_WEIGHT × log10(1 + citations), so a paper cited 100 times counts 1.6 times
+ * its match. A trial's own report is cited more than the papers that followed it. Scaling the match, not
+ * adding to it, keeps citations from lifting a paper that matches little: added, at 0.2, the American Heart
+ * Association's yearly statistics (cited thousands of times, 1 of 12 words) took three of the five places
+ * for a search on the VESSEL trial. On the clinical suite's questions and the model's own searches, 0.3
+ * found as many papers as no weight (16 of 21 questions in the top five), put more first (15 against 13),
+ * and added one hit matching under half the words in 135 (eval/clinical/README.md).
  */
-export const CITATION_WEIGHT = 0.2;
+export const CITATION_WEIGHT = 0.3;
 /** A full text can take Europe PMC several seconds to give (18 s for a preprint in a check); the abstract is read if it takes longer. */
 export const FULL_TEXT_TIMEOUT_MS = 60_000;
 /** Only records with something to read: an abstract, or an open-access full text. */
@@ -156,7 +159,7 @@ const fold = (text: string) => text.toLowerCase().normalize("NFKD").replace(/[\u
 
 /**
  * The HITS records that best match the query: by the share of its words in a record's title and abstract,
- * plus CITATION_WEIGHT times the logarithm of its citations; Europe PMC's order breaks ties.
+ * raised by its citations (CITATION_WEIGHT); Europe PMC's order breaks ties.
  */
 export function rankHits(records: EuropePmcRecord[], terms: string[]): EuropePmcRecord[] {
   const words = terms.map(fold);
@@ -164,7 +167,7 @@ export function rankHits(records: EuropePmcRecord[], terms: string[]): EuropePmc
     .map((record, at) => {
       const text = fold(`${titleOf(record)} ${abstractOf(record)}`);
       const share = words.length ? words.filter((word) => text.includes(word)).length / words.length : 0;
-      return { record, at, score: share + CITATION_WEIGHT * Math.log10(1 + (record.citedByCount ?? 0)) };
+      return { record, at, score: share * (1 + CITATION_WEIGHT * Math.log10(1 + (record.citedByCount ?? 0))) };
     })
     .sort((a, b) => b.score - a.score || a.at - b.at)
     .slice(0, HITS)

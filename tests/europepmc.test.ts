@@ -143,6 +143,11 @@ describe("Europe PMC", () => {
     assert.deepEqual(rankHits([cited, matching], ["ferric", "carboxymaltose", "anaemia", "pregnancy"]).map((r) => r.id), ["2", "1"]);
     const twin = { ...matching, id: "3", citedByCount: 40 };
     assert.deepEqual(rankHits([matching, twin], ["ferric", "carboxymaltose"]).map((r) => r.id), ["3", "2"], "between equal matches, the one cited more");
+    // As for a search on the VESSEL trial, where yearly heart statistics cited thousands of times matched 1 word in 12.
+    const statistics: EuropePmcRecord = { ...CLOSED, id: "4", title: "Heart Disease and Stroke Statistics", abstractText: "Blood pressure.", citedByCount: 5000 };
+    const half: EuropePmcRecord = { ...CLOSED, id: "5", title: "Cruciferous vegetables and blood pressure in a crossover trial", abstractText: "", citedByCount: 0 };
+    const terms = ["VESSEL", "crossover", "trial", "cruciferous", "vegetable", "diet", "root", "squash", "vegetable", "diet", "blood", "pressure"];
+    assert.deepEqual(rankHits([statistics, half], terms).map((r) => r.id), ["5", "4"], "citations do not lift a paper that matches little");
   });
 
   it("names secondary analyses, substudies and protocols", async () => {
