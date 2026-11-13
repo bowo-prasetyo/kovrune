@@ -372,7 +372,7 @@ Steps 3 to 6 ask the same small model that wrote the answer, so they catch some 
 
 ### Open sources
 
-All five are off until you tick them, and need no account.
+All five are off until you tick them, and need no account. When the model first reads a part of a long article or paper from any of them, it is also shown the document's outline: which parts hold which sections and tables (for example "#3 Findings; #19 Table 1: Baseline characteristics"), so it can go to the part it needs.
 
 - **Wikipedia:** encyclopedia articles, in the language edition you choose. A long article is read a part at a time, the part that best matches your question first.
 - **OpenAlex:** scholarly papers of every field, but Kovrune reads only their abstracts: OpenAlex catalogues papers and does not hold their text. A question about a paper's methods or results beyond its abstract usually ends as "not found".
