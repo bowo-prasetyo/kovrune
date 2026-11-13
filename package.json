@@ -29,7 +29,8 @@
     "bench:crosscheck": "node --experimental-strip-types eval/crosscheck.ts",
     "bench:completeness": "node --experimental-strip-types eval/completeness.ts",
     "bench:report": "node --experimental-strip-types eval/report.ts",
-    "bench:replay": "node --experimental-strip-types eval/replay.ts"
+    "bench:replay": "node --experimental-strip-types eval/replay.ts",
+    "bench:europepmc": "node --experimental-strip-types eval/europepmc-check.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.85",

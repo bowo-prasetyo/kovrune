@@ -400,6 +400,10 @@ export function ResearchPanel({
               <input type="checkbox" checked={prefs.datacite} disabled={running} onChange={(e) => updatePrefs({ datacite: e.target.checked })} />
               DataCite (repositories such as Zenodo: read in full where the PDF is open, else abstracts)
             </label>
+            <label className="choice">
+              <input type="checkbox" checked={prefs.europepmc} disabled={running} onChange={(e) => updatePrefs({ europepmc: e.target.checked })} />
+              Europe PMC (biomedical and life-sciences papers and preprints: open-access ones read in full, others as abstracts)
+            </label>
             {prefs.openalex && (
               <label className="openalex-key">
                 OpenAlex API key (optional)
@@ -445,7 +449,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv or DataCite, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite or Europe PMC, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run

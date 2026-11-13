@@ -104,7 +104,7 @@ describe("answer status and cleanup", () => {
 
 describe("open source preferences", () => {
   it("are off by default, with Wikipedia in the browser's language", () => {
-    assert.deepEqual(parseSourcePrefs(null, "ja-JP"), { wikipedia: false, language: "ja", openalex: false, arxiv: false, datacite: false, openalexKey: "" });
+    assert.deepEqual(parseSourcePrefs(null, "ja-JP"), { wikipedia: false, language: "ja", openalex: false, arxiv: false, datacite: false, europepmc: false, openalexKey: "" });
     assert.equal(parseSourcePrefs(null, undefined).language, "en");
     assert.equal(defaultLanguage("zh-Hant-TW"), "zh");
   });
@@ -116,6 +116,7 @@ describe("open source preferences", () => {
       openalex: true,
       arxiv: false,
       datacite: false,
+      europepmc: false,
       openalexKey: "",
     });
     assert.equal(parseSourcePrefs('{"arxiv":true,"openalexKey":" abc "}', "en").openalexKey, "abc", "a key is kept, trimmed");
@@ -123,12 +124,13 @@ describe("open source preferences", () => {
   });
 
   it("create only the chosen sources", () => {
-    const none = { wikipedia: false, language: "en", openalex: false, arxiv: false, datacite: false, openalexKey: "" };
+    const none = { wikipedia: false, language: "en", openalex: false, arxiv: false, datacite: false, europepmc: false, openalexKey: "" };
     assert.deepEqual(openSourcesFor({ ...none, wikipedia: true, language: "ja" }).map((s) => s.label), ["Wikipedia (ja)"]);
     assert.deepEqual(openSourcesFor({ ...none, openalex: true }).map((s) => s.name), ["openalex"]);
     assert.deepEqual(openSourcesFor({ ...none, arxiv: true }).map((s) => s.label), ["arXiv"]);
     assert.deepEqual(openSourcesFor({ ...none, wikipedia: true, openalex: true, arxiv: true }).map((s) => s.name), ["wikipedia", "openalex", "arxiv"]);
     assert.deepEqual(openSourcesFor({ ...none, datacite: true }).map((s) => s.label), ["DataCite"]);
+    assert.deepEqual(openSourcesFor({ ...none, europepmc: true }).map((s) => s.label), ["Europe PMC"]);
     assert.deepEqual(openSourcesFor(none), []);
   });
 
@@ -141,5 +143,7 @@ describe("open source preferences", () => {
       describeCall(call({ tool: "read", args: { docId: "datacite:10.5281/zenodo.15310522#2" } }), () => undefined),
       "Reading DataCite work 10.5281/zenodo.15310522",
     );
+    assert.equal(describeCall(call({ tool: "search_europepmc", args: { query: "IPTp" } }), () => undefined), "Searching Europe PMC for “IPTp”");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "europepmc:MED/38012345#4" } }), () => undefined), "Reading Europe PMC work MED/38012345");
   });
 });

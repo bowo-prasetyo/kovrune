@@ -15,3 +15,9 @@
 - `office/orders-sjis.csv` and `office/orders-utf8-bom.csv`: made-up Japanese orders, written for these
   tests as Japanese Excel saves "CSV (comma delimited)" (Windows-932 Shift_JIS, CRLF, the yen sign as
   byte 0x5C) and "CSV UTF-8" (with a byte-order mark).
+- `europepmc/PMC11590543.xml`: the full text of one of the clinical suite's trial reports
+  (`eval/clinical/docs/carrageenan-insulin.md`), as Europe PMC's REST API gave it on 13 November 2026
+  (`/PMC11590543/fullTextXML`). Open access under the
+  [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/). The tests
+  check that Kovrune's Europe PMC source turns it into that document's text, byte for byte
+  (`tests/europepmc.test.ts`).

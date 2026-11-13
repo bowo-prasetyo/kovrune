@@ -36,6 +36,8 @@ const KNOWN = [
   "https://arxiv.org/pdf/2005.11401",
   "https://api.datacite.org/dois",
   "https://zenodo.org/api/records/15310522/files/paper.pdf/content",
+  "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+  "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10865779/fullTextXML",
 ];
 
 describe("content security policy", () => {
