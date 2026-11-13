@@ -186,6 +186,18 @@ function aboutOf(record: EuropePmcRecord): string {
 /** A warning put first in the text of a retracted work, so the model and the reader see it. */
 export const RETRACTED_NOTE = "Note: Europe PMC marks this publication as retracted. Its findings should not be relied on.";
 
+/**
+ * A note put first in a trial protocol's text. A protocol is written before the trial is run, so it gives
+ * what was planned: asked the REVAMP trial's oral iron dose, Qwen3.5-4B read the trial's report, then its
+ * protocol, and answered with the protocol's plan (eval/clinical/README.md).
+ */
+export const PROTOCOL_NOTE = "Note: this is a trial protocol, written before the trial was run. It gives what was planned, not what was done or found; those are in the trial's own report.";
+
+/** The notes a work's text starts with: a retraction, or that it is a protocol. */
+function notesFor(record: EuropePmcRecord): string[] {
+  return [...(retraction(record) === "retracted" ? [RETRACTED_NOTE] : []), ...(relatedReport(record) === "protocol" ? [PROTOCOL_NOTE] : [])];
+}
+
 function workInfo(record: EuropePmcRecord): WorkInfo {
   const year = Number(record.pubYear);
   const venue = venueOf(record);
@@ -204,7 +216,7 @@ export function recordText(record: EuropePmcRecord, why: string): string {
   const ids = [record.doi ? `DOI: ${record.doi}` : "", record.pmid ? `PMID: ${record.pmid}` : "", record.pmcid ? `PMCID: ${record.pmcid}` : ""].filter(Boolean).join(". ");
   const abstract = abstractOf(record);
   return [
-    ...(retraction(record) === "retracted" ? [RETRACTED_NOTE] : []),
+    ...notesFor(record),
     titleOf(record),
     [authors.slice(0, 5).join(", ") + (authors.length > 5 ? " et al." : ""), record.pubYear, venueOf(record)].filter(Boolean).join(". "),
     ids,
@@ -311,7 +323,7 @@ export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
       return {
         id: europePmcDocId(record),
         title: titleOf(record),
-        text: typeof text === "string" ? (retraction(record) === "retracted" ? `${RETRACTED_NOTE}\n\n${text}` : text) : recordText(record, text.why),
+        text: typeof text === "string" ? [...notesFor(record), text].join("\n\n") : recordText(record, text.why),
         url: `https://europepmc.org/article/${record.source}/${record.id}`,
         retrievedAt: new Date().toISOString(),
         work: workInfo(record),

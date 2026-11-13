@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 import { answerToBibtex, type SavedAnswer } from "../src/app/research/answers.ts";
-import { createEuropePmc, FULL_TEXT_TIMEOUT_MS, plainTerms, rankHits, relatedReport, RETRACTED_NOTE, searchTerms, studyTypes, type EuropePmcRecord } from "../src/sources/europepmc.ts";
+import { createEuropePmc, FULL_TEXT_TIMEOUT_MS, plainTerms, PROTOCOL_NOTE, rankHits, relatedReport, RETRACTED_NOTE, searchTerms, studyTypes, type EuropePmcRecord } from "../src/sources/europepmc.ts";
 import { jatsToMarkdown, parseXml } from "../src/sources/jats.ts";
 import { SourceError, type FetchLike } from "../src/sources/types.ts";
 
@@ -227,6 +227,16 @@ describe("Europe PMC", () => {
     assert.ok(doc.text.startsWith(`${RETRACTED_NOTE}\n\n# Carrageenan`));
     const abstractOnly = await createEuropePmc(fakeFetch({ searches: [[/EXT_ID/, [{ ...RETRACTED, isOpenAccess: "N" }]]] })).fetch("europepmc:MED/39702045", undefined);
     assert.ok(abstractOnly.text.startsWith(RETRACTED_NOTE));
+  });
+
+  it("puts first in a protocol's text that it gives the plan, not what was done", async () => {
+    const protocol: EuropePmcRecord = { ...CARRAGEENAN, id: "34815287", title: "Protocol for a randomised controlled trial: the REVAMP trial", pubTypeList: { pubType: ["Clinical Trial Protocol", "Journal Article"] } };
+    const doc = await createEuropePmc(fakeFetch({ searches: [[/EXT_ID/, [protocol]]], texts: { PMC11590543: await carrageenanXml() } })).fetch("europepmc:MED/34815287", undefined);
+    assert.ok(doc.text.startsWith(`${PROTOCOL_NOTE}\n\n# Carrageenan`));
+    const abstractOnly = await createEuropePmc(fakeFetch({ searches: [[/EXT_ID/, [{ ...protocol, isOpenAccess: "N" }]]] })).fetch("europepmc:MED/34815287", undefined);
+    assert.ok(abstractOnly.text.startsWith(PROTOCOL_NOTE));
+    const report = await createEuropePmc(fakeFetch({ searches: [[/EXT_ID/, [{ ...CARRAGEENAN, isOpenAccess: "N" }]]] })).fetch("europepmc:MED/39593091", undefined);
+    assert.ok(!report.text.includes("Note:"), "a trial's own report has no note");
   });
 
   it("refuses IDs that are not Europe PMC's, and works it does not have", async () => {
