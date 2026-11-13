@@ -16,6 +16,22 @@ import { getBytes, getJson, SourceError, type FetchLike, type FetchedDocument, t
 const PREFIX = "europepmc:";
 export const EUROPEPMC_API = "https://www.ebi.ac.uk/europepmc/webservices/rest";
 const HITS = 5;
+/**
+ * Results asked for, of which the HITS that best match are shown (rankHits). Europe PMC ranks a paper by
+ * the words of a query anywhere in its full text, so the papers that followed a trial, which name it in
+ * their methods, ranked above its own report: "REVAMP trial oral iron standard-of-care" put the REVAMP
+ * report 16th, after a secondary analysis, two substudies and papers that cite it (eval/clinical/README.md).
+ * 25 records are about 44 kB compressed, 0.2 s more than 5.
+ */
+const CANDIDATES = 25;
+/**
+ * How much a paper's citations count against the share of the query's words in its title and abstract:
+ * a paper cited 100 times gains as much as 40% of the words. A trial's own report is cited more than the
+ * papers that followed it. On the clinical suite's questions, weights from 0 to 0.25 found as many papers
+ * (16 of 21 in the top five), and 0.4 fewer; 0.15 and 0.25 put the report asked about higher for the
+ * model's own queries.
+ */
+export const CITATION_WEIGHT = 0.2;
 /** A full text can take Europe PMC several seconds to give (18 s for a preprint in a check); the abstract is read if it takes longer. */
 export const FULL_TEXT_TIMEOUT_MS = 60_000;
 /** Only records with something to read: an abstract, or an open-access full text. */
@@ -37,6 +53,7 @@ export interface EuropePmcRecord {
   bookOrReportDetails?: { publisher?: string };
   pubYear?: string;
   abstractText?: string;
+  citedByCount?: number;
   pubTypeList?: { pubType?: string[] };
   isOpenAccess?: "Y" | "N";
 }
@@ -122,6 +139,38 @@ function titleOf(record: EuropePmcRecord): string {
 }
 
 /** What a search result says besides its title: "(2024, The Lancet; randomized controlled trial; full text)". */
+/**
+ * A paper that reports on a trial without being its main report, from its title or publication type:
+ * a secondary or post-hoc analysis, a substudy, or the trial's protocol. Named in search results, so the
+ * model can tell them from the report a question asks about.
+ */
+export function relatedReport(record: EuropePmcRecord): "secondary analysis" | "protocol" | undefined {
+  const title = titleOf(record);
+  if (pubTypes(record).some((t) => /^(clinical trial protocol|study protocol)$/i.test(t.trim())) || /\b(protocol|statistical analysis plan)\b/i.test(title)) return "protocol";
+  if (/\b(secondary|post[- ]?hoc|ancillary|exploratory) analys[ie]s\b|\bsub-?stud(y|ies)\b/i.test(title)) return "secondary analysis";
+  return undefined;
+}
+
+/** Text compared without case or accents. */
+const fold = (text: string) => text.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+
+/**
+ * The HITS records that best match the query: by the share of its words in a record's title and abstract,
+ * plus CITATION_WEIGHT times the logarithm of its citations; Europe PMC's order breaks ties.
+ */
+export function rankHits(records: EuropePmcRecord[], terms: string[]): EuropePmcRecord[] {
+  const words = terms.map(fold);
+  return records
+    .map((record, at) => {
+      const text = fold(`${titleOf(record)} ${abstractOf(record)}`);
+      const share = words.length ? words.filter((word) => text.includes(word)).length / words.length : 0;
+      return { record, at, score: share + CITATION_WEIGHT * Math.log10(1 + (record.citedByCount ?? 0)) };
+    })
+    .sort((a, b) => b.score - a.score || a.at - b.at)
+    .slice(0, HITS)
+    .map(({ record }) => record);
+}
+
 function aboutOf(record: EuropePmcRecord): string {
   const where = [record.pubYear, venueOf(record)].filter(Boolean).join(", ");
   const retracted = retraction(record);
@@ -129,6 +178,7 @@ function aboutOf(record: EuropePmcRecord): string {
     ...(retracted === "retracted" ? ["RETRACTED"] : retracted === "notice" ? ["retraction notice"] : []),
     ...(where ? [where] : []),
     ...(studyTypes(record).length ? [studyTypes(record).join(", ")] : []),
+    ...(relatedReport(record) ? [relatedReport(record)!] : []),
     fullTextId(record) ? "full text" : "abstract only",
   ].join("; ");
 }
@@ -245,9 +295,9 @@ export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
     async search(query, signal) {
       const terms = searchTerms(query);
       if (!terms.length) return [];
-      let records = await searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, HITS, signal);
-      if (!records.length && terms.length > 1) records = await searchRecords(`(${terms.join(" OR ")}) AND ${READABLE}`, HITS, signal);
-      return records.map((record) => {
+      let records = await searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, CANDIDATES, signal);
+      if (!records.length && terms.length > 1) records = await searchRecords(`(${terms.join(" OR ")}) AND ${READABLE}`, CANDIDATES, signal);
+      return rankHits(records, terms).map((record) => {
         found.set(`${record.source}/${record.id}`, record);
         const abstract = abstractOf(record).replace(/\n/g, " ");
         return { id: europePmcDocId(record), title: `${titleOf(record)} (${aboutOf(record)})`, snippet: abstract ? snippetOf(abstract) : "No abstract." };

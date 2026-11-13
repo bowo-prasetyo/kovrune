@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 import { answerToBibtex, type SavedAnswer } from "../src/app/research/answers.ts";
-import { createEuropePmc, FULL_TEXT_TIMEOUT_MS, plainTerms, RETRACTED_NOTE, searchTerms, studyTypes, type EuropePmcRecord } from "../src/sources/europepmc.ts";
+import { createEuropePmc, FULL_TEXT_TIMEOUT_MS, plainTerms, rankHits, relatedReport, RETRACTED_NOTE, searchTerms, studyTypes, type EuropePmcRecord } from "../src/sources/europepmc.ts";
 import { jatsToMarkdown, parseXml } from "../src/sources/jats.ts";
 import { SourceError, type FetchLike } from "../src/sources/types.ts";
 
@@ -122,6 +122,40 @@ describe("Europe PMC", () => {
     assert.equal(hits[1]!.title.endsWith("(2021, Medicine; abstract only)"), true);
     assert.match(hits[0]!.snippet, /^Background The potential impact/, "the abstract's headings become words");
     assert.match(hits[0]!.snippet, /kg\/m2\) participated\.$/);
+  });
+
+  it("shows the five results that best match the words in their title and abstract, and are cited most", async () => {
+    // As for "REVAMP trial oral iron standard-of-care": Europe PMC put papers that name the trial in their
+    // full text first, and the trial's own report 16th.
+    const report: EuropePmcRecord = { ...CLOSED, id: "37088092", title: "Ferric carboxymaltose versus standard-of-care oral iron in Malawian pregnant women (REVAMP)", abstractText: "A randomised trial of oral iron.", citedByCount: 120 };
+    const mentions = Array.from({ length: 15 }, (_, i): EuropePmcRecord => ({ ...CLOSED, id: String(100 + i), title: `Paper ${i} on malaria`, abstractText: "Pregnant women in Malawi.", citedByCount: 3 }));
+    const fetchImpl = fakeFetch({ searches: [[/REVAMP/, [...mentions, report]]] });
+    const hits = await createEuropePmc(fetchImpl).search("REVAMP trial oral iron standard-of-care", undefined);
+    assert.equal(new URLSearchParams(fetchImpl.urls[0]!.split("?")[1]).get("pageSize"), "25");
+    assert.equal(hits.length, 5);
+    assert.equal(hits[0]!.id, "europepmc:MED/37088092");
+    assert.deepEqual(hits.slice(1).map((h) => h.id), ["europepmc:MED/100", "europepmc:MED/101", "europepmc:MED/102", "europepmc:MED/103"], "Europe PMC's order breaks ties");
+  });
+
+  it("weighs a paper's citations less than the words it matches", () => {
+    const cited: EuropePmcRecord = { ...CLOSED, id: "1", title: "Iron in pregnancy", abstractText: "", citedByCount: 500 };
+    const matching: EuropePmcRecord = { ...CLOSED, id: "2", title: "Ferric carboxymaltose for anaemia in pregnancy", abstractText: "", citedByCount: 0 };
+    assert.deepEqual(rankHits([cited, matching], ["ferric", "carboxymaltose", "anaemia", "pregnancy"]).map((r) => r.id), ["2", "1"]);
+    const twin = { ...matching, id: "3", citedByCount: 40 };
+    assert.deepEqual(rankHits([matching, twin], ["ferric", "carboxymaltose"]).map((r) => r.id), ["3", "2"], "between equal matches, the one cited more");
+  });
+
+  it("names secondary analyses, substudies and protocols", async () => {
+    const titled = (title: string, pubType: string[] = ["Journal Article"]) => relatedReport({ ...CLOSED, title, pubTypeList: { pubType } });
+    assert.equal(titled("Prenatal Intravenous Iron and Child Growth: A Secondary Analysis of a Randomized Clinical Trial"), "secondary analysis");
+    assert.equal(titled("Effects of Ferric Carboxymaltose on Pica among Pregnant Women in Malawi: A Substudy to a Randomized Trial"), "secondary analysis");
+    assert.equal(titled("A post hoc analysis of the COPCOV trial"), "secondary analysis");
+    assert.equal(titled("Protocol and statistical analysis plan for a randomized controlled trial"), "protocol");
+    assert.equal(titled("Iron in pregnancy", ["Clinical Trial Protocol"]), "protocol");
+    assert.equal(titled("Ferric carboxymaltose versus standard-of-care oral iron: a randomised controlled trial"), undefined);
+    const secondary = { ...CARRAGEENAN, title: "Carrageenan and the gut: a secondary analysis of a randomised trial" };
+    const hits = await createEuropePmc(fakeFetch({ searches: [[/carrageenan/, [secondary]]] })).search("carrageenan", undefined);
+    assert.match(hits[0]!.title, /\(2024, BMC medicine; randomized controlled trial; secondary analysis; full text\)$/);
   });
 
   it("asks for any of the words when no work has all of them", async () => {
