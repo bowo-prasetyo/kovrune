@@ -19,6 +19,20 @@ describe("a long document's outline", () => {
     assert.deepEqual(partHeadings(text), ["Mozilla Public License Version 2.0", "5. Termination", "Exhibit A - Source Code Form License Notice"]);
   });
 
+  it("lists a table's caption with the part that holds its rows, when the caption ends the part before", async () => {
+    const parts = [
+      { id: "d#1", text: "## Methods\n\nText." },
+      { id: "d#2", text: "## Results\n\nText.\n\n**Table 1** Baseline characteristics" },
+      { id: "d#3", text: "| | A | B |\n| Age, years | 22·2 | 22·5 |" },
+      { id: "d#4", text: "## Discussion\n\nText." },
+    ];
+    assert.equal(outlineOf(parts), "#1 Methods; #2 Results; #3 Table 1: Baseline characteristics; #4 Discussion");
+    // REVAMP's Table 1, which ends part 22 of the trial report, as Europe PMC gives it.
+    const text = await readFile(new URL("../eval/clinical/docs/iv-iron-pregnancy-malawi.md", import.meta.url), "utf8");
+    const { chunkDocument } = await import("../src/documents/chunk.ts");
+    assert.match(outlineOf(chunkDocument({ id: "revamp", title: "REVAMP", text }))!, /; #23 Table 1: Baseline characteristics/);
+  });
+
   it("lists the parts that have headings, at most two each, and is cut at its length limit", () => {
     const parts = [1, 2, 3, 4].map((n) => ({ id: `doc#${n}`, text: n === 2 ? "No heading here, just a sentence." : `## Part ${n} title\n\nText.\n\n## Second ${n}\n\nText.\n\n## Third ${n}\n\nText.` }));
     assert.equal(outlineOf(parts), "#1 Part 1 title / Second 1; #3 Part 3 title / Second 3; #4 Part 4 title / Second 4");

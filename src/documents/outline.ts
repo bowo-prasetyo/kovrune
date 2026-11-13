@@ -22,6 +22,19 @@ const HEADING_CHARS = 60;
 /** The longest outline, in textWeight: about 150 tokens, a few percent of a 4,096-token context. */
 export const OUTLINE_CHARS = 600;
 
+/** A table's caption: "**Table 1** Baseline …" in the clinical documents, "Table 1." in others. */
+const TABLE_CAPTION = /^\*{0,2}(Table\s+\d+[A-Za-z]?)\.?\*{0,2}\.?\s*(.*)$/;
+
+/**
+ * Whether a part ends with a table's caption and not its rows: a long table is a part of its own, and its
+ * caption can end the part before. REVAMP's Table 1 caption ended part 22 and its rows filled part 23; the
+ * outline named part 22, and Qwen3.5-4B read it, found only the caption, and searched the parts before.
+ */
+function endsWithCaption(text: string): boolean {
+  const last = text.trim().split(/\n\s*\n/).at(-1)?.trim() ?? "";
+  return TABLE_CAPTION.test(last.split("\n")[0]!) && !last.includes("|");
+}
+
 /**
  * The headings of one part's text: Markdown headings, table captions ("**Table 1** Baseline …" in the
  * clinical documents, "Table 1." in others), and short heading-like paragraphs (chunk.ts isHeadingLike),
@@ -33,7 +46,7 @@ export function partHeadings(text: string): string[] {
     const first = paragraph.trim().split("\n")[0]!.trim();
     if (!first) continue;
     const markdown = /^#{1,6}\s+(.+)$/.exec(first);
-    const table = /^\*{0,2}(Table\s+\d+[A-Za-z]?)\.?\*{0,2}\.?\s*(.*)$/.exec(first);
+    const table = TABLE_CAPTION.exec(first);
     // A Setext heading: a line underlined by "===" or "---" (the MPL-2.0's "5. Termination").
     const lines = paragraph.trim().split("\n");
     const setext = lines.length >= 2 && /^\s*(=+|-+)\s*$/.test(lines[1]!) && lines[1]!.trim().length >= 3;
@@ -63,8 +76,13 @@ export function outlineOf(parts: Array<{ id: string; text: string }>): string | 
   if (parts.length < OUTLINE_MIN_PARTS) return undefined;
   const entries: string[] = [];
   let weight = 0;
-  for (const part of parts) {
-    const headings = partHeadings(part.text).slice(0, HEADINGS_PER_PART);
+  // A caption that ends a part is listed with the next part, which holds its table (endsWithCaption).
+  const headingsOf = parts.map((part) => partHeadings(part.text));
+  parts.forEach((part, i) => {
+    if (i + 1 < parts.length && endsWithCaption(part.text) && headingsOf[i]!.length) headingsOf[i + 1]!.unshift(headingsOf[i]!.pop()!);
+  });
+  for (const [i, part] of parts.entries()) {
+    const headings = headingsOf[i]!.slice(0, HEADINGS_PER_PART);
     if (!headings.length) continue;
     const number = /#(\d+)$/.exec(part.id)?.[1] ?? part.id;
     const entry = `#${number} ${headings.join(" / ")}`;
