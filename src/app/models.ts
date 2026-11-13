@@ -256,24 +256,34 @@ export async function askToKeepData(): Promise<boolean> {
  * What to do after the GPU device was lost. The lighter model is suggested only when there is a
  * standard one lighter than the model in use; with the lightest, the way out is another computer.
  */
-function gpuLostAdvice(modelId: string): string {
+function gpuLostAdvice(modelId: string, windows: boolean): string {
   const model = browserModelFor(modelId)?.model;
   const index = model ? STANDARD_BROWSER_MODELS.indexOf(model) : -1;
   const lighter = index >= 0 && index < STANDARD_BROWSER_MODELS.length - 1 ? STANDARD_BROWSER_MODELS[index + 1] : undefined;
   return (
-    "The GPU stopped responding or ran out of memory, so the model was unloaded. On Windows this shows in the console as DXGI_ERROR_DEVICE_HUNG: the GPU took too long and the graphics driver was reset. " +
+    "The GPU stopped responding or ran out of memory, so the model was unloaded. " +
+    (windows ? "On Windows this shows in the console as DXGI_ERROR_DEVICE_HUNG: the GPU took too long and the graphics driver was reset. " : "") +
     (lighter
       ? `Close other tabs and programs and try again, or use the lighter model, ${lighter.label}. On integrated graphics a local model server usually works better.`
       : `Close other tabs and programs and try again. If it fails the same way every time, this device cannot run ${model?.label ?? "the model"} in the browser: use a model server on another computer (see the user guide).`)
   );
 }
 
-/** A user-facing explanation for a failed model call or load. */
-export function describeModelError(error: unknown, settings: Settings): string {
+/** Whether the browser runs on Windows, where a lost GPU shows as DXGI_ERROR_DEVICE_HUNG. */
+function onWindows(): boolean {
+  const nav = globalThis.navigator as (Navigator & { userAgentData?: { platform?: string } }) | undefined;
+  return /windows/i.test(nav?.userAgentData?.platform || nav?.userAgent || "");
+}
+
+/**
+ * A user-facing explanation for a failed model call or load. `windows` says whether to name the
+ * Windows driver error; by default, whether this browser runs on Windows.
+ */
+export function describeModelError(error: unknown, settings: Settings, windows = onWindows()): string {
   if (settings.path === "local-server") return describeConnectionError(error, settings.baseUrl);
   const message = error instanceof Error ? error.message : String(error);
   if (/device.*lost|out of memory|OOM|allocation/i.test(message)) {
-    return gpuLostAdvice(settings.modelId);
+    return gpuLostAdvice(settings.modelId, windows);
   }
   if (isQuotaError(error)) {
     return "The browser has no more storage for this site, so the model could not be stored. Free disk space, or delete a model or documents you don't need (under Storage and backup on the research screen), and try again.";
