@@ -320,6 +320,32 @@ Before the caption fix, the same change passed 7 of `c01`–`c10`, with `c05` fa
 
 **Tried and not kept:** choosing the part read first without the "often" of "how often", which outweighed the rest of the `c04` question and chose the Introduction. With the clinical documents' titles it chose Procedures, but with the title Europe PMC gives, it chose another part (8). A fix that depends on the title is not one.
 
+#### Another report of the same trial (`c13`, `c18`)
+
+Two of the questions that still failed were answered from another report of the trial the question names, not from the suite's paper:
+
+- **`c13`, FASSTT's folic acid dose.** The model answered 400 µg/d, the suite's fact, from the trial's 2019 follow-up (FASSTT Offspring, MED/31672132), which gives the dose in its methods. The suite's paper is the trial's 2024 report. Both give the trial's registration, ISRCTN19917787. Only the citation failed.
+- **`c18`, the betamethasone injection for the first 717 mothers.** The model answered "6 mg of short-acting betamethasone phosphate and 6 mg long-acting betamethasone acetate", from the trial's 50-year cardiovascular report (MED/38557442). The suite's paper is its 50-year report on general health. This one also fails on a fact: the suite's paper says "sodium phosphate", the report read does not. The trial ran from 1969 to 1974, before trials were registered, so no number links the two papers.
+
+Neither is a defect in Kovrune: the questions name a trial, and the open literature holds several reports of most trials, each with its methods. Strict scoring requires the one paper the suite holds, which is right for the suite (its documents are those papers) and too narrow for an open source. So the model check is now committed, `npm run bench:europepmc:model` (`eval/europepmc-model.ts`), and scores each question twice:
+
+- **strictly,** as the suite scores it: the facts, a verified answer, and a citation of the suite's paper by its Europe PMC ID;
+- **by trial,** the same except that a citation of another paper of the same trial counts too. A paper is of the same trial when its full text gives a trial registration number (ISRCTN, NCT, ACTRN, PACTR; `eval/clinical/trials.ts`) the suite's paper gives. A trial without one, like the betamethasone trial, counts only its suite paper.
+
+The strict score stays the one this suite reports. Neither changes a question or a fact. Held-out questions are read only as totals.
+
+**With Qwen3.5-4B,** Europe PMC its only source, `main` after the protocol change, 13 November 2026 (`eval/results/europepmc-model-qwen3.5-4b-q4km.json`):
+
+| | Strictly | By trial |
+| --- | --- | --- |
+| `clinical`, 21 questions | **16** | **17** |
+| `clinicalholdout`, 9 questions | **4** | **5** |
+
+- The same 16 `clinical` questions passed strictly as in the run above. By trial, `c13` passes too.
+- `c18` fails both ways, on the fact's wording: the right dose, without "sodium".
+- `c21` fails both ways, correctly: the model said REVAMP enrolled more (it enrolled 862, the typhoid trial 28,130), though both facts' words are in its answer. Its citations, the REVAMP report and a typhoid preprint, are not the suite's typhoid paper, and give no shared registration.
+- `c09` (VESSEL's participants: the model answered 21, the trial had 18) and `c20` (not found) fail as before.
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.
