@@ -283,6 +283,27 @@ Europe PMC ranks a paper by a query's words anywhere in its full text, so the pa
 
 So search now finds a trial's own report far more often, and the model's failures with Europe PMC have moved from finding the paper to reading it.
 
+#### A long paper's outline, for open sources
+
+With a trial's own report found, the model still had to find the part it needed. Asked REVAMP's oral iron dose and its participants' mean age (`c04`, `c05`), 4B opened the report and read parts in order, never reaching the methods or Table 1. Since then, the first time the model reads a part of a long document from an open source (Europe PMC, arXiv, DataCite or Wikipedia), it is shown the document's outline once: which parts hold which sections and tables (`src/documents/outline.ts`, `SourceSession.read`). This is the outline of #144, measured above, for open sources only. The user's own documents are read as before, and the benchmark suites use no open source: replaying both models' recorded runs of research, unanswerable, pdf, field and holdout, `main` against the change, found all 320 tasks the same.
+
+**A defect in the outline.** A long table is a part of its own, and its caption can end the part before. In eight of the ten papers, a table's caption ended a part and its rows filled the next, so the outline named the part before the table: REVAMP's "#22 Table 1: Baseline characteristics" held only the caption, and 4B read part 22, found nothing, and read parts 21 to 17. The outline now names the part that holds the rows (#23). The outlines measured in #144 had the same defect.
+
+**With Qwen3.5-4B,** Europe PMC its only source, all 21 `clinical` questions with a document, `main` the same day (`c01`–`c10` from the run above):
+
+| | `c01`–`c10` | `c11`–`c21` | All |
+| --- | --- | --- | --- |
+| `main` | 7 | 7 | **14 of 21** |
+| With the outline | 8 | 7 | **15 of 21** |
+
+- Gained `c05`: the model read the report, was shown its outline, read part 23 and quoted "Age, years | 22·2 (6·0)".
+- Gained `c08`: it read the VESSEL blood pressure paper, not the glycaemic control one (a choice between two reports of one trial, as above).
+- Lost `c09`: the outline sent it to "#17 Results / Recruitment", and it answered that 21 were randomised; the suite asks for the 18 recruited, which `main` found in another part.
+- `c11`–`c21`: the same tasks pass with and without it.
+- Still failing `c04`: it reads the report, then the trial's protocol, and answers with the protocol's 65 mg twice daily. The report's 60 mg is in its Procedures, which the outline lists; the model did not go back to it.
+
+Before the caption fix, the same change passed 7 of `c01`–`c10`, with `c05` failing as described.
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.
