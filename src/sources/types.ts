@@ -5,7 +5,7 @@
 // which do (sources/arxiv.ts).
 
 export interface SourceHit {
-  /** Source-prefixed ID, e.g. "wikipedia:Alan_Turing", "openalex:W2741809807", "arxiv:2005.11401" or "datacite:10.5281/zenodo.15310522". */
+  /** Source-prefixed ID, e.g. "wikipedia:Alan_Turing", "openalex:W2741809807", "arxiv:2005.11401", "datacite:10.5281/zenodo.15310522" or "europepmc:MED/38012345". */
   id: string;
   title: string;
   snippet: string;
@@ -34,7 +34,7 @@ export interface WorkInfo {
 }
 
 export interface OpenSource {
-  name: "wikipedia" | "openalex" | "arxiv" | "datacite";
+  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc";
   /** Shown to the model and the user, e.g. "Wikipedia". */
   label: string;
   search(query: string, signal?: AbortSignal): Promise<SourceHit[]>;

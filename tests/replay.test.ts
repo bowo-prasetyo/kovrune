@@ -157,7 +157,7 @@ describe("saved tasks", () => {
   const task: SavedTask = {
     id: TASK_ID,
     question: QUESTION,
-    prefs: { wikipedia: false, language: "en", openalex: false, arxiv: false, datacite: false, openalexKey: "" },
+    prefs: { wikipedia: false, language: "en", openalex: false, arxiv: false, datacite: false, europepmc: false, openalexKey: "" },
     documentIds: ["a", "b"],
     setup: "Qwen3.5-4B on llama.cpp server",
     calls: [{ input: "00000000", output: "{}" }],

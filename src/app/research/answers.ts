@@ -283,7 +283,9 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
       ? `arxiv_${eprint.replace(/[^\w]/g, "_")}`
       : repository
         ? `datacite_${paper.slice("datacite:".length).replace(/[^\w]/g, "_")}`
-        : `openalex_${paper.replace(/^openalex:/, "")}`;
+        : paper.startsWith("europepmc:")
+          ? `europepmc_${paper.slice("europepmc:".length).replace(/[^\w]/g, "_")}`
+          : `openalex_${paper.replace(/^openalex:/, "")}`;
     const fields: Array<[string, string | number | undefined]> = [
       ["title", citation.title],
       ["author", authors.length ? authors.join(" and ") : undefined],

@@ -29,6 +29,8 @@ export const CONNECT_HOSTS = [
   "https://arxiv.org",
   // DataCite works on Zenodo: their records and PDFs (sources/datacite.ts).
   "https://zenodo.org",
+  // Europe PMC: its search, records and open-access full texts (sources/europepmc.ts).
+  "https://www.ebi.ac.uk",
 ];
 
 export const CSP_DIRECTIVES: Record<string, string[]> = {

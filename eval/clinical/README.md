@@ -250,6 +250,25 @@ Reports: [4B base](../results/field-outline-base-qwen3.5-4b-q4km.json), [4B outl
 
 Nothing regresses, but the field suite does not improve on either model, so the rule does not adopt the outline. Its gains are on the clinical suites, where long papers are what the questions are about; the field suite's long documents are a user guide, a licence and a design document, whose questions 4B already answers by search. The overflow retry is a defect fix in its own right, a unit test showing the error it handles, and is adopted on its own under the rule's defect clause as harness 0.66.0 ([field suite](../field/README.md#a-prompt-the-server-refuses-as-too-long-0660-defect-fix)).
 
+### Europe PMC as a source (live, no model and with Qwen3.5-4B)
+
+Europe PMC is one of the open sources the agent can search (`src/sources/europepmc.ts`). It reads an open-access paper in full from the same JATS XML these documents were made from, with `jats2md.py` ported to TypeScript (`src/sources/jats.ts`). `npm run bench:europepmc` checks it live, with no model:
+
+- **Reading:** each of the ten papers, read through the source by its PMID, gives this suite's document byte for byte (10 of 10, 13 November 2026). So what the models were measured on here is what the app reads from Europe PMC.
+- **Search:** each question with a document, searched as typed, the longest query a model could write. Without the function words a question is asked in ("what", "was", "the"), which Europe PMC otherwise required in a paper's full text, the paper is in the top five for 13 of 21 `clinical` questions (first for 5), against 9 with them, and for 6 of 9 `clinicalholdout` questions, against 3. The held-out suite was run once, after the change, and read only as totals.
+
+**With a model.** Qwen3.5-4B on the 0.66.0 harness's machine and build, with Europe PMC as its only source and no documents, answered the first five `clinical` questions, scored as the suite scores, with the paper to cite named by its Europe PMC ID. This is a check, not a run of the suite: five questions, and Europe PMC's index changes. Two of five passed:
+
+| Task | Result | What happened |
+| --- | --- | --- |
+| `c01` | pass | Found the trial with its first search, read it, and answered 78·3% (66·3–86·1) |
+| `c02` | pass | Quoted "Mean (SD) 6·1 (3·3)" from Table 1, which the abstract does not give |
+| `c03` | fail | The right answer ("did not reduce"), from the wrong paper: the later REVAMP-TT trial of ferric carboxymaltose in the third trimester (Nat Med 2025), which reports the same |
+| `c04` | fail | Its searches ("REVAMP trial oral iron standard-of-care", and two more) found the later trial and a secondary analysis of the cohort, not the trial asked about; answered "not found" |
+| `c05` | fail | Found a follow-up of the trial (postpartum outcomes, Lancet Glob Health 2024) and the later trial, read seven parts, answered "not found" |
+
+So reading works, tables included, and the failures were finding the paper: a trial's name brings up the papers that followed it, which the suite's own library of ten did not have. The questions were written for that library, and name the trial as its readers would; in the open literature, "the REVAMP trial" is three papers. A question that names the year or journal, or asks the model to check that it has the primary report, is what a researcher would do; the agent does neither yet.
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.

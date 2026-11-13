@@ -419,7 +419,7 @@ The research agent searches accessible sources, extracts passages and metadata, 
 - CORS-friendly scholarly and technical APIs, for example Wikipedia, OpenAlex, Crossref, arXiv metadata where reachable, the GitHub API, and the Hugging Face Hub.
 - Search providers that allow browser access with the user's own API key, where available.
 
-**Built so far:** the user's documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV and TSV, text, Markdown and HTML; [`office-formats.md`](office-formats.md)), and four open sources, each off until the user ticks it: Wikipedia, OpenAlex (abstracts), arXiv (found through DataCite, papers read in full from arxiv.org), and DataCite (repository works, read in full from Zenodo's PDFs where available, otherwise as abstracts).
+**Built so far:** the user's documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV and TSV, text, Markdown and HTML; [`office-formats.md`](office-formats.md)), and five open sources, each off until the user ticks it: Wikipedia, OpenAlex (abstracts), arXiv (found through DataCite, papers read in full from arxiv.org), DataCite (repository works, read in full from Zenodo's PDFs where available, otherwise as abstracts), and Europe PMC (biomedical papers and preprints, read in full from their JATS XML where open access, otherwise as abstracts).
 
 The product is positioned as **scholarly and technical research**, not general web browsing. Each source adapter declares what it can reach, and the UI explains when a URL cannot be fetched and offers to import it manually.
 
@@ -548,7 +548,7 @@ The deployed app can read every user's identity keys and private data, so its in
 **Since M2 slice 4** ([`releases.md`](releases.md)):
 - **Reproducible builds:** a release built from a tag can be rebuilt byte for byte, and CI checks this on every pull request.
 - **Release checksums:** a tag produces a draft release with `SHA256SUMS`.
-- **Content Security Policy:** in place as above. Because the configured endpoint is only known once setup is saved, `connect-src` is open during setup and narrowed afterwards to Hugging Face, GitHub's raw files, Wikipedia, OpenAlex, DataCite, arXiv, Zenodo and the saved model server (`CONNECT_HOSTS` in `src/app/csp.ts`).
+- **Content Security Policy:** in place as above. Because the configured endpoint is only known once setup is saved, `connect-src` is open during setup and narrowed afterwards to Hugging Face, GitHub's raw files, Wikipedia, OpenAlex, DataCite, arXiv, Zenodo, Europe PMC and the saved model server (`CONNECT_HOSTS` in `src/app/csp.ts`).
 - **Since slice 5:** releases are signed with an SSH key the owner holds, never CI: the owner rebuilds the tag, `npm run release:sign` checks the rebuild against CI's `SHA256SUMS` and signs it, and a workflow unpublishes any release whose signature doesn't verify against `release-signers`. The app is hosted on Cloudflare Pages, which sends the policy as a header (§7.4).
 
 ### 7.4 Hosting requirements
@@ -617,7 +617,7 @@ Reference hardware classes for benchmarks:
 
 ## 10. Repository structure
 
-Modules are added when their responsibilities become concrete; empty directories are not created in advance. The tree below is the full design. Today, `src/` has `app/`, `agent/`, `models/`, `tools/`, `sources/` (Wikipedia, OpenAlex, arXiv and DataCite) and `documents/` (text extraction from PDF, Office, OpenDocument and CSV files, and chunking); `p2p/`, `storage/`, `security/` and `workers/` arrive with their milestones.
+Modules are added when their responsibilities become concrete; empty directories are not created in advance. The tree below is the full design. Today, `src/` has `app/`, `agent/`, `models/`, `tools/`, `sources/` (Wikipedia, OpenAlex, arXiv, DataCite and Europe PMC) and `documents/` (text extraction from PDF, Office, OpenDocument and CSV files, and chunking); `p2p/`, `storage/`, `security/` and `workers/` arrive with their milestones.
 
 ```
 kovrune/

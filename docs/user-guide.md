@@ -239,7 +239,7 @@ Ollama works but is experimental: in testing, some versions repeated the same st
 ## 3. Ask questions and write reports
 
 1. **Add documents** with **Choose files**, or by dropping them on the page: PDF, Word, PowerPoint, Excel, OpenDocument, CSV, text, Markdown or HTML ([what Kovrune reads](#your-documents)). **Show text** shows what Kovrune read from a file.
-2. **Choose where to search**, under **Search in**. Your documents are always searched. Tick **Wikipedia**, **OpenAlex**, **arXiv** or **DataCite** to search those too ([below](#choose-where-to-search)).
+2. **Choose where to search**, under **Search in**. Your documents are always searched. Tick **Wikipedia**, **OpenAlex**, **arXiv**, **DataCite** or **Europe PMC** to search those too ([below](#choose-where-to-search)).
 3. **Type a question and press Ask**, or Ctrl+Enter (⌘ Enter on a Mac). The question box is at the top; where to search and **Mode** (a question or a report) are below it.
 
 You see each step the model takes, then the answer with its label and the quotes it is based on ([section 4](#4-read-the-answer)).
@@ -290,7 +290,7 @@ The report shows a summary of the sections' labels, for example "3 of 4 sections
 
 A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written.
 
-**Export as Markdown** writes the report, with its introduction and conclusion if it has them, each section's quotes numbered against one list of references, and the steps. **Export papers as BibTeX** collects the OpenAlex, arXiv and DataCite works of every section.
+**Export as Markdown** writes the report, with its introduction and conclusion if it has them, each section's quotes numbered against one list of references, and the steps. **Export papers as BibTeX** collects the OpenAlex, arXiv, DataCite and Europe PMC works of every section.
 
 Reports work best with Qwen3.5-4B. With Qwen3.5-2B, sections are often long and mostly unbacked by quotes: the labels say so.
 
@@ -319,7 +319,7 @@ The label's mark says how much it asks of you: ✓ in green when the quotes back
 
 Under **Evidence**, each quote shows ✓ (found) or ✗ (not found), and the document it came from.
 
-- **Where it is:** for a quote from a PDF, the page is shown next to the document's name, for example "p. 4"; from a presentation, its slide, for example "slide 4"; from a spreadsheet, its sheet, for example "sheet 2". Word and OpenDocument text files have no fixed pages (they depend on the layout), so their quotes show no page. Quotes from Wikipedia, OpenAlex, arXiv and DataCite link to the page and show when it was retrieved.
+- **Where it is:** for a quote from a PDF, the page is shown next to the document's name, for example "p. 4"; from a presentation, its slide, for example "slide 4"; from a spreadsheet, its sheet, for example "sheet 2". Word and OpenDocument text files have no fixed pages (they depend on the layout), so their quotes show no page. Quotes from Wikipedia, OpenAlex, arXiv, DataCite and Europe PMC link to the page and show when it was retrieved.
 - **Show in the source,** under each quote that was found, opens the passage around it, as it is in the document, with the quoted words highlighted.
 - **The closest passage:** for a quote that is mostly real but not word for word (at least 70% of its words appear in order in one passage), Kovrune shows the closest passage with the differences marked: highlighted words are in the source, struck-out words appear only in the quote. Small models often start with a real sentence and finish it from memory, and this shows where they did.
 - **Quotes with "...":** a quote may leave words out with "...". It is found when its parts are in the source in that order, close together, and the passage shown includes the words it left out. A quote that leaves out more than five words in one place is still found, but backs no sentence of the answer: joining distant words can change what the source says.
@@ -372,13 +372,15 @@ Steps 3 to 6 ask the same small model that wrote the answer, so they catch some 
 
 ### Open sources
 
-All four are off until you tick them, and need no account.
+All five are off until you tick them, and need no account.
 
 - **Wikipedia:** encyclopedia articles, in the language edition you choose. A long article is read a part at a time, the part that best matches your question first.
 - **OpenAlex:** scholarly papers of every field, but Kovrune reads only their abstracts: OpenAlex catalogues papers and does not hold their text. A question about a paper's methods or results beyond its abstract usually ends as "not found".
   - **API key (optional).** Without a key, OpenAlex shares a small daily budget among everyone on your network's address, which can run out until midnight UTC on a shared network (an office, a campus, a mobile carrier). A free key from [OpenAlex](https://help.openalex.org/api/authentication/) gives you your own; enter it under the boxes once OpenAlex is ticked. It is kept in this browser and sent only to OpenAlex, and backups do not include it. arXiv does not use it.
 - **arXiv:** preprints in physics, mathematics, computer science and related fields, read in full. Papers are found through DataCite, which registers every arXiv paper's DOI (arXiv's own search can't be used from a web page), and each paper the model reads is downloaded from arxiv.org as a PDF. A long paper is read a part at a time, the part that best matches your question, and a quote shows its page. Downloading a paper takes a few seconds more than reading an abstract.
 - **DataCite:** works that research repositories register: Zenodo, university repositories and others, besides arXiv's papers, which the arXiv box covers. Only texts are searched (articles, preprints, reports, theses), not datasets or software. Works on Zenodo, most of what a search finds, are read in full from their PDFs, downloaded from zenodo.org; other works, and Zenodo works without an open PDF, are read as their abstracts. Repositories hold work that has not been peer reviewed, so weigh what you read as you would a preprint.
+- **Europe PMC:** the biomedical and life-sciences literature: PubMed's records, PubMed Central's full texts, and preprints from medRxiv, bioRxiv and others. Each result shows its year, journal and kind of study (randomized controlled trial, systematic review, preprint and so on), and whether it is open access ("full text") or not ("abstract only"). Open-access papers are read in full, tables included, which is where a trial's baseline characteristics, adverse events and subgroups usually are; other papers are read as their abstracts. A long paper is read a part at a time. A paper Europe PMC marks as retracted shows **RETRACTED** in the results, and its text starts with a warning. Searches ask for papers with all of the model's words, and with any of them when none has all.
+  - A full text can take Europe PMC several seconds to give, a preprint's sometimes much longer; after a minute, the paper is read as its abstract.
 
 ## 6. Past answers, export and backup
 
@@ -396,7 +398,7 @@ The browser's **Back** and **Forward** buttons move between the setup steps, the
 ### Export
 
 - **Export as Markdown** saves the question, the label, the answer (with ⚠ marks), each quote with its source and page, and the steps, as a `.md` file.
-- **Export papers as BibTeX** appears when the answer cites OpenAlex, arXiv or DataCite works, and saves a `.bib` file with their authors, year, venue or repository, DOI and link; arXiv papers carry their arXiv identifier.
+- **Export papers as BibTeX** appears when the answer cites OpenAlex, arXiv, DataCite or Europe PMC works, and saves a `.bib` file with their authors, year, venue or repository, DOI and link; arXiv papers carry their arXiv identifier.
 
 Exports are made in the browser; nothing is uploaded.
 
@@ -417,7 +419,7 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 
 - **The model runs on your computer.** Nothing is sent to an online AI service.
 - **Your documents** are read in the browser and never uploaded.
-- **Wikipedia, OpenAlex, arXiv and DataCite** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services: arXiv searches go to DataCite, the arXiv papers the model reads are downloaded from arxiv.org, and the DataCite works it reads on Zenodo are downloaded from zenodo.org. Your documents and your question as you typed it are not sent. An OpenAlex API key, if you enter one, is sent only to OpenAlex.
+- **Wikipedia, OpenAlex, arXiv, DataCite and Europe PMC** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services: arXiv searches go to DataCite, the arXiv papers the model reads are downloaded from arxiv.org, the DataCite works it reads on Zenodo are downloaded from zenodo.org, and Europe PMC's searches and full texts come from www.ebi.ac.uk. Your documents and your question as you typed it are not sent. An OpenAlex API key, if you enter one, is sent only to OpenAlex.
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub, both at fixed versions that are checked against published checksums;
   - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([how](#use-a-model-server-on-another-computer)).
@@ -475,6 +477,7 @@ In each case, the research continues with your other sources.
 | "Wikipedia did not answer within 20 seconds" (or OpenAlex) | The service is slow or the connection is poor | Try again later |
 | "arXiv did not answer within 90 seconds" | A paper's PDF downloads slowly on a poor connection | Try again later |
 | "The PDF of arXiv paper … could not be read" | The PDF is damaged or unusual, or scanned images | Nothing to fix: the model can read other papers |
+| A Europe PMC paper is read only as its abstract | It is not open access, or Europe PMC did not give its full text within a minute; the text says which | Nothing to fix: the model answers from the abstract or reads another paper |
 | A DataCite work is read only as its abstract ("only its record was read") | The work is not on Zenodo, has no PDF there, or its PDF is too large, scanned or could not be downloaded; the step says which | Nothing to fix: the model answers from the abstract or reads another work |
 | "OpenAlex is busy (too many requests)" | OpenAlex limits how often anonymous users may search, and many questions in a short time reach the limit. Kovrune waits and tries once more when OpenAlex asks for a short wait | Wait a few minutes. The search's step in the trace ends with "failed" |
 | "OpenAlex has no requests left for now; they come back in about … hours" | Without an API key, OpenAlex gives everyone on your network's address one small daily budget, and it is used up until midnight UTC | Add a free OpenAlex API key under **Search in** ([how](#open-sources)) |
