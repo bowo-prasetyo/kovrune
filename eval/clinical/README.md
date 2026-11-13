@@ -304,6 +304,22 @@ With a trial's own report found, the model still had to find the part it needed.
 
 Before the caption fix, the same change passed 7 of `c01`–`c10`, with `c05` failing as described.
 
+#### A trial's protocol below its report
+
+`c04` still failed with the outline: asked REVAMP's oral iron dose, 4B read the report, whose part chosen for the question was its Introduction, and then the trial's protocol, which ranked among the five results, and answered with the protocol's plan (65 mg twice daily) instead of the report's 60 mg. A protocol gives what a trial planned; its report gives what was done and found, its methods included. Since then, a protocol's match counts half in the ranking (`PROTOCOL_WEIGHT` in `src/sources/europepmc.ts`). For both of the model's REVAMP searches, the protocol left the top five (it was 4th and 3rd); the no-model check is unchanged (10 of 10 documents byte for byte; the paper first for 15 of 21 `clinical` questions and 6 of 9 held out).
+
+**With Qwen3.5-4B,** Europe PMC its only source, all 21 `clinical` questions, `main` run again the same day (Europe PMC's results had changed since the run above: the REVAMP report now ranked third, after its postpartum follow-up):
+
+| | `c01`–`c10` | `c11`–`c21` | All |
+| --- | --- | --- | --- |
+| `main` | 8 | 7 | **15 of 21** |
+| Protocol below its report | 9 | 7 | **16 of 21** |
+
+- Gained `c04`: the model read the report's Introduction, then, as the outline listed, part 13 (Procedures), and answered "60 mg elemental iron as ferrous sulphate, twice daily for 90 days".
+- Every other question passed or failed as on `main`.
+
+**Tried and not kept:** choosing the part read first without the "often" of "how often", which outweighed the rest of the `c04` question and chose the Introduction. With the clinical documents' titles it chose Procedures, but with the title Europe PMC gives, it chose another part (8). A fix that depends on the title is not one.
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.
