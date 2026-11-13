@@ -269,6 +269,20 @@ Europe PMC is one of the open sources the agent can search (`src/sources/europep
 
 So reading works, tables included, and the failures were finding the paper: a trial's name brings up the papers that followed it, which the suite's own library of ten did not have. The questions were written for that library, and name the trial as its readers would; in the open literature, "the REVAMP trial" is three papers. A question that names the year or journal, or asks the model to check that it has the primary report, is what a researcher would do; the agent does neither yet.
 
+#### A trial's own report first (Europe PMC's ranking)
+
+Europe PMC ranks a paper by a query's words anywhere in its full text, so the papers that followed a trial, which name it in their methods, came before its own report: for the model's search "REVAMP trial oral iron standard-of-care", the report was 16th, after a secondary analysis, two substudies, a cohort analysis and papers about anaemia care that cite it. Since then, the source asks for 25 results and shows the five whose title and abstract hold the largest share of the search words, that share raised by the paper's citations (× 1 + 0.3 log10(1 + citations); `rankHits` in `src/sources/europepmc.ts`), Europe PMC's order breaking ties. Results say when a paper is a secondary analysis, substudy or protocol, and a protocol's text starts with a note that it gives what was planned.
+
+- **Search, no model:** each question searched as typed puts its paper first for 15 of 21 `clinical` questions (5 before) and in the top five for 16 (13), and first for 6 of 9 `clinicalholdout` questions (2) and in the top five for 8 (6), the held-out suite read as totals. Reading still gives the ten documents byte for byte.
+- **The model's own searches,** from the run above: the REVAMP report moves into the top five for 4 of 6 (1 before). The other two ("… dose frequency", "… dose 325 mg") never return it among Europe PMC's first 25.
+- **The weight:** from 0 to 0.3 it finds as many papers as no weight, and puts more first. Added to the match instead of multiplying it, a weight of 0.2 let the American Heart Association's yearly statistics, cited thousands of times and matching one word in twelve, take three of the five places for a search on the VESSEL trial; scaled, a paper that matches little gains little.
+- **With Qwen3.5-4B,** the first ten `clinical` questions, as above: **7 of 10, as before** (`c01`–`c05` 2 of 5 before, `c06`–`c10` 5 of 5, run on `main` the same day).
+  - Gained `c03`: it read the REVAMP report and answered from it.
+  - `c04` and `c05` now read the REVAMP report first, and still fail inside it: the part read first does not hold the dose or Table 1. In `c04` the model then read the trial's protocol and answered with its plan (120 mg daily), with or without the note; in `c05` it read six of the report's parts and none with Table 1. That is reading a long paper, which the outline experiment (#144) measured, not finding it.
+  - Lost `c08`: the model read the VESSEL trial's second paper, on glycaemic control, ranked second, which reports the same 2·5 mmHg fall; the scoring asks for the blood pressure paper. A trial that reports its outcomes in several papers is ambiguous for any ranking.
+
+So search now finds a trial's own report far more often, and the model's failures with Europe PMC have moved from finding the paper to reading it.
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.

@@ -16,6 +16,25 @@ import { getBytes, getJson, SourceError, type FetchLike, type FetchedDocument, t
 const PREFIX = "europepmc:";
 export const EUROPEPMC_API = "https://www.ebi.ac.uk/europepmc/webservices/rest";
 const HITS = 5;
+/**
+ * Results asked for, of which the HITS that best match are shown (rankHits). Europe PMC ranks a paper by
+ * the words of a query anywhere in its full text, so the papers that followed a trial, which name it in
+ * their methods, ranked above its own report: "REVAMP trial oral iron standard-of-care" put the REVAMP
+ * report 16th, after a secondary analysis, two substudies and papers that cite it (eval/clinical/README.md).
+ * 25 records are about 44 kB compressed, 0.2 s more than 5.
+ */
+const CANDIDATES = 25;
+/**
+ * How much a paper's citations raise its match: its share of the query's words in its title and abstract
+ * is multiplied by 1 + CITATION_WEIGHT × log10(1 + citations), so a paper cited 100 times counts 1.6 times
+ * its match. A trial's own report is cited more than the papers that followed it. Scaling the match, not
+ * adding to it, keeps citations from lifting a paper that matches little: added, at 0.2, the American Heart
+ * Association's yearly statistics (cited thousands of times, 1 of 12 words) took three of the five places
+ * for a search on the VESSEL trial. On the clinical suite's questions and the model's own searches, 0.3
+ * found as many papers as no weight (16 of 21 questions in the top five), put more first (15 against 13),
+ * and added one hit matching under half the words in 135 (eval/clinical/README.md).
+ */
+export const CITATION_WEIGHT = 0.3;
 /** A full text can take Europe PMC several seconds to give (18 s for a preprint in a check); the abstract is read if it takes longer. */
 export const FULL_TEXT_TIMEOUT_MS = 60_000;
 /** Only records with something to read: an abstract, or an open-access full text. */
@@ -37,6 +56,7 @@ export interface EuropePmcRecord {
   bookOrReportDetails?: { publisher?: string };
   pubYear?: string;
   abstractText?: string;
+  citedByCount?: number;
   pubTypeList?: { pubType?: string[] };
   isOpenAccess?: "Y" | "N";
 }
@@ -122,6 +142,38 @@ function titleOf(record: EuropePmcRecord): string {
 }
 
 /** What a search result says besides its title: "(2024, The Lancet; randomized controlled trial; full text)". */
+/**
+ * A paper that reports on a trial without being its main report, from its title or publication type:
+ * a secondary or post-hoc analysis, a substudy, or the trial's protocol. Named in search results, so the
+ * model can tell them from the report a question asks about.
+ */
+export function relatedReport(record: EuropePmcRecord): "secondary analysis" | "protocol" | undefined {
+  const title = titleOf(record);
+  if (pubTypes(record).some((t) => /^(clinical trial protocol|study protocol)$/i.test(t.trim())) || /\b(protocol|statistical analysis plan)\b/i.test(title)) return "protocol";
+  if (/\b(secondary|post[- ]?hoc|ancillary|exploratory) analys[ie]s\b|\bsub-?stud(y|ies)\b/i.test(title)) return "secondary analysis";
+  return undefined;
+}
+
+/** Text compared without case or accents. */
+const fold = (text: string) => text.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+
+/**
+ * The HITS records that best match the query: by the share of its words in a record's title and abstract,
+ * raised by its citations (CITATION_WEIGHT); Europe PMC's order breaks ties.
+ */
+export function rankHits(records: EuropePmcRecord[], terms: string[]): EuropePmcRecord[] {
+  const words = terms.map(fold);
+  return records
+    .map((record, at) => {
+      const text = fold(`${titleOf(record)} ${abstractOf(record)}`);
+      const share = words.length ? words.filter((word) => text.includes(word)).length / words.length : 0;
+      return { record, at, score: share * (1 + CITATION_WEIGHT * Math.log10(1 + (record.citedByCount ?? 0))) };
+    })
+    .sort((a, b) => b.score - a.score || a.at - b.at)
+    .slice(0, HITS)
+    .map(({ record }) => record);
+}
+
 function aboutOf(record: EuropePmcRecord): string {
   const where = [record.pubYear, venueOf(record)].filter(Boolean).join(", ");
   const retracted = retraction(record);
@@ -129,12 +181,25 @@ function aboutOf(record: EuropePmcRecord): string {
     ...(retracted === "retracted" ? ["RETRACTED"] : retracted === "notice" ? ["retraction notice"] : []),
     ...(where ? [where] : []),
     ...(studyTypes(record).length ? [studyTypes(record).join(", ")] : []),
+    ...(relatedReport(record) ? [relatedReport(record)!] : []),
     fullTextId(record) ? "full text" : "abstract only",
   ].join("; ");
 }
 
 /** A warning put first in the text of a retracted work, so the model and the reader see it. */
 export const RETRACTED_NOTE = "Note: Europe PMC marks this publication as retracted. Its findings should not be relied on.";
+
+/**
+ * A note put first in a trial protocol's text. A protocol is written before the trial is run, so it gives
+ * what was planned: asked the REVAMP trial's oral iron dose, Qwen3.5-4B read the trial's report, then its
+ * protocol, and answered with the protocol's plan (eval/clinical/README.md).
+ */
+export const PROTOCOL_NOTE = "Note: this is a trial protocol, written before the trial was run. It gives what was planned, not what was done or found; those are in the trial's own report.";
+
+/** The notes a work's text starts with: a retraction, or that it is a protocol. */
+function notesFor(record: EuropePmcRecord): string[] {
+  return [...(retraction(record) === "retracted" ? [RETRACTED_NOTE] : []), ...(relatedReport(record) === "protocol" ? [PROTOCOL_NOTE] : [])];
+}
 
 function workInfo(record: EuropePmcRecord): WorkInfo {
   const year = Number(record.pubYear);
@@ -154,7 +219,7 @@ export function recordText(record: EuropePmcRecord, why: string): string {
   const ids = [record.doi ? `DOI: ${record.doi}` : "", record.pmid ? `PMID: ${record.pmid}` : "", record.pmcid ? `PMCID: ${record.pmcid}` : ""].filter(Boolean).join(". ");
   const abstract = abstractOf(record);
   return [
-    ...(retraction(record) === "retracted" ? [RETRACTED_NOTE] : []),
+    ...notesFor(record),
     titleOf(record),
     [authors.slice(0, 5).join(", ") + (authors.length > 5 ? " et al." : ""), record.pubYear, venueOf(record)].filter(Boolean).join(". "),
     ids,
@@ -245,9 +310,9 @@ export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
     async search(query, signal) {
       const terms = searchTerms(query);
       if (!terms.length) return [];
-      let records = await searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, HITS, signal);
-      if (!records.length && terms.length > 1) records = await searchRecords(`(${terms.join(" OR ")}) AND ${READABLE}`, HITS, signal);
-      return records.map((record) => {
+      let records = await searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, CANDIDATES, signal);
+      if (!records.length && terms.length > 1) records = await searchRecords(`(${terms.join(" OR ")}) AND ${READABLE}`, CANDIDATES, signal);
+      return rankHits(records, terms).map((record) => {
         found.set(`${record.source}/${record.id}`, record);
         const abstract = abstractOf(record).replace(/\n/g, " ");
         return { id: europePmcDocId(record), title: `${titleOf(record)} (${aboutOf(record)})`, snippet: abstract ? snippetOf(abstract) : "No abstract." };
@@ -261,7 +326,7 @@ export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
       return {
         id: europePmcDocId(record),
         title: titleOf(record),
-        text: typeof text === "string" ? (retraction(record) === "retracted" ? `${RETRACTED_NOTE}\n\n${text}` : text) : recordText(record, text.why),
+        text: typeof text === "string" ? [...notesFor(record), text].join("\n\n") : recordText(record, text.why),
         url: `https://europepmc.org/article/${record.source}/${record.id}`,
         retrievedAt: new Date().toISOString(),
         work: workInfo(record),
