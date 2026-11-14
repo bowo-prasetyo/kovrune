@@ -26,6 +26,11 @@ const IN_URL = new RegExp(String.raw`arxiv\.org/(?:abs|pdf)/${ID}`, "i");
 const IN_DOI = new RegExp(String.raw`10\.48550/arxiv\.${ID}`, "i");
 const BARE = new RegExp(String.raw`^${ID}$`);
 
+/** The arXiv identifier in a link or DOI ("https://arxiv.org/abs/2005.11401v2", "10.48550/arXiv.2005.11401"), without its version. */
+export function arxivIdIn(text: string): string | undefined {
+  return (IN_URL.exec(text) ?? IN_DOI.exec(text))?.[1];
+}
+
 /** A DataCite record of an arXiv paper, as far as Kovrune reads it. */
 export interface DataCiteRecord {
   id: string;

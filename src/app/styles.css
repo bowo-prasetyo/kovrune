@@ -769,6 +769,25 @@ fieldset.sources label.openalex-key {
   max-width: 28em;
 }
 
+/* OpenAlex's search limits: a year, a field, open access only (harness 0.68.0). */
+fieldset.sources .openalex-limits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 16px;
+  margin: 8px 0 4px;
+}
+
+fieldset.sources .openalex-limits label:not(.choice) {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+fieldset.sources .openalex-limits input[type="number"] {
+  width: 7em;
+}
+
 /* After Remove or Delete: what was removed, and a way to bring it back (UndoNotice.tsx). */
 .undo-notice {
   display: flex;

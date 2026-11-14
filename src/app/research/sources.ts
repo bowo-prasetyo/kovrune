@@ -8,7 +8,7 @@ import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
 import { createArxiv } from "../../sources/arxiv.ts";
 import { createDataCite } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
-import { createOpenAlex } from "../../sources/openalex.ts";
+import { createOpenAlex, OPENALEX_FIELDS } from "../../sources/openalex.ts";
 import type { OpenSource } from "../../sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../../sources/wikipedia.ts";
 
@@ -29,6 +29,18 @@ export interface SourcePrefs {
    * only, and sent only to OpenAlex. Backups do not include it.
    */
   openalexKey: string;
+  /** OpenAlex searches find only works published in this year or later; undefined for any year. */
+  openalexFromYear?: number;
+  /** OpenAlex searches find only works with a free copy. */
+  openalexOpenAccess?: boolean;
+  /** OpenAlex searches find only works in this field of research (OPENALEX_FIELDS); "" for any field. */
+  openalexField?: string;
+}
+
+/** A year an OpenAlex search may start from: a whole number from 1900 to next year. */
+export function validFromYear(value: unknown, now = new Date()): number | undefined {
+  const year = typeof value === "string" ? Number(value.trim()) : value;
+  return typeof year === "number" && Number.isInteger(year) && year >= 1900 && year <= now.getFullYear() + 1 ? year : undefined;
 }
 
 const KEY = "kovrune.sources.v1";
@@ -52,6 +64,9 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       datacite: value.datacite === true,
       europepmc: value.europepmc === true,
       openalexKey: typeof value.openalexKey === "string" ? value.openalexKey.trim() : "",
+      ...(validFromYear(value.openalexFromYear) ? { openalexFromYear: validFromYear(value.openalexFromYear) } : {}),
+      ...(value.openalexOpenAccess === true ? { openalexOpenAccess: true } : {}),
+      ...(typeof value.openalexField === "string" && OPENALEX_FIELDS.some(([id]) => id === value.openalexField) ? { openalexField: value.openalexField } : {}),
     };
   } catch {
     return defaults;
@@ -76,13 +91,20 @@ export function saveSourcePrefs(prefs: SourcePrefs): void {
 
 const extractPdf = async (bytes: Uint8Array) => extractPdfText(bytes, await loadBrowserPdfJs());
 
+/**
+ * The ticked sources. OpenAlex reads a work in full from arXiv or Europe PMC only when that source is
+ * ticked too, so no site is asked that the user did not choose (openalex.ts).
+ */
 export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
+  const arxiv = prefs.arxiv ? createArxiv({ extractPdf }) : undefined;
+  const europepmc = prefs.europepmc ? createEuropePmc() : undefined;
+  const filters = { fromYear: prefs.openalexFromYear, openAccess: prefs.openalexOpenAccess, field: prefs.openalexField };
   return [
     ...(prefs.wikipedia ? [createWikipedia(prefs.language)] : []),
-    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey)] : []),
-    ...(prefs.arxiv ? [createArxiv({ extractPdf })] : []),
+    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc })] : []),
+    ...(arxiv ? [arxiv] : []),
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
-    ...(prefs.europepmc ? [createEuropePmc()] : []),
+    ...(europepmc ? [europepmc] : []),
   ];
 }
 
