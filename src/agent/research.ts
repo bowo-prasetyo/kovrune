@@ -14,7 +14,7 @@ import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } 
 import { checkCompleteness, checksCompleteness } from "./completeness.ts";
 import { crossCheckAnswer, crossChecksAnswers } from "./crosscheck.ts";
 import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
-import { reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
+import { crossCheckRejects, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -179,7 +179,7 @@ export async function runResearch(options: {
     // The checks above judge what the answer says, not what it leaves out: an answer to one part of a
     // two-part question passes them all. For models it is measured for, the model lists the parts the
     // question asks for, and the answer must give each (completeness.ts).
-    if (support.review === "yes" && support.crossCheck?.agrees !== false && checksCompleteness(options.model.info.id)) {
+    if (support.review === "yes" && !crossCheckRejects(support.crossCheck) && checksCompleteness(options.model.info.id)) {
       support.completeness = await checkCompleteness({
         model: options.model,
         question: options.question,
