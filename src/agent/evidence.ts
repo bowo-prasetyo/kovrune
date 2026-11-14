@@ -76,13 +76,17 @@ const MARKDOWN_LINK = /!?\[([^\]\n]*)\]\((?:[^()\s]|\([^()\s]*\))*(?:\s+"[^"\n]*
  */
 export const LITERAL_BREAKS = /\\[nrt]/g;
 
-/** Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote. */
-export function normalizeForMatch(text: string): string {
-  const unified = text
+/**
+ * Lower-cases and unifies quotes, dashes and whitespace, so formatting differences do not fail a quote.
+ * With `keepCase`, letters keep their case: the sentence check reads units from it, where "mW" and "MW"
+ * are a milliwatt and a megawatt (support.ts).
+ */
+export function normalizeForMatch(text: string, { keepCase = false }: { keepCase?: boolean } = {}): string {
+  const compatible = text
     .replace(LITERAL_BREAKS, " ")
     // Compatibility forms are the same text: ligatures ("ﬁ" is "fi"), full-width letters, "…" as "...".
-    .normalize("NFKC")
-    .toLowerCase()
+    .normalize("NFKC");
+  const unified = (keepCase ? compatible : compatible.toLowerCase())
     // Soft hyphens and zero-width characters are invisible, so a model quoting the text leaves them out.
     .replace(/[\u00ad\u200b-\u200d\u2060\ufeff]/g, "")
     // Markdown is compared as it reads, not as it is written: a link or image is its text, and a

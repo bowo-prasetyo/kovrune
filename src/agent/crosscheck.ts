@@ -8,7 +8,7 @@ import { stripThinking, type LanguageModel } from "../models/types.ts";
 import { quoteHas, type CheckedEvidence } from "./evidence.ts";
 import { mainScript } from "../documents/scripts.ts";
 import { quotedPassages, reviewsShortAnswers } from "./review.ts";
-import { contentWords, MIN_BACKED_SHARE, numbers, sameWord } from "./support.ts";
+import { contentWords, MIN_BACKED_SHARE, numbers, sameWord, saysFall, signDropped } from "./support.ts";
 
 /**
  * Whether the cross-check is asked about answers the review confirms, by the model's ID: only Qwen3.5-4B
@@ -67,13 +67,17 @@ export function parseExtracted(text: string): string | undefined {
  * compared, so only numbers are: an extracted answer with none does not count against the answer. An
  * answer given that is only a number is compared by its numbers alone. An
  * extracted answer that is empty, or has neither a number nor a content word, agrees with nothing: the
- * model found no answer there.
+ * model found no answer there. Since harness 0.67.0, either way the answer must give every number of the
+ * extracted one with its sign ("40 °C" is not "−40 °C"), except the size of a fall (signDropped).
  */
 export function answersAgree(extracted: string, answer: string): boolean {
-  if (extracted && quoteHas(answer, extracted)) return true;
   const extractedNumbers = numbers(extracted);
   const answerNumbers = new Set(numbers(answer));
-  if (extractedNumbers.some((n) => !answerNumbers.has(n))) return false;
+  // Signs count since harness 0.67.0 ("40 °C" is not "−40 °C"), unless the answer gives the size of a fall the passages give as a negative number, or the reverse.
+  // So numbers are compared first: the word-for-word match drops a leading "−" as punctuation.
+  const [answerFalls, extractedFalls] = [saysFall(answer), saysFall(extracted)];
+  if (extractedNumbers.some((n) => !answerNumbers.has(n) && !signDropped(n, answerNumbers, extractedFalls, answerFalls))) return false;
+  if (extracted && quoteHas(answer, extracted)) return true;
   const [extractedScript, answerScript] = [mainScript(extracted)?.script, mainScript(answer)?.script];
   // An answer that is only a number ("21,196.18") has no words to compare: its numbers decide.
   if (!answerScript) return extractedNumbers.length > 0;

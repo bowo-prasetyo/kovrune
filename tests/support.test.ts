@@ -382,3 +382,78 @@ describe("counts of people recruited, not planned (harness 0.62.0)", () => {
     assert.equal(marks("25 participants were recruited.", [CALCULATED, q("In the end, 25 participants were recruited.")]), "+");
   });
 });
+
+describe("engineering units, signs, powers of ten and changes (harness 0.67.0)", () => {
+  const q = (quote: string, docId = "paper") => ({ docId, quote });
+
+  it("gives a value only the engineering unit and prefix the quotes give it", () => {
+    const pairs: Array<[quote: string, wrong: string, right: string]> = [
+      ["The yield strength of the alloy is 276 MPa at room temperature.", "The yield strength of the alloy is 276 GPa.", "The yield strength of the alloy is 276 megapascals."],
+      ["The insulation is rated for 600 V across the terminals.", "The insulation is rated for 600 kV.", "The insulation is rated for 600 volts."],
+      ["The oscillator runs at a clock frequency of 2.4 MHz under load.", "The oscillator runs at a clock frequency of 2.4 GHz.", "The oscillator runs at a clock frequency of 2.4 MHz."],
+      ["Standby power of the sensor node was 15 mW on average.", "Standby power of the sensor node was 15 W.", "Standby power of the sensor node was 15 milliwatts."],
+      ["The bolted joint failed at an axial load of 45 kN.", "The bolted joint failed at an axial load of 45 N.", "The bolted joint failed at an axial load of 45 kilonewtons."],
+      ["A decoupling capacitor of 100 nF sits next to each supply pin.", "A decoupling capacitor of 100 µF sits next to each supply pin.", "A decoupling capacitor of 100 nF sits next to each supply pin."],
+      ["The amplifier gives an output power of 20 dBm at compression.", "The amplifier gives an output power of 20 dB at compression.", "The amplifier gives an output power of 20 dBm."],
+      ["The coolant outlet temperature stabilised at 350 °C.", "The coolant outlet temperature stabilised at 350 K.", "The coolant outlet temperature stabilised at 350 °C."],
+    ];
+    for (const [quote, wrong, right] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(right, [q(quote)]), "+", right);
+    }
+    // The prefix is in the symbol's case: a milliwatt is not a megawatt, nor a viscosity in mPa·s a stress in MPa.
+    assert.equal(marks("The plant exports 15 MW at night.", [q("The plant exports 15 mW at night.")]), "-");
+    assert.equal(marks("The oil viscosity is 32 MPa at 40 °C.", [q("The oil viscosity is 32 mPa·s at 40 °C.")]), "-");
+  });
+
+  it("reads a prefix the PDF set apart from its symbol as one unit", () => {
+    // pdf.js gives "40 m Ω" when the "Ω" comes from a symbol font.
+    const quote = q("R DS(on) = 40 m Ω at T j = 25 ° C");
+    assert.equal(marks("R DS(on) is 40 mΩ at T j = 25 °C.", [quote]), "+");
+    assert.equal(marks("R DS(on) is 40 kΩ at T j = 25 °C.", [quote]), "-");
+  });
+
+  it("keeps a number's sign, unless the sentence gives the size of a fall", () => {
+    const range = q("The device operates over an ambient temperature range from −40 °C to 85 °C without derating.");
+    assert.equal(marks("The device operates over an ambient temperature range from 40 °C to 85 °C.", [range]), "-");
+    assert.equal(marks("The device operates over an ambient temperature range from -40 °C to 85 °C.", [range]), "+");
+    assert.equal(marks("The device operates from minus 40 °C to 85 °C ambient temperature.", [range]), "+");
+    // pdf.js sets a minus sign apart from its number.
+    assert.equal(marks("The converter was tested over an ambient range of 25 °C to 55 °C.", [q("tested over an ambient range of − 25 °C to 55 °C")]), "-");
+    assert.equal(marks("Efficiency fell by 3.2% at light load.", [q("Efficiency showed a change of −3.2% at light load.")]), "+");
+    // A hyphen after a letter or a digit is not a sign.
+    assert.equal(marks("The unit passed IEC 61000-4-2 contact discharge at 8 kV.", [q("The unit passed IEC 61000-4-2 contact discharge at 8 kV.")]), "+");
+    assert.equal(marks("The rated storage range is 20 to 30 °C.", [q("The rated range is 20–30 °C for storage.")]), "+");
+  });
+
+  it("reads powers of ten as one number, with the exponent's sign", () => {
+    const strain = q("The measured thermal expansion coefficient was 1.2 × 10^-3 per kelvin.");
+    assert.equal(marks("The measured thermal expansion coefficient was 1.2 × 10^3 per kelvin.", [strain]), "-");
+    assert.equal(marks("The measured thermal expansion coefficient was 0.0012 per kelvin.", [strain]), "+");
+    assert.equal(marks("The measured thermal expansion coefficient was 1.2×10⁻³ per kelvin.", [strain]), "+");
+    assert.equal(marks("The leakage current remained below 1e6 A during the test.", [q("The leakage current remained below 1e-6 A during the test.")]), "-");
+    // A superscript exponent is not run into the digits before it: "10⁶" is not 106.
+    assert.equal(marks("The friction factor error was 10⁶ in the model.", [q("The friction factor error was 10⁻⁶ in the model.")]), "-");
+    assert.equal(marks("The friction factor error was 10^-6 in the model.", [q("The friction factor error was 10⁻⁶ in the model.")]), "+");
+    // pdf.js sets a superscript exponent apart: "2.5 × 10 − 6 A".
+    assert.equal(marks("Leakage stayed below 2.5 × 10^-6 A in the test.", [q("Leakage stayed below 2.5 × 10 − 6 A in the test.")]), "+");
+    // "×" and a number without "^" or a sign is a size, not a power.
+    assert.equal(marks("The plate measures 4 × 10 mm in the drawing.", [q("The plate measures 4 × 10 mm in the drawing.")]), "+");
+  });
+
+  it("does not back an engineering opposite the quotes state only the other side of", () => {
+    assert.equal(marks("The minimum allowable deflection of the beam is L/360.", [q("The maximum allowable deflection of the beam is L/360 under live load.")]), "-");
+    assert.equal(marks("The member carries a compressive force of 120 kN.", [q("The member carries a tensile force of 120 kN.")]), "-");
+    assert.equal(marks("The outlet temperature of the exchanger was 35 °C.", [q("The inlet temperature of the exchanger was 35 °C.")]), "-");
+    assert.equal(marks("The specimen failed the 500-cycle thermal shock test.", [q("The specimen passed the 500-cycle thermal shock test.")]), "-");
+    assert.equal(marks("The measured efficiency is below the 92% target.", [q("The measured efficiency exceeds the 92% target.")]), "-");
+    assert.equal(marks("The measured efficiency exceeds the 92% target.", [q("The measured efficiency exceeds the 92% target set by the standard.")]), "+");
+  });
+
+  it("does not back a change from one number to another stated the other way round", () => {
+    const change = q("At 20% load, efficiency improved from 96.4% to 97.1% with the adaptive controller.");
+    assert.equal(marks("At 20% load, efficiency improved from 97.1% to 96.4%.", [change]), "-");
+    assert.equal(marks("At 20% load, efficiency improved from 96.4% to 97.1%.", [change]), "+");
+    assert.equal(marks("The dead time was reduced from 150 ns to 90 ns.", [q("Dead time was reduced from 150 ns to 90 ns.")]), "+");
+  });
+});
