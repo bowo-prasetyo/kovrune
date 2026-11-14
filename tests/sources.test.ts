@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { createOpenAlex, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
+import { createOpenAlex, fullTextIds, openAlexFilter, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
+import { parseSourcePrefs } from "../src/app/research/sources.ts";
+import type { OpenSource } from "../src/sources/types.ts";
 import { SourceSession } from "../src/sources/session.ts";
 import { getJson, longWait, retryWait, SourceError, type FetchLike } from "../src/sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../src/sources/wikipedia.ts";
@@ -518,5 +520,86 @@ describe("source requests", () => {
     const pending = getJson(hanging, "Wikipedia", "u", stop.signal, { timeoutMs: 10_000 });
     stop.abort();
     await assert.rejects(pending, (error: Error) => !(error instanceof SourceError));
+  });
+});
+
+describe("OpenAlex search limits and full texts (harness 0.68.0)", () => {
+  const abstract = { Results: [0], here: [1] };
+  const work = (n: number, withAbstract: boolean) => ({ id: `https://openalex.org/W${n}`, display_name: `Work ${n}`, ...(withAbstract ? { abstract_inverted_index: abstract } : {}) });
+
+  it("limits a search to a year on, open access and a field, as OpenAlex's filter", async () => {
+    assert.equal(openAlexFilter({}), undefined);
+    assert.equal(openAlexFilter({ fromYear: 2020, openAccess: true, field: "fields/22" }), "from_publication_date:2020-01-01,is_oa:true,primary_topic.field.id:fields/22");
+    assert.equal(openAlexFilter({ fromYear: 20, field: "fields/999" }), undefined, "a year or field that is not one is left out");
+    const fetchImpl = fakeFetch([[/\/works\?/, { results: [] }]]);
+    await createOpenAlex(fetchImpl, undefined, { fromYear: 2020, field: "fields/22" }).search("totem-pole rectifier");
+    const url = new URL(fetchImpl.urls[0]!);
+    assert.equal(url.searchParams.get("filter"), "from_publication_date:2020-01-01,primary_topic.field.id:fields/22");
+    assert.equal(url.searchParams.get("per-page"), "25");
+  });
+
+  it("shows five works, those with an abstract first, in OpenAlex's order", async () => {
+    const results = [work(1, false), work(2, true), work(3, false), work(4, true), work(5, true), work(6, false), work(7, true), work(8, true), work(9, true)];
+    const hits = await createOpenAlex(fakeFetch([[/\/works\?/, { results }]])).search("q");
+    assert.deepEqual(hits.map((h) => h.id), ["openalex:W2", "openalex:W4", "openalex:W5", "openalex:W7", "openalex:W8"]);
+    const few = await createOpenAlex(fakeFetch([[/\/works\?/, { results: [work(1, false), work(2, true)] }]])).search("q");
+    assert.deepEqual(few.map((h) => h.id), ["openalex:W2", "openalex:W1"], "a work without an abstract still shows when there are few");
+  });
+
+  const onArxiv = { ...work(10, true), display_name: "A Rectifier", publication_year: 2024, doi: "https://doi.org/10.1109/tpel.2024.1", locations: [{ landing_page_url: "https://arxiv.org/abs/2401.01234v2" }], ids: { pmid: null, pmcid: null } };
+  const reader = (label: "arXiv" | "Europe PMC", text: string, fail = false): OpenSource & { asked: string[] } => {
+    const asked: string[] = [];
+    return {
+      name: label === "arXiv" ? "arxiv" : "europepmc",
+      label,
+      asked,
+      search: async () => [],
+      fetch: async (id: string) => {
+        asked.push(id);
+        if (fail) throw new Error("not readable");
+        return { id, title: "t", text, url: `https://example.org/${id}`, retrievedAt: "2026-11-14T00:00:00Z", work: { authors: ["A. Author"], venue: label }, pageStarts: [0, 10] };
+      },
+    };
+  };
+
+  it("reads a work in full from a source the user ticked, under its OpenAlex ID", async () => {
+    const arxiv = reader("arXiv", "Full paper text. Page two.");
+    const doc = await createOpenAlex(fakeFetch([[/\/works\/W10\?/, onArxiv]]), undefined, {}, { arxiv }).fetch("openalex:W10");
+    assert.deepEqual(arxiv.asked, ["arxiv:2401.01234"]);
+    assert.equal(doc.id, "openalex:W10");
+    assert.match(doc.text, /^A Rectifier\n/);
+    assert.match(doc.text, /Full text, read from arXiv:\n\nFull paper text\. Page two\.$/);
+    assert.equal(doc.url, "https://example.org/arxiv:2401.01234");
+    assert.deepEqual(doc.work, { authors: ["A. Author"], venue: "arXiv" }, "the version read is the one cited");
+    const head = doc.text.indexOf("Full paper text");
+    assert.deepEqual(doc.pageStarts, [head, head + 10], "page starts moved past OpenAlex's details");
+  });
+
+  it("reads the abstract when the work is in no ticked source, or reading it there fails", async () => {
+    const route = fakeFetch([[/\/works\/W10\?/, onArxiv]]);
+    assert.match((await createOpenAlex(route).fetch("openalex:W10")).text, /Abstract: Results here/);
+    const failing = reader("arXiv", "", true);
+    const doc = await createOpenAlex(route, undefined, {}, { arxiv: failing }).fetch("openalex:W10");
+    assert.deepEqual(failing.asked, ["arxiv:2401.01234"]);
+    assert.match(doc.text, /Abstract: Results here/);
+  });
+
+  it("finds a work on arXiv by its link or DOI, and in Europe PMC by its PubMed ID", () => {
+    const [arxiv, europepmc] = [reader("arXiv", ""), reader("Europe PMC", "")];
+    const ids = (w: object) => fullTextIds(w as never, { arxiv, europepmc }).map((r) => r.id);
+    assert.deepEqual(ids({ id: "W1", doi: "https://doi.org/10.48550/arXiv.2005.11401" }), ["arxiv:2005.11401"]);
+    assert.deepEqual(ids({ id: "W1", ids: { pmid: "https://pubmed.ncbi.nlm.nih.gov/38012345", pmcid: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10850983" } }), ["europepmc:MED/38012345"]);
+    assert.deepEqual(ids({ id: "W1", ids: { pmcid: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10850983" } }), ["europepmc:PMC/PMC10850983"]);
+    assert.deepEqual(ids({ id: "W1", ids: { pmid: "https://pubmed.ncbi.nlm.nih.gov/38012345" } }), [], "a PubMed record without a free full text");
+    assert.deepEqual(fullTextIds({ id: "W1", doi: "10.48550/arXiv.2005.11401" } as never, {}), [], "no source ticked, nothing read elsewhere");
+  });
+
+  it("keeps the limits the user set, and only valid ones", () => {
+    const prefs = parseSourcePrefs(JSON.stringify({ openalex: true, openalexFromYear: 2019, openalexOpenAccess: true, openalexField: "fields/22" }));
+    assert.equal(prefs.openalexFromYear, 2019);
+    assert.equal(prefs.openalexOpenAccess, true);
+    assert.equal(prefs.openalexField, "fields/22");
+    const bad = parseSourcePrefs(JSON.stringify({ openalex: true, openalexFromYear: 99, openalexOpenAccess: "yes", openalexField: "fields/999" }));
+    assert.deepEqual([bad.openalexFromYear, bad.openalexOpenAccess, bad.openalexField], [undefined, undefined, undefined]);
   });
 });
