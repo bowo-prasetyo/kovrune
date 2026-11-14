@@ -344,7 +344,29 @@ The strict score stays the one this suite reports. Neither changes a question or
 - The same 16 `clinical` questions passed strictly as in the run above. By trial, `c13` passes too.
 - `c18` fails both ways, on the fact's wording: the right dose, without "sodium".
 - `c21` fails both ways, correctly: the model said REVAMP enrolled more (it enrolled 862, the typhoid trial 28,130), though both facts' words are in its answer. Its citations, the REVAMP report and a typhoid preprint, are not the suite's typhoid paper, and give no shared registration.
-- `c09` (VESSEL's participants: the model answered 21, the trial had 18) and `c20` (not found) fail as before.
+- `c09` (VESSEL's participants: the model answered 21 randomised, the suite's fact is 18) and `c20` (not found) fail as before. `c09` is a question of wording ([below](#a-trial-report-past-europe-pmcs-first-results-c20-and-a-count-named-two-ways-c09)).
+
+#### A trial report past Europe PMC's first results (`c20`), and a count named two ways (`c09`)
+
+**`c20`, the Ugandan CRP trial's clinical failure.** The model searched "Uganda C-reactive protein community health workers clinical failure", then the same without "clinical failure". Every word of both is in the trial report's title or abstract, which the ranking puts first, but Europe PMC ranks by full text: the report was 27th of 488 and 50th of 756, past the 25 results the source asks for. The model read a pilot study from Northern Uganda and a scoping review, and answered "not found". Since then, each search also asks Europe PMC for the works with all its words in their title or abstract (`TITLE_ABS`), and the two sets of results are ranked together (`src/sources/europepmc.ts`). Asked so, the report is first of 2. A work with every word in its title or abstract was already ranked first when it was among the 25; this only keeps it from falling outside them. One more request per search, made at the same time.
+
+- **The model's own searches,** the 26 `clinical` searches of the run above: the suite's paper is among the five for 22, against 18. Both `c20` searches find the report first, and the two typhoid searches of `c21` find the typhoid report. Held out: 8 of 9 searches, as before.
+- **The questions as typed** (`npm run bench:europepmc`): each question's paper at the same rank as on `main` (first for 15 of 21 `clinical` questions, top five for 16; held out 6 and 8 of 9), and 10 of 10 documents byte for byte.
+
+**With Qwen3.5-4B,** Europe PMC its only source, 14 November 2026 (`eval/results/europepmc-model-title-qwen3.5-4b-q4km.json`; a restart stopped a first run after the 21 `clinical` questions, which passed and failed as here):
+
+| | Strictly | By trial |
+| --- | --- | --- |
+| `clinical`, 21 questions | **17** (16 on `main`) | **18** (17) |
+| `clinicalholdout`, 9 questions | **4** (4) | **5** (5) |
+
+- Gained `c20`: the model read the report and answered "No, clinical failure did not differ significantly … (OR 0.41, 95% CI: 0.09 to 1.83)".
+- `c21` now cites the suite's typhoid report and answers right: the typhoid trial enrolled more, "more than 28,000 children" against REVAMP's 862. It still fails on the fact's wording, which asks for 28,130.
+- Every other question passed or failed as on `main`.
+
+**`c09`, a count named two ways.** The question asks how many participants VESSEL recruited, and the suite's fact is 18, as its abstract says ("Eighteen participants were recruited"). The report's Recruitment section says "21 participants were randomly assigned. Three participants withdrew after randomization", before any data were collected. On `main` the model answered from that section: "21 participants were randomly assigned … 3 withdrew after randomization", which is right in the terms trials report their flow in. The paper names the 18 who stayed as recruited. So this is a question of wording, like `c18`, not a defect in finding or reading, and the fact is not changed. Two fixes were considered and not made: choosing another part to read first (the one chosen is the Conclusions; no general rule found led to the 18), and holding "randomised" apart from "recruited" in the count checks (`ACTUAL_COUNT` in `src/agent/support.ts`), which most papers use for one number.
+
+In this run, though, `c09` failed another way. The model read the VESSEL protocol, which ranked among the five, and answered "28 eligible participants were planned to be recruited to the VESSEL trial", labelled **Quotes found**. The answer is true of the protocol and says it is a plan, so the count check, which catches a planned number given as a count, passes it; but it does not answer how many were recruited. That is a labelling gap, not wording, and is left for its own change.
 
 ## Limits
 
