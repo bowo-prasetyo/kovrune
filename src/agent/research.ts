@@ -14,7 +14,7 @@ import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } 
 import { checkCompleteness, checksCompleteness } from "./completeness.ts";
 import { crossCheckAnswer, crossChecksAnswers } from "./crosscheck.ts";
 import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
-import { crossCheckRejects, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
+import { crossCheckRejects, inSourceSupport, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -147,7 +147,14 @@ export async function runResearch(options: {
     if (citation) citations[docId] = citation;
   }
   const titleFor = (id: string) => library.documentFor(id)?.title ?? citations[id]?.title;
-  const support = sentenceSupport(final.answer, evidence, titleFor, options.question);
+  // The documents the model read or cited, for sentences no quote backs but a passage of them would (inSourceSupport).
+  const opened = [...new Set([...agent.calls.filter((c) => c.valid && c.tool === "read").map((c) => String(c.args?.docId ?? "")), ...final.evidence.map((e) => e.docId)].map(parentId))];
+  const documents = opened.flatMap((docId) => {
+    const text = library.textFor(docId) ?? session?.textFor(docId);
+    return text ? [{ docId, text }] : [];
+  });
+  const openedTitle = (id: string) => titleFor(id) ?? session?.citation(id)?.title;
+  const support = inSourceSupport(sentenceSupport(final.answer, evidence, titleFor, options.question), documents, openedTitle, options.question);
   // The word checks pass incomplete and misattributed answers, so the model checks those they would
   // label (review.ts). They cannot judge short ones either, which models whose check has been
   // measured to tell right short answers from wrong ones check too (reviewsShortAnswers).

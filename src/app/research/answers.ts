@@ -151,7 +151,10 @@ const EXPORT_NOTE =
 function markedAnswer(answer: SavedAnswer): string {
   const support = shownSupport(answer);
   if (!answer.answer || !support?.sentences.some((s) => s.backed === false)) return answer.answer ?? "";
-  return support.sentences.map((s) => (s.backed === false ? `⚠ ${s.text}` : s.text)).join("");
+  // A sentence nearly word for word in a source the model read, though not quoted, says so (support.ts inSourceSupport).
+  return support.sentences
+    .map((s) => (s.backed === false ? (s.inSource ? `⚠ ${s.text.trimEnd()} (in the source, not quoted)${s.text.slice(s.text.trimEnd().length)}` : `⚠ ${s.text}`) : s.text))
+    .join("");
 }
 
 /** An introduction or conclusion, with ⚠ before the sentences no section's quote backs. */

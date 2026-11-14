@@ -480,6 +480,13 @@ textarea {
   border-bottom: 2px dotted var(--muted);
 }
 
+/* A ⚠ sentence nearly word for word in a source the model read, though not quoted. */
+.answer .unbacked .in-source {
+  font-size: 0.8em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .evidence {
   padding: 0;
   list-style: none;
