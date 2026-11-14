@@ -860,6 +860,26 @@ function nameKey(word: string): string {
     .replace(/(?<=[\p{L}\p{Nd}])-(?=[\p{L}\p{Nd}])/gu, "");
 }
 
+/** A Greek letter's name at the start of what follows a name, so "TNF" plus "beta" is not read as a suffix. */
+const GREEK_NAME_START = new RegExp(`^(?:${Object.values(GREEK).join("|")})`, "u");
+
+/**
+ * Whether a name is a backed name with a plain suffix added (harness 0.74.0): "PPARαBATKO", the mouse line,
+ * beside the paper's "PPARα". The suffix must be letters and digits only and must not begin with a Greek
+ * letter's name, so "TNF-β" is not read as "TNF" with a suffix, nor "CD45+" as "CD45" with one, and those
+ * stay unbacked. Both names are nameKey's form, where a Greek letter is its name and a sign is kept.
+ *
+ * This narrows the rule: a suffix can change what a name refers to, as a gene's name and its mouse line
+ * differ, and the quotes may speak only of the gene. The sentence must still share most of its words with
+ * the quotes. The fuller fix is to look for the name in the documents the model read, as inSourceSupport
+ * looks for sentences; that needs the read documents here, and its own measurement.
+ */
+function plainSuffix(name: string, backing: string): boolean {
+  if (name === backing || !name.startsWith(backing) || !backing) return false;
+  const rest = name.slice(backing.length);
+  return /^[\p{L}\p{Nd}]+$/u.test(rest) && !GREEK_NAME_START.test(rest);
+}
+
 /** A text's words, with the signs that end a cell marker or a genotype ("CD45+", "Tlr4−/−") kept, and other punctuation around them taken off. */
 function nameWords(text: string): string[] {
   return text
@@ -904,12 +924,12 @@ function abbreviatedSpecies(text: string): Array<[string, string]> {
  * gives by its genus's initial, is one the quotes, the cited titles or the question give (harness 0.71.0).
  * "TNF-β levels rose after treatment" is not backed by "TNF-α levels rose after treatment", nor "CD45−
  * cells expanded" by "CD45+ cells expanded", nor "S. epidermidis" by "S. aureus", though every other word
- * is shared. A name inside a longer one counts ("TNF-α-induced"), and "S. aureus" is backed by
- * "Staphylococcus aureus".
+ * is shared. A name inside a longer one counts ("TNF-α-induced"), a backed name with a plain suffix added
+ * counts ("PPARαBATKO" beside "PPARα", plainSuffix), and "S. aureus" is backed by "Staphylococcus aureus".
  */
 function namesBacked(text: string, backing: { names: string[]; text: string }): boolean {
   return (
-    distinguishingNames(text).every((name) => backing.names.some((b) => b.includes(name))) &&
+    distinguishingNames(text).every((name) => backing.names.some((b) => b.includes(name) || plainSuffix(name, b))) &&
     abbreviatedSpecies(text).every(([genus, species]) => new RegExp(`(?<!\\p{L})${genus}(?:\\.|\\p{Ll}+)\\s?${species}\\b`, "u").test(backing.text))
   );
 }

@@ -31,6 +31,10 @@ export interface WorkInfo {
   doi?: string;
   /** The journal, conference or repository. */
   venue?: string;
+  /** PubMed's identifier, digits only, for the works that have one. */
+  pmid?: string;
+  /** PubMed Central's identifier, as "PMC…", for the works that have one. */
+  pmcid?: string;
 }
 
 export interface OpenSource {

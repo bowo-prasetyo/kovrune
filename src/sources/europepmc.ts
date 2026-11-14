@@ -237,6 +237,9 @@ function workInfo(record: EuropePmcRecord): WorkInfo {
     ...(Number.isInteger(year) && year > 0 ? { year } : {}),
     ...(record.doi ? { doi: record.doi.toLowerCase() } : {}),
     ...(venue ? { venue } : {}),
+    // The identifiers a biomedical journal or a grant form asks for, exported with the BibTeX entry.
+    ...(record.pmid ? { pmid: record.pmid } : {}),
+    ...(record.pmcid ? { pmcid: record.pmcid } : {}),
   };
 }
 

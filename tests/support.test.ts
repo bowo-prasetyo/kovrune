@@ -569,6 +569,24 @@ describe("laboratory units, opposites and names (harness 0.71.0)", () => {
   });
 });
 
+describe("a backed name with a plain suffix (harness 0.74.0)", () => {
+  const q = (quote: string, docId = "paper") => ({ docId, quote });
+
+  it("backs a name that adds a plain suffix to a name the quotes give", () => {
+    // The lab suite's first 2B run marked this right answer: the quote names the gene, PPARα, and the
+    // sentence the mouse line, PPARαBATKO, which the paper uses three paragraphs away (eval/lab/README.md).
+    const legend = q("BAT specific deletion of PPARα does not alter glucose tolerance or body weight gain in HFD-induced obese mice.");
+    assert.equal(marks("PPARα deletion did not alter body weight gain in PPARαBATKO mice on the diet.", [legend]), "+");
+    // A suffix that is itself the distinguishing character is not a plain suffix, so these stay unbacked.
+    assert.equal(marks("TNF-β levels rose after treatment with LPS in the cultures.", [q("TNF levels rose after treatment with LPS in the cultures.")]), "-");
+    assert.equal(marks("Estradiol signals mainly through ERβ in the uterus of these mice.", [q("Estradiol signals mainly through ER in the uterus of these mice.")]), "-");
+    assert.equal(marks("CD45− cells expanded after injury in the liver of the mice.", [q("CD45 cells expanded after injury in the liver of the mice.")]), "-");
+    assert.equal(marks("The phenotype appeared in Tlr4+/+ mice at eight weeks of age.", [q("The phenotype appeared in Tlr4−/− mice at eight weeks of age.")]), "-");
+    // The two isoforms are still told apart when both are full names.
+    assert.equal(marks("TNF-β levels rose after treatment with LPS in the cultures.", [q("TNF-α levels rose after treatment with LPS in the cultures.")]), "-");
+  });
+});
+
 describe("each claim of a sentence (harness 0.68.0)", () => {
   // A user's answer, paracetamol against ibuprofen, and its quote from Wikipedia.
   const SOURCE =
