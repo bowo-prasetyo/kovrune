@@ -13,6 +13,24 @@ const found = (count: number | undefined, noun: string) =>
 
 const shorten = (text: string) => (text.length > 80 ? `${text.slice(0, 79)}…` : text);
 
+/** The longest reply quoted in a label; the saved answer keeps more (crosscheck.ts REPLY_CHARS). */
+const LABEL_REPLY_CHARS = 120;
+
+/**
+ * What the cross-check found, for the label: the answer the model read, that it found none, or why it
+ * gave none that could be read. Answers saved before the reply was kept tell an empty answer ("") from
+ * an unreadable reply (no `extracted`) all the same.
+ */
+export function crossCheckFinding(check: CrossCheck): string {
+  if (check.extracted) return `the model read "${check.extracted}"`;
+  if (check.extracted === "") return "the model found no answer in them";
+  if (check.failed) return "the check could not be run: the model could not be asked";
+  const reply = check.reply?.trim();
+  const shown = reply ? `: "${reply.length > LABEL_REPLY_CHARS ? `${reply.slice(0, LABEL_REPLY_CHARS)}…` : reply}"` : "";
+  if (check.cutOff) return `the model's reply was cut off at its length limit before it gave an answer${shown}`;
+  return reply ? `the model's reply could not be read as an answer${shown}` : "the model gave no reply that could be read";
+}
+
 /** The trace step for the model's own check of its answer (agent/review.ts). */
 export const REVIEW_STEP = "Checking that the quoted passages back the answer";
 
@@ -111,10 +129,9 @@ export function describeStatus(
       // Every quote is found, and the model's check said yes, but the answer it read in the passages
       // without seeing this one is a different one (crosscheck.ts).
       if (support?.review === "yes" && support.crossCheck?.agrees === false && reviewAsked(status, evidence, support)) {
-        const read = support.crossCheck.extracted;
         return {
           label: "Quotes found, answer not confirmed",
-          detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, the model ${read ? `read "${read}"` : "found no answer in them"}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
+          detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, ${crossCheckFinding(support.crossCheck)}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
           tone: "unverified",
           severity: "check",
         };

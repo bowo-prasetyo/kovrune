@@ -163,7 +163,7 @@ describe("the model's own check of an answer", () => {
     assert.equal(model.requests.length, 5);
     assert.doesNotMatch(model.requests[4]!.messages[1]!.content, /60 days after the notice/, "the cross-check is not shown the answer");
     assert.equal(support!.review, "yes");
-    assert.deepEqual(support!.crossCheck, { extracted: "30 days", agrees: false });
+    assert.deepEqual(support!.crossCheck, { extracted: "30 days", agrees: false, reply: `{"answer":"30 days"}` });
     assert.equal(labelledQuotesFound(status, evidence, support), false);
     const shown = describeStatus(status as "verified", evidence, support);
     assert.equal(shown.label, "Quotes found, answer not confirmed");
