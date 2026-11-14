@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { answersAgree, crossCheckAnswer, extractionPrompt, parseExtracted } from "../src/agent/crosscheck.ts";
+import { answersAgree, crossCheckAnswer, extractionPrompt, parseExtracted, REPLY_CHARS } from "../src/agent/crosscheck.ts";
+import { crossCheckFinding } from "../src/app/research/trace.ts";
 import { checkEvidence } from "../src/agent/evidence.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
@@ -8,8 +9,10 @@ class ScriptedModel implements LanguageModel {
   readonly info = { id: "scripted", runtime: "scripted" as const, contextLength: 4096 };
   readonly requests: GenerationRequest[] = [];
   private readonly reply: string | Error;
-  constructor(reply: string | Error) {
+  private readonly finishReason?: string;
+  constructor(reply: string | Error, finishReason?: string) {
     this.reply = reply;
+    this.finishReason = finishReason;
   }
   supportsConstrainedDecoding() {
     return true;
@@ -18,7 +21,7 @@ class ScriptedModel implements LanguageModel {
     this.requests.push(request);
     if (this.reply instanceof Error) throw this.reply;
     yield { text: this.reply, done: false };
-    yield { text: "", done: true };
+    yield { text: "", done: true, ...(this.finishReason ? { finishReason: this.finishReason } : {}) };
   }
   async dispose() {}
 }
@@ -56,7 +59,7 @@ describe("the cross-check of an answer (audit F2)", () => {
   it("shows the model the question and the passages, never the answer it checks", async () => {
     const model = new ScriptedModel('{"answer":"60 days"}');
     const result = await crossCheckAnswer({ model, question: QUESTION, answer: "Thirty days, per the cure clause.", evidence, titleFor: () => "MPL-2.0" });
-    assert.deepEqual(result, { extracted: "60 days", agrees: false });
+    assert.deepEqual(result, { extracted: "60 days", agrees: false, reply: '{"answer":"60 days"}' });
     const prompt = model.requests[0]!.messages[1]!.content;
     assert.equal(prompt, extractionPrompt(QUESTION, evidence, () => "MPL-2.0"));
     assert.match(prompt, /^Question: How many days/);
@@ -65,10 +68,31 @@ describe("the cross-check of an answer (audit F2)", () => {
     assert.ok(model.requests[0]!.responseSchema, "the reply is constrained to the JSON asked for");
   });
 
-  it("does not agree when the reply cannot be read or the call fails", async () => {
-    for (const reply of ["no idea", new Error("server error")]) {
-      const result = await crossCheckAnswer({ model: new ScriptedModel(reply), question: QUESTION, answer: "60 days", evidence, titleFor: () => "MPL-2.0" });
-      assert.deepEqual(result, { agrees: false });
-    }
+  it("does not agree when the reply cannot be read or the call fails, and keeps the reason", async () => {
+    const check = (model: ScriptedModel) => crossCheckAnswer({ model, question: QUESTION, answer: "60 days", evidence, titleFor: () => "MPL-2.0" });
+    assert.deepEqual(await check(new ScriptedModel("no idea")), { agrees: false, reply: "no idea" });
+    assert.deepEqual(await check(new ScriptedModel('{"answer":"fever, mild to moderate pain, migraine, tension', "length")), {
+      agrees: false,
+      reply: '{"answer":"fever, mild to moderate pain, migraine, tension',
+      cutOff: true,
+    });
+    assert.deepEqual(await check(new ScriptedModel(new Error("server error"))), { agrees: false, failed: true });
+    assert.deepEqual(await check(new ScriptedModel('{"answer":""}')), { extracted: "", agrees: false, reply: '{"answer":""}' });
+    const long = await check(new ScriptedModel("x".repeat(1000)));
+    assert.equal(long.reply, `${"x".repeat(REPLY_CHARS)}…`, "the saved reply is cut");
+  });
+
+  it("says in the label why it found no answer: none in the passages, a reply cut off or unreadable, or no call", () => {
+    assert.equal(crossCheckFinding({ extracted: "30 days", agrees: false }), 'the model read "30 days"');
+    assert.equal(crossCheckFinding({ extracted: "", agrees: false, reply: '{"answer":""}' }), "the model found no answer in them");
+    assert.equal(
+      crossCheckFinding({ agrees: false, reply: '{"answer":"fever, mild to moderate pain', cutOff: true }),
+      'the model\'s reply was cut off at its length limit before it gave an answer: "{"answer":"fever, mild to moderate pain"',
+    );
+    assert.equal(crossCheckFinding({ agrees: false, reply: "Paracetamol treats pain." }), 'the model\'s reply could not be read as an answer: "Paracetamol treats pain."');
+    assert.match(crossCheckFinding({ agrees: false, reply: "y".repeat(300) }), /: "y{120}…"$/);
+    assert.equal(crossCheckFinding({ agrees: false, failed: true }), "the check could not be run: the model could not be asked");
+    // Saved before the reply was kept: an empty answer was saved as "", an unreadable reply or a failed call as nothing.
+    assert.equal(crossCheckFinding({ agrees: false }), "the model gave no reply that could be read");
   });
 });

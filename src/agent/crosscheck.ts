@@ -86,11 +86,25 @@ export function answersAgree(extracted: string, answer: string): boolean {
 }
 
 export interface CrossCheck {
-  /** The answer the model read in the passages, or undefined when its reply could not be read. */
+  /** The answer the model read in the passages: "" when it found none, undefined when its reply could not be read. */
   extracted?: string;
   /** Whether the answer given agrees with it (answersAgree); false when nothing could be read. */
   agrees: boolean;
+  /**
+   * The model's reply as it came, at most REPLY_CHARS, saved with the answer: the label then says why a
+   * reply could not be read, and a case can be looked into afterwards. Before, an empty answer and a reply
+   * that could not be read were both labelled "the model found no answer in them" (a user's answer about
+   * paracetamol, with five right quotes, in the browser build of Qwen3.5-4B).
+   */
+  reply?: string;
+  /** True when the reply stopped at CROSSCHECK_MAX_TOKENS, so its JSON was unfinished. */
+  cutOff?: boolean;
+  /** True when the model could not be asked: the call to it failed. */
+  failed?: boolean;
 }
+
+/** The most of a cross-check's reply saved with the answer. */
+export const REPLY_CHARS = 400;
 
 /** Asks the model for the answer it reads in the passages, without showing it the answer, and compares the two. */
 export async function crossCheckAnswer(options: {
@@ -104,6 +118,7 @@ export async function crossCheckAnswer(options: {
 }): Promise<CrossCheck> {
   const { model, signal } = options;
   let text = "";
+  let finishReason: string | undefined;
   try {
     for await (const chunk of model.generate({
       messages: [
@@ -116,11 +131,14 @@ export async function crossCheckAnswer(options: {
       signal,
     })) {
       text += chunk.text;
+      if (chunk.finishReason) finishReason = chunk.finishReason;
     }
   } catch (error) {
     if (signal?.aborted) throw error;
-    return { agrees: false };
+    return { agrees: false, failed: true };
   }
   const extracted = parseExtracted(text);
-  return extracted === undefined ? { agrees: false } : { extracted, agrees: answersAgree(extracted, options.answer) };
+  const reply = text.length > REPLY_CHARS ? `${text.slice(0, REPLY_CHARS)}…` : text;
+  if (extracted === undefined) return { agrees: false, reply, ...(finishReason === "length" ? { cutOff: true } : {}) };
+  return { extracted, agrees: answersAgree(extracted, options.answer), reply };
 }
