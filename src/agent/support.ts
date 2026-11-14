@@ -104,10 +104,78 @@ export function plainNumber(written: string): string {
   return groups.length === 2 && !written.includes(".") ? groups.join(".") : groups.join("");
 }
 
-/** The numbers in a text (plainNumber). A list item's own number ("1. Open the perspective") is not one of them. */
+/** Superscript digits and signs, as papers print an exponent ("10⁻³"). */
+const SUPERSCRIPTS: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-", "⁺": "+" };
+
+/** A number as numberText writes it: an optional sign, digits with "." or "," marks, and an exponent only in the form numberText gives. */
+const NUMBER = String.raw`(?:(?<![^\s(\[{=≈<>~:;/])([-+±]))?(\p{Nd}+(?:[.,]\p{Nd}+)*(?:e[-+]\p{Nd}+)?)`;
+
+/** A number written in powers of ten, as one plain number: "1.2e-3" and "1.2 × 10^-3" are both "0.0012". */
+function powerOfTen(mantissa: string, exponent: string): string {
+  const value = Number(`${plainNumber(mantissa)}e${exponent.replace(/\s+/g, "")}`);
+  return Number.isFinite(value) ? String(value) : `${mantissa}e${exponent}`;
+}
+
+/**
+ * A text made ready for reading its numbers and units (harness 0.67.0), as normalizeForMatch makes it
+ * but with letters in their case, since "mW" is not "MW":
+ * - a superscript exponent stays an exponent: "10⁻³" is 10^-3, where compatibility forms alone give
+ *   "10-3", and "10⁶" gives "106";
+ * - a minus sign standing apart from its number is joined to it: pdf.js gives "− 25 °C" for "−25 °C";
+ * - powers of ten are written out, so "1.2 × 10^-3", "1.2×10⁻³", "1.2e-3" and "0.0012" are one number,
+ *   and "10^-3" is not 10^3. A power after "×" needs "^" or a sign, so "4 × 10 mm" stays a size;
+ * - a prefix the PDF set apart from its unit symbol is joined to it: "40 m Ω" is "40 mΩ", "° C" is "°C".
+ */
+function numberText(text: string): string {
+  const raised = text
+    .replace(/(\p{Nd})([⁺⁻]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+)/gu, (_, digit: string, power: string) => `${digit}^${[...power].map((c) => SUPERSCRIPTS[c]).join("")}`)
+    .replace(/−\s+(?=\p{Nd})/gu, "−");
+  return normalizeForMatch(raised, { keepCase: true })
+    .replace(/^\d+[.)]\s+/, "")
+    .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:[.,]\p{Nd}+)?)\s*[×x*]\s*10\s*(?:\^\s*([-+]?\s?\p{Nd}+)|([-+]\s?\p{Nd}+))(?![\p{Nd}.])/gu, (_, m: string, a?: string, b?: string) => powerOfTen(m, (a ?? b)!))
+    .replace(/(?<![\p{L}\p{Nd}.,^])10\s*\^\s*([-+]?\p{Nd}+)(?![\p{Nd}.])/gu, (_, e: string) => powerOfTen("1", e))
+    .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:\.\p{Nd}+)?)[eE]([-+]?\p{Nd}+)(?![\p{L}\p{Nd}])/gu, (_, m: string, e: string) => powerOfTen(m, e))
+    .replace(/(\p{Nd}) ?([pnμmkMG]) (Ω)/gu, "$1 $2$3")
+    .replace(/° ([CF])(?!\p{L})/gu, "°$1");
+}
+
+/** A signed number in one form: "-40" for "−40", "40" for "+40" and "±40", and plainNumber's digits. */
+function signed(sign: string | undefined, digits: string): string {
+  const plain = digits.includes("e") ? digits : plainNumber(digits);
+  return sign === "-" && Number(plain) !== 0 ? `-${plain}` : plain;
+}
+
+/**
+ * The numbers in a text (plainNumber), with their signs and powers of ten (numberText): "−40 °C" gives
+ * "-40", which a sentence giving "40 °C" does not have, and "1.2 × 10^-3" gives "0.0012". A "-" after
+ * a letter or a digit is a hyphen, not a sign: "LSA-2024-07", "61000-4-2" and "20-30" have none. A list
+ * item's own number ("1. Open the perspective") is not one of them.
+ */
 export function numbers(text: string): string[] {
-  const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
-  return [...body.matchAll(/\p{Nd}+(?:[.,]\p{Nd}+)*/gu)].map(([n]) => plainNumber(n));
+  return [...numberText(text).matchAll(new RegExp(NUMBER, "gu"))].map(([, sign, digits]) => signed(sign, digits!));
+}
+
+/**
+ * Words saying a value went down, so a sentence may give the size of a change the quotes give as a
+ * negative number: "efficiency fell by 3.2%" from "a change of −3.2%". Without one, "40 °C" is not
+ * backed by "−40 °C". Only words for a change count: "the lowest temperature is 40 °C" is not "−40 °C".
+ */
+const FALL = /^(?:decrease[sd]?|decreasing|reduc(?:e[sd]?|ing|tions?)|lowered|fell|fall(?:s|ing)?|drop(?:s|ped|ping)?|declin(?:e[sd]?|ing)|loss(?:es)?|lost|minus|negative|cooled)$/;
+
+/** Whether a text says something went down (FALL). */
+export function saysFall(text: string): boolean {
+  return words(normalizeForMatch(text)).some((w) => FALL.test(w));
+}
+
+/**
+ * Whether a number is among others up to its sign, where the sign was left out for the size of a fall:
+ * a positive number from a text that says the value fell ("fell by 3.2"), whose negative the others
+ * have (−3.2); or a negative number whose size the others have, when their text says the value fell.
+ * `ownFalls` and `othersFall` say whether the number's own text and the others' text say a fall (saysFall).
+ */
+export function signDropped(n: string, others: Set<string>, ownFalls: boolean, othersFall: boolean): boolean {
+  if (n.startsWith("-")) return othersFall && others.has(n.slice(1));
+  return ownFalls && others.has(`-${n}`);
 }
 
 /**
@@ -115,14 +183,15 @@ export function numbers(text: string): string[] {
  * or it restates the question's own number ("In Quillstate 2.0, …"), or it is the sum or the
  * difference of two quoted numbers, as answers to "by how much" give ("by 30,000" from 180,000
  * and 150,000). Only numbers within a factor of ten of each other are compared quantities, so
- * "2021" does not pass as 2024 minus version 3.0.
+ * "2021" does not pass as 2024 minus version 3.0. Signs count (numbers), but a sentence saying a value
+ * fell may give the size of a negative quoted number (signDropped).
  */
-function numberCheck(quoted: string[], asked: string[]): (n: string) => boolean {
+function numberCheck(quoted: string[], asked: string[], quotesFall: boolean): (n: string, sentenceFalls: boolean) => boolean {
   const known = new Set([...quoted, ...asked]);
   const values = [...new Set(quoted.map(Number).filter((v) => v > 0))];
   const comparable = (a: number, b: number) => a !== b && Math.max(a, b) <= 10 * Math.min(a, b);
   const derived = new Set(values.flatMap((a) => values.filter((b) => comparable(a, b)).flatMap((b) => [a + b, Math.abs(a - b)])));
-  return (n) => known.has(n) || derived.has(Number(n));
+  return (n, sentenceFalls) => known.has(n) || derived.has(Number(n)) || signDropped(n, known, sentenceFalls, quotesFall);
 }
 
 /** Month names and their usual short forms, by month number. */
@@ -147,6 +216,96 @@ function datedMonths(text: string): number[] {
   });
   return [...found];
 }
+
+/**
+ * Engineering units (harness 0.67.0), where a wrong prefix or unit is a wrong value by a factor of a
+ * thousand or more: "276 GPa" is not backed by "276 MPa", nor "600 kV" by "600 V", "15 W" by "15 mW",
+ * "100 µF" by "100 nF", "20 dB" by "20 dBm", or "350 K" by "350 °C". Symbols are compared in their case,
+ * since the prefix "m" is a thousandth and "M" a million ("mW", "MW"; "mPa·s" is a viscosity, "MPa" a
+ * stress); a symbol in another case is not read as a unit at all, so it is left to the other checks.
+ * Some symbols are left out because they are also common words or other units: "F" (farad or
+ * Fahrenheit), "H" (henry, or hours as the "h" below), "S" (siemens or seconds), "T" (tesla), "us".
+ * Only a unit's first word is compared, so "N·m" is "N" and "K/W" is "K".
+ */
+const ENGINEERING_UNITS: Array<[string, RegExp]> = [
+  ["Pa", /^(?:Pa|pascals?)$/],
+  ["hPa", /^hPa$/],
+  ["kPa", /^(?:kPa|kilopascals?)$/],
+  ["MPa", /^(?:MPa|megapascals?)$/],
+  ["GPa", /^(?:GPa|gigapascals?)$/],
+  ["mPa", /^mPa$/],
+  ["bar", /^bar$/],
+  ["mbar", /^mbar$/],
+  ["psi", /^psi[ag]?$/],
+  ["ksi", /^ksi$/],
+  ["atm", /^atm$/],
+  ["N", /^(?:N|newtons?)$/],
+  ["kN", /^(?:kN|KN|kilonewtons?)$/],
+  ["MN", /^(?:MN|meganewtons?)$/],
+  ["N·m", /^Nm$/],
+  ["lbf", /^lbf$/],
+  ["V", /^(?:V|volts?)$/],
+  ["mV", /^(?:mV|millivolts?)$/],
+  ["μV", /^(?:μV|uV|microvolts?)$/],
+  ["kV", /^(?:kV|KV|kilovolts?)$/],
+  ["MV", /^(?:MV|megavolts?)$/],
+  ["A", /^(?:A|amps?|amperes?)$/],
+  ["mA", /^(?:mA|milliamps?|milliamperes?)$/],
+  ["μA", /^(?:μA|uA|microamps?|microamperes?)$/],
+  ["nA", /^(?:nA|nanoamps?|nanoamperes?)$/],
+  ["kA", /^(?:kA|kiloamps?|kiloamperes?)$/],
+  ["Ah", /^Ah$/],
+  ["mAh", /^mAh$/],
+  ["W", /^(?:W|watts?)$/],
+  ["μW", /^(?:μW|uW|microwatts?)$/],
+  ["mW", /^(?:mW|milliwatts?)$/],
+  ["kW", /^(?:kW|KW|kilowatts?)$/],
+  ["MW", /^(?:MW|megawatts?)$/],
+  ["GW", /^(?:GW|gigawatts?)$/],
+  ["Wh", /^Wh$/],
+  ["kWh", /^(?:kWh|KWh)$/],
+  ["MWh", /^MWh$/],
+  ["GWh", /^GWh$/],
+  ["J", /^(?:J|joules?)$/],
+  ["mJ", /^(?:mJ|millijoules?)$/],
+  ["kJ", /^(?:kJ|kilojoules?)$/],
+  ["MJ", /^(?:MJ|megajoules?)$/],
+  ["eV", /^eV$/],
+  ["keV", /^keV$/],
+  ["MeV", /^MeV$/],
+  ["GeV", /^GeV$/],
+  ["Hz", /^(?:Hz|hertz)$/],
+  ["kHz", /^(?:kHz|KHz|khz|kilohertz)$/],
+  ["MHz", /^(?:MHz|megahertz)$/],
+  ["GHz", /^(?:GHz|ghz|gigahertz)$/],
+  ["THz", /^(?:THz|terahertz)$/],
+  ["rpm", /^(?:rpm|RPM)$/],
+  ["Ω", /^(?:Ω|ohms?)$/],
+  ["mΩ", /^(?:mΩ|milliohms?)$/],
+  ["kΩ", /^(?:kΩ|KΩ|kilohms?|kiloohms?)$/],
+  ["MΩ", /^(?:MΩ|megohms?|megaohms?)$/],
+  ["pF", /^(?:pF|picofarads?)$/],
+  ["nF", /^(?:nF|nanofarads?)$/],
+  ["μF", /^(?:μF|uF|microfarads?)$/],
+  ["mF", /^(?:mF|millifarads?)$/],
+  ["nH", /^(?:nH|nanohenr(?:y|ies|ys))$/],
+  ["μH", /^(?:μH|uH|microhenr(?:y|ies|ys))$/],
+  ["mH", /^(?:mH|millihenr(?:y|ies|ys))$/],
+  ["°C", /^(?:°C|celsius|Celsius)$/],
+  ["°F", /^(?:°F|fahrenheit|Fahrenheit)$/],
+  ["K", /^(?:K|kelvins?)$/],
+  ["dB", /^(?:dB|db|decibels?)$/],
+  ["dBm", /^(?:dBm|dbm)$/],
+  ["dBi", /^(?:dBi|dbi)$/],
+  ["dBc", /^(?:dBc|dbc)$/],
+  ["dBA", /^dBA$/],
+  ["dBW", /^dBW$/],
+  ["dBV", /^dBV$/],
+  ["μm", /^(?:μm|um|microns?|micromet(?:re|er)s?)$/],
+  ["nm", /^(?:nm|nanomet(?:re|er)s?)$/],
+  ["ns", /^(?:ns|nanoseconds?)$/],
+  ["μs", /^(?:μs|microseconds?)$/],
+];
 
 /** Units, each with the spellings that mean it. Binary and decimal sizes are one unit: models write "4 KB" for "4 KiB". */
 const UNITS: Array<[string, RegExp]> = [
@@ -186,6 +345,11 @@ const UNITS: Array<[string, RegExp]> = [
   ["cm", /^(?:cm|centimet(?:re|er)s?)$/],
   ["kcal", /^(?:kcal|kilocalories?)$/],
 ];
+
+/** The unit a word after a number names: an engineering symbol in its own case, or another unit in any case. */
+function unitOf(word: string): string | undefined {
+  return ENGINEERING_UNITS.find(([, pattern]) => pattern.test(word))?.[0] ?? UNITS.find(([, pattern]) => pattern.test(word.toLowerCase()))?.[0];
+}
 
 /** Words that end what a negation before them reaches: "no change in A, but a significant fall in B". */
 const CLAUSE_BREAK = /^(?:but|while|whereas|although|however|yet)$/;
@@ -238,7 +402,19 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["present"], ["absent"]],
   [["positive"], ["negative"]],
   [["superior"], ["inferior"]],
-  [["above"], ["below"]],
+  [["above", "exceed", "exceeds", "exceeded", "exceeding"], ["below"]],
+  // Engineering opposites (harness 0.67.0): a limit, a load, a flow or a test result read the wrong way round.
+  [["maximum", "maxima"], ["minimum", "minima"]],
+  [["tensile", "tension"], ["compressive", "compression"]],
+  [["inlet"], ["outlet"]],
+  [["upstream"], ["downstream"]],
+  [["heating", "heated"], ["cooling", "cooled"]],
+  [["charge", "charged", "charging"], ["discharge", "discharged", "discharging"]],
+  [["leading"], ["lagging"]],
+  [["faster", "fastest"], ["slower", "slowest"]],
+  [["stronger", "strongest"], ["weaker", "weakest"]],
+  [["pass", "passed", "passes"], ["fail", "failed", "fails"]],
+  [["accepted"], ["rejected"]],
 ];
 
 /**
@@ -307,6 +483,31 @@ function countsBacked(text: string, quotes: string[]): boolean {
   });
 }
 
+/**
+ * The changes a text states "from" one number "to" another, as "from|to" keys of signed numbers:
+ * "efficiency improved from 96.4% to 97.1%" gives "96.4|97.1". A unit or a word may follow the first
+ * number ("from 150 ns to 90 ns", "from 20% load to 50% load" is not one: only one word).
+ */
+function changes(text: string): Set<string> {
+  const found = new Set<string>();
+  const pattern = new RegExp(`\\bfrom ${NUMBER}\\S*(?: (?!to\\b)\\S+)? to ${NUMBER}`, "gu");
+  for (const [, s1, d1, s2, d2] of numberText(text).matchAll(pattern)) found.add(`${signed(s1, d1!)}|${signed(s2, d2!)}`);
+  return found;
+}
+
+/**
+ * Whether every change a sentence states from one number to another goes the way the quotes give it:
+ * "efficiency improved from 97.1% to 96.4%" is not backed by "efficiency improved from 96.4% to 97.1%",
+ * which has the same numbers and words. A change the quotes state only one way round is all that is
+ * checked; one they do not state at all is left to the number check.
+ */
+function changesBacked(text: string, quoted: Set<string>): boolean {
+  return [...changes(text)].every((key) => {
+    const [from, to] = key.split("|");
+    return quoted.has(key) || !quoted.has(`${to}|${from}`);
+  });
+}
+
 /** The sides of OPPOSITES a text says, as "pair:side" keys. */
 function directions(text: string): Set<string> {
   const said = new Set(words(normalizeForMatch(text)));
@@ -330,10 +531,9 @@ function directionsBacked(text: string, quoted: Set<string>): boolean {
 function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
   const pairs = new Set<string>();
   const bare = new Set<string>();
-  const body = normalizeForMatch(text).replace(/^\d+[.)]\s+/, "");
-  for (const match of body.matchAll(/(\p{Nd}+(?:[.,]\p{Nd}+)*)\s?(%|[\p{L}]+(?:\s?cent)?)?/gu)) {
-    const number = plainNumber(match[1]!);
-    const unit = match[2] && UNITS.find(([, pattern]) => pattern.test(match[2]!))?.[0];
+  for (const match of numberText(text).matchAll(new RegExp(`${NUMBER}\\s?(%|°?[\\p{L}]+(?:\\s?cent)?)?`, "gu"))) {
+    const number = signed(match[1], match[2]!);
+    const unit = match[3] && unitOf(match[3]);
     if (unit) pairs.add(`${number} ${unit}`);
     else bare.add(number);
   }
@@ -390,9 +590,13 @@ export function splitSentences(answer: string): string[] {
  *   a quote's "not" is often in another clause than the one the sentence restates (f02, f09);
  * - since harness 0.36.0, name only the months the quotes, titles or question name in their dates:
  *   "released in May 2024" is not backed by "released in March 2024", although no number differs;
- * - and give a number only the unit the quotes give it: "8 GB" is not backed by "8 MB". A number
+ * - give a number only the unit the quotes give it: "8 GB" is not backed by "8 MB". A number
  *   the quotes give without a unit ("-c 4096") may take one ("4096 tokens"), and a number the
- *   quotes do not have at all is left to the number check (a sum or a difference).
+ *   quotes do not have at all is left to the number check (a sum or a difference);
+ * - since harness 0.67.0, give a number with its sign and power of ten: "40 °C" is not backed by
+ *   "−40 °C" unless the sentence says the value fell, nor "10^3" by "10^-3" (numbers). Engineering
+ *   units count as units ("276 GPa" is not backed by "276 MPa"), engineering opposites as directions
+ *   ("maximum" and "minimum"), and a change "from" one number "to" another must go the quotes' way.
  */
 export function sentenceSupport(
   answer: string,
@@ -409,7 +613,8 @@ export function sentenceSupport(
   const quoteWords = contentWords(verified.map((e) => e.quote).join(" "));
   const subjectWords = contentWords(verified.map((e) => titleFor(e.docId) ?? "").join(" "));
   const quoted = [...new Set(verified.flatMap((e) => [...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]))];
-  const numberBacked = numberCheck(quoted, question ? numbers(question) : []);
+  const quoteText = verified.map((e) => e.quote).join("\n");
+  const numberBacked = numberCheck(quoted, question ? numbers(question) : [], saysFall(quoteText));
   const negating = verified
     .filter((e) => hasNegation(e.quote))
     .map((e) => ({ words: contentWords(e.quote), numbers: new Set([...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]) }));
@@ -420,6 +625,7 @@ export function sentenceSupport(
   const backing = verified.flatMap((e) => [e.quote, titleFor(e.docId) ?? ""]).join("\n");
   const quotedDirections = directions(backing);
   const quotedSignificance = verified.map((e) => significance(e.quote));
+  const quotedChanges = changes(quoteText);
   let judged = 0;
   let backed = 0;
   const sentences = splitSentences(answer).map((text): AnswerSentence => {
@@ -427,6 +633,7 @@ export function sentenceSupport(
     if (words.length < MIN_JUDGED_WORDS) return { text };
     const claim = words.filter((w) => !subjectWords.some((s) => sameWord(w, s)));
     if (!claim.length) return { text };
+    const falls = saysFall(text);
     const shared = claim.filter((w) => quoteWords.some((q) => sameWord(w, q))).length;
     // The "not" must come from a quote making the same claim: one sharing half the claim words and
     // naming the same numbers, so "3.0 does not support it" is not backed by "2.x did not support it".
@@ -439,13 +646,14 @@ export function sentenceSupport(
       );
     const isBacked =
       shared >= claim.length * MIN_BACKED_SHARE &&
-      numbers(text).every(numberBacked) &&
+      numbers(text).every((n) => numberBacked(n, falls)) &&
       negationBacked &&
       datedMonths(text).every((month) => months.has(month)) &&
       unitsBacked(text, quotedMeasures) &&
       directionsBacked(text, quotedDirections) &&
       significanceBacked(text, quotedSignificance) &&
-      countsBacked(text, verified.map((e) => e.quote));
+      countsBacked(text, verified.map((e) => e.quote)) &&
+      changesBacked(text, quotedChanges);
     judged++;
     if (isBacked) backed++;
     return { text, backed: isBacked };

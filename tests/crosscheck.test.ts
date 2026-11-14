@@ -37,6 +37,12 @@ describe("the cross-check of an answer (audit F2)", () => {
     assert.equal(answersAgree("30 days", "60 days."), false, "a number the answer does not give");
     assert.equal(answersAgree("Tessel Foundation", "LumenDB is maintained by the Tessel Foundation."), true);
     assert.equal(answersAgree("Tessel Foundation", "Harrow Labs maintains it."), false, "another name");
+    // Signs count since harness 0.67.0, except for the size of a fall.
+    assert.equal(answersAgree("−40 °C", "The lowest operating temperature is 40 °C."), false, "a dropped minus sign");
+    assert.equal(answersAgree("−40 °C", "The lowest operating temperature is -40 °C."), true);
+    assert.equal(answersAgree("−3.2%", "Efficiency fell by 3.2%."), true, "the size of a fall");
+    assert.equal(answersAgree("1.2 × 10⁻³", "The coefficient is 1.2 × 10^3."), false, "an exponent's sign");
+    assert.equal(answersAgree("1.2 × 10⁻³", "The coefficient is 0.0012."), true);
     assert.equal(answersAgree("1,5 Go", "La taille est de 1.5 Go."), true, "numbers compare as plain numbers");
     assert.equal(answersAgree("EUR 96,000; Jonas Feld", "The foundation spent EUR 96,000."), false, "half an answer to a two-part question");
     assert.equal(answersAgree("", "30 days"), false, "the model found no answer in the passages");
