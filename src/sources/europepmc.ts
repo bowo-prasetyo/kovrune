@@ -42,6 +42,15 @@ export const CITATION_WEIGHT = 0.3;
  * among the five results, and answered with the protocol's 65 mg instead of the report's 60 mg.
  */
 export const PROTOCOL_WEIGHT = 0.5;
+/**
+ * Each search also asks for the works with all its words in their title or abstract, which rankHits ranks
+ * first, besides the CANDIDATES Europe PMC ranks by its full text. Asked whether clinical failure differed
+ * in the Ugandan trial of C-reactive protein testing, Qwen3.5-4B searched "Uganda C-reactive protein
+ * community health workers clinical failure": every word is in the trial report's title or abstract, and
+ * Europe PMC ranked it 27th of 488 by full text, so it never reached the five; the model read a pilot study
+ * and answered "not found". Asked by title and abstract, it is first of 2 (eval/clinical/README.md).
+ */
+const TITLE_ABS = (terms: string[]) => `TITLE_ABS:(${terms.join(" ")}) AND ${READABLE}`;
 /** A full text can take Europe PMC several seconds to give (18 s for a preprint in a check); the abstract is read if it takes longer. */
 export const FULL_TEXT_TIMEOUT_MS = 60_000;
 /** Only records with something to read: an abstract, or an open-access full text. */
@@ -318,7 +327,18 @@ export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
     async search(query, signal) {
       const terms = searchTerms(query);
       if (!terms.length) return [];
-      let records = await searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, CANDIDATES, signal);
+      // The two searches run together; the one by title and abstract only adds records, so its failure is not the search's.
+      const [byText, byTitle] = await Promise.all([
+        searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, CANDIDATES, signal),
+        searchRecords(TITLE_ABS(terms), CANDIDATES, signal).catch((error) => {
+          if (signal?.aborted) throw error;
+          return [];
+        }),
+      ]);
+      const key = (record: EuropePmcRecord) => `${record.source}/${record.id}`;
+      const known = new Set(byText.map(key));
+      // Europe PMC's full-text order first, as before, so it still breaks ties (rankHits).
+      let records = [...byText, ...byTitle.filter((record) => !known.has(key(record)))];
       if (!records.length && terms.length > 1) records = await searchRecords(`(${terms.join(" OR ")}) AND ${READABLE}`, CANDIDATES, signal);
       return rankHits(records, terms).map((record) => {
         found.set(`${record.source}/${record.id}`, record);

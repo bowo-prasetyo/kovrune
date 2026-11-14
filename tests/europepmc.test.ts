@@ -50,8 +50,8 @@ const XML_DIR = new URL("./fixtures/europepmc/", import.meta.url);
 const carrageenanXml = () => readFile(new URL("PMC11590543.xml", XML_DIR));
 
 interface Routes {
-  /** Search results by query: the first route whose pattern the query matches answers. */
-  searches?: Array<[RegExp, EuropePmcRecord[]]>;
+  /** Search results by query, or an HTTP status: the first route whose pattern the query matches answers. */
+  searches?: Array<[RegExp, EuropePmcRecord[] | number]>;
   /** Full texts by ID, or an HTTP status. */
   texts?: Record<string, Uint8Array | number>;
 }
@@ -72,6 +72,7 @@ function fakeFetch(routes: Routes): FetchLike & { urls: string[] } {
     if (search) {
       const query = new URLSearchParams(search[1]).get("query") ?? "";
       const records = routes.searches?.find(([pattern]) => pattern.test(query))?.[1] ?? [];
+      if (typeof records === "number") return reply(records, {});
       return reply(200, { hitCount: records.length, resultList: { result: records } });
     }
     const text = /\/rest\/([A-Z0-9]+)\/fullTextXML$/.exec(url);
@@ -177,8 +178,23 @@ describe("Europe PMC", () => {
     assert.equal(hits.length, 1);
     assert.deepEqual(
       fetchImpl.urls.map(queryOf),
-      ["(hydroxychloroquine donations zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)", "(hydroxychloroquine OR donations OR zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)"],
+      [
+        "(hydroxychloroquine donations zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
+        "TITLE_ABS:(hydroxychloroquine donations zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
+        "(hydroxychloroquine OR donations OR zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
+      ],
     );
+  });
+
+  it("also asks for the works with all the words in their title or abstract, which Europe PMC can rank past its first results", async () => {
+    // The CRP trial report was 27th by full text for the model's search, and first by title and abstract.
+    const report = { ...CARRAGEENAN, id: "39283909", pmid: "39283909", title: "Point-of-care C-reactive protein measurement by community health workers in rural Uganda", abstractText: "Clinical failure was similar." };
+    const fetchImpl = fakeFetch({ searches: [[/^TITLE_ABS:/, [report, CLOSED]], [/^\(/, [CLOSED]]] });
+    const hits = await createEuropePmc(fetchImpl).search("Uganda C-reactive protein community health workers clinical failure", undefined);
+    assert.equal(hits[0]!.id, "europepmc:MED/39283909");
+    assert.equal(hits.length, 2, "a work both searches find is shown once");
+    const failing = fakeFetch({ searches: [[/^\(/, [CLOSED]], [/^TITLE_ABS:/, 500]] });
+    assert.equal((await createEuropePmc(failing).search("hydroxychloroquine", undefined)).length, 1, "the full-text results, when the other search fails");
   });
 
   it("searches words, not Europe PMC's syntax", () => {
@@ -213,7 +229,7 @@ describe("Europe PMC", () => {
     assert.equal(doc.url, "https://europepmc.org/article/MED/39593091");
     assert.deepEqual(doc.work, { authors: ["Wagner R", "Buettner J", "Heni M"], year: 2024, doi: "10.1186/s12916-024-03771-8", venue: "BMC medicine" });
     assert.equal(fetchImpl.urls.at(-1), "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11590543/fullTextXML");
-    assert.equal(fetchImpl.urls.length, 2, "the record found by the search is not asked for again");
+    assert.equal(fetchImpl.urls.length, 3, "the record found by the search is not asked for again");
   });
 
   it("reads other works as their abstract, and says why", async () => {
