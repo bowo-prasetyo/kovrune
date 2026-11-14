@@ -15,6 +15,12 @@ export interface AnswerSentence {
   text: string;
   /** Whether a verified quote backs the sentence; undefined for fragments too short to judge, such as "Steps:". */
   backed?: boolean;
+  /**
+   * For a sentence no quote backs: a passage of a document the model read that would back it, had it been
+   * quoted (inSourceSupport). The sentence is still not backed, and is labelled as before; the passage only
+   * tells the reader where to check it, instead of "it may come from the model's memory".
+   */
+  inSource?: { docId: string; title?: string; passage: string };
 }
 
 export interface SentenceSupport {
@@ -656,6 +662,82 @@ export function sentenceSupport(
     return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true };
   }
   return { sentences, judged, backed };
+}
+
+/** Passages of a document tried for each sentence no quote backs: those sharing the most of its claim words. */
+const IN_SOURCE_CANDIDATES = 8;
+/**
+ * The claim words a passage may lack for a sentence to count as in it: one in every eight, so a sentence of
+ * fewer than eight must be there whole. "In the source" should mean nearly word for word, more than a quote
+ * must back (MIN_BACKED_SHARE). At one half, the same user's "It is considered a weak inhibitor of
+ * prostaglandin (PG) synthesis, particularly in intact cells when arachidonic acid levels are low" was found in
+ * a review saying the reverse, with 7 of its 13 words; at four in five, "The MPL-2.0 Secondary License is
+ * defined as a license that is incompatible with the MPL-2.0 Primary License" was found in the licence's
+ * "Incompatible With Secondary Licenses" notice, lacking only "Primary". Requiring every word lost the
+ * sentence the review gives nearly word for word: "proceed" and "proceeding" stem apart.
+ */
+export const IN_SOURCE_WORDS_PER_MISS = 8;
+/**
+ * The fewest content words a sentence needs to be looked for in the sources: a claim, not a bare phrase. An
+ * answer such as "Local model server" is in the user guide ("Set up a local model server") whether or not it
+ * answers the question, so finding it there tells the reader nothing.
+ */
+const IN_SOURCE_MIN_WORDS = 6;
+/** The longest passage tried: one of the document's sentences. */
+const IN_SOURCE_MAX_CHARS = 1200;
+/**
+ * A passage that sets two claims against each other is not tried: words can be found across them for a
+ * sentence that says what neither does. The paracetamol review's "Paracetamol is a weak inhibitor of PG
+ * synthesis … in broken cell systems, but, by contrast, … inhibit PG synthesis in intact cells … when the
+ * levels of … arachidonic acid are low", with the sentence before it, held every word of the answer's "a
+ * weak inhibitor …, particularly in intact cells when arachidonic acid levels are low", which reverses it.
+ * For the same reason passages are single sentences, not pairs.
+ */
+const CONTRAST = /\b(?:but|however|whereas|although|though|conversely|contrast|yet|unlike|while)\b/i;
+
+/**
+ * Marks the sentences no quote backs that a passage of a document the model read would back, by the same
+ * rules, had it been quoted and it held nearly all the sentence's words (IN_SOURCE_WORDS_PER_MISS) (AnswerSentence.inSource). A user's answer on how paracetamol relieves pain
+ * gave, unquoted, "The apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent
+ * pathways that proceed at low rates", nearly word for word the abstract of a review it read; the label
+ * said such sentences "may come from the model's memory". The passages tried are each document's sentences,
+ * but those setting two claims against each other (CONTRAST), those sharing most of the sentence's words first. The label and
+ * counts do not change: a sentence is backed by what was quoted, not by what was read.
+ */
+export function inSourceSupport(
+  support: SentenceSupport,
+  documents: Array<{ docId: string; text: string }>,
+  titleFor: (docId: string) => string | undefined = () => undefined,
+  question?: string,
+): SentenceSupport {
+  if (!support.sentences.some((s) => s.backed === false) || !documents.length) return support;
+  const passages = documents.map(({ docId, text }) => {
+    const sentences = splitSentences(text.replace(/\s*\n\s*/g, "\n")).map((t) => t.trim()).filter(Boolean);
+    return { docId, candidates: sentences.filter((t) => t.length <= IN_SOURCE_MAX_CHARS && !CONTRAST.test(t)).map((t) => ({ text: t, words: contentWords(t) })) };
+  });
+  return {
+    ...support,
+    sentences: support.sentences.map((sentence) => {
+      if (sentence.backed !== false) return sentence;
+      const words = contentWords(sentence.text);
+      if (words.length < IN_SOURCE_MIN_WORDS) return sentence;
+      for (const { docId, candidates } of passages) {
+        const subject = contentWords(titleFor(docId) ?? "");
+        const claim = words.filter((w) => !subject.some((t) => sameWord(w, t)));
+        const ranked = candidates
+          .map((c) => ({ ...c, shared: claim.filter((w) => c.words.some((q) => sameWord(w, q))).length }))
+          .filter((c) => claim.length - c.shared <= Math.floor(claim.length / IN_SOURCE_WORDS_PER_MISS))
+          .sort((a, b) => b.shared - a.shared || a.text.length - b.text.length)
+          .slice(0, IN_SOURCE_CANDIDATES);
+        for (const candidate of ranked) {
+          const as = sentenceSupport(sentence.text, [{ docId, quote: candidate.text, verified: true }], titleFor, question);
+          const title = titleFor(docId);
+          if (as.judged > 0 && as.backed === as.judged) return { ...sentence, inSource: { docId, ...(title ? { title } : {}), passage: candidate.text } };
+        }
+      }
+      return sentence;
+    }),
+  };
 }
 
 /** Whether each number the sentence gives a unit has that unit in the quotes, or no unit there, or is not quoted at all. */

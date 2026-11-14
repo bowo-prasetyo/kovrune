@@ -144,6 +144,26 @@ describe("saved answers", () => {
     assert.match(markdown, /2\. ✗ annual-report\.pdf\n\n {3}> invented the telephone\n\n {3}Problem: quote not found in the document\./);
   });
 
+  it("says in the export which unquoted sentences are in a source the model read", async () => {
+    const answer = await savedAnswer();
+    const marked: SavedAnswer = {
+      ...answer,
+      answer: "The budget for 2025 assumes income of EUR 450,000. The board approved the plan in March. Lovelace invented the telephone.",
+      support: {
+        sentences: [
+          { text: "The budget for 2025 assumes income of EUR 450,000. ", backed: true },
+          { text: "The board approved the plan in March. ", backed: false, inSource: { docId: "report", title: "annual-report.pdf", passage: "The board approved the plan in March." } },
+          { text: "Lovelace invented the telephone.", backed: false },
+        ],
+        judged: 3,
+        backed: 1,
+      },
+    };
+    const markdown = answerToMarkdown(marked);
+    assert.match(markdown, /⚠ The board approved the plan in March\. \(in the source, not quoted\) ⚠ Lovelace invented the telephone\./);
+    assert.match(markdown, /Those marked "in the source, not quoted" are nearly word for word in a source the model read/);
+  });
+
   it("exports the cited papers as BibTeX, and nothing without them", async () => {
     const answer = await savedAnswer();
     const bibtex = answerToBibtex(answer)!;

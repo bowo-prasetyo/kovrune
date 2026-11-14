@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
-import { labelledQuotesFound, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
+import { inSourceSupport, labelledQuotesFound, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 
 const ADA = readFileSync(new URL("./fixtures/ada-lovelace-lead.txt", import.meta.url), "utf8");
@@ -380,6 +380,48 @@ describe("counts of people recruited, not planned (harness 0.62.0)", () => {
     assert.equal(marks("The planned sample size was 25 participants.", [CALCULATED]), "+", "a sentence about the plan is not a count");
     // Any quote that gives the number as a count backs it, even next to one that gives it as a target.
     assert.equal(marks("25 participants were recruited.", [CALCULATED, q("In the end, 25 participants were recruited.")]), "+");
+  });
+});
+
+describe("sentences no quote backs, found in a source the model read", () => {
+  // A user's answer on how paracetamol relieves pain, from the abstract of "Mechanism of action of paracetamol" (2005).
+  const ABSTRACT =
+    "Paracetamol (acetaminophen) is generally considered to be a weak inhibitor of the synthesis of prostaglandins (PGs). Paracetamol is a weak inhibitor of PG synthesis of COX-1 and COX-2 in broken cell systems, but, by contrast, therapeutic concentrations of paracetamol inhibit PG synthesis in intact cells in vitro when the levels of the substrate arachidonic acid are low (less than about 5 mumol/L). Thus, the apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent pathways that are proceeding at low rates.";
+  const QUOTE = "Paracetamol (acetaminophen) is generally considered to be a weak inhibitor of the synthesis of prostaglandins (PGs).";
+  const ANSWER =
+    "Paracetamol is generally considered a weak inhibitor of the synthesis of prostaglandins. It is considered a weak inhibitor of prostaglandin (PG) synthesis, particularly in intact cells when arachidonic acid levels are low. The apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent pathways that proceed at low rates.";
+  const titleFor = () => "Mechanism of action of paracetamol.";
+  const question = "How does paracetamol relieve pain?";
+  const evidence = checkEvidence([{ docId: "pmc", quote: QUOTE }], () => ABSTRACT);
+  const support = sentenceSupport(ANSWER, evidence, titleFor, question);
+  const found = inSourceSupport(support, [{ docId: "pmc", text: ABSTRACT }], titleFor, question);
+
+  it("finds a sentence the source gives nearly word for word, and not one that says the reverse", () => {
+    assert.deepEqual(support.sentences.map((s) => s.backed), [true, false, false]);
+    assert.equal(found.sentences[1]!.inSource, undefined, "weak \"particularly\" where the paper says it inhibits: 7 of 13 words is not enough");
+    assert.deepEqual(found.sentences[2]!.inSource, {
+      docId: "pmc",
+      title: "Mechanism of action of paracetamol.",
+      passage: "Thus, the apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent pathways that are proceeding at low rates.",
+    });
+  });
+
+  it("changes no count or label: a sentence is backed by what was quoted, not by what was read", () => {
+    assert.equal(found.judged, support.judged);
+    assert.equal(found.backed, support.backed);
+    assert.equal(found.sentences[2]!.backed, false);
+    assert.equal(describeStatus("verified", evidence, found).label, describeStatus("verified", evidence, support).label);
+    assert.match(describeStatus("verified", evidence, found).detail, /Those marked "in the source, not quoted" are nearly word for word in a source the model read/);
+    assert.match(describeStatus("verified", evidence, support).detail, /They may come from the model's memory/);
+  });
+
+  it("needs a short sentence whole, and a claim, not a bare phrase", () => {
+    // Lacking only "Primary", which makes it wrong: the licence's notice says something else.
+    const notice = 'This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.';
+    const mpl = sentenceSupport("The MPL-2.0 Secondary License is defined as a license that is incompatible with the MPL-2.0 Primary License.", [], () => "mpl-2.0.txt");
+    assert.equal(inSourceSupport(mpl, [{ docId: "mpl", text: notice }], () => "mpl-2.0.txt").sentences[0]!.inSource, undefined);
+    const guide = sentenceSupport("Local model server", [], () => "Guide");
+    assert.equal(inSourceSupport({ ...guide, sentences: [{ text: "Local model server", backed: false }] }, [{ docId: "g", text: "Set up a local model server." }]).sentences[0]!.inSource, undefined);
   });
 });
 
