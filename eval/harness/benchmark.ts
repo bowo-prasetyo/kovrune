@@ -11,6 +11,7 @@ import { multiHoldoutTasks, multiTasks } from "../field/multi.ts";
 import { clinicalHoldoutTasks, clinicalTasks } from "../clinical/tasks.ts";
 import { engineeringHoldoutTasks, engineeringTasks } from "../engineering/tasks.ts";
 import { csHoldoutTasks, csTasks } from "../cs/tasks.ts";
+import { labHoldoutTasks, labTasks } from "../lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
 import type { ResearchLibrary } from "../../src/agent/research.ts";
 import type { CallRecord } from "../../src/agent/agent.ts";
@@ -21,7 +22,7 @@ import { ReplayingModel, type RecordedCall } from "../../src/agent/replay.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.71.0";
+export const HARNESS_VERSION = "0.72.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -388,7 +389,7 @@ export async function runBenchmark(options: {
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
   /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
-  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
+  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -418,6 +419,8 @@ export async function runBenchmark(options: {
     { suite: "engineeringholdout" as const, tasks: pick("engineeringholdout", engineeringHoldoutTasks), library: options.field?.engineeringLibrary ?? baseLibrary },
     { suite: "cs" as const, tasks: pick("cs", csTasks), library: options.field?.csLibrary ?? baseLibrary },
     { suite: "csholdout" as const, tasks: pick("csholdout", csHoldoutTasks), library: options.field?.csLibrary ?? baseLibrary },
+    { suite: "lab" as const, tasks: pick("lab", labTasks), library: options.field?.labLibrary ?? baseLibrary },
+    { suite: "labholdout" as const, tasks: pick("labholdout", labHoldoutTasks), library: options.field?.labLibrary ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;
