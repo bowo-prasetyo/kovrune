@@ -24,6 +24,7 @@ import { baseLibrary } from "./harness/suites.ts";
 import { holdoutTasks } from "./field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "./field/multi.ts";
 import { clinicalHoldoutTasks, clinicalTasks } from "./clinical/tasks.ts";
+import { csHoldoutTasks, csTasks } from "./cs/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "./field/office.ts";
 import { pdfTasks } from "./tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "./tasks/research.ts";
@@ -49,6 +50,8 @@ const suites: Record<string, { library: ResearchLibrary; tasks: ResearchTask[] }
     officeholdout: { library: field.officeLibrary, tasks: officeHoldoutTasks },
     clinical: { library: field.clinicalLibrary, tasks: clinicalTasks },
     clinicalholdout: { library: field.clinicalLibrary, tasks: clinicalHoldoutTasks },
+    cs: { library: field.csLibrary, tasks: csTasks },
+    csholdout: { library: field.csLibrary, tasks: csHoldoutTasks },
 };
 
 for (const file of positionals) {
