@@ -79,8 +79,8 @@ python3 eval/cs/source/build.py
 | | |
 | --- | --- |
 | Cited documents found | 97.2% (35 of the 36 documents the 34 answerable questions cite) |
-| Answer passages found | 82.6% |
-| Everything found | 27 of 34 |
+| Answer passages found | 82.6% (86.7% since 0.72.0) |
+| Everything found | 27 of 34 (29 since 0.72.0) |
 
 The questions where search falls short:
 - **`cs11` and `cs22`, the acronym questions:** asked about "the commitment-bound verification mechanism" and "entity-sensitive contextual augmentation", search finds the paper but not the passage, which says "CBV" and "w/o ESCA". `cs21`, which asks with the acronym "HCE-RAG", finds its table. This is the gap the researcher's audit expected. The abbreviation search of 0.70.0 (`src/tools/abbreviations.ts`) does not close it here: it finds both definitions and adds "CBV" and "ESCA" to the query, but the parts that define and discuss each term share more of the question's words, and fill the three results before the ablation table that uses only the abbreviation.
@@ -133,7 +133,7 @@ For comparison, on the clinical suite 4B passes 19 of 23 (83%) and 2B 13 of 23 (
 - **The acronym questions (`cs11`, `cs22`).** Asked about "commitment-bound verification" and "entity-sensitive contextual augmentation", 4B searched in those words three and one times, read the abstract and nearby parts, and answered "not found". The values are in the ablation, written "CBV" and "w/o ESCA". This is the gap the suite was built to show: search cannot bridge an acronym, and a 4B model does not try the acronym itself, though `cs22`'s answer names "(ESCA)".
 - **A quote copied from a search snippet (`cs21`).** The answer, 0.82, is right. Its quote ends "compared to both general-purpose RAG baselines and domain-specifi…": the snippet search showed, cut at 220 characters, not the part's text, which the model had read. A quote cut mid-word with "…" is not word for word, so the answer is labelled **Quotes not found** and fails. Search snippets that end in "…" invite this; checking such a quote up to its "…" would accept it.
 - **A part label read as a count (`cs20`).** 4B answered "300 questions and 38 documents", and quoted the part's title, "…(part 36 of 38)", for the 38. The benchmark has 6,196 documents. The quote check passed, because a part's title is in the text the model is shown, but the sentence check found the answer's sentence not backed by its quotes, so it reads "0 of 1 sentences backed", not **Quotes found**.
-- **The one wrong green label (`cs24`).** Asked how stereotypical gender assumption changed in the 500-record evaluation, 4B answered "the framework consistently reduced Stereotypical Gender Assumption", with a real quote, and its review and cross-check agreed. The facts ask for the numbers (14.4% to 11.0%), which the answer leaves out. **This is arguably a task defect:** the question does not say it wants the numbers, and the answer is not wrong, only vague. It is left as written, so the run stays comparable; the owner may decide to reword it ("from what to what") or relax its facts, as `c03` was ([clinical README](../clinical/README.md#the-first-model-runs-0600)).
+- **The one wrong green label (`cs24`).** Asked how stereotypical gender assumption changed in the 500-record evaluation, 4B answered "the framework consistently reduced Stereotypical Gender Assumption", with a real quote, and its review and cross-check agreed. The facts ask for the numbers (14.4% to 11.0%), which the answer leaves out. **A task defect, fixed in 0.72.0:** the question does not say it wants the numbers, and the answer is not wrong, only vague. As for `c03` ([clinical README](../clinical/README.md#the-first-model-runs-0600)), the question is unchanged and its facts now ask for what it asks: the direction ("reduc", "decreas", "lower", … or "from 14.4"). An answer that the measure rose still fails. Re-scored with `bench:rescore`, 4B's answer now passes: `cs` 18/26, and its wrong answers under **Quotes found** 0 of 13. 2B's answer passed already; nothing else in the 6,045 recorded answers of `eval/results/` changes.
 
 **What went wrong, 2B.** 2B found more values than 4B, and gave the wrong one more often:
 - **Wrong numbers with real quotes, labelled Quotes found (`cs01`, `cs22`).** For FedBAT's accuracy, "0.19 percentage points" (an accuracy difference from another paragraph); for the accuracy without ESCA, "29 percentage points" (the abstract's Recall@10 gain). Both are short answers inside quotes that cover most of the question's words.
@@ -143,13 +143,50 @@ For comparison, on the clinical suite 4B passes 19 of 23 (83%) and 2B 13 of 23 (
 
 **What 4B did well:** every setup question, including both powers of ten (written "10^-3" and "5×10−4"), the KB/MB storage question, and every negative question: it wrote "did not consistently outperform", "was not statistically significant" and "did not improve" where the papers say so. It refused the unanswerable Gemini question, though Gemini-2.5 Flash is in another paper of the library.
 
-**What the runs suggest, in order of what they would gain on this suite:**
-1. **Show a table with the paragraph that discusses it,** or let the model see that the part before holds "Table 4" (`cs04`, `cs12`). The clinical suite's outline experiment ([#144](https://github.com/bowo-prasetyo/kovrune/pull/144), not adopted) is one way.
+**What the runs suggested,** in order of what they would gain on this suite, and what became of each in 0.72.0 ([below](#four-changes-from-the-first-runs-0720)):
+1. **Point to a table from the paragraph that discusses it** (`cs04`, `cs12`): a table note after the part.
 2. **Split long tables at rows, with caption and header repeated** (`cs01`, `ch01`).
-3. **Bridge acronyms in search** further (`cs11`, `cs22`). The 0.70.0 abbreviation search adds the abbreviation to the query, but a part that uses only the abbreviation still ranks below the parts that spell it out; weighting the abbreviation's match, or keeping a result for it, is a next step. `bench:retrieval` measures it without a model.
-4. **Accept a quote cut with "…" up to the cut** (`cs21`), as a defect fix.
+3. **Bridge acronyms in search further** (`cs11`, `cs22`): a result kept for a passage that uses only the abbreviation.
+4. **Accept a quote cut with "…" up to the cut** (`cs21`): not done as such. Harness 0.8.0 refused quotes cut mid-word on purpose, after a model finished "…can sometimes match hum…" from memory; the same release made OpenAlex snippets end at a whole word. 0.72.0 does that for the user's documents' snippets instead, so a copied snippet is a quote the check accepts.
 
-Each changes what the model sees, so each is judged under [the rule](../field/README.md#rule-for-prompt-and-guard-changes), with this suite added to the ones it runs.
+### Four changes from the first runs (0.72.0)
+
+**What changed.**
+- **Tables split between rows** (`splitTable` in `src/documents/chunk.ts`). A table longer than a part is cut between rows, never inside one, and each later piece starts with "**Table 5** (continued)", its caption's first sentence and its first row, the column names. Search does not index those repeated lines (`withoutRepeatedLead`): indexed, Table 3's caption in every piece of the typhoid trial's table outranked the passages that answer `c01`, which lost two of its three answer passages in `bench:retrieval`.
+- **A note where a cited table is** (`DocumentIndex.tablesCitedElsewhere`, `tableNote` in `src/tools/research.ts`). A part of the user's document that cites a table held in another part ends with "[Table 4 is in stabfl-label-skew#28.]". A caption is a line that starts with "**Table 4**", "Table 4." or "Table 4:"; a paragraph that starts "Table 4 provides…" cites it. An old read that is shortened to fit the context loses the note, as an outline is lost.
+- **A place for a passage that uses only the abbreviation** (`search` in `src/tools/search.ts`). When a query spells out a term the library abbreviates ("commitment-bound verification", defined as CBV), and no result uses the abbreviation without the long form, the best-ranked passage that does takes the last of the three places.
+- **Snippets cut at a word** (`cutAtWord`). A snippet sentence longer than 220 characters ends after its last whole word, marked "[…]", which the quote check ignores at a quote's edge.
+
+Where they apply: of the libraries' parts, 8 CS and 10 clinical table pieces are continued, and 25 CS and 16 clinical parts get a table note; no field, office, engineering, research or pdf document has a table longer than a part or a cited table in another part. Snippets change wherever a sentence is longer than 220 characters: in 327 of the 534 CS parts and 295 of the 415 clinical ones, but 7 field, 7 office, 1 research and 1 pdf part.
+
+**Search alone** (`bench:retrieval`): `cs` and `csholdout` find everything for 29 of 34 answerable questions, up from 27 (`cs11` and `cs22`), and every other suite is unchanged, with and without 300 generated documents. `tests/retrieval.test.ts`'s CS floor is raised to these figures.
+
+**Recorded answers** (`bench:rescore --labels` over every report in `eval/results/`): none of the 6,045 changes label, as the changes are to what the model is shown. The one answer that changes, `cs24`, is the task defect above.
+
+**Models, on the clinical and CS suites** (same machine, build and model files as the 0.69.0 runs). Following [the rule's fewer runs](../field/README.md#rule-for-prompt-and-guard-changes): the change was run with its replies recorded; `bench:replay` found 61 of the 69 tasks differ from `main` (0.71.0), almost all from their first search, whose snippets now end at a word; `main` was run on those 61, and the rest taken from the replay. Both sides re-scored with the 0.72.0 harness, so `cs24`'s fix counts on both:
+
+| Model | Suite | `main` | 0.72.0 | Gained | Lost | p | Report |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | `cs` | 19/26 | **21/26** | 3 | 1 | 0.63 | [before](../results/cs-clinical-0.71-base-qwen3.5-4b-q4km.json), [after](../results/cs-clinical-0.72-qwen3.5-4b-q4km.json) |
+| | `csholdout` | 9/10 | 10/10 | 1 | 0 | 1 | |
+| | `clinical` | 17/23 | 17/23 | 0 | 0 | 1 | |
+| | `clinicalholdout` | 7/10 | 6/10 | 0 | 1 | 1 | |
+| Qwen3.5-2B | `cs` | 11/26 | 12/26 | 1 | 0 | 1 | [before](../results/cs-clinical-0.71-base-qwen3.5-2b-q4km.json), [after](../results/cs-clinical-0.72-qwen3.5-2b-q4km.json) |
+| | `csholdout` | 7/10 | 7/10 | 0 | 0 | 1 | |
+| | `clinical` | 10/23 | 10/23 | 1 | 1 | 1 | |
+| | `clinicalholdout` | 4/10 | 5/10 | 1 | 0 | 1 | |
+
+Over the four suites, 4B gains 4 tasks and loses 2, and 2B gains 3 and loses 1. Labelled **Quotes found**, wrong: 4B 1 of 31 before and 3 of 32 after, the two new ones both in `clinicalholdout`, which is read only as totals; 2B 7 of 25 before and 5 of 22 after. Median time per question is unchanged (4B 100 s clinical, 89 → 83 s CS; 2B about 40 s).
+
+**What each change did, 4B, `cs`:**
+- **The table note: `cs12` gained.** 4B read the paragraph after Table 2, as before, then the part its note named (`fl-iiot-poisoning#43`), and answered 80.5. In `cs04` it was not enough: search now ranks Table 4's part first, and the note pointed to it, but 4B read only the discussion and answered "not found", as on `main`.
+- **The abbreviation's place: `cs22` gained, `cs11` lost.** For `cs22` the kept place went to the ablation table (`w/o ESCA`), which 4B read first and answered 0.6508. For `cs11` it went to another part that uses only "CBV" (part 22, section 5.6, "Sketch Verification"), not the ablation (part 30); 4B read it and two others and answered "not found". On `main`, 4B had passed `cs11` by searching "CBV" itself on its third search; here its later searches were worded differently. The place goes to the best-ranked such passage, which need not be the one that answers.
+- **Snippets cut at a word: `cs21` gained.** 4B gave the same right answer, 0.82, with its quote copied from the snippet as before; the snippet now ends "…baselines and […]", and the quote verifies.
+- **Table pieces: `cs01` still fails, differently.** 4B now read parts 68 and 69: Table 4's later piece, which starts "**Table 4** (continued) … on MNIST.", and the start of Table 5. It answered 95.27%, FedBAT's MNIST accuracy from Table 4, not its CIFAR-10 accuracy from Table 5. The continued label named the dataset, and the model took the number anyway. The cross-check read 95.27 ± 0.10 from the passages and did not agree, so the answer is not labelled **Quotes found**.
+
+**2B:** it gains `cs23`, now reading part 30 and saying HyDE "did not improve", and `clinicalholdout` one task, and trades `c06` for `c11`. In `c06` it read parts 45 and 47 instead of 44, 46, 40 and 3: a long table earlier in that paper is now two pieces, so its later parts are numbered one higher, and the search results and reads differ from there. Its two fewer wrong labels under **Quotes found** are `cs22`, now right, and one held-out answer no longer labelled.
+
+**Not yet measured: the protected suites.** The rule also asks for research, unanswerable, pdf, field and holdout on both models. These changes reach them only through snippets (16 parts in all) and the abbreviation place; replaying the 0.65.0 recordings that still replay on `main` (62 of those suites' 160 tasks per model) finds no task whose requests differ. They are being run as above; their results are added here when they finish.
 
 ## Limits
 
