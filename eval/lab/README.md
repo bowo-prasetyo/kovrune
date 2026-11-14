@@ -102,15 +102,102 @@ For comparison, the clinical suite's search finds 96.7% of documents and 83.7% o
 
 So a question asking about "IL-10" in a library of papers that each use their own terms is carried by its other words; in a researcher's real library, where many papers are about the same pathway, it would not be. That is the gap [recommendation 3 of the audit](../field/README.md#laboratory-units-opposites-and-names-0710-defect-fix) addresses — matching gene and protein names however they are written — and this test is what should fail when it is fixed.
 
-### Model runs
+### The first model runs (0.72.0)
 
-**Not yet run.** The suite is committed with its documents, questions and search figures; the model runs on both Qwen3.5 models come next, under [the rule for prompt and guard changes](../field/README.md#rule-for-prompt-and-guard-changes), and will be recorded here as the clinical and CS suites' first runs are. Rescoring every recorded report with this change gives the same label for every one of 6,699 answers: the suite adds tasks and a library, and changes no check.
+Both models ran on llama.cpp `0c1e570` (the copy vendored in llama-cpp-python 0.3.36, since github.com is not reachable from the container), built portably (`-DGGML_NATIVE=OFF`), on CPU in a 4-core cloud container (Intel Xeon @ 2.10GHz, 16 GB), at 4,096 tokens of context, in constrained mode, with the same Q4_K_M files as the other suites:
 
-What the runs are expected to show, from the other suites' results and the 0.71.0 audit:
+```bash
+llama-server -m Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
+npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b-q4km --context 4096 \
+  --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --modes constrained \
+  --suites lab,labholdout --out eval/results/lab-0.72-qwen3.5-4b-q4km.json
+```
 
-- whether the laboratory units, opposites and names checks of 0.71.0 catch anything a model actually writes, which no recorded run can show;
-- whether 4B's **Quotes found** label stays under the design's 10% false-reassurance target on bench papers, as it does on trial reports (2 of 20) and CS papers (1 of 13);
-- whether the name questions behave like the CS suite's acronym questions, which 4B answered 0 of 4 times.
+The build is the one the CS suite's runs used, not the clinical and field runs', and runs on another build or CPU do not repeat task by task ([field README](../field/README.md#runs-repeat-on-one-machine-not-across-machines)). Compare these figures with other suites' as totals, not task by task.
+
+Re-scored with the one task defect below fixed (`npm run bench:rescore`), which no model run repeats:
+
+| Model | `lab` | `labholdout` | Labelled **Quotes found**, wrong | Median time per question | Report |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | **28/32 (88%)** | 10/11 | **1 of 28 (4%)**: 1 of 20 and 0 of 8 | 107 s | [json](../results/lab-0.72-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 22/32 (69%) | 9/11 | 4 of 19 (21%): 3 of 11 and 1 of 8 | 50 s | [json](../results/lab-0.72-qwen3.5-2b-q4km.json) |
+
+As run, before the defect fix, 4B passed 27 of 32 with 2 of 28 labelled answers wrong; 2B's figures do not change.
+
+For comparison, on the clinical suite 4B passes 19 of 23 (83%) and on the CS suite 17 of 26 (65%). **Bench papers are the easiest of the three paper suites for 4B**, for the same reason search does well on them ([above](#results)): each paper is about its own organism, and a bench paper states its result in prose as well as in a figure. 4B's green label is wrong once in 28, under the design's 10% target; 2B's is wrong once in five, as on the clinical (36%) and CS (33%) papers.
+
+`lab` by kind, re-scored (`labholdout` is read only as totals):
+
+| Kind | 4B | 2B |
+| --- | --- | --- |
+| Name | 8/10 | 6/10 |
+| Direction | **6/6** | 5/6 |
+| Concentration | **6/6** | 3/6 |
+| Negative | **3/3** | **3/3** |
+| Result | 1/2 | **2/2** |
+| Alias | **2/2** | 1/2 |
+| Comparison of two papers | 0/1 | 0/1 |
+| Not in the papers | **2/2** | **2/2** |
+
+#### The 0.71.0 laboratory checks fired once in 86 answers, and that once was a false positive
+
+**This is the suite's main result, and it does not confirm what the audit expected.** The suite was built to show what the laboratory units, opposites and names rules of 0.71.0 gain on text a model writes. Recomputing every recorded answer's sentence marks with this tree and with the tree before those rules (`798e792^`, the same reports, the same quotes) isolates their effect exactly:
+
+| | 4B | 2B |
+| --- | --- | --- |
+| Answers whose sentences are marked, with the rules | 7 | 13 |
+| Answers whose sentences are marked, without them | 7 | 13 |
+| Sentences the rules marked that were backed before | 0 | **1** |
+| Labels changed | 0 | 0 |
+| Task results changed | 0 | 0 |
+
+The single firing is 2B's `l07`, and it is a **false positive on a right answer**. Asked whether PPARαBATKO mice differed in body weight, 2B answered, rightly, that "PPARα deletion did not alter body weight gain in HFD-induced obese mice, meaning the body weight of PPARαBATKO mice was similar to that of control mice", quoting Figure 2's legend: "BAT specific deletion of PPARα does not alter glucose tolerance or body weight gain in HFD-induced obese mice." The names rule marks the sentence because `PPARαBATKO`, a Greek-letter name, is not in that quote, which says only `PPARα`; the genotype is the paper's own, three paragraphs away. Removing the name from the sentence makes it backed again, which is how the rule was identified. The answer's label does not change — its first sentence was already marked, by the older checks — and the task still passes, so nothing a user would see differs. But the mark is wrong, and it points at a real gap in the rule: a name that is a **compound of a backed name** (`PPARα` + `BATKO`) counts as absent. Accepting a name whose base is present would weaken exactly the case the rule exists for ("TNF-α" against a quote saying only "TNF"), so the fix is probably to look for the name in the documents the model read, as `inSourceSupport` already looks for sentences; that is a change for its own measurement.
+
+**Why the rules found nothing to catch.** The audit's 22 probe sentences were written by hand, each carrying one wrong unit, direction or name while every other word matched a real quote. Neither model wrote such a sentence over these ten papers. 4B answered every concentration question right (6/6, prefixes included) and every direction question right (6/6). Where the models were wrong, they were wrong in ways no word rule can see:
+
+- **A value invented wholesale** (2B's `l04`): "reduced by approximately 50% in female mice and by approximately 60% in male mice", where the paper says up to 97% and 83%. The quote check and sentence check both rejected it (0 of 1 sentences backed), so it was not labelled — the older checks doing their job.
+- **A dose in the wrong unit entirely** (2B's `l06`): asked the daily dose of the β3-adrenergic agonist (1 mg/kg), 2B answered "100 μg/kg/day". This is the closest thing here to the error the unit rule is for, and the unit rule did not catch it: that rule marks a sentence only when the quotes give *the same number* another unit, and no quote gives 100. The number check marked it instead, and the answer was not labelled.
+- **The value never found** (4B's `l04`): 4B read Figure 1C's legend and the paragraphs around it and answered that the documents "do not contain the specific numerical values"; the sentence giving them is in the results text it did not reach. 2B's `l08` likewise returned no answer for the daptomycin MIC.
+- **Half an answer, labelled Quotes found** (2B's `l22`): asked what ADP-ribose changed BmMDH2's KM *from and to*, 2B answered "80 ± 20 μM" alone, inside a quote that gives both values. The CS suite recorded the same pattern (`cs09`).
+- **A real quote that does not answer the question** (2B's `l27`): asked what happened to the ABA-induced ROS increase in the quintuple receptor mutant (it was lost), 2B answered with the noun phrase "ABA-induced ROS increase in guard cell mitochondria".
+- **One side of a both-sided sentence** (2B's `l17`): asked which manipulation of MAP1B rescued the migratory defects (knockdown), 2B answered "MAP1B overexpression", from a quote that names both: "We show MAP1B overexpression in Fmr1-mutated neurons and rescue the migratory defects through RNA-interference-induced KD." A quote stating both sides of a pair backs either, by the rule's own design ([0.71.0 limits](../field/README.md#laboratory-units-opposites-and-names-0710-defect-fix)), so this is the documented limit meeting a real answer.
+- **An unanswerable question answered anyway** (2B's `lh10`): asked for a maize stomatal aperture, which no paper measures, 2B gave *Arabidopsis* timings. 4B refused both of its unanswerable questions.
+- **An incomplete answer** (4B's `l16`): asked by how much MAP1B was raised in Fmr1-null mice (1.6×), 4B answered that "elevated levels of MAP1B were detected" without the number.
+- **A number from the wrong place** (4B's `l28`): in the two-paper question it gave Pparα's reduction as "approximately 50%" where the paper says 97% in females, while naming both zebrafish paralogs right. Search finds only one of that question's two papers ([above](#results)).
+
+So the honest reading: **the 0.71.0 rules are a guard against an error these two models did not make on these ten papers.** They cost no label here, and their one mark was wrong. Whether they ever fire usefully needs a model that writes more confidently wrong sentences, or papers whose values invite a prefix slip. What does reach a green label on these papers is semantic, and the next section is the clearest instance.
+
+#### One wrong answer kept its green label, and every check agreed with it
+
+4B's `l03` is the false reassurance the suite was built to catch, and it shows why the word checks cannot be the last line.
+
+- **The question:** in the IL10 chicken study, what effect did the heterozygous IL10 knockout have on pathogen clearance and inflammation?
+- **The paper:** "Neither the heterozygous IL10 knockout nor a homozygous IL10 enhancer mutation had a major effect on pathogen clearance or inflammation in any of the challenge models."
+- **4B's answer:** "the heterozygous IL10 knockout (which resulted in reduced expression of IL10) led to increased pathogen clearance at the expense of increased inflammation."
+- **Its quote, real and word for word,** from the introduction: "We describe the lack of dosage compensation in heterozygous mutation and present evidence that the reduced expression of IL10 leads to increased pathogen clearance at the expense of increased inflammation."
+
+Every check passed it: the sentence check found 1 of 1 sentences backed, the model's review answered "yes", and the cross-check, shown the passages without the answer, read out "increased pathogen clearance at the expense of increased inflammation" and agreed. The answer's words all come from its quote, so no word check can see the error; the quote is about reduced IL10 expression in general, and the sentence that speaks of the heterozygote says the opposite. This is [audit finding F2](../../docs/ai-ml-audit.md#f2-high-the-word-checks-pass-contradictions-and-the-self-review-rarely-catches-them) on a bench paper: the model's own review confirms its own reading of its own quote.
+
+**What would catch it** is not another word rule but a look for the source's own sentence about the thing asked. The answer attributes to the heterozygote a claim the paper makes about something else, and the paper's sentence naming the heterozygote contradicts it; nothing in the pipeline looks for a contradicting sentence in a document the model read. `inSourceSupport` already searches the read documents for a passage that would back a marked sentence ([field README](../field/README.md)); the mirror of it — a passage that denies a *backed* sentence — is a change this suite could measure, and is left to its own change under [the rule](../field/README.md#rule-for-prompt-and-guard-changes).
+
+#### One task defect, fixed at 0.72.0
+
+**`l01` asked for a word the paper does not use.** Its fact group listed "prevented autocrine inhibition" without an article, so 4B's answer — "The absence of IL10 prevented **the** autocrine inhibition of nitric oxide production in macrophages", right and quoting the abstract word for word — matched none of its options and failed. The group now also accepts "prevented the autocrine inhibition" and "prevents (the) autocrine inhibition". Only the facts changed, not the question, so `bench:rescore` gives the exact effect and no model was run again:
+
+| Model | `lab` as run | re-scored | Labelled wrong, as run | re-scored |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 27/32 | **28/32** | 2 of 28 | **1 of 28** |
+| Qwen3.5-2B | 22/32 | 22/32 | 4 of 19 | 4 of 19 |
+
+A wrong answer ("reduced nitric oxide production") still matches none of the group. 2B's answer to `l01` fails either way. Nothing else in either report changes.
+
+**What the runs suggest, in order of what they would gain on this suite:**
+
+1. **Look for a sentence of the source that contradicts a backed sentence** (`l03`), as described above. It is the only wrong answer here that reached a green label on 4B.
+2. **Reach the results text, not only the figure legend** (4B's `l04`, `lh04`). Both read a legend naming the figure that holds the value and concluded the value was not given. The CS suite asked for the neighbouring part for the same reason (`cs04`, `cs12`).
+3. **Require every part of a "from what to what" question** (2B's `l22`), which the completeness check, asked of 2B, did not find missing.
+4. **Look for a distinguishing name in the documents the model read**, not only in its quotes (2B's `l07`, the one false positive above).
+5. Match gene and protein names however they are written, which this suite's alias test measures without a model ([above](#results)).
 
 ## Limits
 

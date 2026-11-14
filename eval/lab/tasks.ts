@@ -122,7 +122,11 @@ export const labTasks: ResearchTask[] = [
     kind: "lookup",
     question: "In the IL10-deficient chicken study, how did the absence of IL10 affect nitric oxide production by macrophages?",
     answerable: true,
-    facts: [["increase", "increased", "elevated", "higher", "greater", "prevention of autocrine inhibition", "prevented autocrine inhibition"]],
+    // Task defect, fixed at 0.72.0 after the first 4B run: the group listed "prevented autocrine
+    // inhibition" without the article, so 4B's right and faithfully quoted "prevented the autocrine
+    // inhibition of nitric oxide production" failed. A wrong answer ("reduced nitric oxide") still
+    // matches none of these (eval/lab/README.md).
+    facts: [["increase", "increased", "elevated", "higher", "greater", "prevention of autocrine inhibition", "prevented autocrine inhibition", "prevented the autocrine inhibition", "prevents the autocrine inhibition", "prevents autocrine inhibition"]],
     citations: [IL10],
   },
   {
