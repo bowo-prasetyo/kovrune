@@ -85,7 +85,14 @@ export function normalizeForMatch(text: string, { keepCase = false }: { keepCase
   const compatible = text
     .replace(LITERAL_BREAKS, " ")
     // Compatibility forms are the same text: ligatures ("ﬁ" is "fi"), full-width letters, "…" as "...".
-    .normalize("NFKC");
+    .normalize("NFKC")
+    // A PDF can set a minus sign, a unit prefix or an exponent apart from what it belongs to, as a symbol
+    // from another font: "− 25 °C", "40 m Ω", "× 10 −6". Documents read before harness 0.68.0 keep that text,
+    // and other PDFs give it still (pdf-layout.ts), while a quote of it is typed whole. Only a true minus sign
+    // (U+2212) is joined, so a list's "- " stays a marker; a prefix only before "Ω"; a signed exponent only after "× 10", written as "× 10−6".
+    .replace(/−\s+(?=\p{Nd})/gu, "−")
+    .replace(/(\p{Nd}\s?[pnμmkMG])\s+Ω/gu, "$1Ω")
+    .replace(/×\s*10\s*(?=[−-]\p{Nd})/gu, "× 10");
   const unified = (keepCase ? compatible : compatible.toLowerCase())
     // Soft hyphens and zero-width characters are invisible, so a model quoting the text leaves them out.
     .replace(/[\u00ad\u200b-\u200d\u2060\ufeff]/g, "")

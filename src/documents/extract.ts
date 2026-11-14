@@ -5,6 +5,7 @@
 import { decodeText, parseDelimited, sniffDelimiter } from "./delimited.ts";
 import { extractOfficeText, joinPages, OFFICE_READER_VERSION, PAGE_UNITS, type OfficeKind } from "./office.ts";
 import { MAX_SHEET_ROWS, readRows } from "./sheets.ts";
+import { pageLines, pageText, withoutRunningLines, type PdfTextItem } from "./pdf-layout.ts";
 
 export type DocumentKind = "text" | "markdown" | "html" | "pdf" | "csv" | "tsv" | OfficeKind;
 
@@ -159,7 +160,7 @@ export interface PdfJsLike {
   getDocument(src: { data: Uint8Array; isEvalSupported?: boolean; verbosity?: number }): {
     promise: Promise<{
       numPages: number;
-      getPage(n: number): Promise<{ getTextContent(): Promise<{ items: Array<{ str?: string; hasEOL?: boolean }> }> }>;
+      getPage(n: number): Promise<{ getTextContent(): Promise<{ items: PdfTextItem[] }> }>;
     }>;
     destroy(): Promise<void>;
   };
@@ -169,6 +170,10 @@ export interface PdfJsLike {
  * The text of a PDF, its page count, and where each page starts in the text, so a quote can be
  * cited by page. `pageStarts[n - 1]` is page n's offset; a page without text starts where the
  * next page does, so the last page whose start is at or before an offset is the one it is on.
+ *
+ * Since harness 0.68.0 the pieces of each page are joined by where they are (pdf-layout.ts): a
+ * subscript, superscript or symbol set against the text before it is joined to it ("fsw", "40 mΩ",
+ * "−25 °C"), paragraphs are marked with a blank line, and running headers and footers are read once.
  */
 export async function extractPdfText(
   data: Uint8Array,
@@ -178,17 +183,9 @@ export async function extractPdfText(
   const task = pdfjs.getDocument({ data, isEvalSupported: false, verbosity: 0 });
   try {
     const pdf = await task.promise;
-    const pages: string[] = [];
-    for (let n = 1; n <= pdf.numPages; n++) {
-      const content = await (await pdf.getPage(n)).getTextContent();
-      let page = "";
-      for (const item of content.items) {
-        if (typeof item.str !== "string") continue;
-        page += item.str;
-        page += item.hasEOL ? "\n" : item.str && !item.str.endsWith(" ") ? " " : "";
-      }
-      pages.push(joinHyphenatedLines(page.replace(/[ \t]+/g, " ").trim()));
-    }
+    const lines = [];
+    for (let n = 1; n <= pdf.numPages; n++) lines.push(pageLines((await (await pdf.getPage(n)).getTextContent()).items));
+    const pages = withoutRunningLines(lines).map((page) => joinHyphenatedLines(pageText(page)));
     return { ...joinPages(pages), pages: pdf.numPages };
   } finally {
     await task.destroy();

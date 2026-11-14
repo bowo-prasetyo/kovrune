@@ -86,7 +86,10 @@ describe("field suite", () => {
         .filter((id) => {
           const text = normalize(suite.library.index.get(id)!.text);
           return task.facts.every((group) => group.some((option) => text.includes(normalize(option))));
-        });
+        })
+        // Since harness 0.68.0 marks a PDF's paragraphs, the design's part 24 holds "Reproducible builds from tagged
+        // commits" next to the static hosts: the word, not the commit the user guide says the preview page shows.
+        .filter((id) => !(task.id === "m09-preview-hosts" && id === "kovrune-design-r3#24"));
       assert.deepEqual(holdsAll, [], `${task.id}: one passage holds every fact`);
     }
   });
@@ -347,7 +350,7 @@ describe("engineering suite", () => {
     const paper = suite.engineeringLibrary.documentFor("sic-pfc-paper")!.text;
     // The PDFs hold what makes engineering text hard to check: a minus sign and a unit symbol from another
     // font, and a table's rows (eval/engineering/source/make_pdfs.py).
-    assert.match(datasheet, /Gate-source voltage, minimum .* 8 V/);
+    assert.match(datasheet, /Gate-source voltage, minimum .*8 V/);
     assert.match(datasheet, /1950 pF/);
     assert.match(paper, /20% 97\.1% 0\.991 6\.8%/);
     assert.match(paper, /ZVS was achieved above 35% load/);
