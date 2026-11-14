@@ -8,7 +8,7 @@ import { pageLines, pageText, withoutRunningLines, type PdfTextItem } from "../s
 /** A piece of text at (x, y), `width` wide and `height` tall, as pdf.js gives it. */
 const at = (str: string, x: number, y: number, width: number, height = 10, hasEOL = false): PdfTextItem => ({ str, transform: [height, 0, 0, height, x, y], width, height, hasEOL });
 
-describe("PDF pages read by layout (harness 0.68.0)", () => {
+describe("PDF pages read by layout (harness 0.70.0)", () => {
   it("joins a subscript, a superscript or a symbol set against the text before it, and spaces words apart", () => {
     const lines = pageLines([
       at("switching frequency is f", 50, 700, 100),
@@ -74,8 +74,8 @@ describe("PDF pages read by layout (harness 0.68.0)", () => {
   });
 });
 
-describe("quotes of PDF text that sets symbols apart (harness 0.68.0)", () => {
-  // Documents read before 0.68.0, and PDFs whose pieces do not touch, keep "− 25", "m Ω" and "× 10 −6".
+describe("quotes of PDF text that sets symbols apart (harness 0.70.0)", () => {
+  // Documents read before 0.70.0, and PDFs whose pieces do not touch, keep "− 25", "m Ω" and "× 10 −6".
   const source = "The device was tested from − 25 °C to 55 °C. RDS(on) is 40 m Ω typical. Leakage stayed below 2.5 × 10 −6 A.\n- 4 items";
   const verified = (quote: string) => checkEvidence([{ docId: "d", quote }], () => source)[0]!.verified;
 

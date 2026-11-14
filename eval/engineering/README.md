@@ -1,6 +1,6 @@
 # Engineering suite
 
-Questions over engineering documents (harness 0.68.0). The other suites' documents are Wikipedia leads, a software licence, Kovrune's own documentation, made-up Office files and clinical trial reports. None has a datasheet, a two-column paper, an SI prefix that changes a value a thousandfold, a negative temperature, or an abbreviation defined once and used after. An audit of Kovrune from an engineering researcher's point of view found that the sentence check passed errors of exactly these kinds ([engineering units, signs, powers of ten and changes, 0.67.0](../field/README.md#engineering-units-signs-powers-of-ten-and-changes-0670-defect-fix)), and that no suite could show how often. This suite can.
+Questions over engineering documents (harness 0.70.0). The other suites' documents are Wikipedia leads, a software licence, Kovrune's own documentation, made-up Office files and clinical trial reports. None has a datasheet, a two-column paper, an SI prefix that changes a value a thousandfold, a negative temperature, or an abbreviation defined once and used after. An audit of Kovrune from an engineering researcher's point of view found that the sentence check passed errors of exactly these kinds ([engineering units, signs, powers of ten and changes, 0.67.0](../field/README.md#engineering-units-signs-powers-of-ten-and-changes-0670-defect-fix)), and that no suite could show how often. This suite can.
 
 ## Documents
 
@@ -37,11 +37,11 @@ npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b
 
 ## Results
 
-First runs, before and after harness 0.68.0 (PDF layout, abbreviations), constrained mode, 4,096-token context; the analysis is in [eval/field/README.md](../field/README.md#pdf-layout-abbreviations-and-openalex-limits-0680).
+First runs, before and after harness 0.70.0 (PDF layout, abbreviations), constrained mode, 4,096-token context; the analysis is in [eval/field/README.md](../field/README.md#pdf-layout-abbreviations-and-openalex-limits-0700).
 
 | Model | Harness | engineering | engineeringholdout | Reports |
 | --- | --- | --- | --- | --- |
 | Qwen3.5-4B | `main`'s code (0.67.0) | 23/25 | 9/10 | [json](../results/engineering-0.68-base-qwen3.5-4b-q4km.json) |
-| Qwen3.5-4B | 0.68.0 | 23/25 | 10/10 | [json](../results/engineering-0.68-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.70.0 | 23/25 | 10/10 | [json](../results/engineering-0.68-qwen3.5-4b-q4km.json) |
 | Qwen3.5-2B | `main`'s code (0.67.0) | 19/25 | 7/10 | [json](../results/engineering-0.68-base-qwen3.5-2b-q4km.json) |
-| Qwen3.5-2B | 0.68.0 | 22/25 | 8/10 | [json](../results/engineering-0.68-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.70.0 | 22/25 | 8/10 | [json](../results/engineering-0.68-qwen3.5-2b-q4km.json) |

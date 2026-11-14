@@ -171,7 +171,7 @@ export interface PdfJsLike {
  * cited by page. `pageStarts[n - 1]` is page n's offset; a page without text starts where the
  * next page does, so the last page whose start is at or before an offset is the one it is on.
  *
- * Since harness 0.68.0 the pieces of each page are joined by where they are (pdf-layout.ts): a
+ * Since harness 0.70.0 the pieces of each page are joined by where they are (pdf-layout.ts): a
  * subscript, superscript or symbol set against the text before it is joined to it ("fsw", "40 mΩ",
  * "−25 °C"), paragraphs are marked with a blank line, and running headers and footers are read once.
  */

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { definitions, longFormOf } from "../src/tools/abbreviations.ts";
 import { DocumentIndex } from "../src/tools/search.ts";
 
-describe("abbreviations a library defines (harness 0.68.0)", () => {
+describe("abbreviations a library defines (harness 0.70.0)", () => {
   it("finds a long form whose letters hold the short form in order (Schwartz and Hearst)", () => {
     assert.equal(longFormOf("FEA", "This memo reports the finite element analysis"), "finite element analysis");
     assert.equal(longFormOf("ZVS", "soft switching through zero-voltage switching"), "zero-voltage switching");

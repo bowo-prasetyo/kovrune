@@ -148,7 +148,7 @@ export class DocumentIndex {
   }
 
   /**
-   * A query's search terms with the abbreviations of the words it uses (harness 0.68.0): a query with
+   * A query's search terms with the abbreviations of the words it uses (harness 0.70.0): a query with
    * all the words of "zero-voltage switching" also searches "ZVS" where a document defines it so, since
    * documents use only the abbreviation after defining it. Not the other way: a query with "Vi-TT" that
    * also searched the eight words of its long form ranked passages by those words over the question's

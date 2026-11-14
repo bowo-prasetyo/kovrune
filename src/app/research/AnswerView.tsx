@@ -119,9 +119,18 @@ function Answer({ text, support, explainMarks = true }: { text: string; support?
       <p className="answer">
         {support.sentences.map((sentence, i) =>
           sentence.backed === false ? (
-            <mark key={i} className="unbacked" title="No found quote shares most of this sentence's words">
+            <mark
+              key={i}
+              className="unbacked"
+              title={
+                sentence.inSource
+                  ? `Not in a quote, but nearly word for word in ${sentence.inSource.title ? `“${sentence.inSource.title}”` : "a source"}, which the model read: “${sentence.inSource.passage}”`
+                  : "No found quote shares most of this sentence's words"
+              }
+            >
               <span aria-label="Not backed by a quote">⚠ </span>
               {sentence.text}
+              {sentence.inSource && <span className="in-source"> (in the source, not quoted) </span>}
             </mark>
           ) : (
             <span key={i}>{sentence.text}</span>

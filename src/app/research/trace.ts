@@ -31,6 +31,19 @@ export function crossCheckFinding(check: CrossCheck): string {
   return reply ? `the model's reply could not be read as an answer${shown}` : "the model gave no reply that could be read";
 }
 
+/**
+ * Where the ⚠ sentences may come from: a source the model read, for those nearly word for word in one
+ * though not quoted (support.ts inSourceSupport), else perhaps the model's memory.
+ */
+export function unquotedNote(support: { sentences?: Array<{ backed?: boolean; inSource?: unknown }> }): string {
+  const marked = (support.sentences ?? []).filter((s) => s.backed === false);
+  const inSource = marked.filter((s) => s.inSource).length;
+  if (!inSource) return "They may come from the model's memory; check them against the sources.";
+  if (inSource === marked.length)
+    return `${marked.length === 1 ? "It is" : "They are"} nearly word for word in a source the model read, marked "in the source, not quoted", but not in a quote: check ${marked.length === 1 ? "it" : "them"} there.`;
+  return `Those marked "in the source, not quoted" are nearly word for word in a source the model read, but not in a quote: check them there. The others may come from the model's memory; check them against the sources.`;
+}
+
 /** The trace step for the model's own check of its answer (agent/review.ts). */
 export const REVIEW_STEP = "Checking that the quoted passages back the answer";
 
@@ -105,7 +118,7 @@ export type LabelSeverity = "found" | "check" | "danger" | "none";
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
+  support?: { judged: number; backed: number; sentences?: Array<{ backed?: boolean; inSource?: unknown }>; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
 ): { label: string; detail: string; tone: AnswerStatus; severity: LabelSeverity } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
@@ -181,7 +194,8 @@ export function describeStatus(
         ? {
             label: coverage!,
             detail:
-              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with the quotes, or have a number, unit, month, a \"not\", a direction such as \"higher\", or \"significant\" that the quotes don't back, or rest on a quote that leaves out many words. They may come from the model's memory; check them against the sources.",
+              "Every quote below is word for word in the source it cites, but the sentences marked ⚠ share few words with the quotes, or have a number, unit, month, a \"not\", a direction such as \"higher\", or \"significant\" that the quotes don't back, or rest on a quote that leaves out many words. " +
+              unquotedNote(support!),
             tone: "unverified",
             severity: "check",
           }

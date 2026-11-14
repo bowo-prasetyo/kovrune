@@ -523,7 +523,7 @@ describe("source requests", () => {
   });
 });
 
-describe("OpenAlex search limits and full texts (harness 0.68.0)", () => {
+describe("OpenAlex search limits and full texts (harness 0.70.0)", () => {
   const abstract = { Results: [0], here: [1] };
   const work = (n: number, withAbstract: boolean) => ({ id: `https://openalex.org/W${n}`, display_name: `Work ${n}`, ...(withAbstract ? { abstract_inverted_index: abstract } : {}) });
 

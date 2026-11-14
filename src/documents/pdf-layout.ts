@@ -1,7 +1,7 @@
-// A PDF page's text from the pieces pdf.js gives, using where each piece is on the page (harness 0.68.0).
+// A PDF page's text from the pieces pdf.js gives, using where each piece is on the page (harness 0.70.0).
 //
 // pdf.js gives a page as pieces of text, each with its position, width and height, in the order the PDF
-// draws them. Until 0.68.0 they were joined with a space between every two and a line break where pdf.js
+// draws them. Until 0.70.0 they were joined with a space between every two and a line break where pdf.js
 // marked one, and nothing else. That loses three things an engineering PDF depends on
 // (eval/engineering/README.md):
 // - a subscript, a superscript or a symbol from another font is its own piece, so "f<sub>sw</sub>" read as

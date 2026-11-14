@@ -1,5 +1,5 @@
 // Abbreviations a library defines, so a search in words finds a passage that has only the abbreviation,
-// and the reverse (harness 0.68.0). Engineering and scientific writing defines an abbreviation once, as
+// and the reverse (harness 0.70.0). Engineering and scientific writing defines an abbreviation once, as
 // "zero-voltage switching (ZVS)", and uses only "ZVS" after; a keyword search for "zero-voltage switching"
 // then misses every later passage, and one for "FEA" misses the passage that defines it.
 //

@@ -1,7 +1,7 @@
 // Scholarly works through the OpenAlex API, which allows cross-origin requests.
 // Abstracts come as an inverted index (word -> positions) and are rebuilt here.
 //
-// Since harness 0.68.0 a search can be limited to works from a year on, to open-access works, and to a
+// Since harness 0.70.0 a search can be limited to works from a year on, to open-access works, and to a
 // field of research, and prefers works with an abstract, which is all OpenAlex can be read as. A work
 // that is on arXiv or in PubMed Central is read in full from there, when the user lets the agent use
 // that source too: no other site is asked than those the user ticked.

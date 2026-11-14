@@ -16,6 +16,7 @@ import { baseLibrary } from "./harness/suites.ts";
 import { pdfTasks } from "./tasks/pdf.ts";
 import { clinicalHoldoutTasks, clinicalTasks } from "./clinical/tasks.ts";
 import { engineeringHoldoutTasks, engineeringTasks } from "./engineering/tasks.ts";
+import { csHoldoutTasks, csTasks } from "./cs/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "./field/office.ts";
 import { researchTasks } from "./tasks/research.ts";
 
@@ -41,6 +42,7 @@ const suites = [
   { name: "office (and officeholdout)", library: field.officeLibrary, tasks: [...officeTasks, ...officeHoldoutTasks] },
   { name: "clinical (and clinicalholdout)", library: field.clinicalLibrary, tasks: [...clinicalTasks, ...clinicalHoldoutTasks] },
   { name: "engineering (and engineeringholdout)", library: field.engineeringLibrary, tasks: [...engineeringTasks, ...engineeringHoldoutTasks] },
+  { name: "cs (and csholdout)", library: field.csLibrary, tasks: [...csTasks, ...csHoldoutTasks] },
   ...(distractors
     ? [
         {

@@ -6,6 +6,7 @@ import { loadNodePdfLibrary } from "../eval/harness/pdf-node.ts";
 import { appSearch, measureRetrieval, summarizeRetrieval } from "../eval/harness/retrieval.ts";
 import { DISTRACTOR_PREFIX, distractorDocuments } from "../eval/harness/distractors.ts";
 import { baseLibrary } from "../eval/harness/suites.ts";
+import { csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
 import { pdfTasks } from "../eval/tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../eval/tasks/research.ts";
 
@@ -85,9 +86,19 @@ describe("retrieval on the evaluation set", () => {
     assert.ok(summary.passageRecall >= FIELD_FLOOR.passageRecall, `answer passages: ${summary.passageRecall}`);
     assert.ok(summary.complete >= FIELD_FLOOR.complete, `complete: ${summary.complete}`);
   });
+
+  it("keeps the CS papers' retrieval at least where it is", async () => {
+    // The acronym questions (cs11, cs22) are among the misses: eval/cs/README.md.
+    const field = await loadFieldSuite();
+    const summary = summarizeRetrieval(measureRetrieval(field.csLibrary, [...csTasks, ...csHoldoutTasks]));
+    assert.ok(summary.documentRecall >= CS_FLOOR.documentRecall, `cited documents: ${summary.documentRecall}`);
+    assert.ok(summary.passageRecall >= CS_FLOOR.passageRecall, `answer passages: ${summary.passageRecall}`);
+    assert.ok(summary.complete >= CS_FLOOR.complete, `complete: ${summary.complete}`);
+  });
 });
 
 const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };
+const CS_FLOOR = { documentRecall: 0.972, passageRecall: 0.826, complete: 27 };
 
 // A user's library can hold hundreds of documents; the field library has seven. With 300 generated
 // documents near its topics added (eval/harness/distractors.ts), search still has to find what it

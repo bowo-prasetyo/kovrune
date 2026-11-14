@@ -121,7 +121,7 @@ async function version(ref: string | undefined): Promise<Version> {
   };
 }
 
-const FIELD = new Set(["field", "holdout", "multi", "multiholdout", "office", "officeholdout", "clinical", "clinicalholdout", "engineering", "engineeringholdout"]);
+const FIELD = new Set(["field", "holdout", "multi", "multiholdout", "office", "officeholdout", "clinical", "clinicalholdout", "cs", "csholdout", "engineering", "engineeringholdout"]);
 
 /** The requests a version makes when a task is replayed, or why it could not be. */
 async function replay(v: Version, report: Report, result: TaskResult): Promise<{ requests: ReplayModel["requests"]; overran: boolean } | { error: string }> {

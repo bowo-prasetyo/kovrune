@@ -12,6 +12,7 @@ import { holdoutTasks } from "../eval/field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../eval/field/multi.ts";
 import { officeDocuments, officeHoldoutTasks, officeTasks } from "../eval/field/office.ts";
 import { clinicalDocuments, clinicalHoldoutTasks, clinicalTasks } from "../eval/clinical/tasks.ts";
+import { csDocuments, csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
 import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from "../eval/engineering/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
@@ -87,7 +88,7 @@ describe("field suite", () => {
           const text = normalize(suite.library.index.get(id)!.text);
           return task.facts.every((group) => group.some((option) => text.includes(normalize(option))));
         })
-        // Since harness 0.68.0 marks a PDF's paragraphs, the design's part 24 holds "Reproducible builds from tagged
+        // Since harness 0.70.0 marks a PDF's paragraphs, the design's part 24 holds "Reproducible builds from tagged
         // commits" next to the static hosts: the word, not the commit the user guide says the preview page shows.
         .filter((id) => !(task.id === "m09-preview-hosts" && id === "kovrune-design-r3#24"));
       assert.deepEqual(holdsAll, [], `${task.id}: one passage holds every fact`);
@@ -206,7 +207,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -336,6 +337,96 @@ describe("clinical suite", () => {
     });
     assert.equal(report.results.length, 1);
     assert.equal(report.results[0]!.suite, "clinical");
+    assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
+  });
+});
+
+describe("cs suite", () => {
+  it("reads ten CC BY computer science papers as published, tables and equations included, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(csDocuments.length, 10);
+    for (const doc of csDocuments) {
+      const text = suite.csLibrary.documentFor(doc.id)?.text ?? "";
+      assert.match(text, /CC BY|Creative Commons Attribution/, `${doc.id}: its licence is in the document`);
+      assert.match(doc.title, /PMC\d+\)$/, `${doc.id}: its title names the article`);
+      assert.ok(text.length > 30_000, `${doc.id}: the whole article, not its abstract`);
+      assert.match(text, /^\| .+ \|$/m, `${doc.id}: its tables are kept as rows`);
+    }
+    assert.equal(suite.csLibrary.documents.length, csDocuments.length, "only the CS papers");
+    assert.equal(suite.clinicalLibrary.documentFor("fedcode-compression"), undefined, "the clinical library is unchanged");
+    // MDPI puts its tables after the article (<floats-group>); each is placed after the paragraph that first cites it.
+    const stabfl = suite.csLibrary.documentFor("stabfl-label-skew")!.text;
+    assert.match(stabfl, /\| FedProx \| 82\.49±3\.25 \| 82\.44±3\.09 \| 71\.32±3\.67 \| 69\.70±5\.52 \| 76\.90±4\.21 \| 76\.81±4\.29 \| 73\.87±3\.53 \| 72\.37±1\.84 \|/);
+    assert.ok(stabfl.indexOf("**Table 4**") > stabfl.indexOf("Table 4 additionally reports"), "a table follows the paragraph that cites it");
+    // Powers of ten lose their superscripts, as in a PDF's text layer.
+    assert.match(stabfl, /\| CIFAR-10 \| 5 \| 8 \| Adam \| 10−3 \| 10−4 \|/);
+    // Displayed equations are kept as their symbols' text, with their number.
+    assert.match(suite.csLibrary.documentFor("kd-intrusion-detection")!.text, /^A c c u r a c y = T P \+ T N .*\(12\)$/m);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with a third held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...csTasks, ...csHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.csLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    const cited = new Set(csTasks.flatMap((t) => t.citations.flat()));
+    assert.deepEqual([...cited].sort(), csDocuments.map((d) => d.id).sort(), "every document is asked about");
+    for (const tasks of [csTasks, csHoldoutTasks]) {
+      assert.ok(tasks.some((t) => !t.answerable), "a question the papers do not answer");
+      assert.ok(tasks.some((t) => t.facts.some((group) => group.includes("does not"))), "a method that did not improve");
+      assert.ok(tasks.some((t) => t.kind === "comparison"), "a question over two papers");
+    }
+    assert.ok(csHoldoutTasks.length >= csTasks.length / 3, "a quarter or more of all is held out");
+  });
+
+  it("fails an answer that turns a negative result into a positive one, or gives the wrong unit or power of ten, and passes right ones", () => {
+    const library = new ResearchLibrary(csDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
+    const result = (answer: string, docId: string): ResearchResult =>
+      ({ status: "verified", final: { found: true, answer, evidence: [{ docId, quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
+    const task = (id: string) => [...csTasks, ...csHoldoutTasks].find((t) => t.id === id)!;
+    const passes = (id: string, answer: string, docId: string) => scoreResearch(task(id), result(answer, docId), library).passed;
+    const fedcode = "fedcode-compression";
+    assert.equal(passes("cs03-fedcode-adaptive-tuning", "No. Adaptive coder-parameter tuning does not consistently outperform strong fixed configurations.", fedcode), true);
+    assert.equal(passes("cs03-fedcode-adaptive-tuning", "Yes, adaptive tuning outperformed the fixed configurations.", fedcode), false);
+    const hce = "longtail-entity-rag";
+    assert.equal(passes("cs23-hcerag-hyde", "HyDE underperforms the hybrid baseline (0.6480 against 0.7116).", hce), true);
+    assert.equal(passes("cs23-hcerag-hyde", "HyDE improved accuracy over hybrid retrieval.", hce), false);
+    const vc = "vcfedadam-verifiable";
+    assert.equal(passes("cs10-vcfedadam-user-storage", "Each user stores 80.16 KB.", vc), true);
+    assert.equal(passes("cs10-vcfedadam-user-storage", "Each user stores 80.16 MB.", vc), false);
+    const stabfl = "stabfl-label-skew";
+    for (const answer of ["a learning rate of 10−3 and a weight decay of 10−4", "learning rate 0.001, weight decay 0.0001", "lr = 1e-3 and weight decay 1e-4"]) {
+      assert.equal(passes("cs05-stabfl-learning-rate", answer, stabfl), true, answer);
+    }
+    assert.equal(passes("cs05-stabfl-learning-rate", "a learning rate of 10−4 and a weight decay of 10−5", stabfl), false, "each a power of ten too small");
+    const kd = "kd-intrusion-detection";
+    assert.equal(passes("cs17-kdids-learning-rate", "An initial learning rate of 5×10−4 and weight decay of 1×10−5.", kd), true);
+    assert.equal(passes("cs17-kdids-learning-rate", "An initial learning rate of 0.0005 and weight decay of 0.00001.", kd), true);
+    assert.equal(passes("cs17-kdids-learning-rate", "An initial learning rate of 5×10−5 and weight decay of 1×10−4.", kd), false);
+  });
+
+  it("runs as its own suite, over its own library", async () => {
+    const suite = await loadFieldSuite();
+    const quote = "the concrete storage overhead is 80.16 KB for each user, 3.33 KB for each AN, 266.72 KB for the server, and 8.30 MB in total";
+    const answer = JSON.stringify({
+      tool: "final_answer",
+      args: { found: true, answer: "VCFedAdam needs 80.16 KB of storage on each user.", evidence: [{ docId: "vcfedadam-verifiable", quote }] },
+    });
+    const model = new ScriptedModel([`{"tool":"search","args":{"query":"VCFedAdam storage overhead user"}}`, `{"tool":"read","args":{"docId":"vcfedadam-verifiable"}}`, answer, answer]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      field: suite,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["cs"], modes: ["constrained"], taskIds: ["cs10-vcfedadam-user-storage"] },
+    });
+    assert.equal(report.results.length, 1);
+    assert.equal(report.results[0]!.suite, "cs");
     assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
   });
 });

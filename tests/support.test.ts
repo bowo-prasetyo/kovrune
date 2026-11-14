@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
-import { labelledQuotesFound, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
+import { inSourceSupport, labelledQuotesFound, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 
 const ADA = readFileSync(new URL("./fixtures/ada-lovelace-lead.txt", import.meta.url), "utf8");
@@ -383,6 +383,48 @@ describe("counts of people recruited, not planned (harness 0.62.0)", () => {
   });
 });
 
+describe("sentences no quote backs, found in a source the model read", () => {
+  // A user's answer on how paracetamol relieves pain, from the abstract of "Mechanism of action of paracetamol" (2005).
+  const ABSTRACT =
+    "Paracetamol (acetaminophen) is generally considered to be a weak inhibitor of the synthesis of prostaglandins (PGs). Paracetamol is a weak inhibitor of PG synthesis of COX-1 and COX-2 in broken cell systems, but, by contrast, therapeutic concentrations of paracetamol inhibit PG synthesis in intact cells in vitro when the levels of the substrate arachidonic acid are low (less than about 5 mumol/L). Thus, the apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent pathways that are proceeding at low rates.";
+  const QUOTE = "Paracetamol (acetaminophen) is generally considered to be a weak inhibitor of the synthesis of prostaglandins (PGs).";
+  const ANSWER =
+    "Paracetamol is generally considered a weak inhibitor of the synthesis of prostaglandins. It is considered a weak inhibitor of prostaglandin (PG) synthesis, particularly in intact cells when arachidonic acid levels are low. The apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent pathways that proceed at low rates.";
+  const titleFor = () => "Mechanism of action of paracetamol.";
+  const question = "How does paracetamol relieve pain?";
+  const evidence = checkEvidence([{ docId: "pmc", quote: QUOTE }], () => ABSTRACT);
+  const support = sentenceSupport(ANSWER, evidence, titleFor, question);
+  const found = inSourceSupport(support, [{ docId: "pmc", text: ABSTRACT }], titleFor, question);
+
+  it("finds a sentence the source gives nearly word for word, and not one that says the reverse", () => {
+    assert.deepEqual(support.sentences.map((s) => s.backed), [true, false, false]);
+    assert.equal(found.sentences[1]!.inSource, undefined, "weak \"particularly\" where the paper says it inhibits: 7 of 13 words is not enough");
+    assert.deepEqual(found.sentences[2]!.inSource, {
+      docId: "pmc",
+      title: "Mechanism of action of paracetamol.",
+      passage: "Thus, the apparent selectivity of paracetamol may be due to inhibition of COX-2-dependent pathways that are proceeding at low rates.",
+    });
+  });
+
+  it("changes no count or label: a sentence is backed by what was quoted, not by what was read", () => {
+    assert.equal(found.judged, support.judged);
+    assert.equal(found.backed, support.backed);
+    assert.equal(found.sentences[2]!.backed, false);
+    assert.equal(describeStatus("verified", evidence, found).label, describeStatus("verified", evidence, support).label);
+    assert.match(describeStatus("verified", evidence, found).detail, /Those marked "in the source, not quoted" are nearly word for word in a source the model read/);
+    assert.match(describeStatus("verified", evidence, support).detail, /They may come from the model's memory/);
+  });
+
+  it("needs a short sentence whole, and a claim, not a bare phrase", () => {
+    // Lacking only "Primary", which makes it wrong: the licence's notice says something else.
+    const notice = 'This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.';
+    const mpl = sentenceSupport("The MPL-2.0 Secondary License is defined as a license that is incompatible with the MPL-2.0 Primary License.", [], () => "mpl-2.0.txt");
+    assert.equal(inSourceSupport(mpl, [{ docId: "mpl", text: notice }], () => "mpl-2.0.txt").sentences[0]!.inSource, undefined);
+    const guide = sentenceSupport("Local model server", [], () => "Guide");
+    assert.equal(inSourceSupport({ ...guide, sentences: [{ text: "Local model server", backed: false }] }, [{ docId: "g", text: "Set up a local model server." }]).sentences[0]!.inSource, undefined);
+  });
+});
+
 describe("engineering units, signs, powers of ten and changes (harness 0.67.0)", () => {
   const q = (quote: string, docId = "paper") => ({ docId, quote });
 
@@ -455,5 +497,33 @@ describe("engineering units, signs, powers of ten and changes (harness 0.67.0)",
     assert.equal(marks("At 20% load, efficiency improved from 97.1% to 96.4%.", [change]), "-");
     assert.equal(marks("At 20% load, efficiency improved from 96.4% to 97.1%.", [change]), "+");
     assert.equal(marks("The dead time was reduced from 150 ns to 90 ns.", [q("Dead time was reduced from 150 ns to 90 ns.")]), "+");
+  });
+});
+
+describe("each claim of a sentence (harness 0.68.0)", () => {
+  // A user's answer, paracetamol against ibuprofen, and its quote from Wikipedia.
+  const SOURCE =
+    "Compared to Ibuprofen—which can have adverse effects that include diarrhea, vomiting, and abdominal pain—paracetamol is well tolerated with fewer side effects. Ollama is experimental; llama.cpp server is the supported local server.";
+  const evidence = checkEvidence(
+    [
+      { docId: "p", quote: "Compared to Ibuprofen—which can have adverse effects that include diarrhea, vomiting, and abdominal pain—paracetamol is well tolerated with fewer side effects." },
+      { docId: "p", quote: "Ollama is experimental; llama.cpp server is the supported local server." },
+    ],
+    () => SOURCE,
+  );
+  const backed = (text: string) => sentenceSupport(text, evidence, () => "Paracetamol").sentences[0]!.backed;
+
+  it("marks a claim joined to a backed one with \"and\" before a verb", () => {
+    assert.equal(
+      backed("Ibuprofen can cause adverse effects including diarrhea, vomiting, abdominal pain, and is associated with a higher risk of gastrointestinal bleeding and hypertension compared to paracetamol."),
+      false,
+    );
+    assert.equal(backed("Ibuprofen can cause adverse effects including diarrhea, vomiting, abdominal pain."), true);
+  });
+
+  it("does not split a list, and passes claims each backed", () => {
+    assert.equal(backed("Ibuprofen can have adverse effects that include diarrhea, vomiting, and abdominal pain."), true, "a list joined by and");
+    assert.equal(backed("The llama.cpp server is the supported local server, while Ollama is experimental."), true);
+    assert.equal(backed("The llama.cpp server is the supported local server, while Ollama is marked as experimental in the design documentation."), false);
   });
 });
