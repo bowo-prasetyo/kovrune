@@ -94,7 +94,60 @@ For comparison, the clinical suite's search finds 96.7% of documents and 83.7% o
 
 ### The first model runs (0.69.0)
 
-Qwen3.5-4B and Qwen3.5-2B are being run on both suites; their results are added here when the runs finish.
+Both models ran on llama.cpp `0c1e570` (the copy vendored in llama-cpp-python 0.3.36), built portably (`-DGGML_NATIVE=OFF`), on CPU in a 4-core cloud container, at 4,096 tokens of context, in constrained mode, with the same Q4_K_M files as the other suites:
+
+```bash
+llama-server -m Qwen3.5-4B-Q4_K_M.gguf -c 4096 -np 1 --jinja --port 8080
+npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b-q4km --context 4096 \
+  --extra-body '{"chat_template_kwargs":{"enable_thinking":false}}' --modes constrained \
+  --suites cs,csholdout --out eval/results/cs-0.69-qwen3.5-4b-q4km.json
+```
+
+The build is not the one the clinical and field runs used, and runs on another build or CPU do not repeat task by task ([field README](../field/README.md#runs-repeat-on-one-machine-not-across-machines)). Compare these figures with other suites' as totals, not task by task.
+
+| Model | `cs` | `csholdout` | Labelled **Quotes found**, wrong | Median time per question | Report |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 17/26 (65%) | 9/10 | 1 of 13 (8%): 1 of 10 and 0 of 3 | 91 s | [json](../results/cs-0.69-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 11/26 (42%) | 7/10 | 4 of 12 (33%): 3 of 9 and 1 of 3 | 39 s | [json](../results/cs-0.69-qwen3.5-2b-q4km.json) |
+
+For comparison, on the clinical suite 4B passes 19 of 23 (83%) and 2B 13 of 23 (57%), re-scored at 0.61.0. CS papers are harder for both models. 4B's green label stays under the design's 10% target here; 2B's is wrong a third of the time, as on the clinical papers.
+
+`cs` by kind (`csholdout` is read only as totals):
+
+| Kind | 4B | 2B |
+| --- | --- | --- |
+| Result (table value) | 5/9 | 3/9 |
+| Setup | **5/5** | 3/5 |
+| Acronym | **0/4** | 1/4 |
+| Negative | **4/4** | 2/4 |
+| Design | 1/2 | 1/2 |
+| Two papers | 1/1 | 0/1 |
+| Not in the papers | 1/1 | 1/1 |
+
+**What went wrong, 4B.** Six of its nine failures are "not found": the value was in the paper, and the model concluded it was not.
+- **The table one part before the paragraph it read (`cs04`, `cs12`).** Both papers discuss a table in the paragraph after it. Search found that paragraph, the model read it ("Table 4 provides the numerical results under severe skew…"; "removing majority voting causes a 3.8-point drop"), saw that it gives a difference, not the value, and answered "not found". The table was in the part just before: `stabfl-label-skew#28` and `fl-iiot-poisoning#43`. It never read them. A model that could see where a part sits, or a read that showed the table a paragraph cites, would have had the answer.
+- **A table split mid-row (`cs01`).** The model read parts 66, 72 and 1 of FEDCODE, never 70, where FedBAT's CIFAR-10 row is, without caption or header (see search above).
+- **The table never reached (`cs19`).** The model read the introduction (part 6), which gives GPT-4o's 0% noise accuracy, and concluded the 80% figure was not given. Table 1 is part 22.
+- **The acronym questions (`cs11`, `cs22`).** Asked about "commitment-bound verification" and "entity-sensitive contextual augmentation", 4B searched in those words three and one times, read the abstract and nearby parts, and answered "not found". The values are in the ablation, written "CBV" and "w/o ESCA". This is the gap the suite was built to show: search cannot bridge an acronym, and a 4B model does not try the acronym itself, though `cs22`'s answer names "(ESCA)".
+- **A quote copied from a search snippet (`cs21`).** The answer, 0.82, is right. Its quote ends "compared to both general-purpose RAG baselines and domain-specifi…": the snippet search showed, cut at 220 characters, not the part's text, which the model had read. A quote cut mid-word with "…" is not word for word, so the answer is labelled **Quotes not found** and fails. Search snippets that end in "…" invite this; checking such a quote up to its "…" would accept it.
+- **A part label read as a count (`cs20`).** 4B answered "300 questions and 38 documents", and quoted the part's title, "…(part 36 of 38)", for the 38. The benchmark has 6,196 documents. The quote check passed, because a part's title is in the text the model is shown, but the sentence check found the answer's sentence not backed by its quotes, so it reads "0 of 1 sentences backed", not **Quotes found**.
+- **The one wrong green label (`cs24`).** Asked how stereotypical gender assumption changed in the 500-record evaluation, 4B answered "the framework consistently reduced Stereotypical Gender Assumption", with a real quote, and its review and cross-check agreed. The facts ask for the numbers (14.4% to 11.0%), which the answer leaves out. **This is arguably a task defect:** the question does not say it wants the numbers, and the answer is not wrong, only vague. It is left as written, so the run stays comparable; the owner may decide to reword it ("from what to what") or relax its facts, as `c03` was ([clinical README](../clinical/README.md#the-first-model-runs-0600)).
+
+**What went wrong, 2B.** 2B found more values than 4B, and gave the wrong one more often:
+- **Wrong numbers with real quotes, labelled Quotes found (`cs01`, `cs22`).** For FedBAT's accuracy, "0.19 percentage points" (an accuracy difference from another paragraph); for the accuracy without ESCA, "29 percentage points" (the abstract's Recall@10 gain). Both are short answers inside quotes that cover most of the question's words.
+- **Half an answer labelled Quotes found (`cs09`).** Asked for the computation and the communication savings, 2B gave "90.25%" alone. Its quote gives both, and its completeness check found nothing missing.
+- **Another value from the right sentence (`cs04`, `cs12`, `cs17`, `cs05`, `cs07`).** StabFL's own 72.82 for FedProx's; the 3.8-point drop for the accuracy; the learning rate without the weight decay, written once as "10^{-3}", a notation the facts do not list (the answer fails either way, for the missing weight decay); fine-tuning epochs without head epochs.
+- **Negative questions (`cs16`, `cs23`):** 2B gave an empty answer with `found: false`. It never said a method improved where the paper says it did not.
+
+**What 4B did well:** every setup question, including both powers of ten (written "10^-3" and "5×10−4"), the KB/MB storage question, and every negative question: it wrote "did not consistently outperform", "was not statistically significant" and "did not improve" where the papers say so. It refused the unanswerable Gemini question, though Gemini-2.5 Flash is in another paper of the library.
+
+**What the runs suggest, in order of what they would gain on this suite:**
+1. **Show a table with the paragraph that discusses it,** or let the model see that the part before holds "Table 4" (`cs04`, `cs12`). The clinical suite's outline experiment ([#144](https://github.com/bowo-prasetyo/kovrune/pull/144), not adopted) is one way.
+2. **Split long tables at rows, with caption and header repeated** (`cs01`, `ch01`).
+3. **Bridge acronyms in search,** for example by indexing each "expansion (ACRONYM)" a paper defines as aliases of each other (`cs11`, `cs22`). `bench:retrieval` measures it without a model.
+4. **Accept a quote cut with "…" up to the cut** (`cs21`), as a defect fix.
+
+Each changes what the model sees, so each is judged under [the rule](../field/README.md#rule-for-prompt-and-guard-changes), with this suite added to the ones it runs.
 
 ## Limits
 
