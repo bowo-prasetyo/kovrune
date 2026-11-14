@@ -500,6 +500,75 @@ describe("engineering units, signs, powers of ten and changes (harness 0.67.0)",
   });
 });
 
+describe("laboratory units, opposites and names (harness 0.70.0)", () => {
+  const q = (quote: string, docId = "paper") => ({ docId, quote });
+
+  it("gives a value only the laboratory unit and prefix the quotes give it", () => {
+    const pairs: Array<[quote: string, wrong: string, right: string]> = [
+      ["Cells were treated with 10 µM rapamycin for 24 h.", "Cells were treated with 10 mM rapamycin for 24 h.", "Cells were treated with 10 micromolar rapamycin for 24 h."],
+      ["The IC50 of the compound was 45 nM in HeLa cells.", "The IC50 of the compound was 45 µM in HeLa cells.", "The IC50 of the compound was 45 nM in HeLa cells."],
+      ["Lysates were made in buffer with 150 mM NaCl.", "Lysates were made in buffer with 150 M NaCl.", "Lysates were made in buffer with 150 mM NaCl."],
+      ["We added 5 µL of lysate to each well.", "We added 5 mL of lysate to each well.", "We added 5 uL of lysate to each well."],
+      ["The band migrated at 55 kDa on the immunoblot.", "The band migrated at 55 Da on the immunoblot.", "The band migrated at 55 kD on the immunoblot."],
+      ["The deletion spans 300 bp of the promoter.", "The deletion spans 300 kb of the promoter.", "The deletion spans 300 base pairs of the promoter."],
+      ["Samples were centrifuged at 12,000 × g for 10 min.", "Samples were centrifuged at 12,000 rpm for 10 min.", "Samples were centrifuged at 12,000 x g for 10 min."],
+      ["Mice were infected with 10^5 PFU of influenza virus.", "Mice were infected with 10^5 CFU of influenza virus.", "Mice were infected with 10⁵ PFU of influenza virus."],
+    ];
+    for (const [quote, wrong, right] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(right, [q(quote)]), "+", right);
+    }
+    // "mM" was read as millimetres, and "μM" as no unit, so "10 mM" was backed by "10 μM".
+    assert.equal(marks("The medium contained 2 mm glutamine.", [q("The medium contained 2 mM glutamine.")]), "-");
+    // A kilobase is still a kilobyte's scale: sizes in bytes keep their spellings.
+    assert.equal(marks("The page size is 4 KB on disk.", [q("The page size is 4 KiB on disk.")]), "+");
+  });
+
+  it("does not back a laboratory opposite the quotes state only the other side of", () => {
+    const pairs: Array<[quote: string, wrong: string]> = [
+      ["TP53 expression was upregulated in tumour samples.", "TP53 expression was downregulated in tumour samples."],
+      ["AMPK activates ULK1 by phosphorylation at Ser555.", "AMPK inhibits ULK1 by phosphorylation at Ser555."],
+      ["Knockdown of YAP1 reduced proliferation of the cells.", "Overexpression of YAP1 reduced proliferation of the cells."],
+      ["H3K27me3 was enriched at the HOXA locus.", "H3K27me3 was depleted at the HOXA locus."],
+      ["The compound acts as an agonist of the receptor.", "The compound acts as an antagonist of the receptor."],
+      ["The mutant strain was resistant to ampicillin.", "The mutant strain was susceptible to ampicillin."],
+      ["Wild-type mice developed tumours by 12 weeks.", "Mutant mice developed tumours by 12 weeks."],
+      ["The effect was found in male mice only.", "The effect was found in female mice only."],
+      ["The effect on migration was seen in vitro only.", "The effect on migration was seen in vivo only."],
+    ];
+    for (const [quote, wrong] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(quote, [q(quote)]), "+", quote);
+    }
+    // A sentence that states both sides of a pair says which is which in its word order, which is left to the other checks.
+    assert.equal(marks("Compound C inhibited the activation of AMPK in the cells.", [q("Compound C inhibited AMPK in the cells.")]), "+");
+  });
+
+  it("tells apart names that differ in a Greek letter, a marker's sign or a genotype", () => {
+    const pairs: Array<[quote: string, wrong: string, right: string]> = [
+      ["TNF-α levels rose after treatment with LPS.", "TNF-β levels rose after treatment with LPS.", "TNF-alpha levels rose after treatment with LPS."],
+      ["Estradiol signals mainly through ERα in the uterus.", "Estradiol signals mainly through ERβ in the uterus.", "Estradiol signals mainly through ERα in the uterus."],
+      ["IL-1β secretion required caspase-1 in macrophages.", "IL-1α secretion required caspase-1 in macrophages.", "IL-1beta secretion required caspase-1 in macrophages."],
+      ["CD45+ cells expanded after injury in the liver.", "CD45− cells expanded after injury in the liver.", "CD45-positive cells expanded after injury in the liver."],
+      ["CD8- T cells did not proliferate after stimulation.", "CD8+ T cells did not proliferate after stimulation.", "CD8 negative T cells did not proliferate after stimulation."],
+      ["The phenotype appeared in Tlr4−/− mice at 8 weeks.", "The phenotype appeared in Tlr4+/+ mice at 8 weeks.", "The phenotype appeared in Tlr4-/- mice at 8 weeks."],
+      ["S. aureus was isolated from 12 wounds.", "S. epidermidis was isolated from 12 wounds.", "S. aureus was isolated from 12 wounds."],
+    ];
+    for (const [quote, wrong, right] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(right, [q(quote)]), "+", right);
+    }
+    // A name inside a longer one, written apart, or named in the title or the question.
+    assert.equal(marks("TNF-α signalling activates NF-κB in these cells.", [q("TNF-α-induced signalling activates NF-κB in these cells.")]), "+");
+    assert.equal(marks("TNF-α levels rose after LPS treatment.", [q("TNF α levels rose after LPS treatment.")]), "+");
+    assert.equal(marks("Staphylococcus aureus was isolated from 12 wounds.", [q("S. aureus was isolated from 12 wounds.")]), "+");
+    assert.equal(marks("S. aureus was isolated from 12 wounds.", [q("Staphylococcus aureus was isolated from 12 wounds.")]), "+");
+    assert.equal(marks("PPARγ agonists lowered glucose in the trial.", [q("These agonists lowered glucose in the trial.")], () => "PPARγ agonists in diabetes"), "+");
+    // A hyphen that ends a word is not a marker's sign.
+    assert.equal(marks("Weight was measured pre- and post-treatment in all mice.", [q("Weight was measured before and after treatment in all mice.")]), "+");
+  });
+});
+
 describe("each claim of a sentence (harness 0.68.0)", () => {
   // A user's answer, paracetamol against ibuprofen, and its quote from Wikipedia.
   const SOURCE =
