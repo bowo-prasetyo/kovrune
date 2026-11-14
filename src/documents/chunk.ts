@@ -80,11 +80,18 @@ function trailingHeadings(units: string[]): string[] {
 /** Paragraphs, with any paragraph longer than maxChars broken into sentences or words. */
 function splitUnits(text: string, maxChars: number): string[] {
   const units: string[] = [];
+  let previous = "";
   for (const paragraph of text.split(/\n\s*\n/)) {
     const p = paragraph.trim();
     if (!p) continue;
+    const before = previous;
+    previous = p;
     if (textWeight(p) <= maxChars) {
       units.push(p);
+      continue;
+    }
+    if (isTable(p)) {
+      units.push(...splitTable(p, before, maxChars));
       continue;
     }
     let buffer = "";
@@ -100,6 +107,66 @@ function splitUnits(text: string, maxChars: number): string[] {
     if (buffer) units.push(buffer);
   }
   return units;
+}
+
+/** The lines a table's later piece repeats (splitTable): its "(continued)" label and its first row. */
+const REPEATED_LEAD = /^\*\*Table\s+[A-Z]?\d+\*\* \(continued\)[^\n]*\n\|[^\n]*\|(?:\n|$)/gm;
+
+/**
+ * A part's text without the lines splitTable repeated, for search to index: indexed in every piece of a
+ * long table, a caption's words outranked the passages that answer (clinical c01 lost two of its three
+ * answer passages to Table 3's later pieces). The model still reads them.
+ */
+export function withoutRepeatedLead(text: string): string {
+  return text.replace(REPEATED_LEAD, "");
+}
+
+/** A table as documents/tables.ts and the JATS converters write it: every line a "| … |" row. */
+function isTable(paragraph: string): boolean {
+  const lines = paragraph.split("\n");
+  return lines.length >= 3 && lines.every((line) => /^\|.*\|$/.test(line.trim()));
+}
+
+/** A caption paragraph: "**Table 5** Static compression …", or "Table 5." or "Table 5:" as printed. */
+const CAPTION = /^(?:\*\*(Table\s+[A-Z]?\d+)\*\*|(Table\s+[A-Z]?\d+)[.:](?!\d))\s*/;
+
+/**
+ * A table longer than a part, split between its rows (harness 0.73.0). Split at sentences, then words,
+ * a results table was cut in the middle of a row, and the part after the cut began with numbers, with
+ * no caption, no column names and no dataset: a model reading it could not tell what a value was, and
+ * Qwen3.5-4B never read it (eval/cs/README.md, cs01). Each later piece starts with what names it: the
+ * table's label and the first sentence of its caption, marked "(continued)", and the table's first row,
+ * which names its columns. Those lines repeat the document's text; a quote of a row is still word for
+ * word. A row longer than a part is split at words, as other text is.
+ */
+function splitTable(table: string, caption: string, maxChars: number): string[] {
+  const [header, ...rows] = table.split("\n");
+  const match = CAPTION.exec(caption);
+  const label = match ? `**${match[1] ?? match[2]}** (continued) ${firstSentence(caption.slice(match[0].length))}`.trim() : "";
+  const lead = [label, header!].filter(Boolean).join("\n");
+  // The repeated lines may take at most half a part; if they would take more, later pieces go without them.
+  const repeat = textWeight(lead) <= maxChars / 2 ? lead : "";
+  const pieces: string[] = [];
+  let piece = header!;
+  for (const row of rows) {
+    for (const part of textWeight(row) > maxChars - textWeight(repeat) - 1 ? splitWords(row, maxChars - textWeight(repeat) - 1) : [row]) {
+      if (textWeight(piece) + textWeight(part) + 1 > maxChars) {
+        pieces.push(piece);
+        piece = repeat ? `${repeat}\n${part}` : part;
+      } else {
+        piece = `${piece}\n${part}`;
+      }
+    }
+  }
+  pieces.push(piece);
+  return pieces;
+}
+
+/** The first sentence of a caption, at most 200 characters, cut at a word. */
+function firstSentence(text: string): string {
+  const sentence = text.split(/(?<=[.!?])\s/)[0]!.trim();
+  if (sentence.length <= 200) return sentence;
+  return `${sentence.slice(0, 200).replace(/\s+\S*$/, "")} […]`;
 }
 
 function splitWords(text: string, maxChars: number): string[] {

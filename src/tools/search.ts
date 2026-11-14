@@ -2,7 +2,7 @@
 // uses it so results depend on the model and not on a retrieval model; the
 // app uses the same search over the user's documents.
 
-import { withoutPartLabel } from "../documents/chunk.ts";
+import { withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
 import { definitions } from "./abbreviations.ts";
 
@@ -68,7 +68,7 @@ export class DocumentIndex {
       const freqs = new Map<string, number>();
       // A chunk's part label is not indexed: its "part", "4" and "12" would match any question with a small number.
       const title = withoutPartLabel(doc.title);
-      for (const token of tokenize(`${title} ${title} ${doc.text}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
+      for (const token of tokenize(`${title} ${title} ${withoutRepeatedLead(doc.text)}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
       for (const token of freqs.keys()) this.docFreq.set(token, (this.docFreq.get(token) ?? 0) + 1);
       return freqs;
     });
@@ -105,6 +105,36 @@ export class DocumentIndex {
     return this.docs.find((doc) => doc.id === docId);
   }
 
+  /**
+   * The tables a part cites ("Table 4 provides the numerical results…") that are in another part of its
+   * document, with that part's ID, in the order the part cites them (harness 0.73.0). Papers discuss a
+   * table in the paragraph after it, so search finds the discussion, which gives a difference or a
+   * trend, and the table that holds the value is one part before: Qwen3.5-4B read the discussion,
+   * found no value and answered "not found" (eval/cs/README.md, cs04 and cs12). A table is where its
+   * caption is (TABLE_CAPTION).
+   */
+  tablesCitedElsewhere(partId: string): Array<{ table: string; partId: string }> {
+    const doc = this.get(partId);
+    const hash = partId.lastIndexOf("#");
+    if (!doc || hash < 0) return [];
+    const parts = this.partsOf(partId.slice(0, hash));
+    const captions = new Map<string, string>();
+    for (const id of parts) {
+      for (const match of this.get(id)!.text.matchAll(TABLE_CAPTION)) {
+        const label = tableLabel((match[1] ?? match[2])!);
+        if (!captions.has(label)) captions.set(label, id);
+      }
+    }
+    const own = new Set([...doc.text.matchAll(TABLE_CAPTION)].map((m) => tableLabel((m[1] ?? m[2])!)));
+    const cited: Array<{ table: string; partId: string }> = [];
+    for (const match of doc.text.matchAll(TABLE_CITATION)) {
+      const label = tableLabel(match[1]!);
+      const where = captions.get(label);
+      if (where && where !== partId && !own.has(label) && !cited.some((c) => c.table === label)) cited.push({ table: label, partId: where });
+    }
+    return cited.slice(0, MAX_TABLE_NOTES);
+  }
+
   /** IDs of the chunks of a chunked document (`${docId}#1`, `${docId}#2`, ...). */
   partsOf(docId: string): string[] {
     return this.docs.filter((doc) => doc.id.startsWith(`${docId}#`)).map((doc) => doc.id);
@@ -132,7 +162,7 @@ export class DocumentIndex {
       .sort((x, y) => y.score - x.score || x.order - y.order)
       .slice(0, count)
       .sort((x, y) => x.order - y.order)
-      .map(({ sentence }) => (sentence.length > maxLength ? `${sentence.slice(0, maxLength)}…` : sentence));
+      .map(({ sentence }) => cutAtWord(sentence, maxLength));
   }
 
   /**
@@ -163,6 +193,21 @@ export class DocumentIndex {
     return [...terms];
   }
 
+  /**
+   * The abbreviations a query gains from expandedTerms, each with the long form's terms the query used:
+   * "commitment-bound verification" gives CBV and its three terms.
+   */
+  private gainedAbbreviations(query: string): Array<{ short: string; long: string[] }> {
+    const terms = new Set(tokenize(query));
+    const gained: Array<{ short: string; long: string[] }> = [];
+    for (const [short, longs] of this.abbreviations) {
+      if (terms.has(short)) continue;
+      const long = longs.find((l) => l.every((term) => terms.has(term)));
+      if (long) gained.push({ short, long });
+    }
+    return gained;
+  }
+
   search(query: string, limit = 3): SearchHit[] {
     const terms = this.expandedTerms(query);
     const k1 = 1.2;
@@ -174,15 +219,41 @@ export class DocumentIndex {
         if (!tf) continue;
         score += (this.idf(term) * tf * (k1 + 1)) / (tf + k1 * (1 - b + (b * this.lengths[i]!) / this.avgLength));
       }
-      return { doc, score };
+      return { doc, i, score };
     });
-    return scored
-      .filter((s) => s.score > 0)
-      .sort((x, y) => y.score - x.score)
-      .slice(0, limit)
-      .map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
+    const ranked = scored.filter((s) => s.score > 0).sort((x, y) => y.score - x.score);
+    const top = ranked.slice(0, limit);
+    // A passage that uses only the abbreviation keeps a place (harness 0.73.0). Its query terms are the
+    // abbreviation's one against the long form's several, so the passages that spell the term out, which
+    // define and discuss it, fill every result before the one that reports on it as "CBV" or "w/o ESCA"
+    // (eval/cs/README.md, cs11 and cs22). If no result has the abbreviation without its long form, the
+    // best-ranked passage that does takes the last place. Only a long form of two words or more counts,
+    // and only one place is given: "controls" matched "control (Ctrl)", and with "RMS" took two of the
+    // three places from the passage that answers (lab suite, l16).
+    for (const { short, long } of this.gainedAbbreviations(query).filter((g) => g.long.length >= 2)) {
+      const shortOnly = (i: number) => this.termFreqs[i]!.has(short) && !long.every((term) => this.termFreqs[i]!.has(term));
+      if (top.length < 2 || top.some((s) => shortOnly(s.i))) continue;
+      const candidate = ranked.slice(limit).find((s) => shortOnly(s.i));
+      if (candidate) {
+        top[top.length - 1] = candidate;
+        break;
+      }
+    }
+    return top.map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
   }
 }
+
+/**
+ * A table's caption: a line that starts with "**Table 4**" (Markdown, as the JATS converter writes it) or
+ * with "Table 4." or "Table 4:" (as a PDF or Word document prints it). Not "Table 4 provides…", which
+ * starts a paragraph about the table.
+ */
+const TABLE_CAPTION = /^(?:\*\*Table\s+([A-Z]?\d+)\*\*|Table\s+([A-Z]?\d+)[.:](?!\d))/gm;
+/** A citation of a table in running text: "Table 4", "Tables 4 and 5" (the first). */
+const TABLE_CITATION = /\bTables?\s+([A-Z]?\d+)\b/g;
+/** At most this many tables are pointed to after one part. */
+const MAX_TABLE_NOTES = 3;
+const tableLabel = (number: string) => `Table ${number}`;
 
 /** A document's sentences, as snippets are chosen from them. */
 function sentencesOf(text: string): string[] {
@@ -203,5 +274,20 @@ function bestSnippet(text: string, terms: string[], weight: (term: string) => nu
     }
   }
   best = best.trim();
-  return best.length > maxLength ? `${best.slice(0, maxLength)}…` : best;
+  return cutAtWord(best, maxLength);
+}
+
+/**
+ * A sentence longer than `maxLength`, cut after its last whole word that fits and marked "[…]", as
+ * OpenAlex snippets are (sources/openalex.ts, harness 0.8.0). Cut mid-word ("…and domain-specifi…"),
+ * a model quoted the snippet as it stood, and the quote check rightly refused a quote that ends inside
+ * a word: a right answer lost its label (harness 0.73.0, eval/cs/README.md, cs21). The quote check
+ * ignores a "[…]" at a quote's edge. A sentence with no space to cut at is cut where it must be.
+ */
+export function cutAtWord(sentence: string, maxLength: number): string {
+  if (sentence.length <= maxLength) return sentence;
+  const head = sentence.slice(0, maxLength + 1);
+  const space = head.search(/\s\S*$/);
+  const cut = space > 0 ? head.slice(0, space) : sentence.slice(0, maxLength);
+  return `${cut.replace(/[\s,;:]+$/, "")} […]`;
 }

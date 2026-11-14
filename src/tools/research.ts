@@ -10,6 +10,19 @@ import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
 import type { DocumentIndex, SearchHit } from "./search.ts";
 
+/**
+ * After a part that cites a table held in another part, where that table is (harness 0.73.0,
+ * DocumentIndex.tablesCitedElsewhere): "[Table 4 is in stabfl-label-skew#28.]". Shortening an old read
+ * leaves it out (TABLE_NOTE_LINE), as it does an outline.
+ */
+export function tableNote(tables: Array<{ table: string; partId: string }>): string {
+  if (!tables.length) return "";
+  const where = tables.map(({ table, partId }) => `${table} is in ${partId}`).join("; ");
+  return `\n\n[${where}.]`;
+}
+
+export const TABLE_NOTE_LINE = /\n*\[Table [^\n]* is in [^\n]*\.\]/;
+
 /** "A", "A and B", "A, B and C": one or two names read as before arXiv made three possible. */
 export function joinNames(names: string[]): string {
   return names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
@@ -233,7 +246,7 @@ export function createResearchTools(
         readDocument = true;
         readIds.add(doc.id);
         unread.clear();
-        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}`);
+        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(doc.id))}`);
       },
       // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
       // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
@@ -241,7 +254,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },

@@ -89,7 +89,7 @@ describe("retrieval on the evaluation set", () => {
   });
 
   it("keeps the CS papers' retrieval at least where it is", async () => {
-    // The acronym questions (cs11, cs22) are among the misses: eval/cs/README.md.
+    // Since 0.73.0 the acronym questions (cs11, cs22) find their passages: eval/cs/README.md.
     const field = await loadFieldSuite();
     const summary = summarizeRetrieval(measureRetrieval(field.csLibrary, [...csTasks, ...csHoldoutTasks]));
     assert.ok(summary.documentRecall >= CS_FLOOR.documentRecall, `cited documents: ${summary.documentRecall}`);
@@ -120,7 +120,7 @@ describe("retrieval on the evaluation set", () => {
 });
 
 const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };
-const CS_FLOOR = { documentRecall: 0.972, passageRecall: 0.826, complete: 27 };
+const CS_FLOOR = { documentRecall: 0.972, passageRecall: 0.867, complete: 29 };
 const LAB_FLOOR = { documentRecall: 0.976, passageRecall: 0.945, complete: 39 };
 
 // A user's library can hold hundreds of documents; the field library has seven. With 300 generated
