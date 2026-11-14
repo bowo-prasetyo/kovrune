@@ -499,3 +499,31 @@ describe("engineering units, signs, powers of ten and changes (harness 0.67.0)",
     assert.equal(marks("The dead time was reduced from 150 ns to 90 ns.", [q("Dead time was reduced from 150 ns to 90 ns.")]), "+");
   });
 });
+
+describe("each claim of a sentence (harness 0.68.0)", () => {
+  // A user's answer, paracetamol against ibuprofen, and its quote from Wikipedia.
+  const SOURCE =
+    "Compared to Ibuprofen—which can have adverse effects that include diarrhea, vomiting, and abdominal pain—paracetamol is well tolerated with fewer side effects. Ollama is experimental; llama.cpp server is the supported local server.";
+  const evidence = checkEvidence(
+    [
+      { docId: "p", quote: "Compared to Ibuprofen—which can have adverse effects that include diarrhea, vomiting, and abdominal pain—paracetamol is well tolerated with fewer side effects." },
+      { docId: "p", quote: "Ollama is experimental; llama.cpp server is the supported local server." },
+    ],
+    () => SOURCE,
+  );
+  const backed = (text: string) => sentenceSupport(text, evidence, () => "Paracetamol").sentences[0]!.backed;
+
+  it("marks a claim joined to a backed one with \"and\" before a verb", () => {
+    assert.equal(
+      backed("Ibuprofen can cause adverse effects including diarrhea, vomiting, abdominal pain, and is associated with a higher risk of gastrointestinal bleeding and hypertension compared to paracetamol."),
+      false,
+    );
+    assert.equal(backed("Ibuprofen can cause adverse effects including diarrhea, vomiting, abdominal pain."), true);
+  });
+
+  it("does not split a list, and passes claims each backed", () => {
+    assert.equal(backed("Ibuprofen can have adverse effects that include diarrhea, vomiting, and abdominal pain."), true, "a list joined by and");
+    assert.equal(backed("The llama.cpp server is the supported local server, while Ollama is experimental."), true);
+    assert.equal(backed("The llama.cpp server is the supported local server, while Ollama is marked as experimental in the design documentation."), false);
+  });
+});
