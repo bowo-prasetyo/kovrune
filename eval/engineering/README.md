@@ -34,3 +34,14 @@ npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b
 ```
 
 **Limits:** one author wrote the documents, the questions and the checks they test, and the documents are made up. Real datasheets and papers have more layouts than two, and more ways to set a formula.
+
+## Results
+
+First runs, before and after harness 0.68.0 (PDF layout, abbreviations), constrained mode, 4,096-token context; the analysis is in [eval/field/README.md](../field/README.md#pdf-layout-abbreviations-and-openalex-limits-0680).
+
+| Model | Harness | engineering | engineeringholdout | Reports |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | `main`'s code (0.67.0) | 23/25 | 9/10 | [json](../results/engineering-0.68-base-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B | 0.68.0 | 23/25 | 10/10 | [json](../results/engineering-0.68-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | `main`'s code (0.67.0) | 19/25 | 7/10 | [json](../results/engineering-0.68-base-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B | 0.68.0 | 22/25 | 8/10 | [json](../results/engineering-0.68-qwen3.5-2b-q4km.json) |

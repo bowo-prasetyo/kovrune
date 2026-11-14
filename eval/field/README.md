@@ -918,6 +918,31 @@ Since 0.40.0, Qwen3.5-4B's answers that its review confirms are cross-checked: t
 
 **Measured with `bench:rescore`.** The change is to the label rule, after the agent loop, so rescoring every recorded report gives its exact effect: of 6,487 recorded answers in 87 benchmark reports (six older reports, from before sentence support, cannot be rescored, on `main` either), 3 change label, and no task passes or fails differently. All three are `f17` ("Which licenses count as Secondary Licenses under the MPL-2.0?") with 4B at a 2,048-token context, in `field-0.44-ctx2048-shorten`, `field-0.54-ctx2048-headroom` and `field-0.54-ctx2048`: right answers that now keep **Quotes found**. Their cross-checks were saved without a reply, so why they could not be read is not known; like the paracetamol question, the answer is a list, which a reply cut at 48 tokens can leave unfinished.
 
+### PDF layout, abbreviations and OpenAlex limits (0.68.0)
+
+Three changes for engineering and scientific libraries, measured on a new suite of engineering documents and questions, `engineering` (25) and `engineeringholdout` (10), described in [eval/engineering/README.md](../engineering/README.md):
+
+- **PDF pages read by layout** (`src/documents/pdf-layout.ts`). pdf.js gives a page as pieces of text with positions. They were joined with a space between every two, so a subscript, a superscript or a symbol from another font read apart ("f sw", "40 m Ω", "− 25 °C", "10 − 6"); no paragraph was marked; and a running header or footer was read into every page. Pieces that touch are now joined without a space; a paragraph ends at a wider gap, or at an indent or a move to the next column after a sentence; and a line at the top or bottom of at least 60% of the pages is read only where it first appears, with page numbers dropped. Quotes of text read before 0.68.0, or from PDFs whose pieces do not touch, are still found: the quote check also joins a minus sign, a unit prefix before Ω and a power of ten to what follows (`normalizeForMatch` in `src/agent/evidence.ts`), and still tells −25 from 25.
+- **Abbreviations a library defines** (`src/tools/abbreviations.ts`). A search in words ("zero-voltage switching") adds the abbreviation the library defines for them ("ZVS"), found with the algorithm of Schwartz and Hearst, so it finds the later passages that use only the abbreviation. The reverse, adding the long form's words to a query that has the abbreviation, was tried and dropped: it moved clinical answer passages down (81.4% found against 88.4%).
+- **OpenAlex** asks for 25 candidates and keeps the 5 best, can be limited to a first year, a field and open-access works, and reads a work's full text through arXiv or Europe PMC when that source is ticked too. These need the network and are covered by unit tests only.
+
+**Retrieval** (`bench:retrieval`, no model): field 69 → 70 of 74 tasks with everything found, clinical 24 → 25 of 30 (cited documents 96.7% → 100%), the others unchanged; engineering is 32 of 32 before and after, since its questions are found by search either way.
+
+**Rescore:** the label rule and checks are unchanged, and `bench:rescore --labels` over every recorded report gives the same lines on `main` and on this branch.
+
+**Engineering suites**, before (the suites on `main`'s code) and after, constrained mode, 4,096-token context:
+
+| Model | engineering | engineeringholdout | Quotes found, wrong | Reports |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B, before | 23/25 | 9/10 | 1 of 21, 0 of 7 | [json](../results/engineering-0.68-base-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B, 0.68.0 | 23/25 | **10/10** | 1 of 21, 0 of 8 | [json](../results/engineering-0.68-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B, before | 19/25 | 7/10 | 0 of 9, 0 of 6 | [json](../results/engineering-0.68-base-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B, 0.68.0 | **22/25** | **8/10** | 0 of 10, 0 of 5 | [json](../results/engineering-0.68-qwen3.5-2b-q4km.json) |
+
+No task was lost on either model; 2B gained `e03`, `e10` and `e12`, and both gained one held-out task. With so few discordant tasks McNemar's p is 0.25 at best, so this shows no harm and points the right way, not more. `e10` is the abbreviation case: before, 2B searched "zero-voltage switching" and never read the passage "ZVS was achieved above 35% load"; after, it quoted it. `e12` and `e03` are less clear: before, 2B misquoted "The converter was tested" as "The prototype was tested", and gave the +22 V maximum gate voltage for the minimum; after, it quoted and answered right, which may be the cleaner text or run-to-run change. 4B's one wrong labelled answer, `e17`, is the same before and after.
+
+**Not yet measured:** the rule above asks that the field, pdf and holdout suites not regress. Those runs, on both models, are under way and are compared with the recorded `field-outline-base` reports; `bench:replay` cannot stand in for them, since the read tool's choices list every part ID and the design PDF is now cut into 32 parts instead of 37.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
