@@ -70,7 +70,8 @@ describe("an open-source document's outline", () => {
     const result = (await read.execute!({ docId: "europepmc:MED/38224710#44" })) as { text: string; shown?: string };
     const observation = result.text;
     assert.match(observation, /Outline of/);
-    assert.equal(result.shown, "part 44 of 51", "the part given, for the trace");
+    // 52 parts since 0.72.0: one of the paper's tables is longer than a part and is split between its rows.
+    assert.equal(result.shown, "part 44 of 52", "the part given, for the trace");
     const short = read.shorten!({ docId: "europepmc:MED/38224710#44" }, observation)!;
     assert.doesNotMatch(short, /Outline of|#3 Findings/);
   });
