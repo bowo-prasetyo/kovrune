@@ -4,6 +4,7 @@
 
 import { withoutPartLabel } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
+import { definitions } from "./abbreviations.ts";
 
 export interface SourceDocument {
   id: string;
@@ -58,6 +59,8 @@ export class DocumentIndex {
   private readonly lengths: number[];
   private readonly docFreq = new Map<string, number>();
   private readonly avgLength: number;
+  /** The library's abbreviations (abbreviations.ts): a short form's search term, and the search terms of each long form it stands for. */
+  private readonly abbreviations = new Map<string, string[][]>();
 
   constructor(docs: SourceDocument[]) {
     this.docs = docs;
@@ -70,6 +73,15 @@ export class DocumentIndex {
       return freqs;
     });
     this.lengths = this.termFreqs.map((f) => [...f.values()].reduce((a, b) => a + b, 0));
+    for (const doc of docs) {
+      for (const { short, long } of definitions(doc.text)) {
+        const [term, ...rest] = tokenize(short);
+        const longTerms = [...new Set(tokenize(long))];
+        if (!term || rest.length || !longTerms.length) continue;
+        const known = this.abbreviations.get(term) ?? [];
+        if (!known.some((terms) => terms.join(" ") === longTerms.join(" "))) this.abbreviations.set(term, [...known, longTerms]);
+      }
+    }
     this.avgLength = this.lengths.reduce((a, b) => a + b, 0) / Math.max(docs.length, 1);
   }
 
@@ -135,8 +147,24 @@ export class DocumentIndex {
     return terms.filter((t) => this.termFreqs[i]!.has(t)).reduce((sum, t) => sum + this.idf(t), 0) / total;
   }
 
+  /**
+   * A query's search terms with the abbreviations of the words it uses (harness 0.70.0): a query with
+   * all the words of "zero-voltage switching" also searches "ZVS" where a document defines it so, since
+   * documents use only the abbreviation after defining it. Not the other way: a query with "Vi-TT" that
+   * also searched the eight words of its long form ranked passages by those words over the question's
+   * own, and lost three clinical answer passages (bench:retrieval); the passages that use "Vi-TT" match it
+   * already.
+   */
+  expandedTerms(query: string): string[] {
+    const terms = new Set(tokenize(query));
+    for (const [short, longs] of this.abbreviations) {
+      if (!terms.has(short) && longs.some((long) => long.every((term) => terms.has(term)))) terms.add(short);
+    }
+    return [...terms];
+  }
+
   search(query: string, limit = 3): SearchHit[] {
-    const terms = [...new Set(tokenize(query))];
+    const terms = this.expandedTerms(query);
     const k1 = 1.2;
     const b = 0.75;
     const scored = this.docs.map((doc, i) => {

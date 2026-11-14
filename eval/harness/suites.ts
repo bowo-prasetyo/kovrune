@@ -22,12 +22,14 @@ import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
  * Word, Excel and CSV files, the second read only as totals (eval/field/office.ts); clinical and
  * clinicalholdout: questions over open-access clinical trial reports, the second read only as totals
  * (eval/clinical/tasks.ts); cs and csholdout: questions over open-access computer science papers, the
- * second read only as totals (eval/cs/tasks.ts).
+ * second read only as totals (eval/cs/tasks.ts); engineering and engineeringholdout: questions over
+ * made-up engineering documents (a datasheet, a paper, test reports), the second read only as totals
+ * (eval/engineering/tasks.ts).
  */
-export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout" | "office" | "officeholdout" | "clinical" | "clinicalholdout" | "cs" | "csholdout";
+export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout" | "office" | "officeholdout" | "clinical" | "clinicalholdout" | "cs" | "csholdout" | "engineering" | "engineeringholdout";
 
 /** The suites over the field documents, which need them loaded (loadFieldSuite). */
-export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout", "office", "officeholdout", "clinical", "clinicalholdout", "cs", "csholdout"];
+export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout", "office", "officeholdout", "clinical", "clinicalholdout", "cs", "csholdout", "engineering", "engineeringholdout"];
 
 /** The evaluation set the gate needs. The field suite is reported separately, so M0 comparisons stay valid. */
 export const ALL_SUITES: SuiteName[] = ["research", "unanswerable", "pdf", "coding"];
