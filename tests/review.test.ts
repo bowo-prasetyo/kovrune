@@ -176,6 +176,24 @@ describe("the model's own check of an answer", () => {
     assert.equal(labelledQuotesFound(before.status, before.evidence, before.support), true);
   });
 
+  it("keeps the label when the cross-check gives nothing to compare, and says so (harness 0.67.0)", async () => {
+    // A reply cut off at its length limit: no answer read, nothing found against the answer.
+    const model = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`, `{"answer":"General Public License, Lesser`], "qwen3.5-4b-q4km");
+    const { support, status, evidence } = await runResearch({ question: QUESTION, library, model });
+    assert.equal(support!.crossCheck!.extracted, undefined);
+    assert.equal(labelledQuotesFound(status, evidence, support), true);
+    const shown = describeStatus(status as "verified", evidence, support);
+    assert.equal(shown.label, "Quotes found");
+    assert.match(shown.detail, /A second check, .* could not be completed: the model's reply could not be read as an answer: "\{"answer":"General Public License, Lesser"\.$/);
+    // A cross-check that found no answer in the passages still takes the label.
+    const empty = new ScriptedModel([search, read, wrong, `{"verdict":"yes"}`, `{"answer":""}`], "qwen3.5-4b-q4km");
+    const none = await runResearch({ question: QUESTION, library, model: empty });
+    assert.equal(labelledQuotesFound(none.status, none.evidence, none.support), false);
+    assert.match(describeStatus(none.status as "verified", none.evidence, none.support).detail, /the model found no answer in them/);
+    // Answers saved before 0.67.0 with an unreadable cross-check keep the label now.
+    assert.equal(labelledQuotesFound(status, evidence, { ...support!, crossCheck: { agrees: false } }), true);
+  });
+
   it("asks Qwen3.5-2B whether the answer gives every part of the question, and labels it only if it does", async () => {
     const parts = (given: string) => JSON.stringify({ parts: [{ asks: "how many days to cure", answer: given }] });
     // The answer gives the part: it keeps its label, after the review and the completeness check.
