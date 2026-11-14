@@ -136,6 +136,7 @@ function numberText(text: string): string {
     .replace(/(?<![\p{L}\p{Nd}.,^])10\s*\^\s*([-+]?\p{Nd}+)(?![\p{Nd}.])/gu, (_, e: string) => powerOfTen("1", e))
     .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:\.\p{Nd}+)?)[eE]([-+]?\p{Nd}+)(?![\p{L}\p{Nd}])/gu, (_, m: string, e: string) => powerOfTen(m, e))
     .replace(/(\p{Nd}) ?([pnμmkMG]) (Ω)/gu, "$1 $2$3")
+    .replace(/(\p{Nd})\s*[×x]\s*g(?![\p{L}\p{Nd}])/gu, "$1 xg")
     .replace(/° ([CF])(?!\p{L})/gu, "°$1");
 }
 
@@ -305,12 +306,30 @@ const ENGINEERING_UNITS: Array<[string, RegExp]> = [
   ["nm", /^(?:nm|nanomet(?:re|er)s?)$/],
   ["ns", /^(?:ns|nanoseconds?)$/],
   ["μs", /^(?:μs|microseconds?)$/],
+  // Laboratory units (harness 0.70.0), read in their case like the others: "10 mM" is millimolar, not
+  // millimetres, and "10 μM" is not "10 mM", a thousandfold error in a protocol. "M" alone is molar
+  // only after a number ("1 M NaCl"). A centrifuge speed in "× g" (numberText writes it "xg") is not one
+  // in rpm. "kD" is a kilodalton, as many papers write it.
+  ["M", /^(?:M|molar)$/],
+  ["mM", /^(?:mM|millimolar)$/],
+  ["μM", /^(?:μM|uM|micromolar)$/],
+  ["nM", /^(?:nM|nanomolar)$/],
+  ["pM", /^(?:pM|picomolar)$/],
+  ["fM", /^(?:fM|femtomolar)$/],
+  ["Da", /^(?:Da|daltons?)$/],
+  ["kDa", /^(?:kDa|kD|kilodaltons?)$/],
+  ["MDa", /^(?:MDa|megadaltons?)$/],
+  ["×g", /^xg$/],
+  ["U", /^U$/],
+  ["mU", /^mU$/],
 ];
 
 /** Units, each with the spellings that mean it. Binary and decimal sizes are one unit: models write "4 KB" for "4 KiB". */
 const UNITS: Array<[string, RegExp]> = [
-  ["KB", /^(?:kb|kib|kilobytes?)$/],
-  ["MB", /^(?:mb|mib|megabytes?)$/],
+  // A kilobase and a kilobyte share a symbol and a scale, so "kb" is one unit for both: "300 kb" is not
+  // backed by "300 bp" (harness 0.70.0), and "4 KB" is still backed by "4 KiB".
+  ["KB", /^(?:kb|kib|kbp|kilobytes?|kilobases?)$/],
+  ["MB", /^(?:mb|mib|mbp|megabytes?|megabases?)$/],
   ["GB", /^(?:gb|gib|gigabytes?)$/],
   ["TB", /^(?:tb|tib|terabytes?)$/],
   ["ms", /^(?:ms|milliseconds?)$/],
@@ -344,6 +363,14 @@ const UNITS: Array<[string, RegExp]> = [
   ["mm", /^(?:mm|mmhg|millimet(?:re|er)s?)$/],
   ["cm", /^(?:cm|centimet(?:re|er)s?)$/],
   ["kcal", /^(?:kcal|kilocalories?)$/],
+  // Laboratory volumes, lengths of DNA, RNA and protein, and counts of live bacteria and viruses (harness 0.70.0).
+  ["μL", /^(?:μl|ul|microlit(?:re|er)s?)$/],
+  ["nL", /^(?:nl|nanolit(?:re|er)s?)$/],
+  ["bp", /^(?:bp|basepairs?)$/],
+  ["nt", /^(?:nt|nucleotides?)$/],
+  ["aa", /^(?:aa|residues?)$/],
+  ["CFU", /^cfus?$/],
+  ["PFU", /^pfus?$/],
 ];
 
 /** The unit a word after a number names: an engineering symbol in its own case, or another unit in any case. */
@@ -415,6 +442,30 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["stronger", "strongest"], ["weaker", "weakest"]],
   [["pass", "passed", "passes"], ["fail", "failed", "fails"]],
   [["accepted"], ["rejected"]],
+  // Laboratory opposites (harness 0.70.0): what a gene, a drug or an experiment did, read the wrong way round.
+  [
+    ["upregulate", "upregulated", "upregulates", "upregulating", "upregulation", "up-regulate", "up-regulated", "up-regulates", "up-regulation"],
+    ["downregulate", "downregulated", "downregulates", "downregulating", "downregulation", "down-regulate", "down-regulated", "down-regulates", "down-regulation"],
+  ],
+  [
+    ["activate", "activated", "activates", "activating", "activation", "activator", "activators"],
+    ["inhibit", "inhibited", "inhibits", "inhibiting", "inhibition", "inhibitor", "inhibitors", "inhibitory"],
+  ],
+  [["agonist", "agonists", "agonistic"], ["antagonist", "antagonists", "antagonistic"]],
+  [
+    ["overexpression", "overexpressed", "overexpressing", "overexpress", "overexpresses"],
+    ["knockdown", "knock-down", "knocked-down", "knockout", "knock-out", "knocked-out", "silenced", "silencing"],
+  ],
+  [["enriched", "enrichment"], ["depleted", "depletion"]],
+  [["resistant"], ["sensitive", "susceptible"]],
+  [["wild-type", "wildtype"], ["mutant", "mutants"]],
+  [["male", "males"], ["female", "females"]],
+  [["vitro"], ["vivo"]],
+  [["dominant"], ["recessive"]],
+  [["induce", "induced", "induces", "inducing", "induction"], ["repress", "repressed", "represses", "repressing", "repression"]],
+  [["hypermethylated", "hypermethylation"], ["hypomethylated", "hypomethylation"]],
+  [["phosphorylated", "phosphorylation", "phosphorylates"], ["dephosphorylated", "dephosphorylation", "dephosphorylates"]],
+  [["gain-of-function"], ["loss-of-function"]],
 ];
 
 /**
@@ -516,11 +567,18 @@ function directions(text: string): Set<string> {
   return found;
 }
 
-/** Whether every direction a sentence states is one the quotes state, or one they state neither side of. */
+/**
+ * Whether every direction a sentence states is one the quotes state, or one they state neither side of.
+ * A pair the sentence states both sides of is not judged (harness 0.70.0): "the inhibitor blocked
+ * activation of AMPK" says which is which in its word order, which a word check cannot read, as a quote
+ * stating both sides backs either.
+ */
 function directionsBacked(text: string, quoted: Set<string>): boolean {
-  return [...directions(text)].every((key) => {
+  const said = directions(text);
+  return [...said].every((key) => {
     const [pair, side] = key.split(":");
-    return quoted.has(key) || !quoted.has(`${pair}:${side === "0" ? 1 : 0}`);
+    const other = `${pair}:${side === "0" ? 1 : 0}`;
+    return said.has(other) || quoted.has(key) || !quoted.has(other);
   });
 }
 
@@ -626,6 +684,7 @@ export function sentenceSupport(
   const quotedDirections = directions(backing);
   const quotedSignificance = verified.map((e) => significance(e.quote));
   const quotedChanges = changes(quoteText);
+  const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
   let judged = 0;
   let backed = 0;
   const sentences = splitSentences(answer).map((text): AnswerSentence => {
@@ -654,7 +713,8 @@ export function sentenceSupport(
       directionsBacked(text, quotedDirections) &&
       significanceBacked(text, quotedSignificance) &&
       countsBacked(text, verified.map((e) => e.quote)) &&
-      changesBacked(text, quotedChanges);
+      changesBacked(text, quotedChanges) &&
+      namesBacked(text, namesBacking);
     judged++;
     if (isBacked) backed++;
     return { text, backed: isBacked };
@@ -773,6 +833,85 @@ function unitsBacked(text: string, quoted: { pairs: Set<string>; bare: Set<strin
     const quotedWithUnit = [...quoted.pairs].some((p) => p.startsWith(`${number} `));
     return quoted.pairs.has(pair) || quoted.bare.has(number) || !quotedWithUnit;
   });
+}
+
+/**
+ * Greek letters, by the names papers also spell them with: "TNF-α" and "TNF-alpha" are one name. "μ" is
+ * left out, since after a number it is the micro prefix ("10 μM"), and so is "π", a constant.
+ */
+const GREEK: Record<string, string> = {
+  α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", ζ: "zeta", η: "eta", θ: "theta", ι: "iota", κ: "kappa",
+  λ: "lambda", ν: "nu", ξ: "xi", ρ: "rho", σ: "sigma", τ: "tau", υ: "upsilon", φ: "phi", χ: "chi", ψ: "psi", ω: "omega",
+};
+const GREEK_LETTER = new RegExp(`[${Object.keys(GREEK).join("")}]`, "u");
+/** A Greek letter's name at the end of a name, after a hyphen or a digit: "TNF-alpha", "IL-1beta", "HIF-1alpha". */
+const GREEK_NAME_END = new RegExp(`(?:-|\\p{Nd})(?:${Object.values(GREEK).join("|")})$`, "u");
+
+/** A word as one name: lower case, minus signs as "-", Greek letters by name, no hyphen between letters or digits, "-positive" as "+". */
+function nameKey(word: string): string {
+  return word
+    .normalize("NFKC")
+    .replace(/[−–‐‑⁻]/g, "-")
+    .replace(/⁺/g, "+")
+    .toLowerCase()
+    .replace(new RegExp(GREEK_LETTER.source, "gu"), (letter) => GREEK[letter]!)
+    .replace(/(?<=[\p{L}\p{Nd}])-?positive$/u, "+")
+    .replace(/(?<=[\p{L}\p{Nd}])-?negative$/u, "-")
+    .replace(/(?<=[\p{L}\p{Nd}])-(?=[\p{L}\p{Nd}])/gu, "");
+}
+
+/** A text's words, with the signs that end a cell marker or a genotype ("CD45+", "Tlr4−/−") kept, and other punctuation around them taken off. */
+function nameWords(text: string): string[] {
+  return text
+    .normalize("NFKC")
+    .split(/[\s,;:()[\]{}"“”‘’]+/u)
+    .map((w) => w.replace(/^[^\p{L}\p{Nd}+−⁻-]+/u, "").replace(/[^\p{L}\p{Nd}+−⁻⁺\-/]+$/u, "").replace(/\.$/, ""))
+    .filter(Boolean);
+}
+
+/**
+ * The names in a sentence that one character tells apart from another (harness 0.70.0), which the share of
+ * shared words cannot see, since the rest of the sentence matches:
+ * - a name with a Greek letter: TNF-α and TNF-β, ERα and ERβ, IL-1β, written with the letter or its name;
+ * - a cell marker with its sign: CD45+ and CD45−. A plain "-" counts only after a name with a capital and a
+ *   digit ("CD8-"), since "pre-" in "pre- and post-treatment" is a hyphen;
+ * - a genotype: Tlr4−/− and Tlr4+/+, "+/−".
+ * They are given as nameKey writes them.
+ */
+function distinguishingNames(text: string): string[] {
+  return nameWords(text).flatMap((word) => {
+    const key = nameKey(word);
+    const greek = GREEK_LETTER.test(word) || GREEK_NAME_END.test(key);
+    const genotype = /[+-]\/[+-]$/.test(key);
+    const marker = /[\p{L}\p{Nd}][+]+$/u.test(key) || /[\p{L}\p{Nd}][−⁻]$/u.test(word.normalize("NFKC")) || (/\p{Lu}/u.test(word) && /\p{Nd}-$/u.test(word));
+    return greek || genotype || marker ? [key] : [];
+  });
+}
+
+/** Every name a backing text gives, as nameKey writes it, and each two words run together, so "TNF α" and "CD45 positive" read as one. */
+function backingNames(text: string): string[] {
+  const keys = nameWords(text).map(nameKey);
+  return [...keys, ...keys.slice(1).map((key, i) => nameKey(`${keys[i]}${key}`))];
+}
+
+/** Species written with the genus as its initial: "S. aureus", "E. coli", as genus initial and species ("s aureus"). */
+function abbreviatedSpecies(text: string): Array<[string, string]> {
+  return [...text.normalize("NFKC").matchAll(/(?<![\p{L}.])(\p{Lu})\.\s?(\p{Ll}{3,})\b/gu)].map(([, genus, species]) => [genus!, species!]);
+}
+
+/**
+ * Whether each name a sentence tells apart by one character (distinguishingNames), and each species it
+ * gives by its genus's initial, is one the quotes, the cited titles or the question give (harness 0.70.0).
+ * "TNF-β levels rose after treatment" is not backed by "TNF-α levels rose after treatment", nor "CD45−
+ * cells expanded" by "CD45+ cells expanded", nor "S. epidermidis" by "S. aureus", though every other word
+ * is shared. A name inside a longer one counts ("TNF-α-induced"), and "S. aureus" is backed by
+ * "Staphylococcus aureus".
+ */
+function namesBacked(text: string, backing: { names: string[]; text: string }): boolean {
+  return (
+    distinguishingNames(text).every((name) => backing.names.some((b) => b.includes(name))) &&
+    abbreviatedSpecies(text).every(([genus, species]) => new RegExp(`(?<!\\p{L})${genus}(?:\\.|\\p{Ll}+)\\s?${species}\\b`, "u").test(backing.text))
+  );
 }
 
 /**

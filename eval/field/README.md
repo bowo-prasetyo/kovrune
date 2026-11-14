@@ -924,6 +924,41 @@ A user asked "What is the difference between paracetamol and ibuprofen?". The an
 
 **Measured with `bench:rescore`.** Of 7,319 recorded sentences, 2 change, both the same right answer of the experimental 0.8B model to `f24`, in `small-qwen3.5-0.8b-q4km` and its completeness run: "Kovrune supports the local model server **llama.cpp** …, while **Ollama** is marked as experimental in the design documentation", whose quote is "**llama.cpp server** is the supported local server; Ollama is experimental". Its second part shares 2 of 5 claim words with the quote ("marked" and "in the design documentation" are not in it), and both answers lose their label. No task passes or fails differently. The benchmark answers seldom join two claims in one sentence; the browser answers this was found in do.
 
+### Laboratory units, opposites and names (0.70.0, defect fix)
+
+An audit from a biological and biomedical sciences researcher's point of view ran the sentence check (`src/agent/support.ts`) on 22 wrong sentences from bench papers: cell culture, immunoblots, cloning, gene regulation, mouse genetics and microbiology. With a real quote, 17 were marked backed. The clinical checks of 0.59.0 had units for doses and readings, not for concentrations, volumes or sizes; their opposites were for outcomes, not for what a gene or a drug did; and a name that one character tells apart passed whenever the rest of the sentence matched. Only the model's own review then stood between these sentences and **Quotes found**:
+
+| The quote says | The answer says | Before | After |
+| --- | --- | --- | --- |
+| 10 **µM**; 45 **nM**; 150 **mM** | 10 **mM**; 45 **µM**; 150 **M** | backed | **not backed** |
+| 5 **µL**; 55 **kDa**; 300 **bp** | 5 **mL**; 55 **Da**; 300 **kb** | backed | **not backed** |
+| 12,000 **× g**; 10^5 **PFU** | 12,000 **rpm**; 10^5 **CFU** | backed | **not backed** |
+| 2 **mM** glutamine | 2 **mm** glutamine | backed ("mM" read as millimetres) | **not backed** |
+| **upregulated**; **activates**; **agonist**; **knockdown** | **downregulated**; **inhibits**; **antagonist**; **overexpression** | backed | **not backed** |
+| **enriched**; **resistant**; **wild-type**; **male**; in **vitro** | **depleted**; **susceptible**; **mutant**; **female**; in **vivo** | backed | **not backed** |
+| TNF-**α**; ER**α**; IL-1**β** | TNF-**β**; ER**β**; IL-1**α** | backed | **not backed** |
+| CD45**+**; Tlr4**−/−**; **S. aureus** | CD45**−**; Tlr4**+/+**; **S. epidermidis** | backed | **not backed** |
+| TNF-α; CD45+; S. aureus | TNF-alpha; CD45-positive; Staphylococcus aureus | backed | backed |
+| *Mus musculus* but not *Rattus norvegicus* | *Rattus norvegicus* but not *Mus musculus* | backed | backed |
+
+What changed:
+- **Laboratory units** (`ENGINEERING_UNITS`, read in their case, and `UNITS`): molar concentrations (M, mM, µM, nM, pM, fM, and "micromolar" and the like), daltons (Da, kDa or kD, MDa), a centrifuge's "× g" (`numberText` writes it "xg", so it is a unit apart from rpm), enzyme units (U, mU), volumes (µL, nL), lengths of DNA, RNA and protein (bp, nt, aa), and counts of colonies and plaques (CFU, PFU). "kb" and "Mb" stay one unit with kilobytes and megabytes, as they share a symbol and a scale, so "300 kb" is not backed by "300 bp" and "4 KB" is still backed by "4 KiB". Before, "mM" was read as millimetres and "µM" as no unit, so "10 mM" was backed by "10 µM".
+- **Laboratory opposites** (`OPPOSITES`), fourteen pairs: upregulated/downregulated, activate/inhibit, agonist/antagonist, overexpression/knockdown (or knockout, silencing), enriched/depleted, resistant/sensitive (or susceptible), wild-type/mutant, male/female, in vitro/in vivo, dominant/recessive, induced/repressed, hypermethylated/hypomethylated, phosphorylated/dephosphorylated, gain-of-function/loss-of-function.
+- **A pair a sentence states both sides of is not judged** (`directionsBacked`), for every pair, not only the new ones. "Compound C inhibited the activation of AMPK" says which is which in its word order, which a word check cannot read; without this, it would be marked against a quote that says only "inhibited". This is the rule a quote already had: one stating both sides backs either.
+- **Names one character tells apart** (`namesBacked`): a name with a Greek letter, a cell marker with its sign, a genotype, and a species with its genus shortened to its initial must be in the quotes, the cited titles or the question. They are compared in one form (`nameKey`): lower case, Greek letters by name ("TNF-α" is "TNF-alpha"), no hyphen inside ("IL-1β" is "IL1beta"), "-positive" as "+" and "-negative" as "−". A name inside a longer one counts ("TNF-α-induced"), so do two words run together ("TNF α", "CD45 positive"), and "S. aureus" is backed by "Staphylococcus aureus". A plain "-" ends a marker only after a name with a capital and a digit ("CD8-"), so the "pre-" of "pre- and post-treatment" is a hyphen.
+
+**Effect on recorded runs: none.** `bench:rescore`, run on each report on its own (the same six files as before cannot be read), re-scores 6,487 answers in 87 reports, 2,857 of them labelled **Quotes found**. No label and no count of backed or judged sentences changed, nor whether any task passes. So it costs no right answer its label on these suites, the clinical and CS suites included. But no suite has a bench paper, so they cannot show what it gains either. That needs a laboratory suite: openly licensed cell, animal, genomics and microbiology papers, with questions on concentrations, directions of regulation, genotypes, figure legends and methods, a third held out.
+
+`tests/support.test.ts` ("laboratory units, opposites and names") fails on all three of its tests before the change and passes after. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): sentence support runs after the model's final answer, so the model runs the clause asks for would repeat their recorded actions.
+
+**Limits:**
+- A word check cannot read word order, so two species, genes or groups swapped within a sentence that names both still pass ("in rats but not mice" for "in mice but not rats").
+- Species written out in full are not checked: without italics, "Rattus norvegicus" cannot be told from two ordinary words.
+- Greek letters as names only count when attached to the name ("TNF-alpha", "IL-1beta"); a lone "alpha" or "beta" is too often a word ("a beta release"). "µ" is the micro prefix, so "µ-opioid receptor" is not checked.
+- "M" after a number is molar, so "3 M users" is read as 3 molar; it changes a label only when a quote gives the same number another unit.
+- Opposites are single English words, so "loss of function" written as three words is not read as a pair. Like every opposite, a right answer that paraphrases one side with the other's word ("blocked activation" for "inhibited") is marked, which asks the reader to check: the cheaper mistake.
+- Gene symbols that differ in a digit (BRCA1, BRCA2) and point mutations (R175H, R273H) were already caught by the number check; symbols that differ only in letters (KRAS and HRAS) are left to the share of shared words.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
