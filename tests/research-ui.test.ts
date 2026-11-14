@@ -136,14 +136,17 @@ describe("open source preferences", () => {
 
   it("describe open-source steps in the trace", () => {
     assert.equal(describeCall(call({ tool: "search_wikipedia", args: { query: "Ada" } }), () => undefined), "Searching Wikipedia for “Ada”");
-    assert.equal(describeCall(call({ tool: "read", args: { docId: "wikipedia:Ada_Lovelace#3" } }), () => undefined), "Reading Wikipedia: Ada Lovelace");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "wikipedia:Ada_Lovelace#3" } }), () => undefined), "Reading Wikipedia: Ada Lovelace (part 3)");
+    // The part a read gave, once it has run: the same article read three times showed as three like lines.
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "wikipedia:Paracetamol" }, shown: "part 4 of 9" }), () => undefined), "Reading Wikipedia: Paracetamol (part 4 of 9)");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "wikipedia:Paracetamol" } }), () => undefined), "Reading Wikipedia: Paracetamol", "while it runs");
     assert.equal(describeCall(call({ tool: "read", args: { docId: "openalex:W123" } }), () => undefined), "Reading OpenAlex work W123");
     assert.equal(describeCall(call({ tool: "search_datacite", args: { query: "RAG" } }), () => undefined), "Searching DataCite for “RAG”");
     assert.equal(
       describeCall(call({ tool: "read", args: { docId: "datacite:10.5281/zenodo.15310522#2" } }), () => undefined),
-      "Reading DataCite work 10.5281/zenodo.15310522",
+      "Reading DataCite work 10.5281/zenodo.15310522 (part 2)",
     );
     assert.equal(describeCall(call({ tool: "search_europepmc", args: { query: "IPTp" } }), () => undefined), "Searching Europe PMC for “IPTp”");
-    assert.equal(describeCall(call({ tool: "read", args: { docId: "europepmc:MED/38012345#4" } }), () => undefined), "Reading Europe PMC work MED/38012345");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "europepmc:MED/38012345#4" } }), () => undefined), "Reading Europe PMC work MED/38012345 (part 4)");
   });
 });

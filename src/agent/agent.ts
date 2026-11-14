@@ -54,6 +54,8 @@ export interface ToolResult {
   resultCount?: number;
   /** True when the tool could not do its work, e.g. a source that could not be reached. */
   failed?: boolean;
+  /** What of a document a read gave, e.g. "part 3 of 9", when the trace cannot tell from the ID it was asked for. */
+  shown?: string;
 }
 
 export interface AgentConfig {
@@ -112,6 +114,8 @@ export interface CallRecord {
   resultCount?: number;
   /** True when the tool reported that it failed. */
   failed?: boolean;
+  /** What of a document a read gave, e.g. "part 3 of 9" (ToolResult.shown). */
+  shown?: string;
   /**
    * How many earlier tool results had been removed from the conversation, or shortened, to fit the
    * context window when this call was made (fitToContext). The model then quotes text it can no longer see.
@@ -464,6 +468,7 @@ export async function runAgent(options: {
         observation = result.text;
         if (result.resultCount !== undefined) record.resultCount = result.resultCount;
         if (result.failed) record.failed = true;
+        if (result.shown) record.shown = result.shown;
         options.onResult?.(record, calls.length);
       }
     }

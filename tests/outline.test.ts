@@ -67,8 +67,10 @@ describe("an open-source document's outline", () => {
     const question = "What was the risk ratio for malaria infection?";
     const session = new SourceSession([await paperSource()], question);
     const read = createResearchTools(new ResearchLibrary([]).index, session, question).find((t) => t.name === "read")!;
-    const observation = String(await read.execute!({ docId: "europepmc:MED/38224710#44" }));
+    const result = (await read.execute!({ docId: "europepmc:MED/38224710#44" })) as { text: string; shown?: string };
+    const observation = result.text;
     assert.match(observation, /Outline of/);
+    assert.equal(result.shown, "part 44 of 51", "the part given, for the trace");
     const short = read.shorten!({ docId: "europepmc:MED/38224710#44" }, observation)!;
     assert.doesNotMatch(short, /Outline of|#3 Findings/);
   });

@@ -181,6 +181,7 @@ describe("Europe PMC", () => {
       [
         "(hydroxychloroquine donations zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
         "TITLE_ABS:(hydroxychloroquine donations zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
+        "TITLE:(hydroxychloroquine donations zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
         "(hydroxychloroquine OR donations OR zebrafish) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)",
       ],
     );
@@ -229,7 +230,7 @@ describe("Europe PMC", () => {
     assert.equal(doc.url, "https://europepmc.org/article/MED/39593091");
     assert.deepEqual(doc.work, { authors: ["Wagner R", "Buettner J", "Heni M"], year: 2024, doi: "10.1186/s12916-024-03771-8", venue: "BMC medicine" });
     assert.equal(fetchImpl.urls.at(-1), "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11590543/fullTextXML");
-    assert.equal(fetchImpl.urls.length, 3, "the record found by the search is not asked for again");
+    assert.equal(fetchImpl.urls.length, 4, "the record found by the search is not asked for again");
   });
 
   it("reads other works as their abstract, and says why", async () => {
