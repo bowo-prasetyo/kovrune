@@ -312,7 +312,7 @@ export const csTasks: ResearchTask[] = [
   // Feedback-driven rule induction for gender bias.
   {
     // acronym, effect: the 500-record evaluation (14.4% to 11.0%), next to the 120-record one (24.16 to 7.08).
-    // Until 0.72.0 its facts required both numbers, which the question does not ask for, so 4B's right but
+    // Until 0.73.0 its facts required both numbers, which the question does not ask for, so 4B's right but
     // vague "consistently reduced" failed (task defect, eval/cs/README.md). It now needs the direction: an
     // answer that it rose, or one with only the numbers of a rise, fails.
     id: "cs24-bias-stereotype-500",

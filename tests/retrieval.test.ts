@@ -7,6 +7,7 @@ import { appSearch, measureRetrieval, summarizeRetrieval } from "../eval/harness
 import { DISTRACTOR_PREFIX, distractorDocuments } from "../eval/harness/distractors.ts";
 import { baseLibrary } from "../eval/harness/suites.ts";
 import { csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
+import { labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
 import { pdfTasks } from "../eval/tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../eval/tasks/research.ts";
 
@@ -88,17 +89,39 @@ describe("retrieval on the evaluation set", () => {
   });
 
   it("keeps the CS papers' retrieval at least where it is", async () => {
-    // Since 0.72.0 the acronym questions (cs11, cs22) find their passages: eval/cs/README.md.
+    // Since 0.73.0 the acronym questions (cs11, cs22) find their passages: eval/cs/README.md.
     const field = await loadFieldSuite();
     const summary = summarizeRetrieval(measureRetrieval(field.csLibrary, [...csTasks, ...csHoldoutTasks]));
     assert.ok(summary.documentRecall >= CS_FLOOR.documentRecall, `cited documents: ${summary.documentRecall}`);
     assert.ok(summary.passageRecall >= CS_FLOOR.passageRecall, `answer passages: ${summary.passageRecall}`);
     assert.ok(summary.complete >= CS_FLOOR.complete, `complete: ${summary.complete}`);
   });
+
+  it("keeps the laboratory papers' retrieval at least where it is", async () => {
+    // Search does well here: the questions use the papers' own terms, except the alias questions, whose
+    // other words find the paper (eval/lab/README.md). l28, over two papers, is the one miss.
+    const field = await loadFieldSuite();
+    const summary = summarizeRetrieval(measureRetrieval(field.labLibrary, [...labTasks, ...labHoldoutTasks]));
+    assert.ok(summary.documentRecall >= LAB_FLOOR.documentRecall, `cited documents: ${summary.documentRecall}`);
+    assert.ok(summary.passageRecall >= LAB_FLOOR.passageRecall, `answer passages: ${summary.passageRecall}`);
+    assert.ok(summary.complete >= LAB_FLOOR.complete, `complete: ${summary.complete}`);
+  });
+
+  it("does not find the IL10 paper for a researcher's own spelling of its name", async () => {
+    // The alias gap, measured: the paper writes "IL10", so "IL-10" matches it nowhere, and the three
+    // papers search returns instead are about a kinase inhibitor, an antibiotic and an enzyme. A
+    // question carries the name's own words with it, which is why the suite's alias tasks still
+    // retrieve; a change that matches gene names however they are written should make this test fail.
+    const field = await loadFieldSuite();
+    const found = (query: string) => new Set(appSearch(3)(field.labLibrary, query).map((id) => id.replace(/#\d+$/, "")));
+    assert.ok(found("IL10").has("il10-tolerance-birds"), "the paper's own spelling finds it");
+    assert.equal(found("IL-10").has("il10-tolerance-birds"), false, "a hyphen between the letters and the number does not");
+  });
 });
 
 const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };
 const CS_FLOOR = { documentRecall: 0.972, passageRecall: 0.867, complete: 29 };
+const LAB_FLOOR = { documentRecall: 0.976, passageRecall: 0.945, complete: 39 };
 
 // A user's library can hold hundreds of documents; the field library has seven. With 300 generated
 // documents near its topics added (eval/harness/distractors.ts), search still has to find what it

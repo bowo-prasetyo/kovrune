@@ -1,4 +1,4 @@
-// The four changes the CS suite's first runs suggested (harness 0.72.0, eval/cs/README.md).
+// The four changes the CS suite's first runs suggested (harness 0.73.0, eval/cs/README.md).
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
@@ -16,7 +16,7 @@ const caption = "**Table 5** Static compression baselines on CIFAR-10. Values ar
 const table = [header, ...Array.from({ length: 40 }, (_, i) => row(i + 1))].join("\n");
 const paper = { id: "paper", title: "A paper", text: `## Results\n\nThe baselines are compared in Table 5.\n\n${caption}\n\n${table}\n\n${"Other results are discussed at length here. ".repeat(45)}\n\nTable 5 shows that every coder keeps the quantized accuracy.` };
 
-describe("a table longer than a part (harness 0.72.0)", () => {
+describe("a table longer than a part (harness 0.73.0)", () => {
   const parts = chunkDocument(paper);
 
   it("is split between rows, never inside one", () => {
@@ -54,7 +54,7 @@ describe("a table longer than a part (harness 0.72.0)", () => {
   });
 });
 
-describe("where a cited table is (harness 0.72.0)", () => {
+describe("where a cited table is (harness 0.73.0)", () => {
   const library = new ResearchLibrary([paper]);
   const index = library.index;
   const parts = index.partsOf("paper");
@@ -85,7 +85,7 @@ describe("where a cited table is (harness 0.72.0)", () => {
   });
 });
 
-describe("a passage that uses only an abbreviation keeps a place in the results (harness 0.72.0)", () => {
+describe("a passage that uses only an abbreviation keeps a place in the results (harness 0.73.0)", () => {
   const docs = [
     { id: "abstract", title: "Paper, part 1", text: "A commitment-bound verification (CBV) mechanism is designed. Commitment-bound verification prevents tampering." },
     { id: "method", title: "Paper, part 2", text: "We design commitment-bound verification for the server. The verification is bound to a commitment." },
@@ -108,7 +108,7 @@ describe("a passage that uses only an abbreviation keeps a place in the results 
   });
 });
 
-describe("search snippets cut at a word (harness 0.72.0)", () => {
+describe("search snippets cut at a word (harness 0.73.0)", () => {
   const sentence =
     "The results demonstrate significant improvements in recall for low-frequency entities (29 percentage point gain, from 0.53 to 0.82, on the Factual subset) compared to both general-purpose RAG baselines and domain-specific methods.";
 
@@ -128,7 +128,7 @@ describe("search snippets cut at a word (harness 0.72.0)", () => {
   });
 });
 
-describe("cs24 asks how a measure changed, not for its numbers (task defect, 0.72.0)", () => {
+describe("cs24 asks how a measure changed, not for its numbers (task defect, 0.73.0)", () => {
   const task = [...csTasks, ...csHoldoutTasks].find((t) => t.id === "cs24-bias-stereotype-500")!;
   const library = new ResearchLibrary(csDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
   const result = (answer: string) =>

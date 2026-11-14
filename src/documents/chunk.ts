@@ -131,7 +131,7 @@ function isTable(paragraph: string): boolean {
 const CAPTION = /^(?:\*\*(Table\s+[A-Z]?\d+)\*\*|(Table\s+[A-Z]?\d+)[.:](?!\d))\s*/;
 
 /**
- * A table longer than a part, split between its rows (harness 0.72.0). Split at sentences, then words,
+ * A table longer than a part, split between its rows (harness 0.73.0). Split at sentences, then words,
  * a results table was cut in the middle of a row, and the part after the cut began with numbers, with
  * no caption, no column names and no dataset: a model reading it could not tell what a value was, and
  * Qwen3.5-4B never read it (eval/cs/README.md, cs01). Each later piece starts with what names it: the

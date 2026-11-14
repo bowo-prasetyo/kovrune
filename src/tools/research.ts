@@ -11,7 +11,7 @@ import { mainScript } from "../documents/scripts.ts";
 import type { DocumentIndex, SearchHit } from "./search.ts";
 
 /**
- * After a part that cites a table held in another part, where that table is (harness 0.72.0,
+ * After a part that cites a table held in another part, where that table is (harness 0.73.0,
  * DocumentIndex.tablesCitedElsewhere): "[Table 4 is in stabfl-label-skew#28.]". Shortening an old read
  * leaves it out (TABLE_NOTE_LINE), as it does an outline.
  */
