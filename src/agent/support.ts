@@ -306,7 +306,7 @@ const ENGINEERING_UNITS: Array<[string, RegExp]> = [
   ["nm", /^(?:nm|nanomet(?:re|er)s?)$/],
   ["ns", /^(?:ns|nanoseconds?)$/],
   ["μs", /^(?:μs|microseconds?)$/],
-  // Laboratory units (harness 0.70.0), read in their case like the others: "10 mM" is millimolar, not
+  // Laboratory units (harness 0.71.0), read in their case like the others: "10 mM" is millimolar, not
   // millimetres, and "10 μM" is not "10 mM", a thousandfold error in a protocol. "M" alone is molar
   // only after a number ("1 M NaCl"). A centrifuge speed in "× g" (numberText writes it "xg") is not one
   // in rpm. "kD" is a kilodalton, as many papers write it.
@@ -327,7 +327,7 @@ const ENGINEERING_UNITS: Array<[string, RegExp]> = [
 /** Units, each with the spellings that mean it. Binary and decimal sizes are one unit: models write "4 KB" for "4 KiB". */
 const UNITS: Array<[string, RegExp]> = [
   // A kilobase and a kilobyte share a symbol and a scale, so "kb" is one unit for both: "300 kb" is not
-  // backed by "300 bp" (harness 0.70.0), and "4 KB" is still backed by "4 KiB".
+  // backed by "300 bp" (harness 0.71.0), and "4 KB" is still backed by "4 KiB".
   ["KB", /^(?:kb|kib|kbp|kilobytes?|kilobases?)$/],
   ["MB", /^(?:mb|mib|mbp|megabytes?|megabases?)$/],
   ["GB", /^(?:gb|gib|gigabytes?)$/],
@@ -363,7 +363,7 @@ const UNITS: Array<[string, RegExp]> = [
   ["mm", /^(?:mm|mmhg|millimet(?:re|er)s?)$/],
   ["cm", /^(?:cm|centimet(?:re|er)s?)$/],
   ["kcal", /^(?:kcal|kilocalories?)$/],
-  // Laboratory volumes, lengths of DNA, RNA and protein, and counts of live bacteria and viruses (harness 0.70.0).
+  // Laboratory volumes, lengths of DNA, RNA and protein, and counts of live bacteria and viruses (harness 0.71.0).
   ["μL", /^(?:μl|ul|microlit(?:re|er)s?)$/],
   ["nL", /^(?:nl|nanolit(?:re|er)s?)$/],
   ["bp", /^(?:bp|basepairs?)$/],
@@ -442,7 +442,7 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["stronger", "strongest"], ["weaker", "weakest"]],
   [["pass", "passed", "passes"], ["fail", "failed", "fails"]],
   [["accepted"], ["rejected"]],
-  // Laboratory opposites (harness 0.70.0): what a gene, a drug or an experiment did, read the wrong way round.
+  // Laboratory opposites (harness 0.71.0): what a gene, a drug or an experiment did, read the wrong way round.
   [
     ["upregulate", "upregulated", "upregulates", "upregulating", "upregulation", "up-regulate", "up-regulated", "up-regulates", "up-regulation"],
     ["downregulate", "downregulated", "downregulates", "downregulating", "downregulation", "down-regulate", "down-regulated", "down-regulates", "down-regulation"],
@@ -569,7 +569,7 @@ function directions(text: string): Set<string> {
 
 /**
  * Whether every direction a sentence states is one the quotes state, or one they state neither side of.
- * A pair the sentence states both sides of is not judged (harness 0.70.0): "the inhibitor blocked
+ * A pair the sentence states both sides of is not judged (harness 0.71.0): "the inhibitor blocked
  * activation of AMPK" says which is which in its word order, which a word check cannot read, as a quote
  * stating both sides backs either.
  */
@@ -870,7 +870,7 @@ function nameWords(text: string): string[] {
 }
 
 /**
- * The names in a sentence that one character tells apart from another (harness 0.70.0), which the share of
+ * The names in a sentence that one character tells apart from another (harness 0.71.0), which the share of
  * shared words cannot see, since the rest of the sentence matches:
  * - a name with a Greek letter: TNF-α and TNF-β, ERα and ERβ, IL-1β, written with the letter or its name;
  * - a cell marker with its sign: CD45+ and CD45−. A plain "-" counts only after a name with a capital and a
@@ -901,7 +901,7 @@ function abbreviatedSpecies(text: string): Array<[string, string]> {
 
 /**
  * Whether each name a sentence tells apart by one character (distinguishingNames), and each species it
- * gives by its genus's initial, is one the quotes, the cited titles or the question give (harness 0.70.0).
+ * gives by its genus's initial, is one the quotes, the cited titles or the question give (harness 0.71.0).
  * "TNF-β levels rose after treatment" is not backed by "TNF-α levels rose after treatment", nor "CD45−
  * cells expanded" by "CD45+ cells expanded", nor "S. epidermidis" by "S. aureus", though every other word
  * is shared. A name inside a longer one counts ("TNF-α-induced"), and "S. aureus" is backed by

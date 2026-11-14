@@ -500,7 +500,7 @@ describe("engineering units, signs, powers of ten and changes (harness 0.67.0)",
   });
 });
 
-describe("laboratory units, opposites and names (harness 0.70.0)", () => {
+describe("laboratory units, opposites and names (harness 0.71.0)", () => {
   const q = (quote: string, docId = "paper") => ({ docId, quote });
 
   it("gives a value only the laboratory unit and prefix the quotes give it", () => {
