@@ -879,6 +879,40 @@ The agent fits each prompt to the context by `estimateTokens` (3.5 characters a 
 
 **Measured with `bench:replay`, by the defect clause.** Only a task that would end in that error takes the new path. Replaying both models' recorded runs of research, unanswerable, pdf, field and holdout on the code without the outline (`field-outline-base-*`, 160 tasks each, none of which errored), `main` against the fix, found every task the same: the fix changes nothing in a run that fits, so no model runs were needed. In the outline experiment, the task that had errored was run again with the fix and finished normally.
 
+### Engineering units, signs, powers of ten and changes (0.67.0, defect fix)
+
+An audit from an engineering researcher's point of view ran the sentence check (`src/agent/support.ts`) on sentences from datasheets, test reports and a two-column paper extracted with pdf.js. With a real quote, 13 of 18 wrong sentences were marked backed: the unit list had software and clinical units only, `numbers()` dropped minus signs and split powers of ten into their digits, and no opposites were engineering ones. As with the clinical checks of 0.59.0, only the model's own review then stood between them and **Quotes found**:
+
+| The quote says | The answer says | Before | After |
+| --- | --- | --- | --- |
+| 276 **MPa** | 276 **GPa** | backed | **not backed** |
+| 600 **V**; 2.4 **MHz**; 15 **mW**; 45 **kN** | 600 **kV**; 2.4 **GHz**; 15 **W**; 45 **N** | backed | **not backed** |
+| 100 **nF**; 20 **dBm**; 350 **°C** | 100 **µF**; 20 **dB**; 350 **K** | backed | **not backed** |
+| 15 **mW** | 15 **MW** | backed | **not backed** |
+| from **−40 °C** to 85 °C | from **40 °C** to 85 °C | backed | **not backed** |
+| **− 25 °C** (pdf.js sets the sign apart) | **25 °C** | backed | **not backed** |
+| 1.2 × 10^**-3**; 1e**-6** | 1.2 × 10^**3**; 1e**6** | backed | **not backed** |
+| 40 **m Ω** (pdf.js sets the prefix apart) | 40 **kΩ** | backed | **not backed** |
+| the **maximum** deflection; a **tensile** force; the **inlet**; **passed** | **minimum**; **compressive**; **outlet**; **failed** | backed | **not backed** |
+| improved **from 96.4% to 97.1%** | improved **from 97.1% to 96.4%** | backed | **not backed** |
+| a change of −3.2% | fell by 3.2% | backed | backed |
+| 1.2 × 10⁻³ | 0.0012 | not backed | **backed** |
+
+What changed:
+- **Engineering units** (`ENGINEERING_UNITS`): pressure and stress (Pa, hPa, kPa, MPa, GPa, mPa, bar, mbar, psi, ksi, atm), force (N, kN, MN, N·m as "Nm", lbf), voltage, current, charge, power and energy (V, mV, µV, kV, MV, A, mA, µA, nA, kA, Ah, mAh, W, µW, mW, kW, MW, GW, Wh, kWh, MWh, GWh, J, mJ, kJ, MJ, eV to GeV), frequency (Hz to THz, rpm), resistance, capacitance and inductance (Ω, mΩ, kΩ, MΩ, pF to mF, nH to mH), temperature (°C, °F, K), decibels (dB, dBm, dBi, dBc, dBA, dBW, dBV), and µm, nm, ns, µs. Symbols are read **in their case** (`normalizeForMatch(…, { keepCase: true })`), since "mW" and "MW", or "mPa" and "MPa", differ only there. A symbol in another case is not read as a unit, so it is left to the other checks, as before. Symbols that are also common words or other units are left out: "F", "H", "S", "T", "us".
+- **Signs** (`numbers`): a "-", "−" or "–" before a number is its sign, unless a letter or digit stands before it, so "LSA-2024-07", "61000-4-2" and "20–30" have none. A minus sign that pdf.js sets apart ("− 25") is joined to its number. A sentence may give the size of a negative quoted number when it says the value changed downwards ("fell", "decreased", "dropped", "minus" and others, `FALL`); words for a low value ("lowest", "below") do not count.
+- **Powers of ten** (`numberText`): "1.2 × 10^-3", "1.2×10⁻³", "1.2e-3" and "2.5 × 10 − 6" (as pdf.js gives a superscript) are written out as one number, so they match "0.0012" and do not match "10^3". A superscript after a digit stays an exponent, where compatibility forms alone made "10⁶" read as 106. After "×", a power needs "^" or a sign, so "4 × 10 mm" stays a size.
+- **Prefixes set apart** by pdf.js: "40 m Ω" reads as 40 mΩ, "71 ° C" as 71 °C.
+- **Opposites** (`OPPOSITES`): "exceed" joins "above", against "below", and there are eleven new pairs: maximum/minimum, tensile/compressive, inlet/outlet, upstream/downstream, heating/cooling, charge/discharge, leading/lagging, faster/slower, stronger/weaker, pass/fail, accepted/rejected.
+- **Changes** (`changesBacked`): a change "from" one number "to" another that the quotes give only the other way round is not backed.
+- **The cross-check** (`answersAgree` in `src/agent/crosscheck.ts`) compares numbers with their signs too, with the same allowance for the size of a fall, and before the word-for-word match, which drops a leading "−" as punctuation.
+
+**Effect on recorded runs: none.** `bench:rescore`, run on each report on its own (six files it cannot read: M0 benchmarks and one early slice report), re-scores 6,487 answers in 87 reports, 2,856 of them labelled **Quotes found**. No label and no count of backed or judged sentences changed. `answersAgree`, run again on the 993 recorded cross-checks against their answers, gives the same verdict for every one. So it costs no right answer its label on these suites. But these suites have no engineering text, so they cannot show what it gains either. An engineering suite would: open datasheets, public test reports and two-column papers, with questions on units, signs, limits and table values, a third held out.
+
+`tests/support.test.ts` ("engineering units, signs, powers of ten and changes") fails on all six of its tests before the change and passes after; the new cases in `tests/crosscheck.test.ts` fail before and pass after too. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): sentence support and the cross-check's comparison run after the model's final answer, so the model runs the clause asks for would repeat their recorded actions.
+
+**Limits:** opposites are single English words, so "falls short of the target" is not read as the opposite of "exceeds"; compound units are still compared by their first part ("N·m" and "N", "m/s" and "m"); "h" is still hours, so a henry written "H" reads as hours; a word for a fall anywhere in the sentence lets any of its numbers drop a sign; and words split apart by pdf.js ("R DS(on)" for "RDS(on)") still share fewer words with a quote than they should, which this change does not address.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
