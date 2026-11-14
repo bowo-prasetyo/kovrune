@@ -22,9 +22,11 @@ import {
   openSourceNames,
   openSourcesFor,
   saveSourcePrefs,
+  validFromYear,
   WIKIPEDIA_LANGUAGES,
   type SourcePrefs,
 } from "./sources.ts";
+import { OPENALEX_FIELDS } from "../../sources/openalex.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describeCall, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
@@ -390,7 +392,7 @@ export function ResearchPanel({
             )}
             <label className="choice">
               <input type="checkbox" checked={prefs.openalex} disabled={running} onChange={(e) => updatePrefs({ openalex: e.target.checked })} />
-              OpenAlex (scholarly papers: abstracts)
+              OpenAlex (scholarly papers: abstracts, or full texts through arXiv and Europe PMC when ticked)
             </label>
             <label className="choice">
               <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
@@ -417,6 +419,44 @@ export function ResearchPanel({
                   placeholder="Free from openalex.org"
                 />
               </label>
+            )}
+            {prefs.openalex && (
+              <div className="openalex-limits">
+                <label>
+                  Published from
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1900}
+                    max={new Date().getFullYear() + 1}
+                    placeholder="any year"
+                    defaultValue={prefs.openalexFromYear ?? ""}
+                    disabled={running}
+                    onChange={(e) => updatePrefs({ openalexFromYear: validFromYear(e.target.value) })}
+                  />
+                </label>
+                <label>
+                  Field
+                  <select value={prefs.openalexField ?? ""} disabled={running} onChange={(e) => updatePrefs({ openalexField: e.target.value })}>
+                    <option value="">Any field</option>
+                    {OPENALEX_FIELDS.map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="choice">
+                  <input type="checkbox" checked={prefs.openalexOpenAccess ?? false} disabled={running} onChange={(e) => updatePrefs({ openalexOpenAccess: e.target.checked })} />
+                  Open-access works only
+                </label>
+              </div>
+            )}
+            {prefs.openalex && (prefs.arxiv || prefs.europepmc) && (
+              <p className="hint">
+                A paper OpenAlex finds that is also on {joinNames([...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.europepmc ? ["Europe PMC"] : [])])} is read in full
+                from there, not only as its abstract.
+              </p>
             )}
             {prefs.openalex && (
               <p className="hint">

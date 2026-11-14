@@ -1,0 +1,7 @@
+Specimen,Test temperature (°C),Yield strength (MPa),Ultimate tensile strength (MPa),Elongation (%)
+T-01,-40,290,338,16
+T-02,-10,284,326,16
+T-03,20,276,310,17
+T-04,100,262,290,18
+T-05,150,214,234,20
+T-06,200,152,165,28

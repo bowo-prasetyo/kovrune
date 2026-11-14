@@ -83,7 +83,7 @@ python3 eval/cs/source/build.py
 | Everything found | 27 of 34 |
 
 The questions where search falls short:
-- **`cs11` and `cs22`, the acronym questions:** asked about "the commitment-bound verification mechanism" and "entity-sensitive contextual augmentation", search finds the paper but not the passage, which says "CBV" and "w/o ESCA". `cs21`, which asks with the acronym "HCE-RAG", finds its table. This is the gap the researcher's audit expected.
+- **`cs11` and `cs22`, the acronym questions:** asked about "the commitment-bound verification mechanism" and "entity-sensitive contextual augmentation", search finds the paper but not the passage, which says "CBV" and "w/o ESCA". `cs21`, which asks with the acronym "HCE-RAG", finds its table. This is the gap the researcher's audit expected. The abbreviation search of 0.70.0 (`src/tools/abbreviations.ts`) does not close it here: it finds both definitions and adds "CBV" and "ESCA" to the query, but the parts that define and discuss each term share more of the question's words, and fill the three results before the ablation table that uses only the abbreviation.
 - **`cs01` and `ch01`, values only in FEDCODE's Table 5:** FEDCODE is the longest paper (118 parts), and its Tables 4 and 5, MNIST and CIFAR-10, share every word but the dataset's name. Search returns parts 66, 71 and 91 (Table 4, the text after Table 5, and the CIFAR-10 CAADS table) for both questions.
 - **A table cut in the middle of a row (`cs01`).** Table 5 is longer than a part (1,800 characters), and the chunker splits a paragraph that long at sentences, then words. So part 69 ends "| Full updates | | 8b Quant." and part 70 begins with that row's numbers. FedBAT's row, which `cs01` asks for, is in part 70, which has no caption, no column headers and no "CIFAR-10". A model that reads it cannot tell which table, dataset or column a number belongs to. Results tables longer than a part are common in CS papers, and rare in the other suites' documents. Splitting a long table at its rows, with its caption and header repeated in each part, is the fix this suite can now measure; it changes every suite's parts, so it is left to its own change under [the rule](../field/README.md#rule-for-prompt-and-guard-changes).
 - **`cs16`, a negative result:** search returns parts 10, 37 and 31 of the right paper, but not the paragraph after Table 7 that says the differences "do not reach statistical significance". The question's words ("full model", "standard knowledge distillation", "statistically significant") are spread over many parts.
@@ -109,6 +109,8 @@ The build is not the one the clinical and field runs used, and runs on another b
 | --- | --- | --- | --- | --- | --- |
 | Qwen3.5-4B | 17/26 (65%) | 9/10 | 1 of 13 (8%): 1 of 10 and 0 of 3 | 91 s | [json](../results/cs-0.69-qwen3.5-4b-q4km.json) |
 | Qwen3.5-2B | 11/26 (42%) | 7/10 | 4 of 12 (33%): 3 of 9 and 1 of 3 | 39 s | [json](../results/cs-0.69-qwen3.5-2b-q4km.json) |
+
+Re-scored with the 0.71.0 harness (`bench:rescore`), both reports keep every label and result: the 0.70.0 and 0.71.0 sentence checks change nothing here.
 
 For comparison, on the clinical suite 4B passes 19 of 23 (83%) and 2B 13 of 23 (57%), re-scored at 0.61.0. CS papers are harder for both models. 4B's green label stays under the design's 10% target here; 2B's is wrong a third of the time, as on the clinical papers.
 
@@ -144,7 +146,7 @@ For comparison, on the clinical suite 4B passes 19 of 23 (83%) and 2B 13 of 23 (
 **What the runs suggest, in order of what they would gain on this suite:**
 1. **Show a table with the paragraph that discusses it,** or let the model see that the part before holds "Table 4" (`cs04`, `cs12`). The clinical suite's outline experiment ([#144](https://github.com/bowo-prasetyo/kovrune/pull/144), not adopted) is one way.
 2. **Split long tables at rows, with caption and header repeated** (`cs01`, `ch01`).
-3. **Bridge acronyms in search,** for example by indexing each "expansion (ACRONYM)" a paper defines as aliases of each other (`cs11`, `cs22`). `bench:retrieval` measures it without a model.
+3. **Bridge acronyms in search** further (`cs11`, `cs22`). The 0.70.0 abbreviation search adds the abbreviation to the query, but a part that uses only the abbreviation still ranks below the parts that spell it out; weighting the abbreviation's match, or keeping a result for it, is a next step. `bench:retrieval` measures it without a model.
 4. **Accept a quote cut with "…" up to the cut** (`cs21`), as a defect fix.
 
 Each changes what the model sees, so each is judged under [the rule](../field/README.md#rule-for-prompt-and-guard-changes), with this suite added to the ones it runs.
