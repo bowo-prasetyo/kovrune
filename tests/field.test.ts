@@ -12,6 +12,7 @@ import { holdoutTasks } from "../eval/field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../eval/field/multi.ts";
 import { officeDocuments, officeHoldoutTasks, officeTasks } from "../eval/field/office.ts";
 import { clinicalDocuments, clinicalHoldoutTasks, clinicalTasks } from "../eval/clinical/tasks.ts";
+import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from "../eval/engineering/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -202,7 +203,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -333,5 +334,41 @@ describe("clinical suite", () => {
     assert.equal(report.results.length, 1);
     assert.equal(report.results[0]!.suite, "clinical");
     assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
+  });
+});
+
+describe("engineering suite", () => {
+  it("reads seven made-up engineering documents, two of them PDFs laid out as real ones, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(engineeringDocuments.length, 7);
+    assert.equal(suite.engineeringLibrary.documents.length, engineeringDocuments.length, "only the engineering documents");
+    assert.equal(suite.library.documentFor("sic-pfc-paper"), undefined, "the field suite's library is unchanged");
+    const datasheet = suite.engineeringLibrary.documentFor("kv1200m040-datasheet")!.text;
+    const paper = suite.engineeringLibrary.documentFor("sic-pfc-paper")!.text;
+    // The PDFs hold what makes engineering text hard to check: a minus sign and a unit symbol from another
+    // font, and a table's rows (eval/engineering/source/make_pdfs.py).
+    assert.match(datasheet, /Gate-source voltage, minimum .* 8 V/);
+    assert.match(datasheet, /1950 pF/);
+    assert.match(paper, /20% 97\.1% 0\.991 6\.8%/);
+    assert.match(paper, /ZVS was achieved above 35% load/);
+    assert.match(suite.engineeringLibrary.documentFor("tensile-tests-6061")!.text, /Test temperature \(°C\): -40 \| Yield strength \(MPa\): 290/);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with a third held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...engineeringTasks, ...engineeringHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.engineeringLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    for (const tasks of [engineeringTasks, engineeringHoldoutTasks]) {
+      const cited = new Set(tasks.flatMap((t) => t.citations.flat()));
+      assert.deepEqual([...cited].sort(), engineeringDocuments.map((d) => d.id).sort(), "every document is asked about");
+      assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
+    }
+    assert.ok(engineeringHoldoutTasks.length >= engineeringTasks.length / 3, "a quarter or more of all is held out");
   });
 });

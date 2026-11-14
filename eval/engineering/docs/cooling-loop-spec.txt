@@ -1,0 +1,41 @@
+SPECIFICATION CS-210
+Liquid cooling loop for the PSU-3K3 power supply
+Revision C
+
+1. Scope
+
+This specification sets the requirements for the liquid cooling loop that removes heat from the power stage of the PSU-3K3 power supply. It covers the pump, the cold plate, the heat exchanger and the hoses. Requirements use "shall". Verification is by test unless stated otherwise.
+
+2. Thermal requirements
+
+2.1 The coolant temperature at the cold plate inlet shall not exceed 45 °C at the rated heat load.
+2.2 The coolant temperature at the cold plate outlet shall not exceed 60 °C at the rated heat load.
+2.3 The loop shall remove a heat load of at least 3.5 kW continuously.
+2.4 The heat exchanger effectiveness shall be at least 0.75 at the nominal flow rate.
+
+3. Hydraulic requirements
+
+3.1 The coolant flow rate shall be at least 4.0 L/min.
+3.2 The pressure drop across the complete loop shall not exceed 35 kPa at the nominal flow rate.
+3.3 The pump shall run at a nominal speed of 3200 rpm.
+3.4 The bore of each hose fitting shall be 12.00 ± 0.05 mm.
+
+4. Environmental requirements
+
+4.1 The loop shall operate at ambient temperatures from −20 °C to 50 °C.
+4.2 The loop shall withstand storage at temperatures from −40 °C to 85 °C, drained.
+4.3 After a cold soak at −20 °C, the pump shall start and reach its nominal speed within 10 s.
+
+5. Mechanical requirements
+
+5.1 The pump mounting bracket shall have a safety factor of at least 1.5 against yield under the transport shock load case.
+5.2 The first natural frequency of the pump mounting bracket shall be at least 120 Hz.
+5.3 The deflection of the pump flange under the transport shock load case shall not exceed 1.0 mm.
+
+6. Leak tightness
+
+6.1 The filled loop shall be pressurised to 3 bar for 10 minutes. The pressure loss shall not exceed 0.5 kPa.
+
+7. Coolant
+
+7.1 The coolant shall be a 30% propylene glycol and water mixture.

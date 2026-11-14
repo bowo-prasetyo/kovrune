@@ -9,6 +9,7 @@ import { unanswerableTasks } from "../tasks/unanswerable.ts";
 import { holdoutTasks } from "../field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../field/multi.ts";
 import { clinicalHoldoutTasks, clinicalTasks } from "../clinical/tasks.ts";
+import { engineeringHoldoutTasks, engineeringTasks } from "../engineering/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
 import type { ResearchLibrary } from "../../src/agent/research.ts";
 import type { CallRecord } from "../../src/agent/agent.ts";
@@ -386,7 +387,7 @@ export async function runBenchmark(options: {
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
   /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
-  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
+  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -397,7 +398,7 @@ export async function runBenchmark(options: {
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
   if (FIELD_SUITES.some((suite) => config.suites.includes(suite)) && !options.field) {
-    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical and clinicalholdout suites need field (loadFieldSuite).");
+    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, engineering and engineeringholdout suites need field (loadFieldSuite).");
   }
   const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
@@ -412,6 +413,8 @@ export async function runBenchmark(options: {
     { suite: "officeholdout" as const, tasks: pick("officeholdout", officeHoldoutTasks), library: options.field?.officeLibrary ?? baseLibrary },
     { suite: "clinical" as const, tasks: pick("clinical", clinicalTasks), library: options.field?.clinicalLibrary ?? baseLibrary },
     { suite: "clinicalholdout" as const, tasks: pick("clinicalholdout", clinicalHoldoutTasks), library: options.field?.clinicalLibrary ?? baseLibrary },
+    { suite: "engineering" as const, tasks: pick("engineering", engineeringTasks), library: options.field?.engineeringLibrary ?? baseLibrary },
+    { suite: "engineeringholdout" as const, tasks: pick("engineeringholdout", engineeringHoldoutTasks), library: options.field?.engineeringLibrary ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;
