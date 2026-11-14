@@ -11,7 +11,8 @@
 // run, so a change is not developed against them (eval/field/holdout.ts). The questions that need more
 // than one passage run as --suites multi,multiholdout, the second held out too (eval/field/multi.ts),
 // the questions over Word, Excel and CSV files as --suites office,officeholdout (eval/field/office.ts),
-// and the questions over clinical trial reports as --suites clinical,clinicalholdout (eval/clinical/tasks.ts).
+// the questions over clinical trial reports as --suites clinical,clinicalholdout (eval/clinical/tasks.ts),
+// and the questions over computer science papers as --suites cs,csholdout (eval/cs/tasks.ts).
 //
 // Press Ctrl+C to stop early; the completed tasks are still reported and written.
 // Browser runtimes (WebLLM, wllama) are benchmarked with the page in eval/browser/.

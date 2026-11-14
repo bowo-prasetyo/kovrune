@@ -11,12 +11,14 @@ import { ResearchLibrary } from "../../src/agent/research.ts";
 import { extractText, type PdfJsLike } from "../../src/documents/extract.ts";
 import type { SourceDocument } from "../../src/tools/search.ts";
 import { clinicalDocuments } from "../clinical/tasks.ts";
+import { csDocuments } from "../cs/tasks.ts";
 import { officeDocuments } from "../field/office.ts";
 import { fieldDocuments, fieldTasks, type FieldDocument } from "../field/tasks.ts";
 import type { ResearchTask } from "../tasks/research.ts";
 
 export const FIELD_DIR = fileURLToPath(new URL("../field/", import.meta.url));
 export const CLINICAL_DIR = fileURLToPath(new URL("../clinical/docs/", import.meta.url));
+export const CS_DIR = fileURLToPath(new URL("../cs/docs/", import.meta.url));
 
 export interface FieldSuite {
   library: ResearchLibrary;
@@ -24,6 +26,8 @@ export interface FieldSuite {
   officeLibrary: ResearchLibrary;
   /** The clinical trial reports (eval/clinical/tasks.ts), on their own: the library of the clinical and clinicalholdout suites. */
   clinicalLibrary: ResearchLibrary;
+  /** The computer science papers (eval/cs/tasks.ts), on their own: the library of the cs and csholdout suites. */
+  csLibrary: ResearchLibrary;
   tasks: ResearchTask[];
   /** How many tasks and documents came from eval/field/local/; runs that include them are not comparable with others'. */
   local: { tasks: number; documents: number };
@@ -62,6 +66,7 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   // The office documents are committed only, so they are read from this repository whatever the root.
   const office = await Promise.all(officeDocuments.map((doc) => readDocument(doc, join(FIELD_DIR, "office"), loadPdfJs)));
   const clinical = await Promise.all(clinicalDocuments.map((doc) => readDocument(doc, CLINICAL_DIR, loadPdfJs)));
+  const cs = await Promise.all(csDocuments.map((doc) => readDocument(doc, CS_DIR, loadPdfJs)));
   const tasks = [...fieldTasks];
 
   const localDir = join(root, "local");
@@ -80,5 +85,5 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   }
   // The office suites' library holds the committed field documents, not local ones, so their runs stay comparable.
   const committed = documents.slice(0, fieldDocuments.length);
-  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), tasks, local };
+  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), tasks, local };
 }
