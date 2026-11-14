@@ -5,7 +5,7 @@ import type { AnswerStatus } from "../../agent/evidence.ts";
 import type { Completeness } from "../../agent/completeness.ts";
 import type { CrossCheck } from "../../agent/crosscheck.ts";
 import type { ReviewVerdict } from "../../agent/review.ts";
-import { labelledQuotesFound, reviewAsked } from "../../agent/support.ts";
+import { crossCheckIncomplete, crossCheckRejects, labelledQuotesFound, reviewAsked } from "../../agent/support.ts";
 
 /** ": 5 results", ": 1 document", ": nothing found", or nothing while the search runs. */
 const found = (count: number | undefined, noun: string) =>
@@ -113,32 +113,36 @@ export function describeStatus(
   switch (status) {
     case "verified":
       if (labelledQuotesFound(status, evidence, support)) {
+        // A cross-check that gave nothing to compare does not take the label (support.ts crossCheckRejects), and is said.
+        const incomplete = crossCheckIncomplete(support?.crossCheck)
+          ? ` A second check, asking the model for the answer in the quoted passages without showing it this one, could not be completed: ${crossCheckFinding(support!.crossCheck!)}.`
+          : "";
         return {
           label: "Quotes found",
-          detail: support?.answerInQuote
+          detail: (support?.answerInQuote
             ? "Every quote below is word for word in the source it cites, and the answer is in one of them, in a passage that shares most of the words of your question. Check that the quote answers what you asked."
             : support?.judged
             ? "Every quote below is word for word in the source it cites, and every sentence shares most of its words with a quote. Check that the quotes say what the answer says."
             : support?.review === "yes"
             ? "Every quote below is word for word in the source it cites. The answer is too short to compare with them word by word, but asked whether the quoted passages state it, the model said yes. Check that the quotes answer your question."
-            : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.",
+            : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.") + incomplete,
           tone: "verified",
           severity: "found",
         };
       }
       // Every quote is found, and the model's check said yes, but the answer it read in the passages
       // without seeing this one is a different one (crosscheck.ts).
-      if (support?.review === "yes" && support.crossCheck?.agrees === false && reviewAsked(status, evidence, support)) {
+      if (support?.review === "yes" && crossCheckRejects(support.crossCheck) && reviewAsked(status, evidence, support)) {
         return {
           label: "Quotes found, answer not confirmed",
-          detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, ${crossCheckFinding(support.crossCheck)}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
+          detail: `Every quote below is word for word in the source it cites, but asked for the answer in the quoted passages without seeing this one, ${crossCheckFinding(support.crossCheck!)}. The answer may come from the wrong passage or leave something out: check it against the sources.`,
           tone: "unverified",
           severity: "check",
         };
       }
       // Every quote is found, and the other checks confirm what the answer says, but asked which parts of
       // the question it answers, the model found one it leaves out (completeness.ts).
-      if (support?.review === "yes" && support.crossCheck?.agrees !== false && support.completeness?.complete === false && reviewAsked(status, evidence, support)) {
+      if (support?.review === "yes" && !crossCheckRejects(support.crossCheck) && support.completeness?.complete === false && reviewAsked(status, evidence, support)) {
         const missing = support.completeness.missing?.[0];
         return {
           label: "Quotes found, answer not confirmed",

@@ -207,6 +207,10 @@ describe("Europe PMC", () => {
   it("leaves out the words that say how a question is asked, unless nothing else is left", async () => {
     assert.deepEqual(searchTerms("What was the mean age of the children in the Vi-TT group?"), ["mean", "age", "children", "Vi-TT", "group"]);
     assert.deepEqual(searchTerms("What is it?"), ["What", "is", "it"]);
+    // Words that say a question is about uses or habits: "paracetamol uses" found an assay and a tablet process.
+    assert.deepEqual(searchTerms("paracetamol uses"), ["paracetamol"]);
+    assert.deepEqual(searchTerms("What is aspirin usually used for"), ["aspirin"]);
+    assert.deepEqual(searchTerms("uses"), ["uses"], "unless nothing else is left");
     const fetchImpl = fakeFetch({});
     await createEuropePmc(fetchImpl).search("How was the dose of folic acid chosen", undefined);
     assert.equal(queryOf(fetchImpl.urls[0]!), "(dose folic acid chosen) AND (HAS_ABSTRACT:y OR OPEN_ACCESS:y)");

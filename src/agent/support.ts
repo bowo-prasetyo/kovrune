@@ -491,6 +491,22 @@ function answerInQuote(
 }
 
 /**
+ * Whether a cross-check counts against the answer: it read an answer in the passages, or found none, and
+ * that is not the answer given. A reply that could not be read, or a call that failed, is no check at all,
+ * and does not: a user's right answer about paracetamol, with five right quotes, lost its label so in the
+ * browser build of Qwen3.5-4B. The other checks decide its label, which then says this one could not be
+ * completed (app/research/trace.ts). Here, not in crosscheck.ts, which reads this module.
+ */
+export function crossCheckRejects(check: CrossCheck | undefined): boolean {
+  return check?.agrees === false && check.extracted !== undefined;
+}
+
+/** Whether a cross-check was asked but gave nothing to compare: its reply could not be read, or the call failed. */
+export function crossCheckIncomplete(check: CrossCheck | undefined): boolean {
+  return check !== undefined && check.extracted === undefined;
+}
+
+/**
  * Whether the app labels an answer "Quotes found": a quote checked out, every quote is in its
  * source, and at least one sentence was judged and every judged sentence is backed. This is the
  * label a reader is most likely to take as "the answer is right", so the share of such answers
@@ -511,7 +527,8 @@ function answerInQuote(
  *
  * Since harness 0.40.0, for Qwen3.5-4B, an answer the check confirms is also cross-checked
  * (crosscheck.ts), and one whose cross-check reads a different answer in the passages is not labelled.
- * Answers saved before have no `crossCheck`, and keep their label.
+ * Answers saved before have no `crossCheck`, and keep their label. Since 0.67.0, a cross-check whose reply
+ * could not be read, or whose call failed, does not count against the answer (crossCheckRejects).
  *
  * Since harness 0.48.0, for Qwen3.5-2B, an answer the checks confirm is also asked whether it gives
  * every part of what the question asks (completeness.ts), and one that leaves a part out is not
@@ -523,7 +540,7 @@ export function labelledQuotesFound(
   support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
 ): boolean {
   if (support?.review) {
-    return support.review === "yes" && support.crossCheck?.agrees !== false && support.completeness?.complete !== false && reviewAsked(status, evidence, support);
+    return support.review === "yes" && !crossCheckRejects(support.crossCheck) && support.completeness?.complete !== false && reviewAsked(status, evidence, support);
   }
   return wordChecksPass(status, evidence, support);
 }

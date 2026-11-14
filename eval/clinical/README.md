@@ -378,6 +378,13 @@ A user searched Europe PMC and Wikipedia for "What is paracetamol?". The model s
 
 **The part read, in the trace.** That user's trace showed "Reading Wikipedia: Paracetamol" three times: the trace left out the part. A read that names no part is given the part that best matches the question, which only the source knew. The read tool now reports the part it gave, and the trace shows it: "Reading Wikipedia: Paracetamol (part 4 of 9)", or "(the passage quoted)" for the short read before an answer that quoted a snippet (`ToolResult.shown`, `src/app/research/trace.ts`). Reading the user's own documents is unchanged.
 
+#### Words that say a question is about uses
+
+Asked "What do people use paracetamol for?", the model searched Europe PMC for "paracetamol uses". "Uses" is in most abstracts as a verb ("this study uses…"), so it narrowed nothing, and few titles hold both words: the five results were a study of ACE2 expression, a sensing assay, a social-media study, a study in polychaetes and a tablet process. Since then, "use", "uses", "used", "using", "usually", "typically", "generally", "often", "mainly" and "mostly" are taken out of a search as function words are (`QUESTION_WORDS` in `src/sources/europepmc.ts`), unless nothing else is left.
+
+- **Searches with them,** `main` against the change: "paracetamol uses" gives reviews of paracetamol's toxicity and pharmacology instead; "what is aspirin used for", the clopidogrel and CAPRIE trials and the Antithrombotic Trialists' meta-analysis instead of papers with "used" in their title; "how is ivermectin used", its first report as an antiparasitic and the in-vitro SARS-CoV-2 study; "statin use dementia" and "cannabis use adolescents psychosis" keep cohort studies and meta-analyses on their subject. "Metformin uses" found reviews titled "new uses" and "clinical uses", and now finds the Diabetes Prevention Program and UKPDS 34 trials and work on its mechanism: about metformin still, less about its uses.
+- **The clinical suite:** only `c04`'s question as typed has one of the words ("how often"), and none of the model's recorded searches; each question's paper is at the same rank as on `main`.
+
 ## Limits
 
 - **Ten papers, 33 questions.** Enough to see whether Kovrune's labels can be trusted on trial reports, not to estimate a rate finely. One question is about 3% of a suite.

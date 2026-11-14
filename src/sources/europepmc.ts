@@ -280,11 +280,18 @@ export function plainTerms(query: string): string[] {
 const FUNCTION_WORDS = new Set(
   "a an the of in on at to for with by from and or not what which who whom whose when where why how was were is are be been being did does do had has have this that these those its it their there than then as into per vs versus among between after before during over under any all each".split(" "),
 );
+/**
+ * Words that say a question is about uses or habits, not what about: "What do people use paracetamol
+ * for?" was searched as "paracetamol uses", and since "uses" is in most abstracts as a verb, the five
+ * results were an assay, a tablet process and a study of ACE2 expression; without it, reviews of
+ * paracetamol's pharmacology (eval/clinical/README.md). Taken out as function words are.
+ */
+const QUESTION_WORDS = new Set("use uses used using usually typically generally often mainly mostly".split(" "));
 
 /** The words a search asks Europe PMC for: the model's words (plainTerms), without function words unless that leaves none. */
 export function searchTerms(query: string): string[] {
   const terms = plainTerms(query);
-  const content = terms.filter((word) => !FUNCTION_WORDS.has(word.toLowerCase()));
+  const content = terms.filter((word) => !FUNCTION_WORDS.has(word.toLowerCase()) && !QUESTION_WORDS.has(word.toLowerCase()));
   return content.length ? content : terms;
 }
 
