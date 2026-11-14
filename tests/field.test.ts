@@ -13,6 +13,7 @@ import { multiHoldoutTasks, multiTasks } from "../eval/field/multi.ts";
 import { officeDocuments, officeHoldoutTasks, officeTasks } from "../eval/field/office.ts";
 import { clinicalDocuments, clinicalHoldoutTasks, clinicalTasks } from "../eval/clinical/tasks.ts";
 import { csDocuments, csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
+import { labDocuments, labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
 import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from "../eval/engineering/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
@@ -207,7 +208,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -427,6 +428,97 @@ describe("cs suite", () => {
     });
     assert.equal(report.results.length, 1);
     assert.equal(report.results[0]!.suite, "cs");
+    assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
+  });
+});
+
+describe("lab suite", () => {
+  it("reads ten CC BY laboratory biology papers as published, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(labDocuments.length, 10);
+    for (const doc of labDocuments) {
+      const text = suite.labLibrary.documentFor(doc.id)?.text ?? "";
+      assert.ok(text.length > 20_000, `${doc.id}: ${text.length} characters`);
+      // The publishers word it differently: eLife names the licence, Elsevier links it ("the CC BY license").
+      assert.match(text, /Creative Commons Attribution|creativecommons\.org\/licenses\/by\/4\.0/i, `${doc.id}: keeps its licence statement`);
+    }
+    assert.equal(suite.labLibrary.documents.length, labDocuments.length, "only the laboratory papers");
+    assert.equal(suite.library.documentFor("il10-tolerance-birds"), undefined, "the field suite's library is unchanged");
+    // The names these papers are read for survive the converter: a Greek letter, a genotype and a mutant.
+    assert.match(suite.labLibrary.documentFor("ppara-brown-adipocytes")!.text, /PPARα/);
+    assert.match(suite.labLibrary.documentFor("zebrafish-seizure-zinc")!.text, /5a−\/−/);
+    assert.match(suite.labLibrary.documentFor("cabozantinib-p53-y220c")!.text, /p53Y220C/);
+    assert.match(suite.labLibrary.documentFor("adp-ribose-methanol-dehydrogenase")!.text, /2\.4 ± 0\.7 μM/);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with a third held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...labTasks, ...labHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.labLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    const cited = new Set(labTasks.flatMap((t) => t.citations.flat()));
+    assert.deepEqual([...cited].sort(), labDocuments.map((d) => d.id).sort(), "every document is asked about");
+    for (const tasks of [labTasks, labHoldoutTasks]) {
+      assert.ok(tasks.some((t) => !t.answerable), "a question the papers do not answer");
+      assert.ok(tasks.some((t) => t.facts.some((group) => group.includes("no difference"))), "a control that showed no effect");
+    }
+    assert.ok(labTasks.some((t) => t.kind === "comparison"), "a question over two papers");
+    assert.ok(labHoldoutTasks.length >= labTasks.length / 3, "a quarter or more of all is held out");
+  });
+
+  it("fails an answer that reverses a direction, swaps a unit's prefix or names the other isoform, and passes right ones", () => {
+    const library = new ResearchLibrary(labDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
+    const result = (answer: string, docId: string): ResearchResult =>
+      ({ status: "verified", final: { found: true, answer, evidence: [{ docId, quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
+    const task = (id: string) => [...labTasks, ...labHoldoutTasks].find((t) => t.id === id)!;
+    const passes = (id: string, answer: string, docId: string) => scoreResearch(task(id), result(answer, docId), library).passed;
+    // A direction reversed: MRSA strains were more tolerant of daptomycin, not less.
+    const meca = "meca-daptomycin-tolerance";
+    assert.equal(passes("l09-meca-mrsa-tolerance", "MRSA strains were more tolerant of daptomycin than MSSA strains.", meca), true);
+    assert.equal(passes("l09-meca-mrsa-tolerance", "MRSA strains were less tolerant of daptomycin than MSSA strains.", meca), false);
+    // A negative result turned into an effect: MIC differences did not explain the tolerance difference.
+    assert.equal(passes("l11-meca-mic-explains", "No. Differences in MIC did not explain the difference in tolerance.", meca), true);
+    assert.equal(passes("l11-meca-mic-explains", "Yes, the MRSA strains had higher MICs, which explained their tolerance.", meca), false);
+    // A unit's prefix swapped: the MIC is 0.5 µg/mL, a thousandfold from 0.5 ng/mL.
+    assert.equal(passes("l08-meca-daptomycin-mic", "The vast majority had a MIC of 0.5 µg/mL.", meca), true);
+    assert.equal(passes("l08-meca-daptomycin-mic", "The vast majority had a MIC of 0.5 ng/mL.", meca), false);
+    // A concentration in the wrong prefix: 10 μM cabozantinib for 48 h, not 10 mM.
+    const p53 = "cabozantinib-p53-y220c";
+    assert.equal(passes("l24-p53-cabozantinib-concentration", "COV362 cells were treated with 10 μM cabozantinib for 48 h.", p53), true);
+    assert.equal(passes("l24-p53-cabozantinib-concentration", "COV362 cells were treated with 10 mM cabozantinib for 48 h.", p53), false);
+    // The other point mutant: cabozantinib barely affected p53 R273H, and that is what the question asks.
+    assert.equal(passes("l23-p53-r273h-effect", "Cabozantinib had barely any effect on p53 R273H levels.", p53), true);
+    assert.equal(passes("l23-p53-r273h-effect", "Cabozantinib induced the degradation of p53 R273H.", p53), false);
+    // Two values of one kinetic measurement, the unit on the second, as the clinical suite's doses are.
+    const mdh = "adp-ribose-methanol-dehydrogenase";
+    for (const answer of ["IC50 values of 4.8 and 2.4 μM, respectively", "4.8 ± 1.0 μM for BmMDH1 and 2.4 ± 0.7 μM for BmMDH2"]) {
+      assert.equal(passes("l20-mdh-ic50", answer, mdh), true, answer);
+    }
+    assert.equal(passes("l20-mdh-ic50", "IC50 values of 4.8 and 2.4 mM, respectively", mdh), false, "the wrong prefix");
+  });
+
+  it("runs as its own suite, over its own library", async () => {
+    const suite = await loadFieldSuite();
+    const quote = "we show that MRSA strains are more tolerant of daptomycin than methicillin-susceptible S. aureus (MSSA) strains";
+    const answer = JSON.stringify({
+      tool: "final_answer",
+      args: { found: true, answer: "MRSA strains were more tolerant of daptomycin than MSSA strains.", evidence: [{ docId: "meca-daptomycin-tolerance", quote }] },
+    });
+    const model = new ScriptedModel([`{"tool":"search","args":{"query":"MRSA MSSA daptomycin tolerance"}}`, `{"tool":"read","args":{"docId":"meca-daptomycin-tolerance"}}`, answer, answer]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      field: suite,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["lab"], modes: ["constrained"], taskIds: ["l09-meca-mrsa-tolerance"] },
+    });
+    assert.equal(report.results.length, 1);
+    assert.equal(report.results[0]!.suite, "lab");
     assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
   });
 });
