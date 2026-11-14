@@ -947,7 +947,21 @@ Three changes for engineering and scientific libraries, measured on a new suite 
 
 No task was lost on either model; 2B gained `e03`, `e10` and `e12`, and both gained one held-out task. With so few discordant tasks McNemar's p is 0.25 at best, so this shows no harm and points the right way, not more. `e10` is the abbreviation case: before, 2B searched "zero-voltage switching" and never read the passage "ZVS was achieved above 35% load"; after, it quoted it. `e12` and `e03` are less clear: before, 2B misquoted "The converter was tested" as "The prototype was tested", and gave the +22 V maximum gate voltage for the minimum; after, it quoted and answered right, which may be the cleaner text or run-to-run change. 4B's one wrong labelled answer, `e17`, is the same before and after.
 
-**Not yet measured:** the rule above asks that the field, pdf and holdout suites not regress. Those runs, on both models, are under way and are compared with the recorded `field-outline-base` reports; `bench:replay` cannot stand in for them, since the read tool's choices list every part ID and the design PDF is now cut into 32 parts instead of 37.
+**Field, pdf and holdout**, measured after adoption, against the recorded `field-outline-base` reports (the code without the outline, 0.65.0; 0.66.0 and 0.67.0 change only the overflow retry and the cross-check label). `bench:replay` cannot stand in for these runs, since the read tool's choices list every part ID and the design PDF is now cut into 32 parts instead of 37.
+
+| Model | pdf | field | holdout | Quotes found, wrong (field) | Report |
+| --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B, before | 4/4 | 80/89 | 34/37 | | [json](../results/field-outline-base-qwen3.5-4b-q4km.json) |
+| Qwen3.5-4B, 0.70.0 | 4/4 | 80/89 (1 gained, 1 lost) | 36/37 | 1 of 61 | [json](../results/field-0.70-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B, before | 3/4 | 63/89 | 24/37 | | [json](../results/field-outline-base-qwen3.5-2b-q4km.json) |
+| Qwen3.5-2B, 0.70.0 | 3/4 | 67/89 (7 gained, 3 lost) | 23/37 | 1 of 35 | [json](../results/field-0.70-qwen3.5-2b-q4km.json) |
+
+Read with care: the base ran on llama.cpp `09338b8` on a 2.30 GHz Xeon, these on `fae9ac5` on a 2.10 GHz one, and [results do not repeat across builds and machines](#runs-repeat-on-one-machine-not-across-machines). Only 45 of 89 field tasks on 4B and 29 of 89 on 2B took the same actions, so most of the gains and losses are the run, not the change. (The engineering runs above shared one build and machine.) None of the losses traces to the change:
+- 4B `f83` answered right, but stopped before reading the design and so did not cite it; its first three steps were the base's.
+- 2B `f79` and `f82` are over a Wikipedia lead, which neither PDF reading nor any abbreviation touches; the first searched other words and its quote was not found in the lead, the second answered a question the lead does not answer.
+- 2B `f62`: search ranked first the design part that holds "Local only", and 2B read it, then answered "Telemetry is off by default".
+
+2B's holdout is one lower (2 gained, 3 lost, 8 of 37 tasks with the same actions), within what a change of build moves. By the rule's letter that is a regression of one held-out task; nothing in the losses points to the change, and field gains four. A run of the base on the same build and machine would settle it.
 
 ### Laboratory units, opposites and names (0.71.0, defect fix)
 
