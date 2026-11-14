@@ -646,6 +646,7 @@ export function sentenceSupport(
       );
     const isBacked =
       shared >= claim.length * MIN_BACKED_SHARE &&
+      clausesBacked(text, subjectWords, quoteWords) &&
       numbers(text).every((n) => numberBacked(n, falls)) &&
       negationBacked &&
       datedMonths(text).every((month) => months.has(month)) &&
@@ -738,6 +739,31 @@ export function inSourceSupport(
       return sentence;
     }),
   };
+}
+
+/**
+ * Where a sentence joins a second claim to its first: "and" before a verb ("…, and is associated with…"),
+ * ";", "while", "whereas", or ", but". A plain list ("diarrhea, vomiting, and abdominal pain") is not split.
+ */
+const CLAIM_BREAK =
+  /;\s+|,?\s+(?:while|whereas)\s+|,\s+but\s+|,?\s+and\s+(?=(?:is|are|was|were|has|have|had|can|could|may|might|will|would|should|must|does|do|did|causes?|caused|increases?|increased|reduces?|reduced|leads?|led|shows?|showed|provides?|provided|acts?|works?|affects?|inhibits?|requires?|remains?|becomes?|became)\b)/giu;
+
+/**
+ * Whether each part of a sentence that makes its own claim (CLAIM_BREAK) shares most of its words with the
+ * quotes, as the whole sentence must. A claim joined to a backed one rode along unchecked: "Ibuprofen can cause
+ * adverse effects including diarrhea, vomiting, abdominal pain, and is associated with a higher risk of
+ * gastrointestinal bleeding and hypertension compared to paracetamol" shared more than half its words with a
+ * quote that gives only the adverse effects (a user's question, paracetamol against ibuprofen). Parts too
+ * short to judge alone (MIN_JUDGED_WORDS) are judged with the sentence only.
+ */
+function clausesBacked(text: string, subjectWords: string[], quoteWords: string[]): boolean {
+  const parts = text.split(CLAIM_BREAK).filter((part) => part.trim());
+  if (parts.length < 2) return true;
+  return parts.every((part) => {
+    const claim = contentWords(part).filter((w) => !subjectWords.some((s) => sameWord(w, s)));
+    if (claim.length < MIN_JUDGED_WORDS) return true;
+    return claim.filter((w) => quoteWords.some((q) => sameWord(w, q))).length >= claim.length * MIN_BACKED_SHARE;
+  });
 }
 
 /** Whether each number the sentence gives a unit has that unit in the quotes, or no unit there, or is not quoted at all. */
