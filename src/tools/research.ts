@@ -218,7 +218,10 @@ export function createResearchTools(
           quotedFrom.delete(parentId(docId));
           // A part the model names is given whole; the document it was sent to read, only around the quotes.
           const short = options.forcedReadPassage && docId === parentId(docId) ? await session.passage(docId, quotes) : undefined;
-          return nextSources(short ?? (await session.read(docId, undefined, quotes)));
+          const text = short ?? (await session.read(docId, undefined, quotes));
+          // Which part was given, for the trace: a read that names no part gets the one that best matches the question.
+          const part = /^\[[^\]\n]*\][^\n]*\((part \d+ of \d+|the passages? your answer quoted)\)\n/.exec(text)?.[1];
+          return { text: nextSources(text), ...(part ? { shown: part.replace("your answer quoted", "quoted") } : {}) };
         }
         const doc = index.get(docId);
         if (!doc) {

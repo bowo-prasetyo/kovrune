@@ -38,11 +38,16 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       return `Searching Europe PMC for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "read": {
       const id = String(args.docId ?? "");
-      if (id.startsWith("wikipedia:")) return `Reading Wikipedia: ${id.slice(10).replace(/#\d+$/, "").replace(/_/g, " ")}`;
-      if (id.startsWith("openalex:")) return `Reading OpenAlex work ${id.slice(9).replace(/#\d+$/, "")}`;
-      if (id.startsWith("arxiv:")) return `Reading arXiv paper ${id.slice(6).replace(/#\d+$/, "")}`;
-      if (id.startsWith("datacite:")) return `Reading DataCite work ${id.slice(9).replace(/#\d+$/, "")}`;
-      if (id.startsWith("europepmc:")) return `Reading Europe PMC work ${id.slice(10).replace(/#\d+$/, "")}`;
+      // Which part: the one the read gave (call.shown, once it has run), else the one the ID names. Without it,
+      // three reads of one article showed as the same line three times ("Reading Wikipedia: Paracetamol").
+      const named = /#(\d+)$/.exec(id)?.[1];
+      const part = call.shown ? ` (${call.shown})` : named ? ` (part ${named})` : "";
+      const bare = id.replace(/#\d+$/, "");
+      if (id.startsWith("wikipedia:")) return `Reading Wikipedia: ${bare.slice(10).replace(/_/g, " ")}${part}`;
+      if (id.startsWith("openalex:")) return `Reading OpenAlex work ${bare.slice(9)}${part}`;
+      if (id.startsWith("arxiv:")) return `Reading arXiv paper ${bare.slice(6)}${part}`;
+      if (id.startsWith("datacite:")) return `Reading DataCite work ${bare.slice(9)}${part}`;
+      if (id.startsWith("europepmc:")) return `Reading Europe PMC work ${bare.slice(10)}${part}`;
       return `Reading ${titleFor(id) ?? id}`;
     }
     case "final_answer":

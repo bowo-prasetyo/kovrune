@@ -51,6 +51,17 @@ export const PROTOCOL_WEIGHT = 0.5;
  * and answered "not found". Asked by title and abstract, it is first of 2 (eval/clinical/README.md).
  */
 const TITLE_ABS = (terms: string[]) => `TITLE_ABS:(${terms.join(" ")}) AND ${READABLE}`;
+/**
+ * And the most cited works with all its words in their title. A search of one or two words matches
+ * thousands of works, which Europe PMC orders newest first: for "paracetamol", the 25 by full text and
+ * the 25 by title and abstract were nearly all of 2026, cited at most twice, so the citations rankHits
+ * weighs could not tell them apart, and the five shown were a study in dogs, nanoparticles against
+ * kidney injury and the like; the model read none of them. The most cited works with "paracetamol" in
+ * their title are reviews of its pharmacology, toxicity and mechanism of action. Most cited with it in
+ * the title or abstract alone were a vaccine trial and a survey of chronic pain, which mention it in
+ * passing. A long search rarely has all its words in one title, and then this finds nothing.
+ */
+const TITLE_CITED = (terms: string[]) => `TITLE:(${terms.join(" ")}) AND ${READABLE}`;
 /** A full text can take Europe PMC several seconds to give (18 s for a preprint in a check); the abstract is read if it takes longer. */
 export const FULL_TEXT_TIMEOUT_MS = 60_000;
 /** Only records with something to read: an abstract, or an open-access full text. */
@@ -286,8 +297,8 @@ export function searchTerms(query: string): string[] {
 export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
   const found = new Map<string, EuropePmcRecord>();
 
-  async function searchRecords(query: string, size: number, signal?: AbortSignal): Promise<EuropePmcRecord[]> {
-    const params = new URLSearchParams({ query, format: "json", resultType: "core", pageSize: String(size) });
+  async function searchRecords(query: string, size: number, signal?: AbortSignal, sort?: string): Promise<EuropePmcRecord[]> {
+    const params = new URLSearchParams({ query, format: "json", resultType: "core", pageSize: String(size), ...(sort ? { sort } : {}) });
     const data = await getJson(fetchImpl, "Europe PMC", `${EUROPEPMC_API}/search?${params}`, signal);
     return data?.resultList?.result ?? [];
   }
@@ -327,18 +338,21 @@ export function createEuropePmc(fetchImpl: FetchLike = fetch): OpenSource {
     async search(query, signal) {
       const terms = searchTerms(query);
       if (!terms.length) return [];
-      // The two searches run together; the one by title and abstract only adds records, so its failure is not the search's.
-      const [byText, byTitle] = await Promise.all([
-        searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, CANDIDATES, signal),
-        searchRecords(TITLE_ABS(terms), CANDIDATES, signal).catch((error) => {
+      // The searches run together; those by title and abstract and by title only add records, so their failure is not the search's.
+      const extra = (records: Promise<EuropePmcRecord[]>) =>
+        records.catch((error) => {
           if (signal?.aborted) throw error;
-          return [];
-        }),
+          return [] as EuropePmcRecord[];
+        });
+      const sets = await Promise.all([
+        searchRecords(`(${terms.join(" ")}) AND ${READABLE}`, CANDIDATES, signal),
+        extra(searchRecords(TITLE_ABS(terms), CANDIDATES, signal)),
+        extra(searchRecords(TITLE_CITED(terms), CANDIDATES, signal, "CITED desc")),
       ]);
-      const key = (record: EuropePmcRecord) => `${record.source}/${record.id}`;
-      const known = new Set(byText.map(key));
-      // Europe PMC's full-text order first, as before, so it still breaks ties (rankHits).
-      let records = [...byText, ...byTitle.filter((record) => !known.has(key(record)))];
+      // Europe PMC's full-text order first, as before, so it still breaks ties (rankHits); each record once.
+      const byKey = new Map<string, EuropePmcRecord>();
+      for (const record of sets.flat()) if (!byKey.has(`${record.source}/${record.id}`)) byKey.set(`${record.source}/${record.id}`, record);
+      let records = [...byKey.values()];
       if (!records.length && terms.length > 1) records = await searchRecords(`(${terms.join(" OR ")}) AND ${READABLE}`, CANDIDATES, signal);
       return rankHits(records, terms).map((record) => {
         found.set(`${record.source}/${record.id}`, record);
