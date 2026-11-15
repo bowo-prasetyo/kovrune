@@ -118,7 +118,16 @@ export type LabelSeverity = "found" | "check" | "danger" | "none";
 export function describeStatus(
   status: AnswerStatus,
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; sentences?: Array<{ backed?: boolean; inSource?: unknown }>; answerInQuote?: boolean; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
+  support?: {
+    judged: number;
+    backed: number;
+    sentences?: Array<{ backed?: boolean; inSource?: unknown }>;
+    answerInQuote?: boolean;
+    contradicted?: { docId: string; title?: string; passage: string };
+    review?: ReviewVerdict;
+    crossCheck?: CrossCheck;
+    completeness?: Completeness;
+  },
 ): { label: string; detail: string; tone: AnswerStatus; severity: LabelSeverity } {
   const found = evidence.filter((e) => e.verified).length;
   const unbacked = support ? support.judged - support.backed : 0;
@@ -141,6 +150,18 @@ export function describeStatus(
             : "Every quote below is word for word in the source it cites. Check that the quotes support the whole answer.") + incomplete,
           tone: "verified",
           severity: "found",
+        };
+      }
+      // Every quote is found and backs the answer, but a sentence of a document the model read answers
+      // the question and denies it (support.ts contradictedSupport). Without this the label would read
+      // "1 of 1 sentences backed by a quote", which says nothing of the sentence that contradicts it.
+      if (support?.contradicted) {
+        const where = support.contradicted.title ?? support.contradicted.docId;
+        return {
+          label: "Quotes found, a source says otherwise",
+          detail: `Every quote below is word for word in the source it cites, but another sentence of ${where} answers your question and says the opposite: "${support.contradicted.passage}". The answer may rest on a passage about something else: read that sentence and check which one answers what you asked.`,
+          tone: "unverified",
+          severity: "check",
         };
       }
       // Every quote is found, and the model's check said yes, but the answer it read in the passages

@@ -85,6 +85,8 @@ export interface EuropePmcRecord {
   abstractText?: string;
   citedByCount?: number;
   pubTypeList?: { pubType?: string[] };
+  /** Links to other records: a preprint's published version arrives here as type "Preprint of". */
+  commentCorrectionList?: { commentCorrection?: Array<{ source?: string; id?: string; reference?: string; type?: string }> };
   isOpenAccess?: "Y" | "N";
 }
 
@@ -224,9 +226,34 @@ export const RETRACTED_NOTE = "Note: Europe PMC marks this publication as retrac
  */
 export const PROTOCOL_NOTE = "Note: this is a trial protocol, written before the trial was run. It gives what was planned, not what was done or found; those are in the trial's own report.";
 
-/** The notes a work's text starts with: a retraction, or that it is a protocol. */
+/**
+ * The published version of a preprint, where Europe PMC links one ("Preprint of"): its PubMed ID and the
+ * reference it prints (journal, year, pages). A preprint has not been peer reviewed and its published
+ * version can differ, so a researcher reading the preprint should know the published one exists
+ * (harness 0.76.0).
+ */
+export function publishedVersion(record: EuropePmcRecord): { pmid?: string; reference?: string } | undefined {
+  const link = (record.commentCorrectionList?.commentCorrection ?? []).find((c) => /^preprint of$/i.test((c.type ?? "").trim()));
+  if (!link) return undefined;
+  const pmid = link.source === "MED" && link.id && /^\d+$/.test(link.id) ? link.id : undefined;
+  const reference = link.reference?.replace(/\s+/g, " ").trim();
+  return pmid || reference ? { ...(pmid ? { pmid } : {}), ...(reference ? { reference } : {}) } : undefined;
+}
+
+/** The note a preprint's text starts with when Europe PMC links it to a published version. */
+export function publishedVersionNote(published: { pmid?: string; reference?: string }): string {
+  const where = [published.reference, published.pmid ? `PMID: ${published.pmid}` : ""].filter(Boolean).join(". ");
+  return `Note: Europe PMC links this preprint to a published version${where ? ` (${where})` : ""}. The published version has been peer reviewed and may differ; prefer it where it answers the question.`;
+}
+
+/** The notes a work's text starts with: a retraction, a published version of a preprint, or that it is a protocol. */
 function notesFor(record: EuropePmcRecord): string[] {
-  return [...(retraction(record) === "retracted" ? [RETRACTED_NOTE] : []), ...(relatedReport(record) === "protocol" ? [PROTOCOL_NOTE] : [])];
+  const published = publishedVersion(record);
+  return [
+    ...(retraction(record) === "retracted" ? [RETRACTED_NOTE] : []),
+    ...(published ? [publishedVersionNote(published)] : []),
+    ...(relatedReport(record) === "protocol" ? [PROTOCOL_NOTE] : []),
+  ];
 }
 
 function workInfo(record: EuropePmcRecord): WorkInfo {

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 import { answerToBibtex, type SavedAnswer } from "../src/app/research/answers.ts";
-import { createEuropePmc, FULL_TEXT_TIMEOUT_MS, plainTerms, PROTOCOL_NOTE, rankHits, relatedReport, RETRACTED_NOTE, searchTerms, studyTypes, type EuropePmcRecord } from "../src/sources/europepmc.ts";
+import { createEuropePmc, FULL_TEXT_TIMEOUT_MS, plainTerms, publishedVersion, publishedVersionNote, PROTOCOL_NOTE, rankHits, relatedReport, RETRACTED_NOTE, searchTerms, studyTypes, type EuropePmcRecord } from "../src/sources/europepmc.ts";
 import { jatsToMarkdown, parseXml } from "../src/sources/jats.ts";
 import { SourceError, type FetchLike } from "../src/sources/types.ts";
 
@@ -106,6 +106,31 @@ describe("JATS articles", () => {
     const xml = "<article><front><journal-meta><journal-title>medRxiv</journal-title></journal-meta><article-meta><article-title>T</article-title><pub-date><year>2026</year></pub-date></article-meta></front></article>";
     assert.match(jatsToMarkdown(parseXml(xml), "PPR1326190"), /medRxiv \(2026\)\. DOI: \. PPR1326190\./);
     assert.match(jatsToMarkdown(parseXml(xml)), /medRxiv \(2026\)\. DOI: \.\n/);
+  });
+});
+
+describe("a preprint Europe PMC links to a published version (harness 0.76.0)", () => {
+  const preprint: EuropePmcRecord = {
+    id: "PPR1304009",
+    source: "PPR",
+    doi: "10.64898/2026.08.19.745661",
+    title: "Repeated swim exposure and PKN1a knockout in mice.",
+    authorString: "Author A.",
+    pubYear: "2026",
+    pubTypeList: { pubType: ["preprint"] },
+    commentCorrectionList: {
+      commentCorrection: [{ source: "MED", id: "42962883", reference: "Neuropharmacology. \n    2026 Oct;:111252", type: "Preprint of" }],
+    },
+  };
+
+  it("reads the published version's reference and PubMed ID", () => {
+    assert.deepEqual(publishedVersion(preprint), { pmid: "42962883", reference: "Neuropharmacology. 2026 Oct;:111252" });
+    assert.match(publishedVersionNote(publishedVersion(preprint)!), /^Note: Europe PMC links this preprint to a published version \(Neuropharmacology\. 2026 Oct;:111252\. PMID: 42962883\)\./);
+  });
+
+  it("names none for a work with no such link, or a link of another kind", () => {
+    assert.equal(publishedVersion({ ...preprint, commentCorrectionList: undefined }), undefined);
+    assert.equal(publishedVersion({ ...preprint, commentCorrectionList: { commentCorrection: [{ source: "MED", id: "1", type: "Comment on" }] } }), undefined);
   });
 });
 

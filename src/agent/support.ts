@@ -34,6 +34,11 @@ export interface SentenceSupport {
    */
   answerInQuote?: boolean;
   /**
+   * A sentence of a document the model read that answers the question and denies what the answer says
+   * (contradictedSupport, harness 0.76.0). Absent when there is none, which is the usual case.
+   */
+  contradicted?: { docId: string; title?: string; passage: string };
+  /**
    * The model's own check (review.ts), asked of answers the word checks would label "Quotes found"
    * and of answers too short for them to judge (reviewAsked): whether the quoted passages state what
    * the answer says. "unclear" when the check gave no readable reply; absent when not asked.
@@ -972,6 +977,71 @@ function answerInQuote(
  * browser build of Qwen3.5-4B. The other checks decide its label, which then says this one could not be
  * completed (app/research/trace.ts). Here, not in crosscheck.ts, which reads this module.
  */
+/**
+ * The share of the question's content words a sentence of a source must cover to count as answering it
+ * (contradictedSupport). Set from the one recorded instance, where the denial covers 78% of the question
+ * ("Neither the heterozygous IL10 knockout nor a homozygous IL10 enhancer mutation had a major effect on
+ * pathogen clearance or inflammation", against a question naming the heterozygous knockout, pathogen
+ * clearance and inflammation), so the threshold is fitted to a single example and the change is judged by
+ * what it costs over every recorded answer, not by that example.
+ */
+export const CONTRADICTION_QUESTION_SHARE = 3 / 4;
+/** Questions with fewer content words than this are not used: a short question is covered by chance. */
+const CONTRADICTION_MIN_ASKED = 5;
+/** A sentence of a source longer than this is not weighed: it covers a question's words by length alone. */
+const CONTRADICTION_MAX_CHARS = 400;
+
+/**
+ * A sentence of a document the model read that answers the question and denies it, where the answer does
+ * not (harness 0.76.0). The lab suite's first 4B run kept a green label for a wrong answer: asked what the
+ * heterozygous IL10 knockout did, the model answered from the introduction's sentence about reduced IL10
+ * expression, which it quoted word for word, while the paper's own sentence about the heterozygote says
+ * neither it nor the enhancer mutation had a major effect. Every word check passed, the model's review
+ * said yes, and the cross-check read the same answer out of the passage (eval/lab/README.md, l03).
+ *
+ * The answer and that sentence share only two words in five, so no comparison between them can see it.
+ * What marks it is the **question**: the paper's sentence covers nearly all of what was asked and denies
+ * it. So a sentence is taken as a contradiction when it covers CONTRADICTION_QUESTION_SHARE of the
+ * question's content words, speaks with a negation or denies significance, and the answer itself does
+ * neither. A sentence inside a verified quote is left out, so an answer that quotes the denial and says
+ * so is not accused of contradicting it.
+ *
+ * This cannot see a denial phrased without a negation, and it fires on a document that answers the
+ * question both ways in different conditions ("did not differ at 12 weeks", "differed at 24 weeks"); what
+ * that costs over the recorded runs is measured in the write-up.
+ */
+export function contradictedSupport(
+  support: SentenceSupport,
+  documents: Array<{ docId: string; text: string }>,
+  verified: Array<{ quote: string }> = [],
+  titleFor: (docId: string) => string | undefined = () => undefined,
+  question?: string,
+): SentenceSupport {
+  if (!question || !documents.length || support.contradicted) return support;
+  const judged = support.sentences.filter((s) => s.backed !== undefined);
+  if (!judged.length || judged.some((s) => !s.backed)) return support;
+  const answer = support.sentences.map((s) => s.text).join("");
+  // An answer that denies something itself is not contradicted by a denial: both say no.
+  if (hasNegation(answer) || significance(answer).negated) return support;
+  const asked = contentWords(question);
+  if (asked.length < CONTRADICTION_MIN_ASKED) return support;
+  const needed = Math.ceil(asked.length * CONTRADICTION_QUESTION_SHARE);
+  const quoted = verified.map((e) => normalizeForMatch(e.quote));
+  for (const { docId, text } of documents) {
+    for (const raw of splitSentences(text.replace(/\s*\n\s*/g, "\n"))) {
+      const passage = raw.trim();
+      if (!passage || passage.length > CONTRADICTION_MAX_CHARS) continue;
+      if (!hasNegation(passage) && !significance(passage).negated) continue;
+      const normalized = normalizeForMatch(passage);
+      if (quoted.some((q) => q.includes(normalized) || normalized.includes(q))) continue;
+      const words = contentWords(passage);
+      if (asked.filter((w) => words.some((q) => sameWord(w, q))).length < needed) continue;
+      return { ...support, contradicted: { docId, ...(titleFor(docId) ? { title: titleFor(docId)! } : {}), passage } };
+    }
+  }
+  return support;
+}
+
 export function crossCheckRejects(check: CrossCheck | undefined): boolean {
   return check?.agrees === false && check.extracted !== undefined;
 }
@@ -1012,8 +1082,9 @@ export function crossCheckIncomplete(check: CrossCheck | undefined): boolean {
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness },
+  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness; contradicted?: { passage: string } },
 ): boolean {
+  if (support?.contradicted) return false;
   if (support?.review) {
     return support.review === "yes" && !crossCheckRejects(support.crossCheck) && support.completeness?.complete !== false && reviewAsked(status, evidence, support);
   }
@@ -1024,8 +1095,9 @@ export function labelledQuotesFound(
 export function wordChecksPass(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number },
+  support?: { judged: number; backed: number; contradicted?: { passage: string } },
 ): boolean {
+  if (support?.contradicted) return false;
   return status === "verified" && evidence.every((e) => e.verified) && (!support || (support.judged > 0 && support.backed === support.judged));
 }
 

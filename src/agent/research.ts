@@ -14,7 +14,7 @@ import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } 
 import { checkCompleteness, checksCompleteness } from "./completeness.ts";
 import { crossCheckAnswer, crossChecksAnswers } from "./crosscheck.ts";
 import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
-import { crossCheckRejects, inSourceSupport, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
+import { contradictedSupport, crossCheckRejects, inSourceSupport, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -154,7 +154,13 @@ export async function runResearch(options: {
     return text ? [{ docId, text }] : [];
   });
   const openedTitle = (id: string) => titleFor(id) ?? session?.citation(id)?.title;
-  const support = inSourceSupport(sentenceSupport(final.answer, evidence, titleFor, options.question), documents, openedTitle, options.question);
+  const support = contradictedSupport(
+    inSourceSupport(sentenceSupport(final.answer, evidence, titleFor, options.question), documents, openedTitle, options.question),
+    documents,
+    evidence.filter((e) => e.verified),
+    openedTitle,
+    options.question,
+  );
   // The word checks pass incomplete and misattributed answers, so the model checks those they would
   // label (review.ts). They cannot judge short ones either, which models whose check has been
   // measured to tell right short answers from wrong ones check too (reviewsShortAnswers).
