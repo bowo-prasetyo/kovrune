@@ -39,7 +39,7 @@ describe("where a figure is discussed (harness 0.76.0)", () => {
 
   it("names nothing for a part that holds table rows, which is where values are read", () => {
     // The CS suite's cs04 reads the part holding Table 4 and Figure 2's legend; a note pointing away
-    // from it cost the task (harness 0.77.0, eval/cs/README.md).
+    // from it cost the task (harness 0.78.0, eval/cs/README.md).
     const withTable = new ResearchLibrary([
       {
         id: "t",

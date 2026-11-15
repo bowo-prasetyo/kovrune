@@ -233,7 +233,7 @@ Neither model lost a task, and neither held-out total fell. 4B gained `l04`, the
 
 **`l03` answered itself this time.** In the new run 4B's first answer was rejected by the read-before-answering guard, and its second said "neither the heterozygous IL10 knockout nor a homozygous IL10 enhancer mutation had a major effect" — the right answer — so the contradiction check had nothing to fire on. The error it guards against is not deterministic: it is in the recorded 0.72.0 run, where rescoring shows the check removing its label. A guard is worth having for an error a model makes some of the time, but one run cannot show it firing.
 
-**The CS suites were run at 0.77.0**, and they narrowed the rule: a part that holds table rows takes no figure note, because on `cs04` the note sent 4B away from the table it was reading and its quote began mid-row ([CS suite](../cs/README.md#the-figure-note-and-why-it-is-not-given-to-a-tables-part-0770)). All 53 of this suite's noted parts keep their note, so the figures above stand unchanged. Still not measured: both models' protected suites, which the count above shows cannot change.
+**The CS suites were run at 0.78.0**, and they narrowed the rule: a part that holds table rows takes no figure note, because on `cs04` the note sent 4B away from the table it was reading and its quote began mid-row ([CS suite](../cs/README.md#the-figure-note-and-why-it-is-not-given-to-a-tables-part-0780)). All 53 of this suite's noted parts keep their note, so the figures above stand unchanged. Still not measured: both models' protected suites, which the count above shows cannot change.
 
 ## Limits
 
