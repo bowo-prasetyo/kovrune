@@ -155,7 +155,7 @@ export function createResearchTools(
     name: `search_${source.name}`,
     usage:
       `{"tool":"search_${source.name}","args":{"query":"..."}} searches ${source.label} and returns IDs, titles and snippets.` +
-      // Following citations (harness 0.82.0), said where the model always sees it, when the user turns it on:
+      // Following citations (harness 0.83.0), said where the model always sees it, when the user turns it on:
       // a note after a read alone, Qwen3.5-4B never used (eval/cs/README.md).
       (source.followsCitations ? ` To follow the citations of the paper the question names, query "citing <that paper's ID or title>" for works citing it, or "references of <that paper's ID or title>" for works it cites, adding ": <topic>" to narrow them.` : ""),
     args: z.object({ query: z.string() }).strict(),

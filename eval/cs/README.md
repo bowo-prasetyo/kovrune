@@ -314,6 +314,27 @@ A paper without a source (arXiv then serves its PDF), one whose archive can't be
 
 **Limits.** A quote from the source shows no page. Text inside figures is read only from the PDF. Packages that define their own table or list environments, and macros with unusual argument syntax, can leave stray words, as can `tikz` drawings. The converter was checked on the 30 papers and on 9 well-known ones (the Transformer, BERT, RAG, Toolformer, LoRA, Chain-of-Thought, InstructGPT, Self-RAG, Lost in the Middle); no benchmark suite reads arXiv, so how much it changes the model's answers is not measured. A suite of CC BY arXiv papers with questions on their equations and tables would measure it.
 
+## Following citations through OpenAlex (0.83.0)
+
+A literature review follows citations: what a paper builds on, and who built on it since. OpenAlex holds both directions (`cited_by:` and `cites:` filters), so the OpenAlex source now reads two search forms (`citationQuery` in `src/sources/openalex.ts`):
+
+- `references of <paper>: <topic>` lists the works the paper cites, and `citing <paper>: <topic>` the works citing it, best matching the topic, or, without one, the most cited first. The user's limits (year, field, venue, open access) apply.
+- The paper is named by its OpenAlex ID, its DOI (with or without `doi:`), its arXiv ID (`arxiv:2310.11511`, looked up as arXiv's DOI), or its title. A title names the work whose title starts with it, or is the start of it ("Self-RAG"); a subtitle after a colon is tried whole first. A title that names no work is searched as words. A placeholder copied from the instructions ("citing W123: words") counts as no topic.
+- A work read from OpenAlex shows `Cited by 1,088 works in OpenAlex; its references there: 32.` OpenAlex's reference lists can be short: it has 32 of Self-RAG's 58 references, and all 47 of Lost in the Middle's.
+
+Live, the forms find what they should: Self-RAG's references include PPO, the GPT-4 report and Llama 2; the works citing RAG on "medical question answering" include MedExpQA; the most cited works citing Lost in the Middle are two surveys and GraphRAG; an ACL paper is found by its DOI.
+
+**Whether the model uses them** (`npm run bench:citations`; searches counted as 0.83.0's parser reads them; five questions that name a paper and ask about one it cites or one citing it; Qwen3.5-4B, OpenAlex and arXiv, no documents, prompt cache off, same day):
+
+| What the model is told | Passed | Searches that followed citations | Report |
+| --- | --- | --- | --- |
+| Nothing (`main`, 0.81.0) | 4 of 5 | none | [report](../results/citations-0.81-base-qwen3.5-4b-q4km.json) |
+| A note after a work's first read | 4 of 5 | 1: "citing GRAG: …", a title, which was not read as one then | [report](../results/citations-note-qwen3.5-4b-q4km.json) |
+| The note, and the forms in `search_openalex`'s usage line | 2 of 5 | 9, in 3 questions: "citing W4391876619: words", a bare DOI, and papers it had read rather than the one named | [report](../results/citations-usage-qwen3.5-4b-q4km.json) |
+| The same, titles, bare DOIs and placeholders read, usage reworded | 3 of 5 | 6, in 3 questions; one right (q5), the rest the wrong paper or direction | [report](../results/citations-usage-fixed-qwen3.5-4b-q4km.json) |
+
+Four of the five questions can also be answered by searching for the cited paper's subject, which the model did without the forms; told about them, it spent its steps following the citations of whatever it had just read (MedExpQA's references for "which paper cites RAG"), and concluded "not found". Under [the rule](../field/README.md#rule-for-prompt-and-guard-changes), telling the model is not adopted: it is a setting, **Let the model follow citations (experimental)**, off by default (`followCitations` in `createOpenAlex`, `followsCitations` on the source). With it off, the model sees only the citation counts, as in the second row. Five questions on one day are few; a larger model, or questions no subject search answers, may come out otherwise.
+
 ## Limits
 
 - **Journal papers, not arXiv preprints.** Europe PMC holds the full text of CS papers published in open-access journals (here MDPI *Sensors*, *Frontiers*, *PLOS One*, *Scientific Reports*), not the conference papers and arXiv preprints most CS researchers read. Their tables and acronyms are of the same kind; their typesetting is not.

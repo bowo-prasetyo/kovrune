@@ -1,5 +1,5 @@
 // Questions that need a paper's citations followed, answered live by a model with OpenAlex and arXiv as its
-// sources and no documents (harness 0.82.0, eval/cs/README.md):
+// sources and no documents (harness 0.83.0, eval/cs/README.md):
 //
 //   NODE_USE_ENV_PROXY=1 npm run bench:citations -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b-q4km \
 //     --extra-body '{"chat_template_kwargs":{"enable_thinking":false},"cache_prompt":false}' --out citations.json
@@ -86,7 +86,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       passed: !!final && final.found && facts && result.status === "verified",
       facts,
       status: result.status,
-      // A search the source reads as following citations; before 0.82.0 there is no such reading.
+      // A search the source reads as following citations; before 0.83.0 there is no such reading.
       followed: result.agent.calls.some((c) => c.valid && c.tool === "search_openalex" && Boolean((openalex as { citationQuery?: (q: string) => unknown }).citationQuery?.((c.args as { query: string }).query))),
       ...(final ? { answer: final.answer } : {}),
       cited: [...new Set((final?.evidence ?? []).map((e) => e.docId.replace(/#\d+$/, "")))],
