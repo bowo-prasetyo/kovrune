@@ -426,3 +426,25 @@ function fullTextDocument(work: Work, read: FetchedDocument, label: string): Fet
     ...(read.pageStarts ? { pageStarts: read.pageStarts.map((start) => start + head.length) } : {}),
   };
 }
+
+/**
+ * A work's title and reference details by its DOI, for a document of the user's that prints one and
+ * came with no reference export (src/app/research/import.ts). Only the DOI is sent. Undefined when
+ * OpenAlex does not know the DOI.
+ */
+export async function workByDoi(
+  doi: string,
+  fetchImpl: FetchLike = fetch,
+  apiKey?: string,
+  signal?: AbortSignal,
+): Promise<{ title?: string; info: WorkInfo } | undefined> {
+  const { params: auth, options } = openAlexOptions(apiKey);
+  const params = new URLSearchParams({ select: "id,display_name,publication_year,doi,authorships,primary_location,ids", ...auth });
+  try {
+    const work: Work = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}/doi:${encodeURIComponent(doi)}?${params}`, signal, options);
+    return { ...(work.display_name ? { title: work.display_name } : {}), info: workInfo(work) };
+  } catch (error) {
+    if (error instanceof SourceError && /\b404\b|not found/i.test(error.message)) return undefined;
+    throw error;
+  }
+}
