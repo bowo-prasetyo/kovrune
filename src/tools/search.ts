@@ -147,6 +147,11 @@ export class DocumentIndex {
     const doc = this.get(partId);
     const hash = partId.lastIndexOf("#");
     if (!doc || hash < 0) return [];
+    // A part that holds table rows holds values, so it is where an answer is read, not a place to point
+    // away from (harness 0.77.0). The CS suite's cs04 reads the part holding Table 4 and the legend of
+    // Figure 2: with a note sending it to Figure 2's discussion, 4B gave the right value but quoted the
+    // table row from its middle, which is not word for word, and the task failed (eval/cs/README.md).
+    if (TABLE_ROW.test(doc.text)) return [];
     const own = [...new Set([...doc.text.matchAll(FIGURE_CAPTION)].map((m) => figureLabel((m[1] ?? m[2])!)))];
     if (!own.length) return [];
     const discussed: Array<{ figure: string; partId: string }> = [];
@@ -291,6 +296,8 @@ const tableLabel = (number: string) => `Table ${number}`;
 const FIGURE_CAPTION = /^(?:\*{1,2}Figure\s+([A-Z]?\d+)\*{0,2}[.:]|Figure\s+([A-Z]?\d+)[.:](?!\d))/gm;
 /** A citation of a figure in running text: "Figure 1", "Figure 1C", "(Fig. 2A)", "Figures 1 and 2" (the first). */
 const FIGURE_CITATION = /\b(?:Figs?\.?|Figures?)\s+([A-Z]?\d+)[A-Z]?\b/g;
+/** A row of a Markdown table, as the converters write one: values between bars on their own line. */
+const TABLE_ROW = /^\s*\|.*\|/m;
 /** At most this many figures are pointed to after one part. */
 const MAX_FIGURE_NOTES = 2;
 const figureLabel = (number: string) => `Figure ${number}`;
