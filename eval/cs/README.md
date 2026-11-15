@@ -287,9 +287,9 @@ So these venues are reached through OpenAlex (`OPENALEX_VENUES` in `src/sources/
 
 **Not covered:** OpenReview's reviews and the authors' replies, which no route reaches from a web page; ICLR and ICML papers by venue; and the camera-ready version where it differs from the arXiv one, since the arXiv version is what is read. None of the benchmark suites reads OpenAlex, so no recorded run changes; the venue limit, the title lookup and the PDF note are tested in `tests/cs-venues.test.ts`.
 
-## arXiv papers from their LaTeX source (0.80.0)
+## arXiv papers from their LaTeX source (0.81.0)
 
-Most arXiv papers in computer science are submitted as LaTeX, and arXiv serves the source to anyone, web pages included (`arxiv.org/src/<id>`, `Access-Control-Allow-Origin: *`; `arxiv.org/e-print/<id>` redirects there without the header). Since 0.80.0 the arXiv source reads a paper from it (`readLatexSource` in `src/sources/arxiv.ts`): the archive is unpacked in the browser (`src/documents/tar.ts`, with a cap on its inflated size) and its LaTeX converted (`src/documents/latex.ts`) into the text the other documents use:
+Most arXiv papers in computer science are submitted as LaTeX, and arXiv serves the source to anyone, web pages included (`arxiv.org/src/<id>`, `Access-Control-Allow-Origin: *`; `arxiv.org/e-print/<id>` redirects there without the header). Since 0.81.0 the arXiv source reads a paper from it (`readLatexSource` in `src/sources/arxiv.ts`): the archive is unpacked in the browser (`src/documents/tar.ts`, with a cap on its inflated size) and its LaTeX converted (`src/documents/latex.ts`) into the text the other documents use:
 
 | LaTeX | Read as |
 | --- | --- |

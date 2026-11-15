@@ -31,7 +31,8 @@
     "bench:report": "node --experimental-strip-types eval/report.ts",
     "bench:replay": "node --experimental-strip-types eval/replay.ts",
     "bench:europepmc": "node --experimental-strip-types eval/europepmc-check.ts",
-    "bench:europepmc:model": "node --experimental-strip-types eval/europepmc-model.ts"
+    "bench:europepmc:model": "node --experimental-strip-types eval/europepmc-model.ts",
+    "bench:coverage": "NODE_USE_ENV_PROXY=1 node --experimental-strip-types --no-warnings eval/coverage.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "0.2.85",

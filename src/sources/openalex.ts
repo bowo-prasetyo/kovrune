@@ -151,6 +151,16 @@ export function workText(work: Work): string {
   return lines.filter(Boolean).join("\n");
 }
 
+/**
+ * A PubMed Central ID from OpenAlex's ids.pmcid. OpenAlex gives the article's URL with the bare number
+ * ("https://www.ncbi.nlm.nih.gov/pmc/articles/8862100": all 200 in a sample), while Europe PMC and
+ * citations use "PMC8862100", so both forms are read.
+ */
+export function pmcidOf(value: string | null | undefined): string | undefined {
+  const match = value?.match(/PMC(\d+)/i) ?? value?.match(/\/pmc\/articles\/(\d+)\/?$/i);
+  return match ? `PMC${match[1]}` : undefined;
+}
+
 /** A work's reference details. */
 export function workInfo(work: Work): WorkInfo {
   return {
@@ -160,7 +170,7 @@ export function workInfo(work: Work): WorkInfo {
     ...(work.primary_location?.source?.display_name ? { venue: work.primary_location.source.display_name } : {}),
     // OpenAlex gives these as URLs ("https://pubmed.ncbi.nlm.nih.gov/38012345"); the identifiers alone are cited.
     ...(work.ids?.pmid?.match(/\d+$/) ? { pmid: work.ids.pmid.match(/\d+$/)![0] } : {}),
-    ...(work.ids?.pmcid?.match(/PMC\d+/) ? { pmcid: work.ids.pmcid.match(/PMC\d+/)![0] } : {}),
+    ...(pmcidOf(work.ids?.pmcid) ? { pmcid: pmcidOf(work.ids?.pmcid)! } : {}),
   };
 }
 
@@ -173,7 +183,7 @@ export function fullTextIds(work: Work, readers: FullTextReaders): Array<{ reade
   const ids: Array<{ reader: OpenSource; id: string }> = [];
   const arxiv = [work.doi ?? "", ...(work.locations ?? []).flatMap((l) => [l?.landing_page_url ?? "", l?.pdf_url ?? ""])].map(arxivIdIn).find(Boolean);
   if (readers.arxiv && arxiv) ids.push({ reader: readers.arxiv, id: `arxiv:${arxiv}` });
-  const pmcid = work.ids?.pmcid?.match(/PMC\d+/)?.[0];
+  const pmcid = pmcidOf(work.ids?.pmcid);
   const pmid = work.ids?.pmid?.match(/\d+$/)?.[0];
   if (readers.europepmc && pmcid) ids.push({ reader: readers.europepmc, id: pmid ? `europepmc:MED/${pmid}` : `europepmc:PMC/${pmcid}` });
   return ids;

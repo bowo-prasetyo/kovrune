@@ -1,4 +1,4 @@
-// arXiv papers read from their LaTeX source (harness 0.80.0): the archive, the conversion, and the
+// arXiv papers read from their LaTeX source (harness 0.81.0): the archive, the conversion, and the
 // arXiv source's choice between the source and the PDF (eval/cs/README.md).
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";

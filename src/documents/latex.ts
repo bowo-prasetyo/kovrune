@@ -1,4 +1,4 @@
-// A paper's LaTeX source as the text Kovrune reads (harness 0.80.0): what a PDF's text layer gives,
+// A paper's LaTeX source as the text Kovrune reads (harness 0.81.0): what a PDF's text layer gives,
 // without its losses. A PDF loses a table's rows (cells run together or split across lines), turns an
 // equation into loose symbols ("u k t = w k t + 1 ."), and joins running headers, footnotes and
 // columns into the text; the source has each exactly. arXiv serves most papers' source (arxiv.org/src).

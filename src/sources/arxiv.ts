@@ -6,7 +6,7 @@
 // (SourceSession), and a quote shows its page. DataCite needs no key and has no daily budget like
 // OpenAlex's, and its arXiv records are arXiv's own, with abstracts.
 //
-// Since harness 0.80.0 a paper is read from its LaTeX source when arXiv has it (arxiv.org/src, which also
+// Since harness 0.81.0 a paper is read from its LaTeX source when arXiv has it (arxiv.org/src, which also
 // allows web pages), converted by documents/latex.ts: tables keep their rows, equations their LaTeX and
 // citations their authors and years, which a PDF's text layer loses. A paper without a source, or whose
 // source doesn't convert to enough text, is read from its PDF as before. A quote from the source shows no
