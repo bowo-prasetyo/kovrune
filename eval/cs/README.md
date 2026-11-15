@@ -287,6 +287,33 @@ So these venues are reached through OpenAlex (`OPENALEX_VENUES` in `src/sources/
 
 **Not covered:** OpenReview's reviews and the authors' replies, which no route reaches from a web page; ICLR and ICML papers by venue; and the camera-ready version where it differs from the arXiv one, since the arXiv version is what is read. None of the benchmark suites reads OpenAlex, so no recorded run changes; the venue limit, the title lookup and the PDF note are tested in `tests/cs-venues.test.ts`.
 
+## arXiv papers from their LaTeX source (0.80.0)
+
+Most arXiv papers in computer science are submitted as LaTeX, and arXiv serves the source to anyone, web pages included (`arxiv.org/src/<id>`, `Access-Control-Allow-Origin: *`; `arxiv.org/e-print/<id>` redirects there without the header). Since 0.80.0 the arXiv source reads a paper from it (`readLatexSource` in `src/sources/arxiv.ts`): the archive is unpacked in the browser (`src/documents/tar.ts`, with a cap on its inflated size) and its LaTeX converted (`src/documents/latex.ts`) into the text the other documents use:
+
+| LaTeX | Read as |
+| --- | --- |
+| `\section{Method}` (the third) | `## 3 Method`; after `\appendix`, `## A …`, `### A.1 …` |
+| `table` with `\caption` and `tabular` | `**Table 2** Its caption.` then `\| a \| b \|` per row; `\multicolumn{2}` keeps its columns |
+| `figure` with `\caption` | `*Figure 3: Its caption.*` |
+| `equation`, `align` | its LaTeX on a line of its own, then its number, `(1)`; an `align` numbers each row not marked `\nonumber` |
+| `$O(n^2)$` | as written |
+| `\citep{a,b}`, `\citet{a}`, `\cite{a}` | `(Lewis et al., 2020; Liu et al., 2023)`, `Liu et al. (2023)` from natbib's `.bbl`, or `[3]` |
+| `\ref`, `\cref`, `\eqref` | `2`, `Table 2`, `(1)`, from the labels numbered as LaTeX numbers them |
+| the `.bbl` | `## References` where the paper prints its bibliography, numbered |
+| the paper's own `\newcommand` and `\def` | expanded; a class or style file's redefinitions of LaTeX's own commands are not |
+
+A paper without a source (arXiv then serves its PDF), one whose archive can't be read, or one that converts to fewer than 800 words or with more unresolved `\ref`s than one per 500 words, is read from its PDF as before.
+
+**Measured on 30 papers**, 15 from the ACL Anthology and 15 from NeurIPS, 2024–2025, sampled from OpenAlex among those linked to arXiv, each read both ways with the code here:
+
+- **Every one had a source and converted**, in 23 to 408 ms (median 69) to unpack and convert. The sources are 143 MB to download, against 120 MB for the PDFs; the largest is 25.5 MB, under the 30 MB download limit.
+- **Nothing the reader needs is lost.** Of the PDF text's words (four letters or more), 89% are in the converted text, and 91% of the converted text's words are in the PDF's. What the PDF has and the source doesn't is equations' loose symbols ("xkxt", "ukxt") and text drawn inside figures (one paper's prompts are images); what the source has and the PDF doesn't is math markup (`\frac`, `\mathcal`).
+- **Equations keep their structure.** The 30 papers have 397 numbered equations and 2,742 inline formulas with a sub- or superscript. In the PDF's text, equation (3) of 2509.22741 reads `t=0 / XT / t QXt + U T / t RUt / dt / . (3)` over seven lines; from the source, `J_{T} = \mathbb{E}\left[\int_{t=0}^{T}\left(X^{\mathrm{T}}_{t}QX_{t}+U_t^{\mathrm{T}}RU_t\right)dt\right]\,. (3)`.
+- **Tables are about even.** 296 tables, 1,871 rows with two or more numbers: 1,849 (98.8%) were already whole on one line of the PDF's text, read by layout since 0.70.0. The source adds the columns' boundaries and ties the caption to the table.
+
+**Limits.** A quote from the source shows no page. Text inside figures is read only from the PDF. Packages that define their own table or list environments, and macros with unusual argument syntax, can leave stray words, as can `tikz` drawings. The converter was checked on the 30 papers and on 9 well-known ones (the Transformer, BERT, RAG, Toolformer, LoRA, Chain-of-Thought, InstructGPT, Self-RAG, Lost in the Middle); no benchmark suite reads arXiv, so how much it changes the model's answers is not measured. A suite of CC BY arXiv papers with questions on their equations and tables would measure it.
+
 ## Limits
 
 - **Journal papers, not arXiv preprints.** Europe PMC holds the full text of CS papers published in open-access journals (here MDPI *Sensors*, *Frontiers*, *PLOS One*, *Scientific Reports*), not the conference papers and arXiv preprints most CS researchers read. Their tables and acronyms are of the same kind; their typesetting is not.
