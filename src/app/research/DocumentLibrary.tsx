@@ -1,6 +1,6 @@
 import { APP_LOCALE } from "../locale.ts";
 import { useState } from "react";
-import { KIND_LABELS, pageUnit, readByEarlierVersion } from "../../documents/extract.ts";
+import { KIND_LABELS, pageUnit, readByEarlierVersion, textlessPagesWarning } from "../../documents/extract.ts";
 import { ACCEPT, formatBytes, readDocument, type LibraryDocument } from "./library.ts";
 import { describeWork, parseReferences, REFERENCE_EXTENSIONS, type DocumentWork, type ReferenceEntry } from "../../documents/references.ts";
 import { workByDoi } from "../../sources/openalex.ts";
@@ -59,6 +59,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
     const taken = new Set(before);
     let added = 0;
     let withDetails = 0;
+    let textless = 0;
     let failed = 0;
     setReading({ done: 0, total: plan.documents.length });
     for (const [i, { file }] of plan.documents.entries()) {
@@ -70,6 +71,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
         taken.add(doc.id);
         added++;
         if (work) withDetails++;
+        if (textlessPagesWarning(doc)) textless++;
         onChange((docs) => [...docs, doc]);
       } catch (error) {
         failed++;
@@ -94,6 +96,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
       duplicates: plan.duplicates.length,
       unsupported: plan.unsupported.map((f) => f.name),
       failed,
+      textless,
       exports: exports.length,
       matchedExisting,
     });
@@ -255,6 +258,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
               </div>
               {doc.work && <WorkLine work={doc.work} />}
               {doc.warning && <p className="warning">{doc.warning}</p>}
+              {textlessPagesWarning(doc) && <p className="warning">{textlessPagesWarning(doc)}</p>}
               {readByEarlierVersion(doc) && (
                 <p className="warning">
                   Read by an earlier version of Kovrune, which lost which column of a table each value was in. Remove it and add the file again for better

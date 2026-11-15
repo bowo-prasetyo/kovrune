@@ -1,5 +1,8 @@
 # Test fixtures
 
+- `pdf/scanned-pages.pdf`: a five-page PDF written for these tests by `pdf/make_scanned_pages.py`
+  (reportlab and Pillow): page 2 is a scan (its words are pixels in an image, with only a printed page
+  number), page 3 a figure with a caption, page 4 blank (`tests/textless-pages.test.ts`).
 - `ada-lovelace-lead.txt`: the lead section of the English Wikipedia article
   [Ada Lovelace](https://en.wikipedia.org/wiki/Ada_Lovelace), as read on 25 October 2026,
   with reference markers removed. Text is available under the
