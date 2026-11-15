@@ -21,6 +21,9 @@ describe("saved documents", () => {
     assert.deepEqual(storeChanges([a, b], [a, b]), { put: [], remove: [] });
     assert.deepEqual(storeChanges([a, b], [b, c]), { put: [c], remove: ["a"] });
     assert.deepEqual(storeChanges([a], []), { put: [], remove: ["a"] });
+    // A document given its paper details is a new object under the same ID, and is saved again.
+    const detailed = { ...a, work: { authors: ["Ana Lima"], from: "export" as const } };
+    assert.deepEqual(storeChanges([a, b], [detailed, b]), { put: [detailed], remove: [] });
   });
 
   it("estimates the saved text's size", () => {

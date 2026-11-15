@@ -86,6 +86,8 @@ export function ResearchPanel({
   }, [state.phase]);
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
+  /** A library document's paper details, for the answers that cite it. */
+  const workOf = (id: string) => documents.find((d) => d.id === id)?.work;
   const running = state.phase === "running";
   const anyOpenSource = anyOpenSourceTicked(prefs);
   const downloads = [...(prefs.arxiv ? ["arxiv.org"] : []), ...(prefs.datacite ? ["zenodo.org"] : [])];
@@ -189,7 +191,7 @@ export function ResearchPanel({
         });
         if (abort.signal.aborted) break;
         if (result.agent.stopReason === "error") throw new Error(result.agent.error);
-        sections.push(toSavedAnswer({ question: sectionQuestion, result, steps: sectionSteps, library, model: setup }));
+        sections.push(toSavedAnswer({ question: sectionQuestion, result, steps: sectionSteps, library, model: setup, workOf }));
         save({ unfinished: true });
       }
       // The introduction and conclusion, from the sections written; a report is complete without them.
@@ -276,7 +278,7 @@ export function ResearchPanel({
         pending.save({ ...task, error: message });
         setState({ phase: "error", steps, message });
       } else {
-        const answer = toSavedAnswer({ question: task.question, result, steps, library, model: setup, now: new Date(task.startedAt) });
+        const answer = toSavedAnswer({ question: task.question, result, steps, library, model: setup, now: new Date(task.startedAt), workOf });
         history.setRecords((answers) => [...answers, answer]);
         pending.clear();
         setState({ phase: "done", steps, answer, restored: model.replayed });

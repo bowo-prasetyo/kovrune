@@ -81,7 +81,18 @@ class IndexedDbStore<T extends { id: string }> implements RecordStore<T> {
   }
 
   async put(record: T) {
-    await done(this.store("readwrite").put({ ...record, savedAt: Date.now() }));
+    // A record saved again (a document given its paper details) keeps its place in the list.
+    const store = this.store("readwrite");
+    const get = store.get(record.id) as IDBRequest<(Stored<T> & { addedAt?: number }) | undefined>;
+    await new Promise<void>((resolve, reject) => {
+      get.onsuccess = () => {
+        const savedAt = get.result?.savedAt ?? get.result?.addedAt ?? Date.now();
+        const put = store.put({ ...record, savedAt });
+        put.onsuccess = () => resolve();
+        put.onerror = () => reject(put.error);
+      };
+      get.onerror = () => reject(get.error);
+    });
   }
 
   async remove(id: string) {
@@ -125,18 +136,19 @@ export function sharedStores(): Promise<Stores> {
 }
 
 /**
- * The writes that bring the store from `saved` to `current`: records to put and IDs to
- * remove. Records are never edited in place, so one already saved under its ID is unchanged.
+ * The writes that bring the store from `saved` to `current`: records to put and IDs to remove.
+ * Records are never edited in place; an edited record is a new object under the same ID, put again.
  */
 export function storeChanges<T extends { id: string }>(
   saved: ReadonlyArray<{ id: string }>,
   current: T[],
 ): { put: T[]; remove: string[] } {
-  const savedIds = new Set(saved.map((d) => d.id));
+  const savedById = new Map(saved.map((d) => [d.id, d]));
   const currentIds = new Set(current.map((d) => d.id));
   return {
-    put: current.filter((d) => !savedIds.has(d.id)),
-    remove: [...savedIds].filter((id) => !currentIds.has(id)),
+    // A record replaced by an edited copy (a document given its paper details) is saved again.
+    put: current.filter((d) => savedById.get(d.id) !== d),
+    remove: [...savedById.keys()].filter((id) => !currentIds.has(id)),
   };
 }
 

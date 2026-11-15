@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
+import type { DocumentWork } from "../src/documents/references.ts";
 import { answerToBibtex, answerToMarkdown, exportFileName, toSavedAnswer, type SavedAnswer } from "../src/app/research/answers.ts";
 import { createOpenAlex } from "../src/sources/openalex.ts";
 import type { FetchLike } from "../src/sources/types.ts";
@@ -46,7 +47,7 @@ const REPORT = {
   pageStarts: [0, 40],
 };
 
-async function savedAnswer(): Promise<SavedAnswer> {
+async function savedAnswer(workOf?: (id: string) => DocumentWork | undefined): Promise<SavedAnswer> {
   const library = new ResearchLibrary([REPORT]);
   const model = new ScriptedModel([
     `{"tool":"search","args":{"query":"budget 2025"}}`,
@@ -86,6 +87,7 @@ async function savedAnswer(): Promise<SavedAnswer> {
     library,
     model: "Qwen3.5-4B on llama.cpp server",
     now: new Date("2026-10-25T12:00:00Z"),
+    workOf,
   });
 }
 
@@ -186,6 +188,31 @@ describe("saved answers", () => {
     };
     const bibtex = answerToBibtex(withIds)!;
     assert.match(bibtex, / {2}doi = \{10\.48550\/arxiv\.1706\.03762\},\n {2}pmid = \{38012345\},\n {2}pmcid = \{PMC10850983\},\n/);
+  });
+
+  it("cites a library paper with the details its reference export gave", async () => {
+    const work: DocumentWork = {
+      title: "Annual Report of the Tessel Foundation",
+      authors: ["Ana Lima", "Jon Berg"],
+      year: 2025,
+      venue: "Tessel Reports",
+      doi: "10.1234/tessel.2025",
+      from: "export",
+      source: "library.bib",
+    };
+    const answer = await savedAnswer((id) => (id === "report" ? work : undefined));
+    assert.deepEqual(answer.works, { report: work });
+    const markdown = answerToMarkdown(answer);
+    assert.match(markdown, /Lima and Berg \(2025\)\. Annual Report of the Tessel Foundation\. Tessel Reports\. https:\/\/doi\.org\/10\.1234\/tessel\.2025 \(annual-report\.pdf\), p\. 2/);
+    const bibtex = answerToBibtex(answer)!;
+    assert.match(bibtex, /@article\{doi_10_1234_tessel_2025,\n {2}title = \{Annual Report of the Tessel Foundation\},\n {2}author = \{Ana Lima and Jon Berg\},\n {2}year = \{2025\},\n {2}journal = \{Tessel Reports\},\n {2}doi = \{10\.1234\/tessel\.2025\},/);
+    assert.match(bibtex, /note = \{From the user's library: annual-report\.pdf\}/);
+    // The OpenAlex paper is still exported beside it.
+    assert.match(bibtex, /@article\{openalex_W2741809807,/);
+    // A document without details is cited by its name, as before, and is not in the BibTeX.
+    const plain = await savedAnswer();
+    assert.equal(plain.works, undefined);
+    assert.doesNotMatch(answerToBibtex(plain)!, /annual-report/);
   });
 
   it("names export files after the question and the date", async () => {

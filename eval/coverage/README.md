@@ -40,7 +40,7 @@ Each review counts its own citations, so the shares are of a review's reading li
 - **Conference papers are mostly abstract only** (64% of 1,217), most of them IEEE's.
 - **Repeatable:** another 140 reviews (seed 2) give 12%, 25%, 27% and 35%.
 
-**What follows.** The open sources carry about a tenth of what an engineering review cites, and abstracts another quarter; the rest needs the researcher's own copies. So the largest gain for engineering is making those copies easy to add: a folder, or a reference manager's export, at once, each file matched to its DOI so its citation is complete. Biomedical engineering is the exception (32% in full), through Europe PMC.
+**What follows.** The open sources carry about a tenth of what an engineering review cites, and abstracts another quarter; the rest needs the researcher's own copies. So the largest gain for engineering is making those copies easy to add: a folder, or a reference manager's export, at once, each file matched to its DOI so its citation is complete. Biomedical engineering is the exception (32% in full), through Europe PMC. Harness 0.82.0 does this: a folder, chosen or dropped, with a reference manager's export (user guide, "Adding many papers at once").
 
 **What this does not cover.** Only references OpenAlex matched to a work count (222 cited IDs returned nothing); standards, datasheets and application notes are rarely matched, and are never in these sources. A review's references stand in for a researcher's reading list. OpenAlex's open-access status can be out of date, and "free" does not mean Kovrune could fetch it from a web page.
 
