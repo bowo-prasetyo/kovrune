@@ -1,4 +1,4 @@
-// The two changes the lab suite's first runs asked for (harness 0.75.0): a pointer from a figure's legend
+// The two changes the lab suite's first runs asked for (harness 0.76.0): a pointer from a figure's legend
 // to the prose that discusses it, and a check for a sentence of a source that answers the question and
 // denies the answer. Both come from recorded failures: eval/lab/README.md, l04 and l03.
 
@@ -15,7 +15,7 @@ const PROSE = "PPARαBATKO mice displayed, upon tamoxifen treatment, a strong in
 const LEGEND = `*Figure 1: Generation of PPARαBATKO mice showing deletion of PPARα in brown adipose tissue. ${"Panels show the design of the experiment and the diet. ".repeat(12)}*`;
 const paper = { id: "paper", title: "Deletion of PPARα in mouse brown adipocytes", text: `${"Introductory text that fills a part. ".repeat(40)}\n\n${PROSE}\n\n${LEGEND}` };
 
-describe("where a figure is discussed (harness 0.75.0)", () => {
+describe("where a figure is discussed (harness 0.76.0)", () => {
   const library = new ResearchLibrary([paper]);
   const index = library.index;
   const parts = index.partsOf("paper");
@@ -44,7 +44,7 @@ describe("where a figure is discussed (harness 0.75.0)", () => {
   });
 });
 
-describe("a source sentence that denies the answer (harness 0.75.0)", () => {
+describe("a source sentence that denies the answer (harness 0.76.0)", () => {
   const DENIAL = "Neither the heterozygous IL10 knockout nor a homozygous IL10 enhancer mutation had a major effect on pathogen clearance or inflammation in any of the challenge models.";
   const QUOTED = "We describe the lack of dosage compensation in heterozygous mutation and present evidence that the reduced expression of IL10 leads to increased pathogen clearance at the expense of increased inflammation.";
   const text = `${QUOTED}\n\n${"Other findings of the study follow here. ".repeat(10)}\n\n${DENIAL}`;

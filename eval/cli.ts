@@ -15,6 +15,9 @@
 // and the questions over computer science papers as --suites cs,csholdout (eval/cs/tasks.ts),
 // and the questions over engineering documents as --suites engineering,engineeringholdout (eval/engineering/tasks.ts).
 //
+// The model server's prompt cache is off (cache_prompt: false, eval/harness/request.ts), so a task's
+// reply does not depend on the tasks before it; --prompt-cache keeps it on, faster but noisier to compare.
+//
 // Press Ctrl+C to stop early; the completed tasks are still reported and written.
 // Browser runtimes (WebLLM, wllama) are benchmarked with the page in eval/browser/.
 
@@ -24,6 +27,7 @@ import { parseArgs } from "node:util";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import { runBenchmark, type Mode, type Preset } from "./harness/benchmark.ts";
 import { HELD_OUT_SUITES } from "./harness/compare.ts";
+import { benchExtraBody } from "./harness/request.ts";
 import { formatCall, formatReport } from "./harness/format.ts";
 import { NodeCodeRunner } from "./harness/sandbox.ts";
 import { describeSelfCheck, runSelfCheck } from "../src/agent/self-check.ts";
@@ -39,6 +43,7 @@ const { values } = parseArgs({
     context: { type: "string", default: "4096" },
     "api-key": { type: "string" },
     "extra-body": { type: "string" },
+    "prompt-cache": { type: "boolean", default: false },
     suites: { type: "string", default: "research,unanswerable,pdf,coding" },
     modes: { type: "string", default: "constrained,unconstrained" },
     preset: { type: "string", default: "full" },
@@ -65,12 +70,13 @@ if (!values.model) {
 }
 
 const contextLength = Number(values.context);
+const extraBody = benchExtraBody(values["extra-body"] ? JSON.parse(values["extra-body"]) : undefined, values["prompt-cache"]);
 const model = new LocalEndpointModel({
   baseUrl: values["base-url"],
   model: values.model,
   contextLength,
   apiKey: values["api-key"],
-  extraBody: values["extra-body"] ? JSON.parse(values["extra-body"]) : undefined,
+  extraBody,
 });
 
 const controller = new AbortController();
@@ -87,7 +93,7 @@ for (const line of describeSelfCheck(selfCheck)) console.log(line);
 if (!selfCheck.passed && !values["ignore-self-check"]) {
   console.error(
     selfCheck.failedStep !== "uses-tool-result"
-      ? "Self-check failed, so the benchmark did not start. Check that the server supports json_schema response_format and that thinking is off, or pass --ignore-self-check."
+      ? "Self-check failed, so the benchmark did not start. Check that the server supports json_schema response_format and that thinking is off, or pass --ignore-self-check. A server that rejects the cache_prompt field runs with --prompt-cache."
       : "Self-check failed, so the benchmark did not start. Pass --ignore-self-check to run anyway.",
   );
   process.exit(1);
@@ -115,6 +121,7 @@ const report = await runBenchmark({
       endpoint: values["base-url"],
     },
     build: values.build,
+    extraBody,
     notes: values.notes,
   },
   config: {

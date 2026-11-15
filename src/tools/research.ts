@@ -24,7 +24,7 @@ export function tableNote(tables: Array<{ table: string; partId: string }>): str
 export const TABLE_NOTE_LINE = /\n*\[Table [^\n]* is in [^\n]*\.\]/;
 
 /**
- * After a part that holds a figure's legend, where that figure is discussed (harness 0.75.0,
+ * After a part that holds a figure's legend, where that figure is discussed (harness 0.76.0,
  * DocumentIndex.figuresDiscussedElsewhere): "[Figure 1 is discussed in ppara-brown-adipocytes#13.]". A
  * legend repeats a figure's design; the prose that cites it gives its values. Shortening an old read
  * leaves it out (FIGURE_NOTE_LINE), as it does a table's note and an outline.

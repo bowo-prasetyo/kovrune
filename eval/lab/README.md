@@ -193,14 +193,14 @@ A wrong answer ("reduced nitric oxide production") still matches none of the gro
 
 **What the runs suggest, in order of what they would gain on this suite:**
 
-1. ~~**Look for a sentence of the source that contradicts a backed sentence**~~ (`l03`). Done at 0.75.0 ([above](#three-changes-from-the-first-runs-0750)).
-2. ~~**Reach the results text, not only the figure legend**~~ (4B's `l04`, `lh04`). Done at 0.75.0 ([above](#three-changes-from-the-first-runs-0750)): `l04` passes, and `lh04`, whose value is in a part search does not return at all, does not.
+1. ~~**Look for a sentence of the source that contradicts a backed sentence**~~ (`l03`). Done at 0.76.0 ([above](#three-changes-from-the-first-runs-0760)).
+2. ~~**Reach the results text, not only the figure legend**~~ (4B's `l04`, `lh04`). Done at 0.76.0 ([above](#three-changes-from-the-first-runs-0760)): `l04` passes, and `lh04`, whose value is in a part search does not return at all, does not.
 3. **Require every part of a "from what to what" question** (2B's `l22`), which the completeness check, asked of 2B, did not find missing.
 4. **Look for a distinguishing name in the documents the model read**, not only in its quotes. The plain-suffix fix of 0.74.0 covers `l07`; a name the paper uses in another form still needs the read documents, as `inSourceSupport` uses them for sentences.
-5. Match gene and protein names however they are written. **Measured at 0.75.0 before building anything:** every one of the ten papers is found by the spelling it uses for a key name, and 8 of 28 spellings a researcher might type are not — a hyphen or space inside a name ("IL-10" for "IL10", "mec A", "H3K27 me3", "Bm MDH2") and a Greek letter written as its name ("PPARalpha"). `tests/retrieval.test.ts` records those misses, and should fail when a change bridges them.
+5. Match gene and protein names however they are written. **Measured at 0.76.0 before building anything:** every one of the ten papers is found by the spelling it uses for a key name, and 8 of 28 spellings a researcher might type are not — a hyphen or space inside a name ("IL-10" for "IL10", "mec A", "H3K27 me3", "Bm MDH2") and a Greek letter written as its name ("PPARalpha"). `tests/retrieval.test.ts` records those misses, and should fail when a change bridges them.
 6. **Europe PMC's synonym option: measured and dropped.** Asked with `synonym=TRUE`, Europe PMC *lost* 2 of 6 of these papers that it found with the option off, and gained none: the IL10 paper's query goes from 436 hits to 3,550 and the paper falls off the first page. Kovrune keeps the five best of 25 candidates, so a wider hit set pushes the right paper out. Not adopted.
 
-### Three changes from the first runs (0.75.0)
+### Three changes from the first runs (0.76.0)
 
 The runs above named four things to try. Three are done here, and one was measured and dropped.
 
@@ -217,6 +217,8 @@ The runs above named four things to try. Three are done here, and one was measur
 **Recorded answers** (`bench:rescore --labels` on each of the 132 reports, 7,321 answers): **exactly one line changes**, `l03` losing its label, and it is a wrong answer. No right answer loses its label, no sentence count moves and no task result changes. This is the whole cost of the contradiction check over everything recorded, and it satisfies the rule stated before it was written: adopt only if it costs no right answer its label and takes the label from at least one wrong one.
 
 **The suites the rule protects cannot change.** The figure note reaches only a part that holds a figure's legend whose figure another part discusses. Counted over every library: 0 of the research and unanswerable parts, 0 of 2 pdf parts, 0 of 61 field parts (so holdout and multi too), 0 of 80 office, 0 of 415 clinical, 0 of 13 engineering — and 23 of 534 CS parts and 53 of 451 lab parts. So no run of the protected suites can differ, and none was made for them.
+
+**These runs were made before `main`'s 0.75.0 turned llama-server's prompt cache off.** All four — both baselines and both changes — ran with the cache on, as every earlier run in this file did, on one server and one model file per model, so the pairing holds and the comparison is between the code versions. But 0.75.0 was adopted because with the cache the same request can get another reply depending on what ran before it, so a task-by-task repeat of these runs under the new setting may differ, and the totals are the part to trust. Re-running the pair with `cache_prompt: false` is the way to confirm them.
 
 **Models, on the lab suites.** `bench:replay` could not shorten this: the 0.72.0 recordings no longer replay even on unmodified `main`, because 0.73.0's chunking change moved the parts (`main` against `main` gives the same 34 undecidable tasks). So a fresh baseline was run on `main` at 0.74.0, on the same machine, build and model files as the change.
 

@@ -22,7 +22,7 @@ import { ReplayingModel, type RecordedCall } from "../../src/agent/replay.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.75.0";
+export const HARNESS_VERSION = "0.76.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -81,6 +81,11 @@ export interface Environment {
    * (eval/field/README.md), so bench:compare reads it.
    */
   build?: string;
+  /**
+   * The fields added to every request (--extra-body, and cache_prompt: false unless --prompt-cache),
+   * recorded from harness 0.75.0. bench:compare reads cache_prompt.
+   */
+  extraBody?: Record<string, unknown>;
   notes?: string;
 }
 

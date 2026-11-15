@@ -109,7 +109,7 @@ describe("JATS articles", () => {
   });
 });
 
-describe("a preprint Europe PMC links to a published version (harness 0.75.0)", () => {
+describe("a preprint Europe PMC links to a published version (harness 0.76.0)", () => {
   const preprint: EuropePmcRecord = {
     id: "PPR1304009",
     source: "PPR",

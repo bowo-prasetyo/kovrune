@@ -119,7 +119,7 @@ describe("retrieval on the evaluation set", () => {
   });
 
   it("records how often another spelling of a name misses its paper", async () => {
-    // Measured at 0.75.0 before building anything (eval/lab/README.md): every paper is found by the
+    // Measured at 0.76.0 before building anything (eval/lab/README.md): every paper is found by the
     // spelling it uses, and 8 of 28 spellings a researcher might type are not. The misses are two
     // families — a hyphen or space inside a name, and a Greek letter written as its name — which is what
     // a change to search would have to bridge. These assertions fail when it does, and should then be

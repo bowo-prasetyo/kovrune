@@ -137,7 +137,7 @@ export class DocumentIndex {
 
   /**
    * For a part that holds a figure's legend, where that figure is discussed: the first part of the same
-   * document that cites it, with that figure's label (harness 0.75.0). A paper gives a figure's values in
+   * document that cites it, with that figure's label (harness 0.76.0). A paper gives a figure's values in
    * the prose that cites it, while the legend repeats the design, so search ranks the legend high and the
    * prose that answers is elsewhere: Qwen3.5-4B read Figure 1's legend and Figure 6's, found no value and
    * answered "not found", though the sentence citing "(Figure 1C)" gives both (eval/lab/README.md, l04).

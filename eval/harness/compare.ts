@@ -35,6 +35,17 @@ export interface Comparison {
   warnings: string[];
 }
 
+/**
+ * Whether a run used the model server's prompt cache: yes if any reply reused cached prompt tokens, no if
+ * the run turned it off (cache_prompt: false) or every reply reported none, unknown otherwise.
+ */
+export function usedPromptCache(report: Report): boolean | undefined {
+  if (report.results.some((r) => (r.cachedTokens ?? 0) > 0)) return true;
+  if (report.environment.extraBody?.cache_prompt === false) return false;
+  if (report.results.length && report.results.every((r) => r.cachedTokens === 0)) return false;
+  return undefined;
+}
+
 const key = (r: TaskResult) => `${r.suite}/${r.mode}/${r.taskId}`;
 
 export function compareReports(before: Report, after: Report): Comparison {
@@ -51,6 +62,13 @@ export function compareReports(before: Report, after: Report): Comparison {
   if (cpuBefore !== cpuAfter && !portable) {
     warnings.push(
       `The runs used different CPUs (${cpuBefore ?? "unknown"} and ${cpuAfter ?? "unknown"}) without a shared portable build (--build with GGML_NATIVE=OFF): results do not repeat across machines, so the difference may not be the change's.`,
+    );
+  }
+  const cache = [before, after].map(usedPromptCache);
+  if (cache[0] || cache[1]) {
+    const which = cache[0] && cache[1] ? "both runs" : cache[0] ? "the run before" : "the run after";
+    warnings.push(
+      `The model server's prompt cache was on in ${which}: a task's reply then depends on the tasks run before it, so once one task changes, later ones can change by chance. Run with the cache off (the default from harness 0.75.0; eval/field/README.md#the-prompt-cache-makes-a-task-depend-on-the-tasks-before-it).`,
     );
   }
   if (!before.complete || !after.complete) warnings.push("A report is incomplete; only tasks in both are compared.");

@@ -35,7 +35,7 @@ export interface SentenceSupport {
   answerInQuote?: boolean;
   /**
    * A sentence of a document the model read that answers the question and denies what the answer says
-   * (contradictedSupport, harness 0.75.0). Absent when there is none, which is the usual case.
+   * (contradictedSupport, harness 0.76.0). Absent when there is none, which is the usual case.
    */
   contradicted?: { docId: string; title?: string; passage: string };
   /**
@@ -993,7 +993,7 @@ const CONTRADICTION_MAX_CHARS = 400;
 
 /**
  * A sentence of a document the model read that answers the question and denies it, where the answer does
- * not (harness 0.75.0). The lab suite's first 4B run kept a green label for a wrong answer: asked what the
+ * not (harness 0.76.0). The lab suite's first 4B run kept a green label for a wrong answer: asked what the
  * heterozygous IL10 knockout did, the model answered from the introduction's sentence about reduced IL10
  * expression, which it quoted word for word, while the paper's own sentence about the heterozygote says
  * neither it nor the enhancer mutation had a major effect. Every word check passed, the model's review

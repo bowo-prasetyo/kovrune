@@ -230,7 +230,7 @@ export const PROTOCOL_NOTE = "Note: this is a trial protocol, written before the
  * The published version of a preprint, where Europe PMC links one ("Preprint of"): its PubMed ID and the
  * reference it prints (journal, year, pages). A preprint has not been peer reviewed and its published
  * version can differ, so a researcher reading the preprint should know the published one exists
- * (harness 0.75.0).
+ * (harness 0.76.0).
  */
 export function publishedVersion(record: EuropePmcRecord): { pmid?: string; reference?: string } | undefined {
   const link = (record.commentCorrectionList?.commentCorrection ?? []).find((c) => /^preprint of$/i.test((c.type ?? "").trim()));
