@@ -963,6 +963,17 @@ Read with care: the base ran on llama.cpp `09338b8` on a 2.30 GHz Xeon, these on
 
 2B's holdout is one lower (2 gained, 3 lost, 8 of 37 tasks with the same actions), within what a change of build moves. By the rule's letter that is a regression of one held-out task; nothing in the losses points to the change, and field gains four. A run of the base on the same build and machine would settle it.
 
+**2B on one build and machine (settled).** The code before the change (`f3a94f3`) was then run on `fae9ac5` and the same model file, first as before and then, with the change, with llama-server's [prompt cache turned off](#the-prompt-cache-makes-a-task-depend-on-the-tasks-before-it):
+
+| Qwen3.5-2B, `fae9ac5` | pdf | field | holdout | Same actions (field, holdout) | Report |
+| --- | --- | --- | --- | --- | --- |
+| Before, cache on | 3/4 | 65/89 | 25/37 | | [json](../results/field-0.70-base-qwen3.5-2b-q4km.json) |
+| 0.70.0, cache on | 3/4 | 67/89 (5 gained, 3 lost) | 23/37 (1 gained, 3 lost) | 35 of 89, 9 of 37 | [json](../results/field-0.70-qwen3.5-2b-q4km.json) |
+| Before, cache off | 3/4 | 68/89 | 25/37 | | [json](../results/field-0.70-base-nocache-qwen3.5-2b-q4km.json) |
+| 0.70.0, cache off | 3/4 | 68/89 (3 gained, 3 lost) | 25/37 (1 gained, 1 lost) | 53 of 89, 23 of 37 | [json](../results/field-0.70-nocache-qwen3.5-2b-q4km.json) |
+
+With the cache on, the same-build comparison was still mostly noise: 42 of the 85 tasks whose actions differed first parted where the model was given the same request and replied differently. `f28` is one: same request (input hash `c25036b3`), same build, and the first search differed; run on its own, it took the same actions on both versions and passed both times. With the cache off, none did: every one of the 51 tasks that differ first differs in what the code showed the model (in each of the six that changed result, at the fourth request), so each difference is the change's doing. The totals are equal on every suite, so the change regresses neither field nor holdout on 2B, and the one-task holdout drop above was the run. `f26` and `f61`, two of the cache-on gains, also pass in the cache-off base. 4B has not been rerun this way; its holdout was not lower (36 against 34).
+
 ### Laboratory units, opposites and names (0.71.0, defect fix)
 
 An audit from a biological and biomedical sciences researcher's point of view ran the sentence check (`src/agent/support.ts`) on 22 wrong sentences from bench papers: cell culture, immunoblots, cloning, gene regulation, mouse genetics and microbiology. With a real quote, 17 were marked backed. The clinical checks of 0.59.0 had units for doses and readings, not for concentrations, volumes or sizes; their opposites were for outcomes, not for what a gene or a drug did; and a name that one character tells apart passed whenever the rest of the sentence matched. Only the model's own review then stood between these sentences and **Quotes found**:
@@ -1230,7 +1241,7 @@ Keeping a final "s" after another, and indexing each joined word's parts as well
 
 ### Runs repeat on one machine, not across machines
 
-- **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results.
+- **On one machine, runs repeat exactly.** Running the 4B baseline and the 0.17.0 change a second time gave the same actions on all 58 tasks, and the same results. That holds for whole runs: one task run on its own, or after other tasks, can differ while llama-server's prompt cache is on ([below](#the-prompt-cache-makes-a-task-depend-on-the-tasks-before-it)).
 - **Across machines, they differ.** The 0.16.0 baseline used the same llama.cpp commit and model files as the 0.15.0 runs, and the same prompt. Its actions differed on 20 of 58 tasks for 4B and 34 of 58 for 2B. A few results changed: `p04` (4B) now fails, and `r17` (2B) now passes. The likely cause is floating-point differences between CPUs and builds, which change which token wins at temperature 0.
 - **So a change is judged against a baseline run on the same machine, never against a report from another one,** unless both use the same portable build (below). One run of each is enough there, but a difference of one or two tasks is still specific to that machine.
 - **A portable llama.cpp build repeats across machines (0.29.0, confirmed in 0.31.0).** The container moved between three CPUs during the 0.29.0 runs, and a llama.cpp built with `-DGGML_NATIVE=ON` on one stopped with an illegal instruction on another. Rebuilt with `-DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON`, 12 tasks first took the same actions on two CPUs. Then the whole 0.29.0 baseline of Qwen3.5-2B, all five suites, was run again with the same code (`e34aa00`) and build on the other CPU ([json](../results/field-0.29-baseline-xmachine-qwen3.5-2b-q4km.json)):
@@ -1261,6 +1272,16 @@ Keeping a final "s" after another, and indexing each joined word's parts as well
 - **Distractors work as intended.** The most common failure is a nearby wrong fact backed by a real quote (`f02`, `f07`, `f23`). The app labels most of these answers **Quotes found**: this is the false reassurance problem ([issue #32](https://github.com/bowo-prasetyo/kovrune/issues/32)) on real text.
 - **Two-document questions are the weakest kind.** Both models fail `f23` and `f24`, and neither failure appears in the synthetic multi-hop tasks.
 - **Unanswerable questions about real documents are mostly refused.** Both models refused the questions about the steering committee's approval date, the euro fine and Ada Lovelace's patent. Only 4B refused the stop shortcut question.
+
+### The prompt cache makes a task depend on the tasks before it
+
+llama-server keeps the prompt it last processed and, by default (`cache_prompt`), reuses the longest matching start of it for the next request; in a benchmark that is the system prompt, shared by every task (`cachedTokens` 217 on 2B). Measured in 0.70.0 (`fae9ac5`, Qwen3.5-2B):
+
+- **The same request can get a different reply, depending on what ran before.** `f28` was given the same first request (input hash `c25036b3`) on the same build in two full runs, and its first search differed. Run on its own, it repeated. With `"cache_prompt": false` (`cachedTokens` 0), `f28` took the same actions run alone and after other tasks.
+- **So "runs repeat" holds for a whole run, not for one task.** Two identical runs repeat (above): the same tasks in the same order leave the same cache. But once one early task differs, because of a real change, the cache it leaves differs, and later tasks can change for no reason of their own. Comparing the code before and after 0.70.0 on 2B with the cache on, 42 of 85 tasks that took other actions first parted on an identical request; with it off, none of 51 did ([results](#pdf-layout-abbreviations-and-openalex-limits-0700)).
+- **This also limits `bench:replay`.** Its step 3 runs only the tasks that differ, so each runs after other tasks than in the full run; with the cache on, its results can differ from what a full run would give.
+- **How to turn it off:** `--extra-body '{"chat_template_kwargs":{"enable_thinking":false},"cache_prompt":false}'`. Reports do not record `--extra-body` yet, so say so in `--notes`. It costs speed, since every request processes the whole prompt: about 2 hours instead of 1¼ for pdf, field and holdout on 2B in a 4-core container. Cache-on reports before this are still valid as whole runs; a comparison between two of them is noisier than it looked, more so the more tasks differ.
+
 
 ## Committed documents
 
