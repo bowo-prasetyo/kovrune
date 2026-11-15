@@ -256,6 +256,37 @@ The narrowing is measured, not assumed:
 
 **What this says about the note.** On bench papers, where a figure's values live in the prose that cites it, it gains two tasks on 4B and one on 2B. On these CS papers, where the values are in tables the model reads directly, it gains nothing and, before the narrowing, cost one task through a quote that began mid-row. A pointer helps where the answer is elsewhere and distracts where it is already in hand, which is what the rule now encodes.
 
+## Computer science venues (0.79.0)
+
+The CS suite reads journal papers from Europe PMC, but a computer science researcher reads conference papers: the ACL Anthology for NLP, and NeurIPS, ICLR and ICML for machine learning, with OpenReview's reviews. Kovrune runs in the browser and runs no proxy ([design](../../docs/design.md), §5.1), so it can only read a site that lets web pages read it. Checked on 15 November 2026:
+
+| Site | What it serves | Readable by a web page? |
+| --- | --- | --- |
+| aclanthology.org | PDFs, BibTeX, pages | No: no `Access-Control-Allow-Origin` |
+| api2.openreview.net | papers, reviews, replies (JSON) | No: allowed only for `openreview.net` |
+| openreview.net | PDFs | No: refused outside a browser session there |
+| raw.githubusercontent.com (the Anthology's records) | titles, abstracts, links, as one XML file per volume (ACL 2023: 2.8 MB) | Yes, but no full texts and no search |
+| api.openalex.org | records of both | Yes |
+
+So these venues are reached through OpenAlex (`OPENALEX_VENUES` in `src/sources/openalex.ts`):
+
+- **A search can be limited to a venue**, under OpenAlex's limits: the **ACL Anthology** by its DOI prefix (`10.18653`; ACL, EMNLP, NAACL, EACL, Findings and workshops; 7,058 works from 2023 and 11,113 from 2025 in OpenAlex), or **NeurIPS** by its OpenAlex source, on any of a work's locations (3,516 and 5,832). OpenAlex holds 4 of ICLR's 2023 papers, none of ICML's or JMLR's, and 2 of USENIX Security's, so those are not offered; their papers are nearly all on arXiv, which the arXiv source searches. TACL, whose DOIs are MIT Press's, is not in the ACL filter.
+- **A paper is read in full from arXiv** when its OpenAlex record links there, as before, or, new, when an arXiv paper on DataCite has the same title, compared as letters and digits, and no other does (`findArxivByTitle`). OpenAlex often keeps a conference paper and its preprint as two works. A title of fewer than four words is not looked up. The paper is cited as the arXiv version read, with OpenAlex's authors.
+- **Otherwise the abstract names the free PDF**, such as `aclanthology.org/2023.eacl-main.252.pdf`, for the user to download and add to their documents, where it is read in full like any PDF.
+
+**Coverage**, with this code on 40 papers sampled by OpenAlex for each venue and year (`sample=40`, `seed=11`):
+
+| Venue, year | Read from arXiv, linked | Read from arXiv, by title | Abstract, free PDF named | Abstract only |
+| --- | --- | --- | --- | --- |
+| ACL Anthology, 2023 | 17 | 0 | 23 | 0 |
+| ACL Anthology, 2025 | 22 | 4 | 14 | 0 |
+| NeurIPS, 2023 | 26 | 5 | 2 | 7 |
+| NeurIPS, 2025 | 33 | 1 | 0 | 6 |
+
+108 of 160 are read in full, 10 of them found by title. For 6 of those 10, arXiv's first author was compared with OpenAlex's, and all 6 are the same person. Every ACL paper had an abstract; 11 NeurIPS 2023 and 5 NeurIPS 2025 papers had none. An ACL paper not on arXiv still needs the user to add its PDF, which is two clicks but not none.
+
+**Not covered:** OpenReview's reviews and the authors' replies, which no route reaches from a web page; ICLR and ICML papers by venue; and the camera-ready version where it differs from the arXiv one, since the arXiv version is what is read. None of the benchmark suites reads OpenAlex, so no recorded run changes; the venue limit, the title lookup and the PDF note are tested in `tests/cs-venues.test.ts`.
+
 ## Limits
 
 - **Journal papers, not arXiv preprints.** Europe PMC holds the full text of CS papers published in open-access journals (here MDPI *Sensors*, *Frontiers*, *PLOS One*, *Scientific Reports*), not the conference papers and arXiv preprints most CS researchers read. Their tables and acronyms are of the same kind; their typesetting is not.

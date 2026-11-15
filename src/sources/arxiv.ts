@@ -82,6 +82,39 @@ export function dataCiteQuery(query: string): string {
   return [...new Set(words)].slice(0, 16).join(" OR ");
 }
 
+/** A title as compared: letters and digits only, lower case ("Self-RAG: Learning…" → "selfraglearning…"). */
+export function titleKey(title: string): string {
+  return title.normalize("NFKD").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+/**
+ * The arXiv version of a paper published elsewhere, by its exact title: the one arXiv paper on DataCite
+ * whose title, compared as titleKey, is the same; undefined when none is, or more than one. OpenAlex often
+ * keeps a conference paper and its arXiv preprint as two works, so the conference paper's record has no
+ * arXiv link: of 160 sampled ACL Anthology and NeurIPS papers, 10 were found this way, besides 98 linked
+ * (eval/cs/README.md).
+ * A title of fewer than four words is not looked up: "Attention" is many papers.
+ */
+export async function findArxivByTitle(fetchImpl: FetchLike, title: string, signal?: AbortSignal): Promise<string | undefined> {
+  const key = titleKey(title);
+  const words = title.replace(/[+\-=&|><!(){}[\]^"~*?:\\/]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 4 || key.length < 12) return undefined;
+  const params = new URLSearchParams({
+    query: `titles.title:"${words.join(" ")}"`,
+    "client-id": DATACITE_ARXIV_CLIENT,
+    "page[size]": "10",
+    "fields[dois]": DATACITE_FIELDS,
+  });
+  const data = await getJson(fetchImpl, "DataCite (finding the arXiv version)", `${DATACITE_API}?${params}`, signal);
+  const ids = new Set(
+    ((data?.data ?? []) as DataCiteRecord[])
+      .filter((record) => (record.attributes.titles ?? []).some((t) => t.title && titleKey(t.title) === key))
+      .map(arxivId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  return ids.size === 1 ? [...ids][0] : undefined;
+}
+
 /** The ID the model sees for an arXiv paper, e.g. "arxiv:2005.11401". */
 export function arxivDocId(id: string): string {
   return PREFIX + id;

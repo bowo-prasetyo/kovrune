@@ -26,7 +26,7 @@ import {
   WIKIPEDIA_LANGUAGES,
   type SourcePrefs,
 } from "./sources.ts";
-import { OPENALEX_FIELDS } from "../../sources/openalex.ts";
+import { OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describeCall, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
@@ -446,6 +446,17 @@ export function ResearchPanel({
                     ))}
                   </select>
                 </label>
+                <label>
+                  Venue
+                  <select value={prefs.openalexVenue ?? ""} disabled={running} onChange={(e) => updatePrefs({ openalexVenue: e.target.value })}>
+                    <option value="">Any venue</option>
+                    {OPENALEX_VENUES.map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label className="choice">
                   <input type="checkbox" checked={prefs.openalexOpenAccess ?? false} disabled={running} onChange={(e) => updatePrefs({ openalexOpenAccess: e.target.checked })} />
                   Open-access works only
@@ -455,7 +466,7 @@ export function ResearchPanel({
             {prefs.openalex && (prefs.arxiv || prefs.europepmc) && (
               <p className="hint">
                 A paper OpenAlex finds that is also on {joinNames([...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.europepmc ? ["Europe PMC"] : [])])} is read in full
-                from there, not only as its abstract.
+                from there, not only as its abstract.{prefs.arxiv && " A conference paper (ACL, NeurIPS) is also looked for on arXiv by its title."}
               </p>
             )}
             {prefs.openalex && (
