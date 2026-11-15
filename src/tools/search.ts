@@ -221,21 +221,6 @@ export class DocumentIndex {
     return [...terms];
   }
 
-  /**
-   * The abbreviations a query gains from expandedTerms, each with the long form's terms the query used:
-   * "commitment-bound verification" gives CBV and its three terms.
-   */
-  private gainedAbbreviations(query: string): Array<{ short: string; long: string[] }> {
-    const terms = new Set(tokenize(query));
-    const gained: Array<{ short: string; long: string[] }> = [];
-    for (const [short, longs] of this.abbreviations) {
-      if (terms.has(short)) continue;
-      const long = longs.find((l) => l.every((term) => terms.has(term)));
-      if (long) gained.push({ short, long });
-    }
-    return gained;
-  }
-
   search(query: string, limit = 3): SearchHit[] {
     const terms = this.expandedTerms(query);
     const k1 = 1.2;
@@ -251,22 +236,8 @@ export class DocumentIndex {
     });
     const ranked = scored.filter((s) => s.score > 0).sort((x, y) => y.score - x.score);
     const top = ranked.slice(0, limit);
-    // A passage that uses only the abbreviation keeps a place (harness 0.73.0). Its query terms are the
-    // abbreviation's one against the long form's several, so the passages that spell the term out, which
-    // define and discuss it, fill every result before the one that reports on it as "CBV" or "w/o ESCA"
-    // (eval/cs/README.md, cs11 and cs22). If no result has the abbreviation without its long form, the
-    // best-ranked passage that does takes the last place. Only a long form of two words or more counts,
-    // and only one place is given: "controls" matched "control (Ctrl)", and with "RMS" took two of the
-    // three places from the passage that answers (lab suite, l16).
-    for (const { short, long } of this.gainedAbbreviations(query).filter((g) => g.long.length >= 2)) {
-      const shortOnly = (i: number) => this.termFreqs[i]!.has(short) && !long.every((term) => this.termFreqs[i]!.has(term));
-      if (top.length < 2 || top.some((s) => shortOnly(s.i))) continue;
-      const candidate = ranked.slice(limit).find((s) => shortOnly(s.i));
-      if (candidate) {
-        top[top.length - 1] = candidate;
-        break;
-      }
-    }
+    // 0.73.0 gave a passage that uses only an abbreviation the last place when the query spelled the term
+    // out; under the rule it gained three tasks and lost two, and 0.77.0 takes it out (eval/cs/README.md).
     return top.map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
   }
 }

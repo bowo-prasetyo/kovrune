@@ -150,7 +150,7 @@ describe("retrieval on the evaluation set", () => {
 });
 
 const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };
-const CS_FLOOR = { documentRecall: 0.972, passageRecall: 0.867, complete: 29 };
+const CS_FLOOR = { documentRecall: 0.972, passageRecall: 0.822, complete: 27 }; // 29 with 0.73.0's abbreviation place, taken out in 0.77.0
 const LAB_FLOOR = { documentRecall: 0.976, passageRecall: 0.945, complete: 39 };
 
 // A user's library can hold hundreds of documents; the field library has seven. With 300 generated

@@ -151,6 +151,8 @@ For comparison, on the clinical suite 4B passes 19 of 23 (83%) and 2B 13 of 23 (
 
 ### Four changes from the first runs (0.73.0)
 
+Three of the four are kept; the abbreviation place was taken out in 0.77.0 ([below](#the-other-suites-and-the-rules-decisions-0770)).
+
 **What changed.**
 - **Tables split between rows** (`splitTable` in `src/documents/chunk.ts`). A table longer than a part is cut between rows, never inside one, and each later piece starts with "**Table 5** (continued)", its caption's first sentence and its first row, the column names. Search does not index those repeated lines (`withoutRepeatedLead`): indexed, Table 3's caption in every piece of the typhoid trial's table outranked the passages that answer `c01`, which lost two of its three answer passages in `bench:retrieval`.
 - **A note where a cited table is** (`DocumentIndex.tablesCitedElsewhere`, `tableNote` in `src/tools/research.ts`). A part of the user's document that cites a table held in another part ends with "[Table 4 is in stabfl-label-skew#28.]". A caption is a line that starts with "**Table 4**", "Table 4." or "Table 4:"; a paragraph that starts "Table 4 provides…" cites it. An old read that is shortened to fit the context loses the note, as an outline is lost.
@@ -188,7 +190,41 @@ Over the four suites, 4B gains 4 tasks and loses 2, and 2B gains 3 and loses 1. 
 
 **2B:** it gains `cs23`, now reading part 30 and saying HyDE "did not improve", and `clinicalholdout` one task, and trades `c06` for `c11`. In `c06` it read parts 45 and 47 instead of 44, 46, 40 and 3: a long table earlier in that paper is now two pieces, so its later parts are numbered one higher, and the search results and reads differ from there. Its two fewer wrong labels under **Quotes found** are `cs22`, now right, and one held-out answer no longer labelled.
 
-**Not yet measured: the protected suites.** The rule also asks for research, unanswerable, pdf, field and holdout on both models. These changes reach them only through snippets (16 parts in all) and the abbreviation place; replaying the 0.65.0 recordings that still replay on `main` (62 of those suites' 160 tasks per model) finds no task whose requests differ. They are being run as above; their results are added here when they finish.
+### The other suites, and the rule's decisions (0.77.0)
+
+**How they were run.** The rule asks for research, unanswerable, pdf, field and holdout on both models, and the lab suites (merged after 0.73.0) were added to them. Run in the order the decision needs (4B's protected suites, then 4B's field and lab, then 2B), in chunks of at most 10 tasks, each its own report, so a run that stops resumes at the next chunk. `main`'s recordings were reused wherever they replay: the 0.70.0 field and holdout runs and the 0.72.0 lab runs on `main`'s code (`0396484`), with `bench:replay` naming the tasks whose requests differ; only those ran, on both sides. 4B's `c01`, the one clinical or CS task whose requests changed with the final abbreviation place, was run again on that code and passes as before ([report](../results/cs-clinical-0.73-c01-qwen3.5-4b-q4km.json)). Research and unanswerable have no recent recording, so the change ran all 30 and `main` the 2 whose requests differ. Both sides used llama-server's prompt cache, as every run before harness 0.75.0, so these are a full run's results only per chunk: a comparison of a few tasks is noisier than its p says ([the prompt cache](../field/README.md#the-prompt-cache-makes-a-task-depend-on-the-tasks-before-it)).
+
+**0.73.0 against `main`** ([before](../results/protected-0.73-base-qwen3.5-4b-q4km.json), [after](../results/protected-0.73-qwen3.5-4b-q4km.json); 2B: [before](../results/protected-0.73-base-qwen3.5-2b-q4km.json), [after](../results/protected-0.73-qwen3.5-2b-q4km.json)):
+
+| Suite | 4B `main` | 4B 0.73.0 | Gained / lost | 2B `main` | 2B 0.73.0 | Gained / lost |
+| --- | --- | --- | --- | --- | --- | --- |
+| `research` | 19/22 | 19/22 | 0 / 0 | 15/22 | 15/22 | 0 / 0 |
+| `unanswerable` | 8/8 | 8/8 | 0 / 0 | 5/8 | 5/8 | 0 / 0 |
+| `pdf` | 4/4 | 4/4 | 0 / 0 | 3/4 | 3/4 | 0 / 0 |
+| `holdout` | 36/37 | 36/37 | 0 / 0 | 23/37 | 23/37 | 0 / 0 |
+| `labholdout` | 10/11 | 9/11 | 0 / 1 | 9/11 | 9/11 | 1 / 1 |
+| `field` | 80/89 | 80/89 | 0 / 0 | 69/89 | 68/89 | 0 / 1 |
+| `lab` | 27/32 | 27/32 | 2 / 2 | 22/32 | 20/32 | 1 / 3 |
+
+**Which change each flip came from.** Reports do not keep what the tools returned, so each flipped task's recorded actions were run through the tools of both versions and the observations compared:
+- **Abbreviation place:** the only difference in `l03` (4B, gained) and `l06` (2B, gained), and one of two in `l07` (2B, lost): a passage using only "BAT" or "HFD" took the third result. With `cs22` gained and `cs11` lost, it gained 3 tasks and lost 2.
+- **Table pieces:** `l11` (4B) and `l30` (2B), both lost, on the one lab paper with a long table (mecA): its parts after the table are numbered one higher and its search results re-ranked.
+- **Snippets cut at a word:** the only difference in `l17` (4B, gained), `l23` (4B, lost), `l16` and `f82` (2B, lost): a snippet's last words. With `cs21` gained, 2 gained and 3 lost.
+- **Table note:** in no flipped task; no field, lab or protected document has a table cited from another part.
+
+**Decisions, under [the rule](../field/README.md#rule-for-prompt-and-guard-changes).**
+- **Table pieces and snippets** fix defects (a table cut inside a row; a snippet whose quote the check refused), so the defect-fix clause applies: adopted unless a protected suite loses two more than it gains, or loses with p < 0.25. None does: every protected suite is unchanged except `labholdout`, 0 / 1 on 4B (p = 1) and 1 / 1 on 2B, and `clinicalholdout`, 0 / 1 and 1 / 0. **Adopted.** Their lab and field flips (5 lost, 2 gained) are each a re-ranking or a snippet's last words, not a wrong reading of a table or a snippet.
+- **The table note** is a heuristic: it must improve the domain suites without a protected loss. It gained `cs12` and reaches no other suite's documents. **Adopted.**
+- **The abbreviation place** is a heuristic too. It gained 3 and lost 2 (p = 1), no clear improvement, and the lab held-out total fell on 4B. **Not adopted: taken out in 0.77.0.** The place goes to the best-ranked passage using the abbreviation, which need not be the one that answers (`cs11` above); a later version could ask for the query's other terms too.
+
+**Without the abbreviation place (0.77.0).** `bench:replay` of every 0.73.0 recording on the code without it finds 17 tasks per model whose requests differ (lab, clinical and CS; none in research, unanswerable, pdf, field or holdout). Those were run again on that code and on `main`'s, with the prompt cache off on both ([before](../results/noslot-0.77-base-qwen3.5-4b-q4km.json), [after](../results/noslot-0.77-qwen3.5-4b-q4km.json); 2B: [before](../results/noslot-0.77-base-qwen3.5-2b-q4km.json), [after](../results/noslot-0.77-qwen3.5-2b-q4km.json)): 4B gains `l07` and one held-out task and loses none, 2B is unchanged. With the other tasks taken from the 0.73.0 runs, 0.77.0 against `main`:
+
+| Model | Protected suites | `labholdout` | `lab` | `field` | `cs` | `csholdout` | `clinical` | `clinicalholdout` | All |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | unchanged | 10 → 10 | 26 → 26 (2 / 2) | 80 → 80 | 19 → **21** | 9 → 10 | 17 → 17 | 7 → 7 (1 / 1) | 6 gained, 3 lost |
+| Qwen3.5-2B | unchanged | 9 → 10 | 22 → 20 (0 / 2) | 69 → 68 | 11 → 12 | 7 → 7 | 10 → 10 (1 / 1) | 4 → 5 | 4 gained, 4 lost |
+
+"Protected suites" are research, unanswerable, pdf and holdout, each the same before and after. `bench:retrieval`'s CS figures go back to 27 of 34 found in full (`cs11` and `cs22` lose their answer passages), and `tests/retrieval.test.ts`'s CS floor with them; every other suite is unchanged. The 17 tasks were run on 0.73.0's code without the place, not on 0.76.0's: 0.76.0's figure note (lab suite) was measured with the place in.
 
 ## Limits
 
