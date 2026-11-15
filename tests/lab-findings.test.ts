@@ -37,6 +37,22 @@ describe("where a figure is discussed (harness 0.76.0)", () => {
     assert.ok(!short || !FIGURE_NOTE_LINE.test(short), "a shortened read leaves the note out");
   });
 
+  it("names nothing for a part that holds table rows, which is where values are read", () => {
+    // The CS suite's cs04 reads the part holding Table 4 and Figure 2's legend; a note pointing away
+    // from it cost the task (harness 0.78.0, eval/cs/README.md).
+    const withTable = new ResearchLibrary([
+      {
+        id: "t",
+        title: "T",
+        text: `${"Prose that fills a part so the legend lands in another. ".repeat(40)}\n\n*Figure 2: Accuracy by method.*\n\n| Method | A |\n| FedProx | 72.37 |\n\n${"More prose citing Figure 2 here. ".repeat(30)}`,
+      },
+    ]);
+    for (const id of withTable.index.partsOf("t")) {
+      const text = withTable.index.get(id)!.text;
+      if (/^\s*\|.*\|/m.test(text)) assert.deepEqual(withTable.index.figuresDiscussedElsewhere(id), [], `${id} holds table rows`);
+    }
+  });
+
   it("names nothing for a document with no figures, or a legend no other part cites", () => {
     assert.equal(figureNote([]), "");
     const alone = new ResearchLibrary([{ id: "d", title: "D", text: `${"Filler sentence here. ".repeat(80)}\n\n*Figure 9: A figure nothing cites.*` }]);

@@ -190,7 +190,7 @@ Over the four suites, 4B gains 4 tasks and loses 2, and 2B gains 3 and loses 1. 
 
 **2B:** it gains `cs23`, now reading part 30 and saying HyDE "did not improve", and `clinicalholdout` one task, and trades `c06` for `c11`. In `c06` it read parts 45 and 47 instead of 44, 46, 40 and 3: a long table earlier in that paper is now two pieces, so its later parts are numbered one higher, and the search results and reads differ from there. Its two fewer wrong labels under **Quotes found** are `cs22`, now right, and one held-out answer no longer labelled.
 
-### The other suites, and the rule's decisions (0.77.0)
+### The other suites, and the rule's decisions (0.78.0)
 
 **How they were run.** The rule asks for research, unanswerable, pdf, field and holdout on both models, and the lab suites (merged after 0.73.0) were added to them. Run in the order the decision needs (4B's protected suites, then 4B's field and lab, then 2B), in chunks of at most 10 tasks, each its own report, so a run that stops resumes at the next chunk. `main`'s recordings were reused wherever they replay: the 0.70.0 field and holdout runs and the 0.72.0 lab runs on `main`'s code (`0396484`), with `bench:replay` naming the tasks whose requests differ; only those ran, on both sides. 4B's `c01`, the one clinical or CS task whose requests changed with the final abbreviation place, was run again on that code and passes as before ([report](../results/cs-clinical-0.73-c01-qwen3.5-4b-q4km.json)). Research and unanswerable have no recent recording, so the change ran all 30 and `main` the 2 whose requests differ. Both sides used llama-server's prompt cache, as every run before harness 0.75.0, so these are a full run's results only per chunk: a comparison of a few tasks is noisier than its p says ([the prompt cache](../field/README.md#the-prompt-cache-makes-a-task-depend-on-the-tasks-before-it)).
 
@@ -217,7 +217,7 @@ Over the four suites, 4B gains 4 tasks and loses 2, and 2B gains 3 and loses 1. 
 - **The table note** is a heuristic: it must improve the domain suites without a protected loss. It gained `cs12` and reaches no other suite's documents. **Adopted.**
 - **The abbreviation place** is a heuristic too. It gained 3 and lost 2 (p = 1), no clear improvement, and the lab held-out total fell on 4B. **Not adopted: taken out in 0.77.0.** The place goes to the best-ranked passage using the abbreviation, which need not be the one that answers (`cs11` above); a later version could ask for the query's other terms too.
 
-**Without the abbreviation place (0.77.0).** `bench:replay` of every 0.73.0 recording on the code without it finds 17 tasks per model whose requests differ (lab, clinical and CS; none in research, unanswerable, pdf, field or holdout). Those were run again on that code and on `main`'s, with the prompt cache off on both ([before](../results/noslot-0.77-base-qwen3.5-4b-q4km.json), [after](../results/noslot-0.77-qwen3.5-4b-q4km.json); 2B: [before](../results/noslot-0.77-base-qwen3.5-2b-q4km.json), [after](../results/noslot-0.77-qwen3.5-2b-q4km.json)): 4B gains `l07` and one held-out task and loses none, 2B is unchanged. With the other tasks taken from the 0.73.0 runs, 0.77.0 against `main`:
+**Without the abbreviation place (0.78.0).** `bench:replay` of every 0.73.0 recording on the code without it finds 17 tasks per model whose requests differ (lab, clinical and CS; none in research, unanswerable, pdf, field or holdout). Those were run again on that code and on `main`'s, with the prompt cache off on both ([before](../results/noslot-0.77-base-qwen3.5-4b-q4km.json), [after](../results/noslot-0.77-qwen3.5-4b-q4km.json); 2B: [before](../results/noslot-0.77-base-qwen3.5-2b-q4km.json), [after](../results/noslot-0.77-qwen3.5-2b-q4km.json)): 4B gains `l07` and one held-out task and loses none, 2B is unchanged. With the other tasks taken from the 0.73.0 runs, 0.77.0 against `main`:
 
 | Model | Protected suites | `labholdout` | `lab` | `field` | `cs` | `csholdout` | `clinical` | `clinicalholdout` | All |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -225,6 +225,36 @@ Over the four suites, 4B gains 4 tasks and loses 2, and 2B gains 3 and loses 1. 
 | Qwen3.5-2B | unchanged | 9 → 10 | 22 → 20 (0 / 2) | 69 → 68 | 11 → 12 | 7 → 7 | 10 → 10 (1 / 1) | 4 → 5 | 4 gained, 4 lost |
 
 "Protected suites" are research, unanswerable, pdf and holdout, each the same before and after. `bench:retrieval`'s CS figures go back to 27 of 34 found in full (`cs11` and `cs22` lose their answer passages), and `tests/retrieval.test.ts`'s CS floor with them; every other suite is unchanged. The 17 tasks were run on 0.73.0's code without the place, not on 0.76.0's: 0.76.0's figure note (lab suite) was measured with the place in.
+
+### The figure note, and why it is not given to a table's part (0.78.0)
+
+The lab suite's 0.76.0 [figure note](../lab/README.md#three-changes-from-the-first-runs-0760) — a part holding a figure's legend ends with where that figure is discussed — reaches 23 of these papers' 534 parts, and its write-up left the CS runs undone. They are here, and they changed the rule.
+
+Both models ran on llama.cpp `0c1e570` built portably, on CPU in a 4-core cloud container, at 4,096 tokens of context, in constrained mode, against a baseline on `main` at 0.75.0 on the same machine, build and model file. **These are the first CS runs with llama-server's prompt cache off** (`main`'s 0.75.0), which makes a run about twice as slow and its replies independent of what ran before.
+
+**All four runs were made before `main`'s 0.77.0 took out the abbreviation place**, so each of them — baselines and changes alike — had it. The pairs are therefore internally consistent and the comparison is between the code versions, but the figures are not what these suites give on `main` today; a fresh baseline is needed before they are quoted as current.
+
+| Model | Suite | Baseline (no note) | The note as merged (0.76.0) | The note narrowed (0.78.0) |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | `cs` | 22/26 | 21/26 (0 gained, **1 lost**) | **22/26** (0, 0) |
+| Qwen3.5-4B | `csholdout` | 10/10 | 10/10 | 10/10 |
+| Qwen3.5-2B | `cs` | 13/26 | not run | **13/26** (0, 0) |
+| Qwen3.5-2B | `csholdout` | 7/10 | not run | 7/10 |
+
+For comparison, the 0.69.0 runs of these suites passed 17 of 26 on 4B and 11 of 26 on 2B, with the prompt cache on and before 0.73.0's tables and 0.76.0's checks. The baseline above is what the suites stand at now, so it is what a change is judged against.
+
+**The task the note cost, and what the reports show.** `cs04` asks for FedProx's macro-F1 on PAMAP2 under severe label skew. In both the baseline and the 0.76.0 run, 4B searched with the same query, read the same part (`stabfl-label-skew#28`) and gave the same right value, 72.37±1.84. The difference is the **quote**: without the note it quoted Table 4's row whole, and with the note it quoted the row from the middle, "FedProx | 76.90±4.21 | …", which is not word for word in the source. The quote check rejected it (`evidence: false`) and the task failed, though the answer was right.
+
+That part holds **Table 4 — the table the question needs — as well as Figure 2's legend**. The note sent the model away from the values it already had in front of it.
+
+**So a part that holds table rows takes no figure note** (`TABLE_ROW` in `figuresDiscussedElsewhere`). A part with rows of values is where an answer is read, not a place to point away from; a legend among prose still points to its discussion, which is what the lab case needs.
+
+The narrowing is measured, not assumed:
+- **Of the lab suite's 53 noted parts, all 53 keep their note**, so every lab prompt is unchanged and 0.76.0's lab measurement (4B 27→29 of 32, 2B 20→21, nothing lost) carries over with no model run.
+- **Of these suites' 23, 20 keep it**; the three dropped include `#28`. With them dropped, both models sit exactly on their baselines: 0 gained, 0 lost, `cs04` passing again.
+- `bench:retrieval` is unchanged on every suite, and `bench:rescore --labels` over every recorded report gives the same line for each answer: the note is read-time only.
+
+**What this says about the note.** On bench papers, where a figure's values live in the prose that cites it, it gains two tasks on 4B and one on 2B. On these CS papers, where the values are in tables the model reads directly, it gains nothing and, before the narrowing, cost one task through a quote that began mid-row. A pointer helps where the answer is elsewhere and distracts where it is already in hand, which is what the rule now encodes.
 
 ## Limits
 
