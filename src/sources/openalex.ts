@@ -191,7 +191,7 @@ export interface CitationQuery {
   whole?: string;
 }
 
-const WORK_REF = String.raw`(?:openalex:)?(W\d+)|doi:(\S+)|arxiv:(\S+)`;
+const WORK_REF = String.raw`(?:openalex:)?(W\d+)|(?:doi:|https?://doi\.org/)?(10\.\d{4,9}/\S+)|arxiv:(\S+)`;
 const CITATION_QUERY = new RegExp(
   String.raw`^\s*(references\s+of|reference\s+list\s+of|works\s+cited\s+by|cited_by:|citing|works\s+citing|papers\s+citing|citations\s+of|cites:)\s*(?:${WORK_REF})\s*[:,]?\s*([\s\S]*)$`,
   "i",
@@ -205,13 +205,18 @@ const CITATION_QUERY = new RegExp(
  */
 const CITATION_BY_TITLE = /^\s*(references\s+of|reference\s+list\s+of|works\s+cited\s+by|citing|works\s+citing|papers\s+citing|citations\s+of)\s+["'“]?([^:"”]{4,}?)["'”]?\s*(?::\s*([\s\S]*))?$/i;
 
+/** Words copied from the usage line's own placeholder ("citing W123: words") are no words. */
+function withoutPlaceholder(terms: string): string {
+  return /^(?:<?\s*(?:words?|terms?|keywords?|\.\.\.|…)\s*>?)$/i.test(terms) ? "" : terms;
+}
+
 export function citationQuery(query: string): CitationQuery | undefined {
   const m = CITATION_QUERY.exec(query);
   if (!m) {
     const t = CITATION_BY_TITLE.exec(query);
     if (!t) return undefined;
     const title = t[2]!.trim();
-    const terms = (t[3] ?? "").trim();
+    const terms = withoutPlaceholder((t[3] ?? "").trim());
     // "citing RAG" is a topic: without a colon after it, a title has at least two words. With one, a
     // paper's short name will do ("references of Self-RAG: PPO").
     if (terms === "" && t[3] === undefined && title.split(/\s+/).length < 2) return undefined;
@@ -225,12 +230,12 @@ export function citationQuery(query: string): CitationQuery | undefined {
   const direction = /^(references|reference|works\s+cited|cited_by)/i.test(m[1]!) ? "references" : "citing";
   // A DOI or arXiv ID runs to the next space; a colon or comma after it introduces the words.
   const work = m[2] ? m[2].toUpperCase() : m[3] ? `doi:${m[3].replace(/[.,;:]+$/, "")}` : `arxiv:${m[4]!.replace(/[.,;:]+$/, "").replace(/v\d+$/, "")}`;
-  return { direction, work, terms: m[5]!.replace(/^["']|["']$/g, "").trim() };
+  return { direction, work, terms: withoutPlaceholder(m[5]!.replace(/^["']|["']$/g, "").trim()) };
 }
 
 /** The pointer after a scholarly work's first read, when OpenAlex is searched: how to follow its citations. */
 export function citationNote(work: string): string {
-  return `\n\n[To follow its citations, search_openalex "references of ${work}: words" for works it cites, or "citing ${work}: words" for works citing it.]`;
+  return `\n\n[To follow its citations, search_openalex "citing ${work}" for works citing it, or "references of ${work}" for works it cites; add a colon and a topic to narrow them.]`;
 }
 
 /** A citation note at the end of a read (citationNote), which shortening an old read leaves out. */

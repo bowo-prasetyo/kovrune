@@ -157,7 +157,7 @@ export function createResearchTools(
       `{"tool":"search_${source.name}","args":{"query":"..."}} searches ${source.label} and returns IDs, titles and snippets.` +
       // OpenAlex follows citations (harness 0.82.0), said where the model always sees it: a note after a read
       // alone, Qwen3.5-4B never used (eval/cs/README.md).
-      (source.name === "openalex" ? ` For a paper's citations, the query "citing <its ID or title>: words" finds works that cite it, and "references of <its ID or title>: words" works it cites.` : ""),
+      (source.name === "openalex" ? ` To follow the citations of the paper the question names, query "citing <that paper's ID or title>" for works citing it, or "references of <that paper's ID or title>" for works it cites, adding ": <topic>" to narrow them.` : ""),
     args: z.object({ query: z.string() }).strict(),
     execute: async ({ query }: { query: string }) => {
       searchedSources.add(source.name);
