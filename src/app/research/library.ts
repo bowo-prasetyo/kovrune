@@ -2,6 +2,7 @@
 
 import { ACCEPTED_EXTENSIONS, extractText, type DocumentKind } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
+import type { DocumentWork } from "../../documents/references.ts";
 
 export interface LibraryDocument {
   id: string;
@@ -16,6 +17,8 @@ export interface LibraryDocument {
   warning?: string;
   /** Office files: the version of the reader that read it (documents/office.ts). */
   reader?: number;
+  /** The paper's reference details, from a reference export or its DOI (documents/references.ts), so answers cite it in full. */
+  work?: DocumentWork;
 }
 
 /** Accepted file types, for the file picker. */

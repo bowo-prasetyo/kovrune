@@ -17,6 +17,7 @@ export const documentSchema = z.object({
   pageStarts: z.array(z.number().int().nonnegative()).optional(),
   warning: z.string().optional(),
   reader: z.number().int().positive().optional(),
+  work: z.looseObject({ authors: z.array(z.string()), from: z.enum(["export", "text", "openalex"]) }).optional(),
 });
 
 const supportSchema = z.looseObject({ sentences: z.array(z.looseObject({ text: z.string() })), judged: z.number(), backed: z.number() });
@@ -35,6 +36,7 @@ const answerFields = {
   support: supportSchema.optional(),
   citations: z.record(z.string(), z.looseObject({})),
   titles: z.record(z.string(), z.string()),
+  works: z.record(z.string(), z.looseObject({ authors: z.array(z.string()) })).optional(),
   sourceErrors: z.array(z.string()),
   noAnswer: z.string().optional(),
   steps: z.array(z.string()),

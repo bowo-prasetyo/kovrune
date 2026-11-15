@@ -369,6 +369,16 @@ Steps 4 to 7 ask the same small model that wrote the answer, so they catch some 
 - **CSV and TSV files** are read as one sheet, the same way. Files saved by Japanese Excel as "CSV (comma delimited)" (Shift_JIS) and as "CSV UTF-8" both read correctly; for other languages' older encodings, save as "CSV UTF-8".
 - **Can't be read:** older Office files (.doc, .ppt, .xls), RTF files and password-protected files. Open them in Word, PowerPoint, Excel or LibreOffice, save them as .docx, .pptx, .xlsx or PDF (removing the password), and add them again.
 
+#### Adding many papers at once
+
+For the papers you downloaded through a library or a subscription (IEEE Xplore, ScienceDirect, SpringerLink), which no open source holds in full:
+
+- **A folder:** **Choose a folder**, or drop a folder on the page, adds every document in it and in its subfolders. Hidden files (such as `.DS_Store`) are left out, and a file Kovrune can't read (such as an old `.doc`) is named in the summary.
+- **Files already here are skipped:** a file with the same name and size as one in your documents, so adding the same folder again adds only what is new.
+- **Paper details from a reference manager:** export your collection as BibTeX (`.bib`) or RIS (`.ris`) from Zotero, Mendeley, EndNote or JabRef, with its files (in Zotero: **Export Collection…**, with **Export Files** ticked), and add the export folder. Each document gets the title, authors, year, journal and DOI of the entry that links to its file, or that has the DOI the document prints, or whose title is on its first page. An export added later on its own is matched to the documents already here. The details show under each document's name.
+- **A DOI without an export:** a document that prints its DOI on its first pages shows it. **Look up details on OpenAlex** finds the rest for all such documents at once; only each DOI is sent.
+- **In answers:** a quote from a document with details is cited with them ("Lee and Müller (2021). A Silicon Carbide Totem-Pole PFC Rectifier. IEEE Transactions on Power Electronics. https://doi.org/…"), in the Markdown export too, and **Export papers as BibTeX** includes it, with a note that it is from your library.
+
 #### Documents in other languages
 
 - Documents can be in any language, including Chinese, Japanese, Korean and Thai, which are written without spaces.
@@ -427,7 +437,7 @@ If the browser's storage for Kovrune is full, saving a document or an answer fai
 
 - **The model runs on your computer.** Nothing is sent to an online AI service.
 - **Your documents** are read in the browser and never uploaded.
-- **Wikipedia, OpenAlex, arXiv, DataCite and Europe PMC** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services: arXiv searches go to DataCite, and so does the title of a conference paper whose arXiv version is looked for, the arXiv papers the model reads are downloaded from arxiv.org, the DataCite works it reads on Zenodo are downloaded from zenodo.org, and Europe PMC's searches and full texts come from www.ebi.ac.uk. Your documents and your question as you typed it are not sent. An OpenAlex API key, if you enter one, is sent only to OpenAlex.
+- **Wikipedia, OpenAlex, arXiv, DataCite and Europe PMC** are off by default. When you tick them, the search words the model chooses and the pages it reads are requested from those services: arXiv searches go to DataCite, and so does the title of a conference paper whose arXiv version is looked for, the arXiv papers the model reads are downloaded from arxiv.org, the DataCite works it reads on Zenodo are downloaded from zenodo.org, and Europe PMC's searches and full texts come from www.ebi.ac.uk. Your documents and your question as you typed it are not sent. **Look up details on OpenAlex** (under Your documents) sends only the DOIs your documents print, when you click it. An OpenAlex API key, if you enter one, is sent only to OpenAlex.
 - **Other network requests:**
   - the browser path downloads the model from Hugging Face, and WebLLM's runtime library from GitHub, both at fixed versions that are checked against published checksums;
   - the local-server path talks only to the server address you entered. If that server is on another computer, your questions and the passages the model reads go to it over your network ([how](#use-a-model-server-on-another-computer)).

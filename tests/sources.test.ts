@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { createOpenAlex, fullTextIds, openAlexFilter, pmcidOf, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
+import { createOpenAlex, fullTextIds, openAlexFilter, pmcidOf, rebuildAbstract, snippetOf, workByDoi } from "../src/sources/openalex.ts";
 import { parseSourcePrefs } from "../src/app/research/sources.ts";
 import type { OpenSource } from "../src/sources/types.ts";
 import { SourceSession } from "../src/sources/session.ts";
@@ -610,3 +610,29 @@ describe("OpenAlex search limits and full texts (harness 0.70.0)", () => {
     assert.deepEqual([bad.openalexFromYear, bad.openalexOpenAccess, bad.openalexField], [undefined, undefined, undefined]);
   });
 });
+
+describe("OpenAlex details by DOI", () => {
+  it("looks up a document's details by its DOI, sending only the DOI", async () => {
+    const fetchImpl = fakeFetch([
+      [
+        /works\/doi:10\.1109%2FTPEL\.2021\.3061234/,
+        {
+          id: "https://openalex.org/W1",
+          display_name: "A GaN-Based Totem-Pole PFC Rectifier",
+          publication_year: 2021,
+          doi: "https://doi.org/10.1109/tpel.2021.3061234",
+          authorships: [{ author: { display_name: "Fred C. Lee" } }],
+          primary_location: { source: { display_name: "IEEE Transactions on Power Electronics" } },
+          ids: { pmid: null, pmcid: null },
+        },
+      ],
+      [/works\/doi:10\.1000/, { error: "not found" }, 404],
+    ]);
+    const found = await workByDoi("10.1109/TPEL.2021.3061234", fetchImpl, "my-key");
+    assert.equal(found?.title, "A GaN-Based Totem-Pole PFC Rectifier");
+    assert.deepEqual(found?.info, { authors: ["Fred C. Lee"], year: 2021, doi: "10.1109/tpel.2021.3061234", venue: "IEEE Transactions on Power Electronics" });
+    assert.match(fetchImpl.urls[0]!, /api_key=my-key/);
+    assert.equal(await workByDoi("10.1000/unknown", fetchImpl), undefined);
+  });
+});
+
