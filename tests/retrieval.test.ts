@@ -117,6 +117,36 @@ describe("retrieval on the evaluation set", () => {
     assert.ok(found("IL10").has("il10-tolerance-birds"), "the paper's own spelling finds it");
     assert.equal(found("IL-10").has("il10-tolerance-birds"), false, "a hyphen between the letters and the number does not");
   });
+
+  it("records how often another spelling of a name misses its paper", async () => {
+    // Measured at 0.75.0 before building anything (eval/lab/README.md): every paper is found by the
+    // spelling it uses, and 8 of 28 spellings a researcher might type are not. The misses are two
+    // families — a hyphen or space inside a name, and a Greek letter written as its name — which is what
+    // a change to search would have to bridge. These assertions fail when it does, and should then be
+    // replaced by the figures after it.
+    const field = await loadFieldSuite();
+    const found = (query: string) => new Set(appSearch(3)(field.labLibrary, query).map((id) => id.replace(/#\d+$/, "")));
+    for (const [own, paper] of [
+      ["IL10", "il10-tolerance-birds"],
+      ["PPARα", "ppara-brown-adipocytes"],
+      ["mecA", "meca-daptomycin-tolerance"],
+      ["H3K27me3", "scml2-sperm-chromatin"],
+      ["BmMDH2", "adp-ribose-methanol-dehydrogenase"],
+    ] as const) {
+      assert.ok(found(own).has(paper), `the paper's own "${own}" finds it`);
+    }
+    // A hyphen or a space where the paper runs the name together.
+    for (const [variant, paper] of [
+      ["IL-10", "il10-tolerance-birds"],
+      ["mec A", "meca-daptomycin-tolerance"],
+      ["H3K27 me3", "scml2-sperm-chromatin"],
+      ["Bm MDH2", "adp-ribose-methanol-dehydrogenase"],
+    ] as const) {
+      assert.equal(found(variant).has(paper), false, `"${variant}" still misses its paper`);
+    }
+    // A Greek letter written as its name.
+    assert.equal(found("PPARalpha").has("ppara-brown-adipocytes"), false, '"PPARalpha" still misses its paper');
+  });
 });
 
 const FIELD_FLOOR = { documentRecall: 0.974, passageRecall: 0.933, complete: 69 };

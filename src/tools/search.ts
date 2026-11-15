@@ -135,6 +135,34 @@ export class DocumentIndex {
     return cited.slice(0, MAX_TABLE_NOTES);
   }
 
+  /**
+   * For a part that holds a figure's legend, where that figure is discussed: the first part of the same
+   * document that cites it, with that figure's label (harness 0.75.0). A paper gives a figure's values in
+   * the prose that cites it, while the legend repeats the design, so search ranks the legend high and the
+   * prose that answers is elsewhere: Qwen3.5-4B read Figure 1's legend and Figure 6's, found no value and
+   * answered "not found", though the sentence citing "(Figure 1C)" gives both (eval/lab/README.md, l04).
+   * The mirror of tablesCitedElsewhere, which points from prose to the table it cites.
+   */
+  figuresDiscussedElsewhere(partId: string): Array<{ figure: string; partId: string }> {
+    const doc = this.get(partId);
+    const hash = partId.lastIndexOf("#");
+    if (!doc || hash < 0) return [];
+    const own = [...new Set([...doc.text.matchAll(FIGURE_CAPTION)].map((m) => figureLabel((m[1] ?? m[2])!)))];
+    if (!own.length) return [];
+    const discussed: Array<{ figure: string; partId: string }> = [];
+    for (const id of this.partsOf(partId.slice(0, hash))) {
+      if (id === partId) continue;
+      const text = this.get(id)!.text;
+      // A part that only holds the legend again is no discussion: the citation must stand outside one.
+      const legends = new Set([...text.matchAll(FIGURE_CAPTION)].map((m) => figureLabel((m[1] ?? m[2])!)));
+      for (const match of text.matchAll(FIGURE_CITATION)) {
+        const label = figureLabel(match[1]!);
+        if (own.includes(label) && !legends.has(label) && !discussed.some((d) => d.figure === label)) discussed.push({ figure: label, partId: id });
+      }
+    }
+    return discussed.sort((a, b) => own.indexOf(a.figure) - own.indexOf(b.figure)).slice(0, MAX_FIGURE_NOTES);
+  }
+
   /** IDs of the chunks of a chunked document (`${docId}#1`, `${docId}#2`, ...). */
   partsOf(docId: string): string[] {
     return this.docs.filter((doc) => doc.id.startsWith(`${docId}#`)).map((doc) => doc.id);
@@ -254,6 +282,18 @@ const TABLE_CITATION = /\bTables?\s+([A-Z]?\d+)\b/g;
 /** At most this many tables are pointed to after one part. */
 const MAX_TABLE_NOTES = 3;
 const tableLabel = (number: string) => `Table ${number}`;
+
+/**
+ * A figure's legend, as the JATS converter writes it ("*Figure 1: Generation of …*") and as a PDF's text
+ * gives it ("Figure 1. Generation of …"). A supplementary figure's legend is not in the document, so only
+ * the plain forms are matched.
+ */
+const FIGURE_CAPTION = /^(?:\*{1,2}Figure\s+([A-Z]?\d+)\*{0,2}[.:]|Figure\s+([A-Z]?\d+)[.:](?!\d))/gm;
+/** A citation of a figure in running text: "Figure 1", "Figure 1C", "(Fig. 2A)", "Figures 1 and 2" (the first). */
+const FIGURE_CITATION = /\b(?:Figs?\.?|Figures?)\s+([A-Z]?\d+)[A-Z]?\b/g;
+/** At most this many figures are pointed to after one part. */
+const MAX_FIGURE_NOTES = 2;
+const figureLabel = (number: string) => `Figure ${number}`;
 
 /** A document's sentences, as snippets are chosen from them. */
 function sentencesOf(text: string): string[] {

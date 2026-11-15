@@ -15,7 +15,7 @@ import { parseArgs } from "node:util";
 import { checkEvidence, answerStatus, type EvidenceItem } from "../src/agent/evidence.ts";
 import { withoutPartLabels, type ResearchLibrary } from "../src/agent/research.ts";
 import { reviewsShortAnswers, type ReviewVerdict } from "../src/agent/review.ts";
-import { labelledQuotesFound, reviewAsked, sentenceSupport, wordChecksPass } from "../src/agent/support.ts";
+import { contradictedSupport, labelledQuotesFound, reviewAsked, sentenceSupport, wordChecksPass } from "../src/agent/support.ts";
 import type { Report } from "./harness/benchmark.ts";
 import { scoreResearch } from "./harness/scoring.ts";
 import { loadFieldSuite } from "./harness/field.ts";
@@ -87,7 +87,26 @@ for (const file of positionals) {
     const answer = withoutPartLabels(final.answer);
     const evidence = checkEvidence(final.evidence, (id) => library.textFor(id), (id) => library.pageStartsFor(id));
     const status = answerStatus(final.found, evidence);
-    const support = sentenceSupport(answer, evidence, (id) => library.documentFor(id)?.title, task.question);
+    // The documents the recorded run read or cited, as the app gathers them (research.ts), so the
+    // contradiction check of 0.75.0 sees what the model saw.
+    const readIds = [
+      ...new Set(
+        [...(result.actions ?? []).flatMap((a: string) => [...a.matchAll(/"docId":"([^"]+)"/g)].map((m) => m[1]!)), ...final.evidence.map((e) => e.docId)].map((id) =>
+          id.replace(/#\d+$/, ""),
+        ),
+      ),
+    ];
+    const readDocuments = readIds.flatMap((docId) => {
+      const text = library.textFor(docId);
+      return text ? [{ docId, text }] : [];
+    });
+    const support = contradictedSupport(
+      sentenceSupport(answer, evidence, (id) => library.documentFor(id)?.title, task.question),
+      readDocuments,
+      evidence.filter((e) => e.verified),
+      (id) => library.documentFor(id)?.title,
+      task.question,
+    );
     // The recorded review counts only where the app would still ask for it (research.ts): an answer the
     // word checks no longer pass, and too short for the models whose short answers are reviewed, is not
     // reviewed, so its recorded "yes" does not label it. The cross-check and completeness check follow it.

@@ -23,6 +23,20 @@ export function tableNote(tables: Array<{ table: string; partId: string }>): str
 
 export const TABLE_NOTE_LINE = /\n*\[Table [^\n]* is in [^\n]*\.\]/;
 
+/**
+ * After a part that holds a figure's legend, where that figure is discussed (harness 0.75.0,
+ * DocumentIndex.figuresDiscussedElsewhere): "[Figure 1 is discussed in ppara-brown-adipocytes#13.]". A
+ * legend repeats a figure's design; the prose that cites it gives its values. Shortening an old read
+ * leaves it out (FIGURE_NOTE_LINE), as it does a table's note and an outline.
+ */
+export function figureNote(figures: Array<{ figure: string; partId: string }>): string {
+  if (!figures.length) return "";
+  const where = figures.map(({ figure, partId }) => `${figure} is discussed in ${partId}`).join("; ");
+  return `\n\n[${where}.]`;
+}
+
+export const FIGURE_NOTE_LINE = /\n*\[Figure [^\n]* is discussed in [^\n]*\.\]/;
+
 /** "A", "A and B", "A, B and C": one or two names read as before arXiv made three possible. */
 export function joinNames(names: string[]): string {
   return names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
@@ -246,7 +260,7 @@ export function createResearchTools(
         readDocument = true;
         readIds.add(doc.id);
         unread.clear();
-        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(doc.id))}`);
+        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(doc.id))}${figureNote(index.figuresDiscussedElsewhere(doc.id))}`);
       },
       // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
       // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
@@ -254,7 +268,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },
