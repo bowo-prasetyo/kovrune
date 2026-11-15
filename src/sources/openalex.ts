@@ -276,11 +276,23 @@ export function fullTextIds(work: Work, readers: FullTextReaders): Array<{ reade
  * from arXiv or Europe PMC when `readers` has that source and the work is there (fullTextIds); otherwise,
  * or when that fails, as its abstract.
  */
-export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, filters: OpenAlexFilters = {}, readers: FullTextReaders = {}): OpenSource {
+export function createOpenAlex(
+  fetchImpl: FetchLike = fetch,
+  apiKey?: string,
+  filters: OpenAlexFilters = {},
+  readers: FullTextReaders = {},
+  /**
+   * Tell the model it can follow citations (followsCitations). Off by default: told so, Qwen3.5-4B passed
+   * 2 and 3 of 5 citation questions where it passed 4 without, mostly following the wrong paper's citations
+   * (eval/cs/README.md). The search forms work either way.
+   */
+  behaviour: { followCitations?: boolean } = {},
+): OpenSource {
   const { params: auth, options } = openAlexOptions(apiKey);
   const filter = openAlexFilter(filters);
   return {
     name: "openalex",
+    ...(behaviour.followCitations ? { followsCitations: true } : {}),
     label: "OpenAlex",
     async search(query, signal) {
       let cited = citationQuery(query);

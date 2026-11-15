@@ -461,6 +461,10 @@ export function ResearchPanel({
                   <input type="checkbox" checked={prefs.openalexOpenAccess ?? false} disabled={running} onChange={(e) => updatePrefs({ openalexOpenAccess: e.target.checked })} />
                   Open-access works only
                 </label>
+                <label className="choice">
+                  <input type="checkbox" checked={prefs.openalexFollowCitations ?? false} disabled={running} onChange={(e) => updatePrefs({ openalexFollowCitations: e.target.checked })} />
+                  Let the model follow citations (experimental: small models often follow the wrong paper's)
+                </label>
               </div>
             )}
             {prefs.openalex && (prefs.arxiv || prefs.europepmc) && (

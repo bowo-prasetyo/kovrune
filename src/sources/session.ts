@@ -117,7 +117,7 @@ export class SourceSession {
    * arXiv ID, and another paper by its DOI; a Wikipedia article has no citations to follow.
    */
   private citationPointer(doc: FetchedDocument): string {
-    if (!this.sources.some((s) => s.name === "openalex") || this.pointed.has(doc.id)) return "";
+    if (!this.sources.some((s) => s.followsCitations) || this.pointed.has(doc.id)) return "";
     const openalex = /^openalex:(W\d+)$/.exec(doc.id)?.[1];
     const arxiv = /^10\.48550\/arxiv\.(.+)$/i.exec(doc.work?.doi ?? "")?.[1];
     const work = openalex ?? (arxiv ? `arxiv:${arxiv}` : doc.work?.doi ? `doi:${doc.work.doi}` : undefined);

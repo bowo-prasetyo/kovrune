@@ -3,7 +3,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { CITATION_NOTE_LINE, citationCounts, citationNote, citationQuery, createOpenAlex, workText } from "../src/sources/openalex.ts";
+import { parseSourcePrefs } from "../src/app/research/sources.ts";
 import { SourceSession } from "../src/sources/session.ts";
+import { createResearchTools } from "../src/tools/research.ts";
+import { DocumentIndex } from "../src/tools/search.ts";
 import type { FetchedDocument, FetchLike, OpenSource } from "../src/sources/types.ts";
 
 function fakeFetch(routes: Array<[RegExp, unknown, number?]>): FetchLike & { urls: string[] } {
@@ -109,7 +112,7 @@ describe("the note after a work's first read", () => {
     search: async () => [],
     fetch: async (id) => ({ id, title: "T", text: "Text of the work.", url: "https://example.org", retrievedAt: "2026-11-15T00:00:00Z", ...doc }),
   });
-  const openalex = source("openalex", {});
+  const openalex = { ...source("openalex", {}), followsCitations: true };
 
   it("names an OpenAlex work by its ID, an arXiv paper by its arXiv ID and another paper by its DOI, once each", async () => {
     const session = new SourceSession([openalex, source("arxiv", { work: { authors: [], doi: "10.48550/arXiv.2310.11511" } }), source("europepmc", { work: { authors: [], doi: "10.1016/S0140-6736(23)01234-5" } }), source("wikipedia", {})], "q");
@@ -118,6 +121,18 @@ describe("the note after a work's first read", () => {
     assert.ok((await session.read("europepmc:MED/1")).endsWith(citationNote("doi:10.1016/S0140-6736(23)01234-5")));
     assert.doesNotMatch(await session.read("wikipedia:Ada_Lovelace"), /To follow its citations/, "an article has no citations to follow");
     assert.doesNotMatch(await new SourceSession([openalex], "q").read("openalex:W42").then(() => session.read("openalex:W42")), /To follow/, "shown once");
+  });
+
+  it("is given only when the user lets the model follow citations, as the search tool's usage line is", async () => {
+    const off = new SourceSession([source("openalex", {}), source("arxiv", { work: { authors: [], doi: "10.48550/arXiv.2310.11511" } })], "q");
+    assert.doesNotMatch(await off.read("openalex:W42"), /To follow its citations/);
+    const usage = (sources: OpenSource[]) => createResearchTools(new DocumentIndex([]), new SourceSession(sources, "q")).find((t) => t.name === "search_openalex")!.usage;
+    assert.doesNotMatch(usage([source("openalex", {})]), /citing/);
+    assert.match(usage([openalex]), /query "citing <that paper's ID or title>" for works citing it, or "references of <that paper's ID or title>"/);
+    assert.equal(parseSourcePrefs(JSON.stringify({ openalex: true })).openalexFollowCitations, undefined, "off by default");
+    assert.equal(parseSourcePrefs(JSON.stringify({ openalex: true, openalexFollowCitations: true })).openalexFollowCitations, true);
+    assert.equal(createOpenAlex(fakeFetch([]), undefined, {}, {}, { followCitations: true }).followsCitations, true);
+    assert.equal(createOpenAlex(fakeFetch([])).followsCitations, undefined);
   });
 
   it("is not given when OpenAlex is not searched, and an old read loses it when shortened", async () => {

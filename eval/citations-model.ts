@@ -53,6 +53,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       context: { type: "string", default: "4096" },
       "extra-body": { type: "string" },
       tasks: { type: "string" },
+      /** Leave the model untold that it can follow citations, as Kovrune does unless the user turns it on. */
+      "no-follow": { type: "boolean" },
       out: { type: "string" },
     },
   });
@@ -74,7 +76,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (only && !only.some((id) => task.id.startsWith(id))) continue;
     const start = Date.now();
     const arxiv = createArxiv({ extractPdf: (bytes) => extractPdfText(bytes, pdfjs) });
-    const sources = [openalex.createOpenAlex(fetch, undefined, {}, { arxiv }), arxiv];
+    const sources = [openalex.createOpenAlex(fetch, undefined, {}, { arxiv }, { followCitations: values["no-follow"] !== true }), arxiv];
     const result = await runResearch({ question: task.question, library: new ResearchLibrary([]), model, sources, constrained: true });
     const final = result.final;
     const facts = !!final && task.facts.every((group) => group.some((option) => norm(final.answer).includes(norm(option))));
