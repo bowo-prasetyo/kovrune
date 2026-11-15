@@ -224,8 +224,10 @@ The runs above named four things to try. Three are done here, and one was measur
 | --- | --- | --- | --- | --- | --- | --- |
 | Qwen3.5-4B | `lab` | 27/32 | **29/32** | 2 | 0 | 0.50 |
 | Qwen3.5-4B | `labholdout` | 9/11 | 9/11 | 0 | 0 | 1 |
+| Qwen3.5-2B | `lab` | 20/32 | **21/32** | 1 | 0 | 1 |
+| Qwen3.5-2B | `labholdout` | 9/11 | 9/11 | 0 | 0 | 1 |
 
-4B gained `l04`, the task the figure note was written for, and `l28`. **The mechanism is confirmed, not assumed:** in the new run 4B read `ppara-brown-adipocytes#14`, the Figure 1 legend, then read `#13`, the part the note points to, and answered "reduced by up to 97% in female mice and 83% in male mice". Labelled answers that are wrong: 0 of 25 before, 0 of 26 after.
+Neither model lost a task, and neither held-out total fell. 4B gained `l04`, the task the figure note was written for, and `l28`; 2B gained `l07`, whose answer the 0.71.0 names rule had marked and 0.74.0 unmarked. With so few discordant tasks McNemar's p cannot be small (2 gained and 0 lost gives 0.5), so this shows no harm and points the right way, as the rule's recorded decisions do. **The mechanism is confirmed, not assumed:** in the new run 4B read `ppara-brown-adipocytes#14`, the Figure 1 legend, then read `#13`, the part the note points to, and answered "reduced by up to 97% in female mice and 83% in male mice". Labelled answers that are wrong: on 4B, 0 of 25 before and 0 of 26 after; on 2B, 5 of 24 before and 5 of 25 after, the share 2B shows on every paper suite.
 
 **`l03` answered itself this time.** In the new run 4B's first answer was rejected by the read-before-answering guard, and its second said "neither the heterozygous IL10 knockout nor a homozygous IL10 enhancer mutation had a major effect" — the right answer — so the contradiction check had nothing to fire on. The error it guards against is not deterministic: it is in the recorded 0.72.0 run, where rescoring shows the check removing its label. A guard is worth having for an error a model makes some of the time, but one run cannot show it firing.
 
