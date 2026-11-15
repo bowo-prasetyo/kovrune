@@ -81,10 +81,21 @@ export function withExports(docs: LibraryDocument[], exports: Array<{ source: st
 }
 
 /** What a finished import says: added, with details, and what was left out and why. */
-export function describeImport(result: { added: number; withDetails: number; duplicates: number; unsupported: string[]; failed: number; exports: number; matchedExisting: number }): string {
+export function describeImport(result: {
+  added: number;
+  withDetails: number;
+  duplicates: number;
+  unsupported: string[];
+  failed: number;
+  /** Added PDFs with pages that have no text (extract.ts textlessPagesWarning). */
+  textless?: number;
+  exports: number;
+  matchedExisting: number;
+}): string {
   const parts: string[] = [];
   const s = (n: number) => (n === 1 ? "" : "s");
   if (result.added) parts.push(`Added ${result.added} document${s(result.added)}, ${result.withDetails} with paper details.`);
+  if (result.textless) parts.push(`Of these, ${result.textless} ${result.textless === 1 ? "has" : "have"} pages with no text (probably scanned), marked below.`);
   if (result.exports && result.matchedExisting) parts.push(`Matched ${result.matchedExisting} document${s(result.matchedExisting)} already here to the reference export.`);
   else if (result.exports && !result.added) parts.push("No document here matched the reference export.");
   if (result.duplicates) parts.push(`Skipped ${result.duplicates} already in your documents.`);

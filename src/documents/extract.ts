@@ -2,6 +2,7 @@
 // PowerPoint, Excel and OpenDocument files. PDF extraction uses pdf.js; scanned PDFs without a text layer yield no
 // text (there is no OCR, docs/m1-plan.md decision D3). Office files are read by office.ts.
 
+import { describePageNumbers, pagesWithoutText } from "./pages.ts";
 import { decodeText, parseDelimited, sniffDelimiter } from "./delimited.ts";
 import { extractOfficeText, joinPages, OFFICE_READER_VERSION, PAGE_UNITS, type OfficeKind } from "./office.ts";
 import { MAX_SHEET_ROWS, readRows } from "./sheets.ts";
@@ -239,4 +240,17 @@ export async function extractText(
   const raw = new TextDecoder().decode(bytes);
   const text = (kind === "html" ? htmlToText(raw) : raw.replace(/\r\n/g, "\n").trim()).replace(/\u00ad/g, "");
   return { kind, text, warning: text ? undefined : "This file has no text." };
+}
+
+/**
+ * For a PDF that has text, the pages that have none: "Pages 2 and 4 of 5 have no text …". Undefined when
+ * every page has text, or none has (the document's own warning says so then), and for other kinds:
+ * a slide with only a title or a picture is common, a PDF page without text is not.
+ */
+export function textlessPagesWarning(doc: { kind: DocumentKind; text: string; pageStarts?: number[] }): string | undefined {
+  if (doc.kind !== "pdf" || !doc.text.trim() || !doc.pageStarts) return undefined;
+  const empty = pagesWithoutText(doc.text, doc.pageStarts);
+  if (!empty.length || empty.length === doc.pageStarts.length) return undefined;
+  const which = `${empty.length === 1 ? "Page" : "Pages"} ${describePageNumbers(empty)} of ${doc.pageStarts.length}`;
+  return `${which} ${empty.length === 1 ? "has" : "have"} no text Kovrune can read: ${empty.length === 1 ? "it may be a scan, a full-page figure or blank" : "they may be scans, full-page figures or blank"}. A question about what ${empty.length === 1 ? "it shows" : "they show"} will find nothing.`;
 }
