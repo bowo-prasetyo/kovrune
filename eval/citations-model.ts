@@ -15,7 +15,7 @@ import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import { extractPdfText, type PdfJsLike } from "../src/documents/extract.ts";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import { createArxiv } from "../src/sources/arxiv.ts";
-import { createOpenAlex } from "../src/sources/openalex.ts";
+import * as openalex from "../src/sources/openalex.ts";
 
 export const citationQuestions: Array<{ id: string; question: string; facts: string[][] }> = [
   {
@@ -74,7 +74,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (only && !only.some((id) => task.id.startsWith(id))) continue;
     const start = Date.now();
     const arxiv = createArxiv({ extractPdf: (bytes) => extractPdfText(bytes, pdfjs) });
-    const sources = [createOpenAlex(fetch, undefined, {}, { arxiv }), arxiv];
+    const sources = [openalex.createOpenAlex(fetch, undefined, {}, { arxiv }), arxiv];
     const result = await runResearch({ question: task.question, library: new ResearchLibrary([]), model, sources, constrained: true });
     const final = result.final;
     const facts = !!final && task.facts.every((group) => group.some((option) => norm(final.answer).includes(norm(option))));
@@ -84,7 +84,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       passed: !!final && final.found && facts && result.status === "verified",
       facts,
       status: result.status,
-      followed: actions.some((a) => /search_openalex .*(references of|citing|cites:|cited_by:)/i.test(a)),
+      // A search the source reads as following citations; before 0.82.0 there is no such reading.
+      followed: result.agent.calls.some((c) => c.valid && c.tool === "search_openalex" && Boolean((openalex as { citationQuery?: (q: string) => unknown }).citationQuery?.((c.args as { query: string }).query))),
       ...(final ? { answer: final.answer } : {}),
       cited: [...new Set((final?.evidence ?? []).map((e) => e.docId.replace(/#\d+$/, "")))],
       actions,

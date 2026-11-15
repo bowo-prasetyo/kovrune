@@ -30,7 +30,35 @@ describe("a search that follows citations", () => {
     assert.deepEqual(citationQuery('cites:W12 "long context"'), { direction: "citing", work: "W12", terms: "long context" });
     assert.deepEqual(citationQuery("cited_by:W12"), { direction: "references", work: "W12", terms: "" });
     assert.equal(citationQuery("retrieval augmented generation"), undefined);
-    assert.equal(citationQuery("citing RAG"), undefined, "a work must be named by an ID");
+    assert.equal(citationQuery("citing RAG"), undefined, "one word without a colon is a topic");
+  });
+
+  it("reads a paper named by its title, keeping a subtitle to try whole", () => {
+    assert.deepEqual(citationQuery('papers citing "Lost in the Middle": graph'), { direction: "citing", work: "title:Lost in the Middle", terms: "graph", whole: "Lost in the Middle: graph" });
+    assert.deepEqual(citationQuery("references of Self-RAG: PPO"), { direction: "references", work: "title:Self-RAG", terms: "PPO", whole: "Self-RAG: PPO" });
+    assert.deepEqual(citationQuery("citing Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"), { direction: "citing", work: "title:Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", terms: "" });
+  });
+
+  it("follows the work a title names, whole or before its colon, and searches a title that names none as words", async () => {
+    const lost = { id: "https://openalex.org/W77", display_name: "Lost in the Middle: How Language Models Use Long Contexts" };
+    const fetchImpl = fakeFetch([
+      [/filter=title\.search%3ALost\+in\+the\+Middle\+How/, { results: [lost] }],
+      [/filter=title\.search%3ALost\+in\+the\+Middle\+graph/, { results: [] }],
+      [/filter=title\.search%3ALost\+in\+the\+Middle&/, { results: [{ id: "https://openalex.org/W5", display_name: "Lost in the Middle of Nowhere" }, lost] }],
+      [/filter=title\.search%3Aretrieval/, { results: [{ id: "https://openalex.org/W9", display_name: "Benchmarking retrieval augmented generation" }] }],
+      [/\/works\?/, { results: [] }],
+    ]);
+    const source = createOpenAlex(fetchImpl);
+    const lastFilter = () => new URL(fetchImpl.urls.at(-1)!).searchParams;
+    await source.search("citing Lost in the Middle: How Language Models Use Long Contexts");
+    assert.equal(lastFilter().get("filter"), "cites:W77");
+    assert.equal(lastFilter().get("search"), null, "the subtitle is the title's, not words to search");
+    await source.search("citing Lost in the Middle: graph");
+    assert.equal(lastFilter().get("filter"), "cites:W5", "the first title starting with the name given");
+    assert.equal(lastFilter().get("search"), "graph");
+    await source.search("citing retrieval augmented generation systems");
+    assert.equal(lastFilter().get("filter"), null, "no title starts so: searched as words");
+    assert.equal(lastFilter().get("search"), "citing retrieval augmented generation systems");
   });
 
   it("asks OpenAlex for the works a work cites, or that cite it, best matching the words, within the user's limits", async () => {
