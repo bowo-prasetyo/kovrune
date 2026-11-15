@@ -136,6 +136,9 @@ export function workInfo(work: Work): WorkInfo {
     ...(work.publication_year ? { year: work.publication_year } : {}),
     ...(work.doi ? { doi: work.doi.replace(/^https:\/\/doi\.org\//, "") } : {}),
     ...(work.primary_location?.source?.display_name ? { venue: work.primary_location.source.display_name } : {}),
+    // OpenAlex gives these as URLs ("https://pubmed.ncbi.nlm.nih.gov/38012345"); the identifiers alone are cited.
+    ...(work.ids?.pmid?.match(/\d+$/) ? { pmid: work.ids.pmid.match(/\d+$/)![0] } : {}),
+    ...(work.ids?.pmcid?.match(/PMC\d+/) ? { pmcid: work.ids.pmcid.match(/PMC\d+/)![0] } : {}),
   };
 }
 

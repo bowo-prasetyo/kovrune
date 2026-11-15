@@ -172,6 +172,20 @@ describe("saved answers", () => {
     assert.match(bibtex, / {2}author = \{Ashish Vaswani and Noam Shazeer\},\n/);
     assert.match(bibtex, / {2}year = \{2017\},\n {2}journal = \{arXiv\},\n {2}doi = \{10\.48550\/arxiv\.1706\.03762\},\n/);
     assert.equal(answerToBibtex({ ...answer, citations: {} }), undefined);
+    // This OpenAlex work has no PubMed identifiers, so the entry has no such fields (harness 0.74.0).
+    assert.doesNotMatch(bibtex, /pmid|pmcid/);
+  });
+
+  it("exports PubMed identifiers with a paper that has them", async () => {
+    const answer = await savedAnswer();
+    const id = "openalex:W2741809807";
+    const cited = answer.citations[id]!;
+    const withIds: SavedAnswer = {
+      ...answer,
+      citations: { ...answer.citations, [id]: { ...cited, work: { ...cited.work!, pmid: "38012345", pmcid: "PMC10850983" } } },
+    };
+    const bibtex = answerToBibtex(withIds)!;
+    assert.match(bibtex, / {2}doi = \{10\.48550\/arxiv\.1706\.03762\},\n {2}pmid = \{38012345\},\n {2}pmcid = \{PMC10850983\},\n/);
   });
 
   it("names export files after the question and the date", async () => {

@@ -277,7 +277,7 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
     const citation = answer.citations[docId];
     if (!citation?.work) continue;
     const paper = docId.replace(/#\d+$/, "");
-    const { authors, year, doi, venue } = citation.work;
+    const { authors, year, doi, venue, pmid, pmcid } = citation.work;
     // arXiv papers are cited as arXiv's own BibTeX does: a @misc with the identifier as eprint.
     const eprint = paper.startsWith("arxiv:") ? paper.slice("arxiv:".length) : undefined;
     // Repository works from DataCite are a @misc published by their repository, not a journal article.
@@ -300,6 +300,9 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
           ] as Array<[string, string]>)
         : ([[venue && !repository ? "journal" : "howpublished", venue ?? citation.source]] as Array<[string, string]>)),
       ["doi", doi],
+      // Biomedical journals and grant forms ask for these, so an answer's papers carry them where the source gave them.
+      ["pmid", pmid],
+      ["pmcid", pmcid],
       ["url", citation.url],
       ["note", `Retrieved from ${citation.source} on ${citation.retrievedAt.slice(0, 10)}`],
     ];

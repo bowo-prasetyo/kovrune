@@ -1002,6 +1002,29 @@ What changed:
 
 Four changes from the [CS suite's first runs](../cs/README.md#four-changes-from-the-first-runs-0730): long tables split between rows, with their label, caption and column names repeated in each later piece; a note after a part that cites a table held in another part; a result kept for a passage that uses only an abbreviation the query spells out; and search snippets that end at a whole word. On this suite's documents they change only snippets, in 7 parts, and no `bench:retrieval` figure; their runs are recorded with the CS suite's.
 
+### A backed name with a plain suffix (0.74.0, defect fix)
+
+The laboratory names check of 0.71.0 marked a right answer in the lab suite's first 2B run. Asked whether PPARαBATKO mice differed in body weight, 2B answered, rightly, that "PPARα deletion did not alter body weight gain in HFD-induced obese mice, meaning the body weight of PPARαBATKO mice was similar to that of control mice", and quoted Figure 2's legend: "BAT specific deletion of PPARα does not alter glucose tolerance or body weight gain in HFD-induced obese mice." The rule marked the sentence because `PPARαBATKO`, a Greek-letter name, is not in that quote, which names only the gene, `PPARα`; the mouse line is the paper's own, three paragraphs away ([lab suite](../lab/README.md#the-0710-laboratory-checks-fired-once-in-86-answers-and-that-once-was-a-false-positive)).
+
+Since 0.74.0, a distinguishing name is also backed when it adds a **plain suffix** to a name the quotes, titles or question give (`plainSuffix` in `src/agent/support.ts`): the suffix must be letters and digits only, and must not begin with a Greek letter's name. Both names are compared in `nameKey`'s form, where a Greek letter reads as its name and a sign is kept.
+
+| The quotes say | The answer says | Before | After |
+| --- | --- | --- | --- |
+| PPARα | PPARα**BATKO** | not backed | **backed** |
+| TNF | TNF-**β** | not backed | not backed |
+| ER | ER**β** | not backed | not backed |
+| CD45 | CD45**+** | not backed | not backed |
+| Tlr4−/− | Tlr4**+/+** | not backed | not backed |
+| TNF-α | TNF-β | not backed | not backed |
+
+The four cases the rule exists for keep their marks because there the suffix **is** the distinguishing character: "beta" is a Greek letter's name, and "+" and "+/+" are signs, none of which a plain suffix may be.
+
+**This narrows the rule, and the narrowing has a cost.** A suffix can change what a name refers to: a gene and the mouse line named after it are not the same thing, and a quote may speak only of the gene. The sentence must still share most of its words with the quotes, so the other checks still apply, but a sentence that attributes a gene's result to the line would now pass the names check. The fuller fix is to look for the name in the documents the model read, as `inSourceSupport` looks for sentences; that needs the read documents in `sentenceSupport`, and its own measurement.
+
+**Effect on recorded runs: one sentence.** `bench:rescore`, run on each report on its own, re-scores 7,321 answers and gives the same line as `main` for every one: no label, no task result and no count of judged sentences changes. Recomputing the sentence marks of the lab suite's two runs with and without the change, the only difference is 2B's `l07`, which goes from 0 of 2 sentences backed to 1 of 2. Its first sentence stays marked, as it should: "PPARαBATKO mice differed from control mice in body weight" is what the paper denies.
+
+`tests/support.test.ts` ("a backed name with a plain suffix") fails before the change and passes after. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): sentence support runs after the model's final answer, so the model runs the clause asks for would repeat their recorded actions.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

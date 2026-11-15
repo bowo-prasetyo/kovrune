@@ -232,7 +232,15 @@ describe("Europe PMC", () => {
     const want = await readFile(new URL("../eval/clinical/docs/carrageenan-insulin.md", import.meta.url), "utf8");
     assert.equal(doc.text, want, "the text the clinical suite measured the models on");
     assert.equal(doc.url, "https://europepmc.org/article/MED/39593091");
-    assert.deepEqual(doc.work, { authors: ["Wagner R", "Buettner J", "Heni M"], year: 2024, doi: "10.1186/s12916-024-03771-8", venue: "BMC medicine" });
+    // The identifiers a biomedical journal or grant form asks for travel with the citation (harness 0.74.0).
+    assert.deepEqual(doc.work, {
+      authors: ["Wagner R", "Buettner J", "Heni M"],
+      year: 2024,
+      doi: "10.1186/s12916-024-03771-8",
+      venue: "BMC medicine",
+      pmid: "39593091",
+      pmcid: "PMC11590543",
+    });
     assert.equal(fetchImpl.urls.at(-1), "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC11590543/fullTextXML");
     assert.equal(fetchImpl.urls.length, 4, "the record found by the search is not asked for again");
   });
