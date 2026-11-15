@@ -190,6 +190,34 @@ Over the four suites, 4B gains 4 tasks and loses 2, and 2B gains 3 and loses 1. 
 
 **Not yet measured: the protected suites.** The rule also asks for research, unanswerable, pdf, field and holdout on both models. These changes reach them only through snippets (16 parts in all) and the abbreviation place; replaying the 0.65.0 recordings that still replay on `main` (62 of those suites' 160 tasks per model) finds no task whose requests differ. They are being run as above; their results are added here when they finish.
 
+### The figure note, and why it is not given to a table's part (0.77.0)
+
+The lab suite's 0.76.0 [figure note](../lab/README.md#three-changes-from-the-first-runs-0760) — a part holding a figure's legend ends with where that figure is discussed — reaches 23 of these papers' 534 parts, and its write-up left the CS runs undone. They are here, and they changed the rule.
+
+Both models ran on llama.cpp `0c1e570` built portably, on CPU in a 4-core cloud container, at 4,096 tokens of context, in constrained mode, against a baseline on `main` at 0.75.0 on the same machine, build and model file. **These are the first CS runs with llama-server's prompt cache off** (`main`'s 0.75.0), which makes a run about twice as slow and its replies independent of what ran before.
+
+| Model | Suite | Baseline (no note) | The note as merged (0.76.0) | The note narrowed (0.77.0) |
+| --- | --- | --- | --- | --- |
+| Qwen3.5-4B | `cs` | 22/26 | 21/26 (0 gained, **1 lost**) | **22/26** (0, 0) |
+| Qwen3.5-4B | `csholdout` | 10/10 | 10/10 | 10/10 |
+| Qwen3.5-2B | `cs` | 13/26 | not run | **13/26** (0, 0) |
+| Qwen3.5-2B | `csholdout` | 7/10 | not run | 7/10 |
+
+For comparison, the 0.69.0 runs of these suites passed 17 of 26 on 4B and 11 of 26 on 2B, with the prompt cache on and before 0.73.0's tables and 0.76.0's checks. The baseline above is what the suites stand at now, so it is what a change is judged against.
+
+**The task the note cost, and what the reports show.** `cs04` asks for FedProx's macro-F1 on PAMAP2 under severe label skew. In both the baseline and the 0.76.0 run, 4B searched with the same query, read the same part (`stabfl-label-skew#28`) and gave the same right value, 72.37±1.84. The difference is the **quote**: without the note it quoted Table 4's row whole, and with the note it quoted the row from the middle, "FedProx | 76.90±4.21 | …", which is not word for word in the source. The quote check rejected it (`evidence: false`) and the task failed, though the answer was right.
+
+That part holds **Table 4 — the table the question needs — as well as Figure 2's legend**. The note sent the model away from the values it already had in front of it.
+
+**So a part that holds table rows takes no figure note** (`TABLE_ROW` in `figuresDiscussedElsewhere`). A part with rows of values is where an answer is read, not a place to point away from; a legend among prose still points to its discussion, which is what the lab case needs.
+
+The narrowing is measured, not assumed:
+- **Of the lab suite's 53 noted parts, all 53 keep their note**, so every lab prompt is unchanged and 0.76.0's lab measurement (4B 27→29 of 32, 2B 20→21, nothing lost) carries over with no model run.
+- **Of these suites' 23, 20 keep it**; the three dropped include `#28`. With them dropped, both models sit exactly on their baselines: 0 gained, 0 lost, `cs04` passing again.
+- `bench:retrieval` is unchanged on every suite, and `bench:rescore --labels` over every recorded report gives the same line for each answer: the note is read-time only.
+
+**What this says about the note.** On bench papers, where a figure's values live in the prose that cites it, it gains two tasks on 4B and one on 2B. On these CS papers, where the values are in tables the model reads directly, it gains nothing and, before the narrowing, cost one task through a quote that began mid-row. A pointer helps where the answer is elsewhere and distracts where it is already in hand, which is what the rule now encodes.
+
 ## Limits
 
 - **Journal papers, not arXiv preprints.** Europe PMC holds the full text of CS papers published in open-access journals (here MDPI *Sensors*, *Frontiers*, *PLOS One*, *Scientific Reports*), not the conference papers and arXiv preprints most CS researchers read. Their tables and acronyms are of the same kind; their typesetting is not.
