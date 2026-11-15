@@ -1,4 +1,5 @@
-// The four changes the CS suite's first runs suggested (harness 0.73.0, eval/cs/README.md).
+// The changes the CS suite's first runs suggested (harness 0.73.0, eval/cs/README.md); the abbreviation
+// place among them was taken out in 0.77.0.
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
@@ -82,29 +83,6 @@ describe("where a cited table is (harness 0.73.0)", () => {
     assert.ok(observation.endsWith(`[Table 5 is in ${holder}.]`), observation.slice(-80));
     const short = read.shorten!({ docId: discussion }, observation);
     assert.ok(!short || !TABLE_NOTE_LINE.test(short));
-  });
-});
-
-describe("a passage that uses only an abbreviation keeps a place in the results (harness 0.73.0)", () => {
-  const docs = [
-    { id: "abstract", title: "Paper, part 1", text: "A commitment-bound verification (CBV) mechanism is designed. Commitment-bound verification prevents tampering." },
-    { id: "method", title: "Paper, part 2", text: "We design commitment-bound verification for the server. The verification is bound to a commitment." },
-    { id: "security", title: "Paper, part 3", text: "Commitment-bound verification is secure: the commitment binds the verification." },
-    { id: "ablation", title: "Paper, part 4", text: "CBV increases communication by 113.50% because it requires extra messages." },
-  ];
-  const index = new DocumentIndex(docs);
-  const question = "How much does the commitment-bound verification mechanism increase communication overhead?";
-
-  it("takes the last place when the passages that spell the term out fill the others", () => {
-    const hits = index.search(question).map((h) => h.docId);
-    assert.equal(hits.length, 3);
-    assert.ok(hits.includes("ablation"), hits.join(", "));
-    assert.equal(hits[0], index.search(question, 10)[0]!.docId, "the best result keeps its place");
-  });
-
-  it("changes nothing for a query that uses the abbreviation, or when such a passage is already shown", () => {
-    assert.equal(index.search("CBV communication increase")[0]?.docId, "ablation");
-    assert.deepEqual(index.search(question, 10).map((h) => h.docId).slice(0, 4).sort(), docs.map((d) => d.id).sort());
   });
 });
 
