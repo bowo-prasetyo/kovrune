@@ -5,10 +5,10 @@
 
 import { extractPdfText } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
-import { createArxiv } from "../../sources/arxiv.ts";
+import { createArxiv, findArxivByTitle } from "../../sources/arxiv.ts";
 import { createDataCite } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
-import { createOpenAlex, OPENALEX_FIELDS } from "../../sources/openalex.ts";
+import { createOpenAlex, OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
 import type { OpenSource } from "../../sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../../sources/wikipedia.ts";
 
@@ -33,8 +33,12 @@ export interface SourcePrefs {
   openalexFromYear?: number;
   /** OpenAlex searches find only works with a free copy. */
   openalexOpenAccess?: boolean;
+  /** The model is told it can follow a paper's citations through OpenAlex (experimental, off by default). */
+  openalexFollowCitations?: boolean;
   /** OpenAlex searches find only works in this field of research (OPENALEX_FIELDS); "" for any field. */
   openalexField?: string;
+  /** OpenAlex searches find only works from this computer science venue (OPENALEX_VENUES); "" for any venue. */
+  openalexVenue?: string;
 }
 
 /** A year an OpenAlex search may start from: a whole number from 1900 to next year. */
@@ -66,7 +70,9 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       openalexKey: typeof value.openalexKey === "string" ? value.openalexKey.trim() : "",
       ...(validFromYear(value.openalexFromYear) ? { openalexFromYear: validFromYear(value.openalexFromYear) } : {}),
       ...(value.openalexOpenAccess === true ? { openalexOpenAccess: true } : {}),
+      ...(value.openalexFollowCitations === true ? { openalexFollowCitations: true } : {}),
       ...(typeof value.openalexField === "string" && OPENALEX_FIELDS.some(([id]) => id === value.openalexField) ? { openalexField: value.openalexField } : {}),
+      ...(typeof value.openalexVenue === "string" && OPENALEX_VENUES.some(([id]) => id === value.openalexVenue) ? { openalexVenue: value.openalexVenue } : {}),
     };
   } catch {
     return defaults;
@@ -98,10 +104,12 @@ const extractPdf = async (bytes: Uint8Array) => extractPdfText(bytes, await load
 export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
   const arxiv = prefs.arxiv ? createArxiv({ extractPdf }) : undefined;
   const europepmc = prefs.europepmc ? createEuropePmc() : undefined;
-  const filters = { fromYear: prefs.openalexFromYear, openAccess: prefs.openalexOpenAccess, field: prefs.openalexField };
+  const filters = { fromYear: prefs.openalexFromYear, openAccess: prefs.openalexOpenAccess, field: prefs.openalexField, venue: prefs.openalexVenue };
+  // A conference paper's arXiv version is looked up by its title on DataCite, which the arXiv source searches already.
+  const findArxiv = arxiv ? (title: string, signal?: AbortSignal) => findArxivByTitle(fetch, title, signal) : undefined;
   return [
     ...(prefs.wikipedia ? [createWikipedia(prefs.language)] : []),
-    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc })] : []),
+    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc, findArxiv }, { followCitations: prefs.openalexFollowCitations === true })] : []),
     ...(arxiv ? [arxiv] : []),
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
     ...(europepmc ? [europepmc] : []),

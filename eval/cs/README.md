@@ -256,6 +256,85 @@ The narrowing is measured, not assumed:
 
 **What this says about the note.** On bench papers, where a figure's values live in the prose that cites it, it gains two tasks on 4B and one on 2B. On these CS papers, where the values are in tables the model reads directly, it gains nothing and, before the narrowing, cost one task through a quote that began mid-row. A pointer helps where the answer is elsewhere and distracts where it is already in hand, which is what the rule now encodes.
 
+## Computer science venues (0.79.0)
+
+The CS suite reads journal papers from Europe PMC, but a computer science researcher reads conference papers: the ACL Anthology for NLP, and NeurIPS, ICLR and ICML for machine learning, with OpenReview's reviews. Kovrune runs in the browser and runs no proxy ([design](../../docs/design.md), §5.1), so it can only read a site that lets web pages read it. Checked on 15 November 2026:
+
+| Site | What it serves | Readable by a web page? |
+| --- | --- | --- |
+| aclanthology.org | PDFs, BibTeX, pages | No: no `Access-Control-Allow-Origin` |
+| api2.openreview.net | papers, reviews, replies (JSON) | No: allowed only for `openreview.net` |
+| openreview.net | PDFs | No: refused outside a browser session there |
+| raw.githubusercontent.com (the Anthology's records) | titles, abstracts, links, as one XML file per volume (ACL 2023: 2.8 MB) | Yes, but no full texts and no search |
+| api.openalex.org | records of both | Yes |
+
+So these venues are reached through OpenAlex (`OPENALEX_VENUES` in `src/sources/openalex.ts`):
+
+- **A search can be limited to a venue**, under OpenAlex's limits: the **ACL Anthology** by its DOI prefix (`10.18653`; ACL, EMNLP, NAACL, EACL, Findings and workshops; 7,058 works from 2023 and 11,113 from 2025 in OpenAlex), or **NeurIPS** by its OpenAlex source, on any of a work's locations (3,516 and 5,832). OpenAlex holds 4 of ICLR's 2023 papers, none of ICML's or JMLR's, and 2 of USENIX Security's, so those are not offered; their papers are nearly all on arXiv, which the arXiv source searches. TACL, whose DOIs are MIT Press's, is not in the ACL filter.
+- **A paper is read in full from arXiv** when its OpenAlex record links there, as before, or, new, when an arXiv paper on DataCite has the same title, compared as letters and digits, and no other does (`findArxivByTitle`). OpenAlex often keeps a conference paper and its preprint as two works. A title of fewer than four words is not looked up. The paper is cited as the arXiv version read, with OpenAlex's authors.
+- **Otherwise the abstract names the free PDF**, such as `aclanthology.org/2023.eacl-main.252.pdf`, for the user to download and add to their documents, where it is read in full like any PDF.
+
+**Coverage**, with this code on 40 papers sampled by OpenAlex for each venue and year (`sample=40`, `seed=11`):
+
+| Venue, year | Read from arXiv, linked | Read from arXiv, by title | Abstract, free PDF named | Abstract only |
+| --- | --- | --- | --- | --- |
+| ACL Anthology, 2023 | 17 | 0 | 23 | 0 |
+| ACL Anthology, 2025 | 22 | 4 | 14 | 0 |
+| NeurIPS, 2023 | 26 | 5 | 2 | 7 |
+| NeurIPS, 2025 | 33 | 1 | 0 | 6 |
+
+108 of 160 are read in full, 10 of them found by title. For 6 of those 10, arXiv's first author was compared with OpenAlex's, and all 6 are the same person. Every ACL paper had an abstract; 11 NeurIPS 2023 and 5 NeurIPS 2025 papers had none. An ACL paper not on arXiv still needs the user to add its PDF, which is two clicks but not none.
+
+**Not covered:** OpenReview's reviews and the authors' replies, which no route reaches from a web page; ICLR and ICML papers by venue; and the camera-ready version where it differs from the arXiv one, since the arXiv version is what is read. None of the benchmark suites reads OpenAlex, so no recorded run changes; the venue limit, the title lookup and the PDF note are tested in `tests/cs-venues.test.ts`.
+
+## arXiv papers from their LaTeX source (0.81.0)
+
+Most arXiv papers in computer science are submitted as LaTeX, and arXiv serves the source to anyone, web pages included (`arxiv.org/src/<id>`, `Access-Control-Allow-Origin: *`; `arxiv.org/e-print/<id>` redirects there without the header). Since 0.81.0 the arXiv source reads a paper from it (`readLatexSource` in `src/sources/arxiv.ts`): the archive is unpacked in the browser (`src/documents/tar.ts`, with a cap on its inflated size) and its LaTeX converted (`src/documents/latex.ts`) into the text the other documents use:
+
+| LaTeX | Read as |
+| --- | --- |
+| `\section{Method}` (the third) | `## 3 Method`; after `\appendix`, `## A …`, `### A.1 …` |
+| `table` with `\caption` and `tabular` | `**Table 2** Its caption.` then `\| a \| b \|` per row; `\multicolumn{2}` keeps its columns |
+| `figure` with `\caption` | `*Figure 3: Its caption.*` |
+| `equation`, `align` | its LaTeX on a line of its own, then its number, `(1)`; an `align` numbers each row not marked `\nonumber` |
+| `$O(n^2)$` | as written |
+| `\citep{a,b}`, `\citet{a}`, `\cite{a}` | `(Lewis et al., 2020; Liu et al., 2023)`, `Liu et al. (2023)` from natbib's `.bbl`, or `[3]` |
+| `\ref`, `\cref`, `\eqref` | `2`, `Table 2`, `(1)`, from the labels numbered as LaTeX numbers them |
+| the `.bbl` | `## References` where the paper prints its bibliography, numbered |
+| the paper's own `\newcommand` and `\def` | expanded; a class or style file's redefinitions of LaTeX's own commands are not |
+
+A paper without a source (arXiv then serves its PDF), one whose archive can't be read, or one that converts to fewer than 800 words or with more unresolved `\ref`s than one per 500 words, is read from its PDF as before.
+
+**Measured on 30 papers**, 15 from the ACL Anthology and 15 from NeurIPS, 2024–2025, sampled from OpenAlex among those linked to arXiv, each read both ways with the code here:
+
+- **Every one had a source and converted**, in 23 to 408 ms (median 69) to unpack and convert. The sources are 143 MB to download, against 120 MB for the PDFs; the largest is 25.5 MB, under the 30 MB download limit.
+- **Nothing the reader needs is lost.** Of the PDF text's words (four letters or more), 89% are in the converted text, and 91% of the converted text's words are in the PDF's. What the PDF has and the source doesn't is equations' loose symbols ("xkxt", "ukxt") and text drawn inside figures (one paper's prompts are images); what the source has and the PDF doesn't is math markup (`\frac`, `\mathcal`).
+- **Equations keep their structure.** The 30 papers have 397 numbered equations and 2,742 inline formulas with a sub- or superscript. In the PDF's text, equation (3) of 2509.22741 reads `t=0 / XT / t QXt + U T / t RUt / dt / . (3)` over seven lines; from the source, `J_{T} = \mathbb{E}\left[\int_{t=0}^{T}\left(X^{\mathrm{T}}_{t}QX_{t}+U_t^{\mathrm{T}}RU_t\right)dt\right]\,. (3)`.
+- **Tables are about even.** 296 tables, 1,871 rows with two or more numbers: 1,849 (98.8%) were already whole on one line of the PDF's text, read by layout since 0.70.0. The source adds the columns' boundaries and ties the caption to the table.
+
+**Limits.** A quote from the source shows no page. Text inside figures is read only from the PDF. Packages that define their own table or list environments, and macros with unusual argument syntax, can leave stray words, as can `tikz` drawings. The converter was checked on the 30 papers and on 9 well-known ones (the Transformer, BERT, RAG, Toolformer, LoRA, Chain-of-Thought, InstructGPT, Self-RAG, Lost in the Middle); no benchmark suite reads arXiv, so how much it changes the model's answers is not measured. A suite of CC BY arXiv papers with questions on their equations and tables would measure it.
+
+## Following citations through OpenAlex (0.84.0)
+
+A literature review follows citations: what a paper builds on, and who built on it since. OpenAlex holds both directions (`cited_by:` and `cites:` filters), so the OpenAlex source now reads two search forms (`citationQuery` in `src/sources/openalex.ts`):
+
+- `references of <paper>: <topic>` lists the works the paper cites, and `citing <paper>: <topic>` the works citing it, best matching the topic, or, without one, the most cited first. The user's limits (year, field, venue, open access) apply.
+- The paper is named by its OpenAlex ID, its DOI (with or without `doi:`), its arXiv ID (`arxiv:2310.11511`, looked up as arXiv's DOI), or its title. A title names the work whose title starts with it, or is the start of it ("Self-RAG"); a subtitle after a colon is tried whole first. A title that names no work is searched as words. A placeholder copied from the instructions ("citing W123: words") counts as no topic.
+- A work read from OpenAlex shows `Cited by 1,088 works in OpenAlex; its references there: 32.` OpenAlex's reference lists can be short: it has 32 of Self-RAG's 58 references, and all 47 of Lost in the Middle's.
+
+Live, the forms find what they should: Self-RAG's references include PPO, the GPT-4 report and Llama 2; the works citing RAG on "medical question answering" include MedExpQA; the most cited works citing Lost in the Middle are two surveys and GraphRAG; an ACL paper is found by its DOI.
+
+**Whether the model uses them** (`npm run bench:citations`; searches counted as 0.84.0's parser reads them; five questions that name a paper and ask about one it cites or one citing it; Qwen3.5-4B, OpenAlex and arXiv, no documents, prompt cache off, same day):
+
+| What the model is told | Passed | Searches that followed citations | Report |
+| --- | --- | --- | --- |
+| Nothing (`main`, 0.81.0) | 4 of 5 | none | [report](../results/citations-0.81-base-qwen3.5-4b-q4km.json) |
+| A note after a work's first read | 4 of 5 | 1: "citing GRAG: …", a title, which was not read as one then | [report](../results/citations-note-qwen3.5-4b-q4km.json) |
+| The note, and the forms in `search_openalex`'s usage line | 2 of 5 | 9, in 3 questions: "citing W4391876619: words", a bare DOI, and papers it had read rather than the one named | [report](../results/citations-usage-qwen3.5-4b-q4km.json) |
+| The same, titles, bare DOIs and placeholders read, usage reworded | 3 of 5 | 6, in 3 questions; one right (q5), the rest the wrong paper or direction | [report](../results/citations-usage-fixed-qwen3.5-4b-q4km.json) |
+
+Four of the five questions can also be answered by searching for the cited paper's subject, which the model did without the forms; told about them, it spent its steps following the citations of whatever it had just read (MedExpQA's references for "which paper cites RAG"), and concluded "not found". Under [the rule](../field/README.md#rule-for-prompt-and-guard-changes), telling the model is not adopted: it is a setting, **Let the model follow citations (experimental)**, off by default (`followCitations` in `createOpenAlex`, `followsCitations` on the source). With it off, the model sees only the citation counts, as in the second row. Five questions on one day are few; a larger model, or questions no subject search answers, may come out otherwise.
+
 ## Limits
 
 - **Journal papers, not arXiv preprints.** Europe PMC holds the full text of CS papers published in open-access journals (here MDPI *Sensors*, *Frontiers*, *PLOS One*, *Scientific Reports*), not the conference papers and arXiv preprints most CS researchers read. Their tables and acronyms are of the same kind; their typesetting is not.

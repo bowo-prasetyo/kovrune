@@ -8,6 +8,7 @@ import type { SentenceSupport } from "../../agent/support.ts";
 import type { Synthesis, SynthesisPart } from "../../agent/synthesis.ts";
 import { detectKind, pageUnit } from "../../documents/extract.ts";
 import type { Citation } from "../../sources/session.ts";
+import { referenceLine, type DocumentWork } from "../../documents/references.ts";
 import { describeReportLabels } from "./report.ts";
 import { describeNoAnswer, describePages, describeStatus, type LabelSeverity } from "./trace.ts";
 
@@ -25,6 +26,8 @@ export interface SavedAnswer {
   citations: Record<string, Citation>;
   /** Names of cited documents from the user's library, so the answer reads the same after a document is removed. */
   titles: Record<string, string>;
+  /** Paper details of cited documents from the user's library that have them (documents/references.ts), by the same IDs as `titles`. */
+  works?: Record<string, DocumentWork>;
   sourceErrors: string[];
   /** Why there is no answer, for status "no-answer". */
   noAnswer?: string;
@@ -62,12 +65,17 @@ export function toSavedAnswer(options: {
   library: ResearchLibrary;
   model: string;
   now?: Date;
+  /** A library document's paper details, by its ID. */
+  workOf?: (documentId: string) => DocumentWork | undefined;
 }): SavedAnswer {
-  const { question, result, steps, library, model, now = new Date() } = options;
+  const { question, result, steps, library, model, now = new Date(), workOf } = options;
   const titles: Record<string, string> = {};
+  const works: Record<string, DocumentWork> = {};
   for (const { docId } of result.evidence) {
-    const title = library.documentFor(docId)?.title;
-    if (title) titles[docId] = title;
+    const doc = library.documentFor(docId);
+    if (doc?.title) titles[docId] = doc.title;
+    const work = doc && workOf?.(doc.id);
+    if (work) works[docId] = work;
   }
   return {
     id: `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
@@ -80,6 +88,7 @@ export function toSavedAnswer(options: {
     ...(result.support ? { support: result.support } : {}),
     citations: result.citations,
     titles,
+    ...(Object.keys(works).length ? { works } : {}),
     sourceErrors: result.sourceErrors,
     ...(result.status === "no-answer" ? { noAnswer: describeNoAnswer(result.agent.stopReason, result.agent.error) } : {}),
     steps: [...steps],
@@ -109,6 +118,13 @@ export function quotePages(answer: SavedAnswer, item: SavedAnswer["evidence"][nu
 
 export const formatTime = formatDateTime;
 
+/** A cited library document as a reference: its paper details where it has them, then its file name. */
+export function libraryReference(answer: SavedAnswer, docId: string): string {
+  const name = sourceTitle(answer, docId).replace(/ \(part \d+ of \d+\)$/, "");
+  const work = answer.works?.[docId];
+  return work ? `${referenceLine(work, name)} (${name})` : name;
+}
+
 const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
 
 /** The answer as a Markdown document: question, label, answer, evidence and steps. A report has its own (reportToMarkdown). */
@@ -133,7 +149,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
         const citation = answer.citations[item.docId];
         const where = citation
           ? `[${citation.title}](${citation.url}) (${citation.source}, retrieved ${citation.retrievedAt.slice(0, 10)})`
-          : `${sourceTitle(answer, item.docId)}${item.context?.pages ? `, ${quotePages(answer, item)}` : ""}`;
+          : `${libraryReference(answer, item.docId)}${item.context?.pages ? `, ${quotePages(answer, item)}` : ""}`;
         lines.push(`${i + 1}. ${item.verified ? "✓" : "✗"} ${where}`, "", `   > ${oneLine(item.quote)}`, "");
         if (!item.verified && item.reason) lines.push(`   Problem: ${item.reason}.`, "");
       });
@@ -220,7 +236,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
       references.push(
         citation
           ? `[${citation.title}](${citation.url}) (${citation.source}, retrieved ${citation.retrievedAt.slice(0, 10)})`
-          : sourceTitle(section, docId).replace(/ \(part \d+ of \d+\)$/, ""),
+          : libraryReference(section, docId),
       );
     }
     return `[${numbers.get(key)}]${pages ? `, ${pages}` : ""}`;
@@ -274,6 +290,11 @@ export function answerToBibtex(answer: SavedAnswer): string | undefined {
 
 function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
   for (const { docId } of answer.evidence) {
+    const local = answer.works?.[docId];
+    if (local && (local.title || local.doi)) {
+      addLocalBibtex(local, sourceTitle(answer, docId).replace(/ \(part \d+ of \d+\)$/, ""), entries);
+      continue;
+    }
     const citation = answer.citations[docId];
     if (!citation?.work) continue;
     const paper = docId.replace(/#\d+$/, "");
@@ -312,6 +333,25 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
       .join(",\n");
     entries.set(key, `@${venue && !eprint && !repository ? "article" : "misc"}{${key},\n${body}\n}`);
   }
+}
+
+/** A BibTeX entry for a paper from the user's library, keyed by its DOI, or by its file name without one. */
+function addLocalBibtex(work: DocumentWork, fileName: string, entries: Map<string, string>): void {
+  const key = work.doi ? `doi_${work.doi.toLowerCase().replace(/[^\w]/g, "_")}` : `local_${fileName.toLowerCase().replace(/\.[^.]+$/, "").replace(/[^\w]/g, "_")}`;
+  const fields: Array<[string, string | number | undefined]> = [
+    ["title", work.title],
+    ["author", work.authors.length ? work.authors.join(" and ") : undefined],
+    ["year", work.year],
+    [work.venue ? "journal" : "howpublished", work.venue],
+    ["doi", work.doi],
+    ["url", work.doi ? `https://doi.org/${work.doi}` : undefined],
+    ["note", `From the user's library: ${fileName}`],
+  ];
+  const body = fields
+    .filter(([, value]) => value !== undefined)
+    .map(([name, value]) => `  ${name} = {${bib(String(value))}}`)
+    .join(",\n");
+  entries.set(key, `@${work.venue ? "article" : "misc"}{${key},\n${body}\n}`);
 }
 
 /** A file name for an exported answer, e.g. "kovrune-how-to-create-an-activity-diagram-2026-10-25.md". */

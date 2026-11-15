@@ -248,6 +248,11 @@ Both models, on `main` at 0.78.0, on llama.cpp `0c1e570` built portably, on CPU 
 | `cs` | **22/26** | 12, 0 | **13/26** | 8, 2 |
 | `csholdout` | **10/10** | 3, 0 | **7/10** | 2, 0 |
 
+**Taken at 0.78.0, and still describing `main` at 0.84.0.** `main` moved six versions while these runs were going (OpenAlex venues and citations, Europe PMC full texts through OpenAlex, arXiv LaTeX, adding many documents, a PDF's pages without text). None of them reaches a suite whose library is local Markdown, and that is checked rather than assumed:
+- **Search:** `bench:retrieval` gives the same figures at 0.78.0 and at 0.84.0 — lab 94.5% of answer passages and 39 of 40 complete, cs 82.2% and 27 of 34 — and the part counts are the same (451 and 534).
+- **Scoring and labels:** re-scoring these six reports on 0.84.0's code gives each run's own figures back exactly (lab 45 of 64 over both models, labholdout 20 of 22, cs 35 of 52, csholdout 17 of 20).
+- **What a task is shown:** of the files that changed, only `src/tools/research.ts` is on these suites' path, and its two changes are a sentence in a *source* tool's usage and the stripping of a citation note — neither reachable without an open source ticked, which these suites do not have. `src/documents/extract.ts` only gained a function that returns nothing for anything but a PDF.
+
 Reports: `baseline-0.78-{lab,cs,holdouts}-qwen3.5-{4b,2b}-q4km.json`. They are four runs per model, one suite or pair of suites at a time: with the cache off, all four suites in one run do not finish inside the two hours a background command gets, and a first attempt at that was stopped with nothing written.
 
 **What moved, against the figures the write-ups above quote.**

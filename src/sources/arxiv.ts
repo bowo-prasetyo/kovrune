@@ -5,7 +5,15 @@
 // as the user's PDFs are. A long paper is split into parts like a long Wikipedia article
 // (SourceSession), and a quote shows its page. DataCite needs no key and has no daily budget like
 // OpenAlex's, and its arXiv records are arXiv's own, with abstracts.
+//
+// Since harness 0.81.0 a paper is read from its LaTeX source when arXiv has it (arxiv.org/src, which also
+// allows web pages), converted by documents/latex.ts: tables keep their rows, equations their LaTeX and
+// citations their authors and years, which a PDF's text layer loses. A paper without a source, or whose
+// source doesn't convert to enough text, is read from its PDF as before. A quote from the source shows no
+// page, since the source has none.
 
+import { latexToText, readableLatex } from "../documents/latex.ts";
+import { readSourceFiles } from "../documents/tar.ts";
 import { snippetOf } from "./openalex.ts";
 import { getBytes, getJson, SourceError, type FetchLike, type OpenSource, type WorkInfo } from "./types.ts";
 
@@ -19,6 +27,8 @@ const DATACITE_FIELDS = "titles,descriptions,url,doi,creators,publicationYear";
 
 /** A PDF download can be several megabytes on a slow connection. */
 export const ARXIV_PDF_TIMEOUT_MS = 90_000;
+/** A source archive holds the figures too, often more megabytes than the PDF. */
+export const ARXIV_SOURCE_TIMEOUT_MS = 90_000;
 
 /** An arXiv identifier, new style ("2005.11401") or old ("hep-th/9901001", "math.GT/0309136"), without its version. */
 const ID = String.raw`(\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?`;
@@ -82,6 +92,39 @@ export function dataCiteQuery(query: string): string {
   return [...new Set(words)].slice(0, 16).join(" OR ");
 }
 
+/** A title as compared: letters and digits only, lower case ("Self-RAG: Learning…" → "selfraglearning…"). */
+export function titleKey(title: string): string {
+  return title.normalize("NFKD").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+/**
+ * The arXiv version of a paper published elsewhere, by its exact title: the one arXiv paper on DataCite
+ * whose title, compared as titleKey, is the same; undefined when none is, or more than one. OpenAlex often
+ * keeps a conference paper and its arXiv preprint as two works, so the conference paper's record has no
+ * arXiv link: of 160 sampled ACL Anthology and NeurIPS papers, 10 were found this way, besides 98 linked
+ * (eval/cs/README.md).
+ * A title of fewer than four words is not looked up: "Attention" is many papers.
+ */
+export async function findArxivByTitle(fetchImpl: FetchLike, title: string, signal?: AbortSignal): Promise<string | undefined> {
+  const key = titleKey(title);
+  const words = title.replace(/[+\-=&|><!(){}[\]^"~*?:\\/]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 4 || key.length < 12) return undefined;
+  const params = new URLSearchParams({
+    query: `titles.title:"${words.join(" ")}"`,
+    "client-id": DATACITE_ARXIV_CLIENT,
+    "page[size]": "10",
+    "fields[dois]": DATACITE_FIELDS,
+  });
+  const data = await getJson(fetchImpl, "DataCite (finding the arXiv version)", `${DATACITE_API}?${params}`, signal);
+  const ids = new Set(
+    ((data?.data ?? []) as DataCiteRecord[])
+      .filter((record) => (record.attributes.titles ?? []).some((t) => t.title && titleKey(t.title) === key))
+      .map(arxivId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  return ids.size === 1 ? [...ids][0] : undefined;
+}
+
 /** The ID the model sees for an arXiv paper, e.g. "arxiv:2005.11401". */
 export function arxivDocId(id: string): string {
   return PREFIX + id;
@@ -96,6 +139,8 @@ export function createArxiv(options: {
   /** Extracts a PDF's text with pdf.js (extractPdfText). */
   extractPdf: (bytes: Uint8Array) => Promise<ExtractedPdf>;
   fetchImpl?: FetchLike;
+  /** Read papers from their LaTeX source when arXiv has it (default); false reads the PDF only. */
+  readSource?: boolean;
 }): OpenSource {
   const fetchImpl = options.fetchImpl ?? fetch;
   // The records the searches found, by arXiv ID, so a paper read keeps its title, authors and year.
@@ -127,6 +172,22 @@ export function createArxiv(options: {
     async fetch(id, signal) {
       const key = id.slice(PREFIX.length);
       if (!BARE.test(key)) throw new SourceError(`"${id}" is not an arXiv paper ID.`);
+      const bare = key.replace(/v\d+$/, "");
+      const record = found.get(bare);
+      const work = record ? recordInfo(record, bare) : { authors: [], doi: `10.48550/arXiv.${bare}`, venue: "arXiv" };
+      if (options.readSource !== false) {
+        const source = await readLatexSource(fetchImpl, key, signal);
+        if (source) {
+          return {
+            id: arxivDocId(key),
+            title: record?.attributes.titles?.[0]?.title ?? source.title ?? key,
+            text: source.text,
+            url: `https://arxiv.org/abs/${key}`,
+            retrievedAt: new Date().toISOString(),
+            work,
+          };
+        }
+      }
       const bytes = await getBytes(fetchImpl, "arXiv", `https://arxiv.org/pdf/${key}`, signal, { timeoutMs: ARXIV_PDF_TIMEOUT_MS });
       let pdf: ExtractedPdf;
       try {
@@ -135,8 +196,6 @@ export function createArxiv(options: {
         throw new SourceError(`The PDF of arXiv paper ${key} could not be read.`);
       }
       if (!pdf.text.trim()) throw new SourceError(`The PDF of arXiv paper ${key} has no text that can be read.`);
-      const bare = key.replace(/v\d+$/, "");
-      const record = found.get(bare);
       return {
         id: arxivDocId(key),
         title: record?.attributes.titles?.[0]?.title ?? pdf.text.trim().split("\n")[0]!.trim().slice(0, 200),
@@ -144,9 +203,27 @@ export function createArxiv(options: {
         url: `https://arxiv.org/abs/${key}`,
         retrievedAt: new Date().toISOString(),
         // The text read is arXiv's, so the reference is to the arXiv version, whatever was published later.
-        work: record ? recordInfo(record, bare) : { authors: [], doi: `10.48550/arXiv.${bare}`, venue: "arXiv" },
+        work,
         ...(pdf.pageStarts ? { pageStarts: pdf.pageStarts } : {}),
       };
     },
   };
+}
+
+/**
+ * A paper's text from its LaTeX source (arxiv.org/src), or undefined when arXiv has no source for it (it
+ * serves the PDF instead), the source can't be downloaded or unpacked, or it doesn't convert to enough
+ * text (readableLatex): the PDF is read then. Only an abort is thrown.
+ */
+export async function readLatexSource(fetchImpl: FetchLike, key: string, signal?: AbortSignal): Promise<{ title?: string; text: string } | undefined> {
+  try {
+    const bytes = await getBytes(fetchImpl, "arXiv", `https://arxiv.org/src/${key}`, signal, { timeoutMs: ARXIV_SOURCE_TIMEOUT_MS });
+    // A paper submitted as a PDF has no source: arXiv serves the PDF ("%PDF").
+    if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) return undefined;
+    const converted = latexToText(await readSourceFiles(bytes));
+    return readableLatex(converted) ? converted : undefined;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return undefined;
+  }
 }

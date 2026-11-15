@@ -1,0 +1,115 @@
+{
+  "model": "qwen3.5-4b-q4km",
+  "date": "2026-11-15T16:32:50.010Z",
+  "outcomes": [
+    {
+      "taskId": "q1-selfrag-ppo",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": false,
+      "answer": "The paper that introduced PPO is 'Proximal Policy Optimization Algorithms' by John Schulman, published in 2017. The first author is John Schulman.",
+      "cited": [
+        "arxiv:1808.07982"
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"PPO reinforcement learning paper\"}",
+        "search_openalex {\"query\":\"PPO reinforcement learning paper\"}",
+        "final_answer {\"found\":true,\"answer\":\"The paper that introduced PPO is 'Proximal Policy Optimization Algorithms' by John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov, published in 2017. The first author is John Schulman.\",\"evidence\":[{\"docId\":\"arxiv:1808.07982\",\"quote\":\"Proximal Policy Optimization and its Dynamic Version for Sequence Generation (2018)\"}]}",
+        "read {\"docId\":\"arxiv:1808.07982\"}",
+        "read {\"docId\":\"arxiv:1808.07982#2\"}",
+        "read {\"docId\":\"arxiv:1808.07982#3\"}",
+        "read {\"docId\":\"arxiv:1808.07982#4\"}",
+        "read {\"docId\":\"arxiv:1808.07982#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"The paper that introduced PPO is 'Proximal Policy Optimization Algorithms' by John Schulman, published in 2017. The first author is John Schulman.\",\"evidence\":[{\"docId\":\"arxiv:1808.07982#5\",\"quote\":\"Proximal policy optimization (PPO) (Schulman et al., 2017) is modified from trust region policy optimization (TRPO) (Schulman et al., 2015), and both methods aim to maximize a surrogate objective and subject to a constraint on quantity of policy update:\"}]}"
+      ],
+      "seconds": 583
+    },
+    {
+      "taskId": "q2-rag-medical-multilingual",
+      "passed": false,
+      "facts": false,
+      "status": "verified",
+      "followed": false,
+      "answer": "Mirage",
+      "cited": [
+        "openalex:W4402670290"
+      ],
+      "actions": [
+        "search_openalex {\"query\":\"2024 benchmark medical question answering several languages retrieval-augmented generation Lewis 2020\"}",
+        "read {\"docId\":\"openalex:W4402670290\"}",
+        "search_arxiv {\"query\":\"Mirage benchmark medical question answering 2024\"}",
+        "read {\"docId\":\"openalex:W4402670290#3\"}",
+        "read {\"docId\":\"openalex:W4402670290#6\"}",
+        "read {\"docId\":\"openalex:W4402670290#8\"}",
+        "read {\"docId\":\"openalex:W4402670290#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"Mirage\",\"evidence\":[{\"docId\":\"openalex:W4402670290\",\"quote\":\"Benchmarking Retrieval-Augmented Generation for Medicine (part 2 of 44) ... Retrieval-Augmented Generation (RAG) has the potential to address the above challenges (Lewis et al., 2020; Gao et al. [...]\"},{\"docId\":\"openalex:W4402670290#3\",\"quote\":\"To systematically evaluate how different components in RAG affect its performance, we first compile an evaluation benchmark termed Mirage, representing Medical Information Retrieval-Augmented Generation Evaluation.\"},{\"docId\":\"openalex:W4402670290#1\",\"quote\":\"we propose the Medical Information Retrieval-Augmented Generation Evaluation (Mirage), a first-of-its-kind benchmark including 7,663 questions from five medical QA datasets.\"}]}"
+      ],
+      "seconds": 504
+    },
+    {
+      "taskId": "q3-lost-middle-graph",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": true,
+      "answer": "The paper proposes a graph-based approach (LiteRAG) that addresses the problem of summarizing retrieved evidence into compact reasoning chains. Specifically, it converts the retrieved subgraph into compact reasoning chains that express retained relations directly in the prompt, yielding a more compact, query-focused context within restricted token budgets.",
+      "cited": [
+        "openalex:W7212130107"
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"Lost in the Middle: How Language Models Use Long Contexts Liu et al. graph-based retrieval-augmented generation summarization\"}",
+        "search_openalex {\"query\":\"graph-based retrieval-augmented generation summarization\"}",
+        "read {\"docId\":\"openalex:W4411120544\"}",
+        "read {\"docId\":\"openalex:W4411120544#8\"}",
+        "read {\"docId\":\"openalex:W4411120544#7\"}",
+        "search_arxiv {\"query\":\"Lost in the Middle Liu et al. graph retrieval augmented generation summarization\"}",
+        "search_openalex {\"query\":\"Lost in the Middle Liu et al. paper citing graph retrieval augmented generation\"}",
+        "read {\"docId\":\"openalex:W7212130107\"}",
+        "read {\"docId\":\"openalex:W7212130107#3\"}",
+        "read {\"docId\":\"openalex:W7212130107#4\"}",
+        "read {\"docId\":\"openalex:W7212130107#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"The paper proposes a graph-based approach (LiteRAG) that addresses the problem of summarizing retrieved evidence into compact reasoning chains. Specifically, it converts the retrieved subgraph into compact reasoning chains that express retained relations directly in the prompt, yielding a more compact, query-focused context within restricted token budgets.\",\"evidence\":[{\"docId\":\"openalex:W7212130107#3\",\"quote\":\"Rather than passing large text collections or broad summaries to the generator, LiteRAG converts the retrieved subgraph into compact reasoning chains that express the retained relations directly in the prompt.\"},{\"docId\":\"openalex:W7212130107#3\",\"quote\":\"LiteRAG converts the retrieved subgraph into compact reasoning chains, producing a more information-dense context that remains effective within a budget of about 2,000 tokens.\"}]}"
+      ],
+      "seconds": 869
+    },
+    {
+      "taskId": "q4-selfrag-controllable",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": false,
+      "answer": "CTRL (Conditional Transformer Language Model for Controllable Generation)",
+      "cited": [
+        "arxiv:1909.05858"
+      ],
+      "actions": [
+        "search_openalex {\"query\":\"Self-RAG Asai 2023 conditional transformer language model 2019 controllable generation\"}",
+        "search_arxiv {\"query\":\"Self-RAG Asai 2023 conditional transformer language model 2019 controllable generation\"}",
+        "final_answer {\"found\":true,\"answer\":\"CTRL (Conditional Transformer Language Model for Controllable Generation)\",\"evidence\":[{\"docId\":\"arxiv:1909.05858\",\"quote\":\"CTRL: A Conditional Transformer Language Model for Controllable Generation (2019)\"}]}",
+        "read {\"docId\":\"arxiv:1909.05858\"}",
+        "final_answer {\"found\":true,\"answer\":\"CTRL (Conditional Transformer Language Model for Controllable Generation)\",\"evidence\":[{\"docId\":\"arxiv:1909.05858\",\"quote\":\"CTRL: A Conditional Transformer Language Model for Controllable Generation\"}]}"
+      ],
+      "seconds": 214
+    },
+    {
+      "taskId": "q5-acl-user-simulation",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": false,
+      "answer": "The paper titled 'Towards a Formal Characterization of User Simulation Objectives in Conversational Information Access' by Nolwenn Bernard and Krisztian Balog gives a formal characterization of user simulation objectives. It was published in 2024.",
+      "cited": [
+        "arxiv:2406.19007"
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"ACL 2023 10.18653/v1/2023.acl-long.1 user simulation objectives formal characterization\"}",
+        "read {\"docId\":\"arxiv:2406.19007\"}",
+        "search_openalex {\"query\":\"Towards a Formal Characterization of User Simulation Objectives in Conversational Information Access\"}",
+        "read {\"docId\":\"arxiv:2406.19007#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"The paper titled 'Towards a Formal Characterization of User Simulation Objectives in Conversational Information Access' by Nolwenn Bernard and Krisztian Balog gives a formal characterization of user simulation objectives. It was published in 2024.\",\"evidence\":[{\"docId\":\"arxiv:2406.19007#1\",\"quote\":\"Towards a Formal Characterization of User Simulation Objectives in Conversational Information Access\"},{\"docId\":\"arxiv:2406.19007#1\",\"quote\":\"Nolwenn Bernard University of Stavanger ityStavanger ountryNorway\"},{\"docId\":\"arxiv:2406.19007#1\",\"quote\":\"Krisztian Balog University of Stavanger ityStavanger ountryNorway\"},{\"docId\":\"arxiv:2406.19007\",\"quote\":\"(2024)\"}]}"
+      ],
+      "seconds": 242
+    }
+  ]
+}
