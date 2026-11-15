@@ -396,7 +396,7 @@ export function ResearchPanel({
             </label>
             <label className="choice">
               <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
-              arXiv (preprints, read in full)
+              arXiv (preprints, read in full from their LaTeX source, or their PDF)
             </label>
             <label className="choice">
               <input type="checkbox" checked={prefs.datacite} disabled={running} onChange={(e) => updatePrefs({ datacite: e.target.checked })} />
