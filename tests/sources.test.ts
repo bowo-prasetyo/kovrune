@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
-import { createOpenAlex, fullTextIds, openAlexFilter, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
+import { createOpenAlex, fullTextIds, openAlexFilter, pmcidOf, rebuildAbstract, snippetOf } from "../src/sources/openalex.ts";
 import { parseSourcePrefs } from "../src/app/research/sources.ts";
 import type { OpenSource } from "../src/sources/types.ts";
 import { SourceSession } from "../src/sources/session.ts";
@@ -590,6 +590,13 @@ describe("OpenAlex search limits and full texts (harness 0.70.0)", () => {
     assert.deepEqual(ids({ id: "W1", doi: "https://doi.org/10.48550/arXiv.2005.11401" }), ["arxiv:2005.11401"]);
     assert.deepEqual(ids({ id: "W1", ids: { pmid: "https://pubmed.ncbi.nlm.nih.gov/38012345", pmcid: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10850983" } }), ["europepmc:MED/38012345"]);
     assert.deepEqual(ids({ id: "W1", ids: { pmcid: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10850983" } }), ["europepmc:PMC/PMC10850983"]);
+    // As OpenAlex gives it: the article URL with the bare number.
+    assert.deepEqual(ids({ id: "W1", ids: { pmid: "https://pubmed.ncbi.nlm.nih.gov/35188372", pmcid: "https://www.ncbi.nlm.nih.gov/pmc/articles/8862100" } }), ["europepmc:MED/35188372"]);
+    assert.deepEqual(ids({ id: "W1", ids: { pmcid: "https://www.ncbi.nlm.nih.gov/pmc/articles/8862100" } }), ["europepmc:PMC/PMC8862100"]);
+    assert.equal(pmcidOf("PMC10850983"), "PMC10850983");
+    assert.equal(pmcidOf("https://www.ncbi.nlm.nih.gov/pmc/articles/8862100/"), "PMC8862100");
+    assert.equal(pmcidOf("https://pubmed.ncbi.nlm.nih.gov/35188372"), undefined);
+    assert.equal(pmcidOf(null), undefined);
     assert.deepEqual(ids({ id: "W1", ids: { pmid: "https://pubmed.ncbi.nlm.nih.gov/38012345" } }), [], "a PubMed record without a free full text");
     assert.deepEqual(fullTextIds({ id: "W1", doi: "10.48550/arXiv.2005.11401" } as never, {}), [], "no source ticked, nothing read elsewhere");
   });
