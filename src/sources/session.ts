@@ -6,6 +6,7 @@ import { quoteContext, quoteHas } from "../agent/evidence.ts";
 import { chunkDocument, parentId } from "../documents/chunk.ts";
 import { outlineOf } from "../documents/outline.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
+import { citationNote } from "./openalex.ts";
 import { SourceError, type FetchedDocument, type OpenSource, type WorkInfo } from "./types.ts";
 
 export interface Citation {
@@ -61,6 +62,8 @@ export class SourceSession {
   private readonly fetched = new Map<string, { doc: FetchedDocument; parts: SourceDocument[] }>();
   /** Documents whose outline has been shown: once is enough, and it would crowd the context. */
   private readonly outlined = new Set<string>();
+  /** Works whose citation note has been shown, once each, as the outline is. */
+  private readonly pointed = new Set<string>();
 
   constructor(sources: OpenSource[], question: string, signal?: AbortSignal) {
     this.sources = sources;
@@ -88,7 +91,8 @@ export class SourceSession {
       throw error;
     }
     const { doc, parts } = entry;
-    if (parts.length === 1) return `[${doc.id}] ${doc.title}\n${parts[0]!.text}`;
+    const note = this.citationPointer(doc);
+    if (parts.length === 1) return `[${doc.id}] ${doc.title}\n${parts[0]!.text}${note}`;
     // A whole article does not fit; give the part that best matches the question.
     const part =
       parts.find((p) => p.id === id) ??
@@ -102,8 +106,24 @@ export class SourceSession {
     return (
       `[${part.id}] ${doc.title} (part ${number} of ${parts.length})\n${part.text}\n\n` +
       `Other parts: ${doc.id}#1 to ${doc.id}#${parts.length}.` +
-      (outline ? `\n${outlineNote(doc.id, outline)}` : "")
+      (outline ? `\n${outlineNote(doc.id, outline)}` : "") +
+      note
     );
+  }
+
+  /**
+   * After a scholarly work's first read, when OpenAlex is searched: how to follow its citations, naming the
+   * work as OpenAlex's search takes it (harness 0.84.0). An OpenAlex work by its ID, an arXiv paper by its
+   * arXiv ID, and another paper by its DOI; a Wikipedia article has no citations to follow.
+   */
+  private citationPointer(doc: FetchedDocument): string {
+    if (!this.sources.some((s) => s.followsCitations) || this.pointed.has(doc.id)) return "";
+    const openalex = /^openalex:(W\d+)$/.exec(doc.id)?.[1];
+    const arxiv = /^10\.48550\/arxiv\.(.+)$/i.exec(doc.work?.doi ?? "")?.[1];
+    const work = openalex ?? (arxiv ? `arxiv:${arxiv}` : doc.work?.doi ? `doi:${doc.work.doi}` : undefined);
+    if (!work) return "";
+    this.pointed.add(doc.id);
+    return citationNote(work);
   }
 
   /**

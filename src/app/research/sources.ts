@@ -33,6 +33,8 @@ export interface SourcePrefs {
   openalexFromYear?: number;
   /** OpenAlex searches find only works with a free copy. */
   openalexOpenAccess?: boolean;
+  /** The model is told it can follow a paper's citations through OpenAlex (experimental, off by default). */
+  openalexFollowCitations?: boolean;
   /** OpenAlex searches find only works in this field of research (OPENALEX_FIELDS); "" for any field. */
   openalexField?: string;
   /** OpenAlex searches find only works from this computer science venue (OPENALEX_VENUES); "" for any venue. */
@@ -68,6 +70,7 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       openalexKey: typeof value.openalexKey === "string" ? value.openalexKey.trim() : "",
       ...(validFromYear(value.openalexFromYear) ? { openalexFromYear: validFromYear(value.openalexFromYear) } : {}),
       ...(value.openalexOpenAccess === true ? { openalexOpenAccess: true } : {}),
+      ...(value.openalexFollowCitations === true ? { openalexFollowCitations: true } : {}),
       ...(typeof value.openalexField === "string" && OPENALEX_FIELDS.some(([id]) => id === value.openalexField) ? { openalexField: value.openalexField } : {}),
       ...(typeof value.openalexVenue === "string" && OPENALEX_VENUES.some(([id]) => id === value.openalexVenue) ? { openalexVenue: value.openalexVenue } : {}),
     };
@@ -106,7 +109,7 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
   const findArxiv = arxiv ? (title: string, signal?: AbortSignal) => findArxivByTitle(fetch, title, signal) : undefined;
   return [
     ...(prefs.wikipedia ? [createWikipedia(prefs.language)] : []),
-    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc, findArxiv })] : []),
+    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc, findArxiv }, { followCitations: prefs.openalexFollowCitations === true })] : []),
     ...(arxiv ? [arxiv] : []),
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
     ...(europepmc ? [europepmc] : []),

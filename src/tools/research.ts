@@ -5,6 +5,7 @@ import type { AgentTool } from "../agent/agent.ts";
 import type { EvidenceItem } from "../agent/evidence.ts";
 import { parentId } from "../documents/chunk.ts";
 import { OUTLINE_LINE, type SourceSession } from "../sources/session.ts";
+import { CITATION_NOTE_LINE } from "../sources/openalex.ts";
 import { SourceError } from "../sources/types.ts";
 import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
@@ -152,7 +153,11 @@ export function createResearchTools(
   const searchedSources = new Set<string>();
   const sourceSearches: AgentTool[] = (session?.sources ?? []).map((source) => ({
     name: `search_${source.name}`,
-    usage: `{"tool":"search_${source.name}","args":{"query":"..."}} searches ${source.label} and returns IDs, titles and snippets.`,
+    usage:
+      `{"tool":"search_${source.name}","args":{"query":"..."}} searches ${source.label} and returns IDs, titles and snippets.` +
+      // Following citations (harness 0.84.0), said where the model always sees it, when the user turns it on:
+      // a note after a read alone, Qwen3.5-4B never used (eval/cs/README.md).
+      (source.followsCitations ? ` To follow the citations of the paper the question names, query "citing <that paper's ID or title>" for works citing it, or "references of <that paper's ID or title>" for works it cites, adding ": <topic>" to narrow them.` : ""),
     args: z.object({ query: z.string() }).strict(),
     execute: async ({ query }: { query: string }) => {
       searchedSources.add(source.name);
@@ -268,7 +273,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },

@@ -6,12 +6,12 @@
 // that is on arXiv or in PubMed Central is read in full from there, when the user lets the agent use
 // that source too: no other site is asked than those the user ticked.
 
-import { arxivIdIn } from "./arxiv.ts";
+import { arxivIdIn, titleKey } from "./arxiv.ts";
 import { getJson, SourceError, type FetchedDocument, type FetchLike, type OpenSource, type RequestOptions, type WorkInfo } from "./types.ts";
 
 const PREFIX = "openalex:";
 export const OPENALEX_API = "https://api.openalex.org/works";
-export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location";
+export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location,cited_by_count,referenced_works_count";
 /** What reading a work also needs: where else it is, to read it in full there. */
 export const READ_FIELDS = `${WORK_FIELDS},ids,locations`;
 /** Works asked for in a search; the best `SEARCH_RESULTS` of them are shown. */
@@ -109,6 +109,10 @@ export interface Work {
   authorships?: Array<{ author?: { display_name?: string } }>;
   abstract_inverted_index?: Record<string, number[]> | null;
   primary_location?: { source?: { display_name?: string } | null } | null;
+  /** Works OpenAlex knows that cite this one. */
+  cited_by_count?: number;
+  /** Works in this one's reference list that OpenAlex knows. */
+  referenced_works_count?: number;
 }
 
 export function rebuildAbstract(index: Record<string, number[]> | null | undefined): string {
@@ -145,6 +149,7 @@ export function workText(work: Work): string {
       .filter(Boolean)
       .join(". "),
     work.doi ? `DOI: ${work.doi.replace(/^https:\/\/doi\.org\//, "")}` : "",
+    citationCounts(work),
   ];
   const abstract = rebuildAbstract(work.abstract_inverted_index);
   lines.push(abstract ? `Abstract: ${abstract}` : "OpenAlex has no abstract for this work.");
@@ -160,6 +165,81 @@ export function pmcidOf(value: string | null | undefined): string | undefined {
   const match = value?.match(/PMC(\d+)/i) ?? value?.match(/\/pmc\/articles\/(\d+)\/?$/i);
   return match ? `PMC${match[1]}` : undefined;
 }
+
+/** "Cited by 1,088 works in OpenAlex; its references there: 32.", or "" when OpenAlex gives neither count. */
+export function citationCounts(work: Work): string {
+  const parts = [
+    ...(typeof work.cited_by_count === "number" ? [`Cited by ${work.cited_by_count.toLocaleString("en")} works in OpenAlex`] : []),
+    ...(work.referenced_works_count ? [`its references there: ${work.referenced_works_count}`] : []),
+  ];
+  return parts.length ? `${parts.join("; ")}.` : "";
+}
+
+/**
+ * A search that follows citations (harness 0.84.0): "references of W123: words" lists the works W123
+ * cites, "citing W123: words" the works that cite it, best matching the words first, or, without words,
+ * most cited first. The work can be named by its OpenAlex ID, its DOI ("doi:10.18653/v1/2023.acl-long.1")
+ * or its arXiv ID ("arxiv:2005.11401"), so a paper read from arXiv or Europe PMC can be followed too.
+ * OpenAlex's own filter names are read as well ("cites:W123", "cited_by:W123"), since a model may know them.
+ */
+export interface CitationQuery {
+  direction: "references" | "citing";
+  /** "W123", "doi:…", "arxiv:…" or "title:…". */
+  work: string;
+  terms: string;
+  /** For a title followed by a colon: the whole text, tried first as a title with a subtitle ("Lost in the Middle: How …"). */
+  whole?: string;
+}
+
+const WORK_REF = String.raw`(?:openalex:)?(W\d+)|(?:doi:|https?://doi\.org/)?(10\.\d{4,9}/\S+)|arxiv:(\S+)`;
+const CITATION_QUERY = new RegExp(
+  String.raw`^\s*(references\s+of|reference\s+list\s+of|works\s+cited\s+by|cited_by:|citing|works\s+citing|papers\s+citing|citations\s+of|cites:)\s*(?:${WORK_REF})\s*[:,]?\s*([\s\S]*)$`,
+  "i",
+);
+
+/**
+ * The same forms with the paper named by its title, as a small model names it: "citing Lost in the Middle:
+ * graph". Qwen3.5-4B, shown the forms with an ID, wrote "citing GRAG: Graph Retrieval-Augmented
+ * Generation summarization" (eval/cs/README.md). The title runs to the first colon; without one, the whole
+ * rest is the title.
+ */
+const CITATION_BY_TITLE = /^\s*(references\s+of|reference\s+list\s+of|works\s+cited\s+by|citing|works\s+citing|papers\s+citing|citations\s+of)\s+["'“]?([^:"”]{4,}?)["'”]?\s*(?::\s*([\s\S]*))?$/i;
+
+/** Words copied from the usage line's own placeholder ("citing W123: words") are no words. */
+function withoutPlaceholder(terms: string): string {
+  return /^(?:<?\s*(?:words?|terms?|keywords?|\.\.\.|…)\s*>?)$/i.test(terms) ? "" : terms;
+}
+
+export function citationQuery(query: string): CitationQuery | undefined {
+  const m = CITATION_QUERY.exec(query);
+  if (!m) {
+    const t = CITATION_BY_TITLE.exec(query);
+    if (!t) return undefined;
+    const title = t[2]!.trim();
+    const terms = withoutPlaceholder((t[3] ?? "").trim());
+    // "citing RAG" is a topic: without a colon after it, a title has at least two words. With one, a
+    // paper's short name will do ("references of Self-RAG: PPO").
+    if (terms === "" && t[3] === undefined && title.split(/\s+/).length < 2) return undefined;
+    return {
+      direction: /^(references|reference|works\s+cited)/i.test(t[1]!) ? "references" : "citing",
+      work: `title:${title}`,
+      terms,
+      ...(terms ? { whole: `${title}: ${terms}` } : {}),
+    };
+  }
+  const direction = /^(references|reference|works\s+cited|cited_by)/i.test(m[1]!) ? "references" : "citing";
+  // A DOI or arXiv ID runs to the next space; a colon or comma after it introduces the words.
+  const work = m[2] ? m[2].toUpperCase() : m[3] ? `doi:${m[3].replace(/[.,;:]+$/, "")}` : `arxiv:${m[4]!.replace(/[.,;:]+$/, "").replace(/v\d+$/, "")}`;
+  return { direction, work, terms: withoutPlaceholder(m[5]!.replace(/^["']|["']$/g, "").trim()) };
+}
+
+/** The pointer after a scholarly work's first read, when OpenAlex is searched: how to follow its citations. */
+export function citationNote(work: string): string {
+  return `\n\n[To follow its citations, search_openalex "citing ${work}" for works citing it, or "references of ${work}" for works it cites; add a colon and a topic to narrow them.]`;
+}
+
+/** A citation note at the end of a read (citationNote), which shortening an old read leaves out. */
+export const CITATION_NOTE_LINE = /\n*\[To follow its citations, [^\n]*\]/;
 
 /** A work's reference details. */
 export function workInfo(work: Work): WorkInfo {
@@ -196,23 +276,52 @@ export function fullTextIds(work: Work, readers: FullTextReaders): Array<{ reade
  * from arXiv or Europe PMC when `readers` has that source and the work is there (fullTextIds); otherwise,
  * or when that fails, as its abstract.
  */
-export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, filters: OpenAlexFilters = {}, readers: FullTextReaders = {}): OpenSource {
+export function createOpenAlex(
+  fetchImpl: FetchLike = fetch,
+  apiKey?: string,
+  filters: OpenAlexFilters = {},
+  readers: FullTextReaders = {},
+  /**
+   * Tell the model it can follow citations (followsCitations). Off by default: told so, Qwen3.5-4B passed
+   * 2 and 3 of 5 citation questions where it passed 4 without, mostly following the wrong paper's citations
+   * (eval/cs/README.md). The search forms work either way.
+   */
+  behaviour: { followCitations?: boolean } = {},
+): OpenSource {
   const { params: auth, options } = openAlexOptions(apiKey);
   const filter = openAlexFilter(filters);
   return {
     name: "openalex",
+    ...(behaviour.followCitations ? { followsCitations: true } : {}),
     label: "OpenAlex",
     async search(query, signal) {
-      const params = new URLSearchParams({ search: query, "per-page": String(SEARCH_CANDIDATES), select: WORK_FIELDS, ...(filter ? { filter } : {}), ...auth });
+      let cited = citationQuery(query);
+      // A title with a subtitle is tried whole first; failing that, the part before the colon, with the rest as words.
+      const whole = cited?.whole ? await workByTitle(fetchImpl, cited.whole, auth, options, signal) : undefined;
+      if (cited && whole) cited = { ...cited, terms: "" };
+      const id = whole ?? (cited ? await openAlexId(fetchImpl, cited.work, auth, options, signal) : undefined);
+      // A title that names no work is a topic after all: it is searched as words.
+      if (cited && !id && cited.work.startsWith("title:")) cited = undefined;
+      if (cited && !id) throw new SourceError(`OpenAlex has no work ${cited.work.replace(/^doi:/, "with DOI ").replace(/^arxiv:/, "for arXiv paper ").replace(/^title:(.*)$/, 'titled "$1"')}.`);
+      const follow = cited && id ? `${cited.direction === "references" ? "cited_by" : "cites"}:${id}` : undefined;
+      const terms = cited ? cited.terms : query;
+      const params = new URLSearchParams({
+        ...(terms ? { search: terms } : { sort: "cited_by_count:desc" }),
+        "per-page": String(SEARCH_CANDIDATES),
+        select: WORK_FIELDS,
+        ...(filter || follow ? { filter: [follow, filter].filter(Boolean).join(",") } : {}),
+        ...auth,
+      });
       const data = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}?${params}`, signal, options);
       const works: Work[] = data?.results ?? [];
       const withAbstract = (work: Work) => Boolean(work.abstract_inverted_index && Object.keys(work.abstract_inverted_index).length);
       return [...works.filter(withAbstract), ...works.filter((work) => !withAbstract(work))].slice(0, SEARCH_RESULTS).map((work) => {
         const abstract = rebuildAbstract(work.abstract_inverted_index);
         const year = work.publication_year ? ` (${work.publication_year})` : "";
+        const cites = cited && typeof work.cited_by_count === "number" ? `, cited by ${work.cited_by_count.toLocaleString("en")}` : "";
         return {
           id: workId(work),
-          title: `${work.display_name ?? "Untitled"}${year}`,
+          title: `${work.display_name ?? "Untitled"}${year.replace(/\)$/, `${cites})`) || (cites ? ` (${cites.slice(2)})` : "")}`,
           snippet: abstract ? snippetOf(abstract) : "No abstract.",
         };
       });
@@ -250,6 +359,43 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, fi
       };
     },
   };
+}
+
+/**
+ * The OpenAlex ID of a work named in a citation search: as given, or looked up by its DOI or arXiv ID
+ * (OpenAlex registers arXiv papers under arXiv's DOI, 10.48550/arXiv.<id>). Undefined when OpenAlex has
+ * no such work.
+ */
+async function openAlexId(fetchImpl: FetchLike, work: string, auth: Record<string, string>, options: RequestOptions, signal?: AbortSignal): Promise<string | undefined> {
+  if (/^W\d+$/.test(work)) return work;
+  if (work.startsWith("title:")) return workByTitle(fetchImpl, work.slice(6), auth, options, signal);
+  const doi = work.startsWith("arxiv:") ? `10.48550/arXiv.${work.slice(6)}` : work.slice(4);
+  try {
+    const found: Work = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}/doi:${encodeURIComponent(doi)}?${new URLSearchParams({ select: "id", ...auth })}`, signal, options);
+    return found?.id?.replace(/^https:\/\/openalex\.org\//, "");
+  } catch (error) {
+    if (error instanceof SourceError && /HTTP 404/.test(error.message)) return undefined;
+    throw error;
+  }
+}
+
+/**
+ * The OpenAlex ID of the work a title names: of the works whose title has its words, the best match whose
+ * title starts with the one given, or is the start of it ("Self-RAG" names "Self-RAG: Learning to
+ * Retrieve…"). Undefined when none does, so a topic ("retrieval augmented generation") is searched as words
+ * rather than followed as some paper's citations.
+ */
+async function workByTitle(fetchImpl: FetchLike, title: string, auth: Record<string, string>, options: RequestOptions, signal?: AbortSignal): Promise<string | undefined> {
+  const words = title.replace(/[,:|"()]/g, " ").replace(/\s+/g, " ").trim();
+  const key = titleKey(title);
+  if (!words || key.length < 4) return undefined;
+  const params = new URLSearchParams({ search: words, filter: `title.search:${words}`, "per-page": "10", select: "id,display_name", ...auth });
+  const found: Work[] = (await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}?${params}`, signal, options))?.results ?? [];
+  const match = found.find((w) => {
+    const other = titleKey(w.display_name ?? "");
+    return other.length > 0 && (other.startsWith(key) || key.startsWith(other));
+  });
+  return match?.id.replace(/^https:\/\/openalex\.org\//, "");
 }
 
 /**

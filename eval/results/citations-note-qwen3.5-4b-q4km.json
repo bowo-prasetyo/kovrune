@@ -1,0 +1,122 @@
+{
+  "model": "qwen3.5-4b-q4km",
+  "date": "2026-11-15T15:52:38.229Z",
+  "outcomes": [
+    {
+      "taskId": "q1-selfrag-ppo",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": false,
+      "answer": "The paper that introduced PPO is 'Proximal Policy Optimization Algorithms' (arXiv:1707.06347), and its first author is John Schulman.",
+      "cited": [
+        "arxiv:1707.06347"
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"PPO reinforcement learning paper\"}",
+        "search_openalex {\"query\":\"PPO reinforcement learning paper\"}",
+        "final_answer {\"found\":true,\"answer\":\"The paper that introduced PPO is 'Proximal Policy Optimization Algorithms' by John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov, published in 2017. The first author is John Schulman.\",\"evidence\":[{\"docId\":\"arxiv:1808.07982\",\"quote\":\"Proximal Policy Optimization and its Dynamic Version for Sequence Generation (2018)\"}]}",
+        "read {\"docId\":\"arxiv:1808.07982\"}",
+        "search_arxiv {\"query\":\"Proximal Policy Optimization Algorithms Schulman 2017\"}",
+        "read {\"docId\":\"arxiv:1707.06347\"}",
+        "read {\"docId\":\"arxiv:1707.06347#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"The paper that introduced PPO is 'Proximal Policy Optimization Algorithms' (arXiv:1707.06347), and its first author is John Schulman.\",\"evidence\":[{\"docId\":\"arxiv:1707.06347#1\",\"quote\":\"John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov\"}]}"
+      ],
+      "seconds": 558
+    },
+    {
+      "taskId": "q2-rag-medical-multilingual",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": false,
+      "answer": "MedExpQA",
+      "cited": [
+        "arxiv:2404.05590"
+      ],
+      "actions": [
+        "search_openalex {\"query\":\"2024 benchmark medical question answering several languages retrieval-augmented generation Lewis 2020\"}",
+        "read {\"docId\":\"openalex:W4402670290\"}",
+        "search_arxiv {\"query\":\"2024 benchmark medical question answering several languages retrieval-augmented generation Lewis 2020\"}",
+        "read {\"docId\":\"openalex:W4402670290#3\"}",
+        "read {\"docId\":\"openalex:W4402670290#6\"}",
+        "read {\"docId\":\"openalex:W4402670290#7\"}",
+        "read {\"docId\":\"openalex:W4402670290#8\"}",
+        "search_arxiv {\"query\":\"Mirage benchmark medical question answering several languages\"}",
+        "read {\"docId\":\"arxiv:2404.05590\"}",
+        "search_arxiv {\"query\":\"MedExpQA Lewis 2020\"}",
+        "read {\"docId\":\"arxiv:2404.05590#17\"}",
+        "final_answer {\"found\":true,\"answer\":\"MedExpQA\",\"evidence\":[{\"docId\":\"arxiv:2404.05590\",\"quote\":\"MedExpQA: Multilingual Benchmarking of Large Language Models for Medical Question Answering (2024)\"},{\"docId\":\"arxiv:2404.05590#16\",\"quote\":\"We apply MedRAG as the Retrieval-Augmented Generation (RAG) state-of-the-art technique especially developed for the medical domain (Xiong et al., 2024).\"}]}"
+      ],
+      "seconds": 893
+    },
+    {
+      "taskId": "q3-lost-middle-graph",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": true,
+      "answer": "Query-Focused Summarization (QFS)",
+      "cited": [
+        "arxiv:2408.08921"
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"Lost in the Middle: How Language Models Use Long Contexts Liu et al. graph-based retrieval-augmented generation summarization\"}",
+        "search_openalex {\"query\":\"graph-based retrieval-augmented generation summarization\"}",
+        "read {\"docId\":\"openalex:W4411120544\"}",
+        "search_openalex {\"query\":\"citing GRAG: Graph Retrieval-Augmented Generation summarization\"}",
+        "search_arxiv {\"query\":\"Lost in the Middle Liu et al. graph retrieval augmented generation summarization\"}",
+        "read {\"docId\":\"arxiv:2510.16715\"}",
+        "search_arxiv {\"query\":\"Lost in the Middle Liu et al. graph retrieval augmented generation\"}",
+        "search_openalex {\"query\":\"Lost in the Middle: How Language Models Use Long Contexts Liu et al. citing graph retrieval augmented generation\"}",
+        "read {\"docId\":\"arxiv:2408.08921\"}",
+        "search_arxiv {\"query\":\"Lost in the Middle Liu et al. Query-Focused Summarization\"}",
+        "read {\"docId\":\"arxiv:2408.08921#125\"}",
+        "final_answer {\"found\":true,\"answer\":\"Query-Focused Summarization (QFS)\",\"evidence\":[{\"docId\":\"arxiv:2408.08921#5\",\"quote\":\"(3) Lacking Global Information: RAG can only retrieve a subset of documents and fails to grasp global information comprehensively, and hence struggles with tasks such as Query-Focused Summarization (QFS).\"}]}"
+      ],
+      "seconds": 885
+    },
+    {
+      "taskId": "q4-selfrag-controllable",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "followed": false,
+      "answer": "CTRL (Conditional Transformer Language Model for Controllable Generation)",
+      "cited": [
+        "arxiv:1909.05858"
+      ],
+      "actions": [
+        "search_openalex {\"query\":\"Self-RAG Asai 2023 conditional transformer language model 2019 controllable generation\"}",
+        "search_arxiv {\"query\":\"Self-RAG Asai 2023 conditional transformer language model 2019 controllable generation\"}",
+        "final_answer {\"found\":true,\"answer\":\"CTRL (Conditional Transformer Language Model for Controllable Generation)\",\"evidence\":[{\"docId\":\"arxiv:1909.05858\",\"quote\":\"CTRL: A Conditional Transformer Language Model for Controllable Generation (2019)\"}]}",
+        "read {\"docId\":\"arxiv:1909.05858\"}",
+        "final_answer {\"found\":true,\"answer\":\"CTRL (Conditional Transformer Language Model for Controllable Generation)\",\"evidence\":[{\"docId\":\"arxiv:1909.05858\",\"quote\":\"CTRL: A Conditional Transformer Language Model for Controllable Generation\"}]}"
+      ],
+      "seconds": 236
+    },
+    {
+      "taskId": "q5-acl-user-simulation",
+      "passed": false,
+      "facts": false,
+      "status": "not-found",
+      "followed": false,
+      "answer": "The documents searched do not contain information about which paper citing the ACL 2023 paper with DOI 10.18653/v1/2023.acl-long.1 gives a formal characterization of user simulation objectives, or the year it was published.",
+      "cited": [],
+      "actions": [
+        "search_arxiv {\"query\":\"ACL 2023 10.18653/v1/2023.acl-long.1 user simulation objectives formal characterization\"}",
+        "read {\"docId\":\"arxiv:2406.19007\"}",
+        "search_openalex {\"query\":\"Towards a Formal Characterization of User Simulation Objectives in Conversational Information Access\"}",
+        "read {\"docId\":\"arxiv:2406.19007#1\"}",
+        "search_arxiv {\"query\":\"ACL 2023 10.18653/v1/2023.acl-long.1\"}",
+        "search_openalex {\"query\":\"10.18653/v1/2023.acl-long.1\"}",
+        "read {\"docId\":\"arxiv:2406.19007#1\"}",
+        "read {\"docId\":\"arxiv:2406.19007#2\"}",
+        "search_arxiv {\"query\":\"ACL 2023 10.18653/v1/2023.acl-long.1 user simulation\"}",
+        "search_openalex {\"query\":\"10.18653/v1/2023.acl-long.1\"}",
+        "final_answer {\"found\":false,\"answer\":\"The documents searched do not contain information about which paper citing the ACL 2023 paper with DOI 10.18653/v1/2023.acl-long.1 gives a formal characterization of user simulation objectives, or the year it was published.\",\"evidence\":[]}"
+      ],
+      "seconds": 808
+    }
+  ]
+}
