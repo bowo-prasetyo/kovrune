@@ -107,7 +107,7 @@ describe("retrieval on the evaluation set", () => {
     assert.ok(summary.complete >= LAB_FLOOR.complete, `complete: ${summary.complete}`);
   });
 
-  it("does not find the IL10 paper for a researcher's own spelling of its name", async () => {
+  it("finds the IL10 paper for a researcher's own spelling of its name", async () => {
     // The alias gap, measured: the paper writes "IL10", so "IL-10" matches it nowhere, and the three
     // papers search returns instead are about a kinase inhibitor, an antibiotic and an enzyme. A
     // question carries the name's own words with it, which is why the suite's alias tasks still
@@ -115,15 +115,18 @@ describe("retrieval on the evaluation set", () => {
     const field = await loadFieldSuite();
     const found = (query: string) => new Set(appSearch(3)(field.labLibrary, query).map((id) => id.replace(/#\d+$/, "")));
     assert.ok(found("IL10").has("il10-tolerance-birds"), "the paper's own spelling finds it");
-    assert.equal(found("IL-10").has("il10-tolerance-birds"), false, "a hyphen between the letters and the number does not");
+    // Until 0.85.0 a hyphen between the letters and the number missed it, and the three papers search
+    // returned instead were about a kinase inhibitor, an antibiotic and an enzyme (eval/lab/README.md).
+    assert.ok(found("IL-10").has("il10-tolerance-birds"), "and so does a hyphen between the letters and the number");
   });
 
-  it("records how often another spelling of a name misses its paper", async () => {
-    // Measured at 0.76.0 before building anything (eval/lab/README.md): every paper is found by the
-    // spelling it uses, and 8 of 28 spellings a researcher might type are not. The misses are two
-    // families — a hyphen or space inside a name, and a Greek letter written as its name — which is what
-    // a change to search would have to bridge. These assertions fail when it does, and should then be
-    // replaced by the figures after it.
+  it("finds a paper by another spelling of a name (harness 0.85.0)", async () => {
+    // Measured at 0.76.0 before building anything: every paper was found by the spelling it uses, and 8
+    // of 28 spellings a researcher might type were not, in two families — a hyphen or space inside a
+    // name, and a Greek letter written as its name. 0.85.0 bridges both, on the query side, and 26 of 28
+    // now find their paper; the two that do not are a Latin letter standing for a Greek one ("Ppara")
+    // and a name's substring ("MDH2" for "BmMDH2"), neither a spelling of the same name
+    // (eval/lab/README.md).
     const field = await loadFieldSuite();
     const found = (query: string) => new Set(appSearch(3)(field.labLibrary, query).map((id) => id.replace(/#\d+$/, "")));
     for (const [own, paper] of [
@@ -141,11 +144,16 @@ describe("retrieval on the evaluation set", () => {
       ["mec A", "meca-daptomycin-tolerance"],
       ["H3K27 me3", "scml2-sperm-chromatin"],
       ["Bm MDH2", "adp-ribose-methanol-dehydrogenase"],
+      ["interleukin-10", "il10-tolerance-birds"],
     ] as const) {
-      assert.equal(found(variant).has(paper), false, `"${variant}" still misses its paper`);
+      assert.ok(found(variant).has(paper), `"${variant}" finds its paper`);
     }
-    // A Greek letter written as its name.
-    assert.equal(found("PPARalpha").has("ppara-brown-adipocytes"), false, '"PPARalpha" still misses its paper');
+    // A Greek letter written as its name, either way round.
+    assert.ok(found("PPARalpha").has("ppara-brown-adipocytes"), '"PPARalpha" finds the PPARα paper');
+    assert.ok(found("PPARα").has("ppara-brown-adipocytes"), '"PPARα" finds it too');
+    // Not bridged, and not a spelling of the same name: a Latin letter for a Greek one, and a substring.
+    assert.equal(found("Ppara").has("ppara-brown-adipocytes"), false, '"Ppara" is left for another change');
+    assert.equal(found("MDH2").has("adp-ribose-methanol-dehydrogenase"), false, '"MDH2" is part of "BmMDH2", not a spelling of it');
   });
 });
 

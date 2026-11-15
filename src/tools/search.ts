@@ -40,6 +40,48 @@ export function stem(token: string): string {
  * joined by "-" or "." also gives its parts, so "llama server" finds "llama-server" and "report"
  * finds a document titled "report.pdf"; a dot between digits ("3.2.0") joins one number.
  */
+/**
+ * Greek letters by the names papers also spell them with, so "PPARα" and "PPARalpha" are one term
+ * (harness 0.85.0). "μ" is left out: after a number it is the micro prefix ("10 μM"), not a name.
+ */
+const GREEK_NAMES: Record<string, string> = {
+  α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", ζ: "zeta", η: "eta", θ: "theta", ι: "iota", κ: "kappa",
+  λ: "lambda", ν: "nu", ξ: "xi", ρ: "rho", σ: "sigma", τ: "tau", υ: "upsilon", φ: "phi", χ: "chi", ψ: "psi", ω: "omega",
+};
+const GREEK_LETTER = new RegExp(`[${Object.keys(GREEK_NAMES).join("")}]`, "gu");
+/** A Greek letter's name ending a longer word: "pparalpha", "il1beta". */
+const GREEK_NAME_END = new RegExp(`.(${Object.values(GREEK_NAMES).join("|")})$`, "u");
+const LETTER_FOR: Record<string, string> = Object.fromEntries(Object.entries(GREEK_NAMES).map(([letter, name]) => [name, letter]));
+
+/**
+ * The forms of a gene or protein name that writing it another way gives (harness 0.85.0). A paper writes
+ * the name one way and a researcher types another, and the lab suite measured how often that misses: every
+ * one of its ten papers is found by the spelling it uses, and 8 of 28 spellings a researcher might type are
+ * not (eval/lab/README.md). Two families are bridged here:
+ * - **a hyphen or dot inside a name:** a query's "IL-10" also gives "il10", so it finds a paper writing
+ *   "IL10". Only the query is expanded: adding these to the index lengthened every document and cost
+ *   tasks on three suites (eval/lab/README.md), so a paper writing "IL-10" is still missed by a query
+ *   writing "IL10";
+ * - **a Greek letter written as its name:** "PPARα" and "PPARalpha" both give "pparalpha".
+ * What is not bridged: a letter standing for a Greek one ("Ppara" for "PPARα"), which would need every
+ * trailing "a" read as alpha, and a name whose parts differ by more than this ("periostin" for "POSTN").
+ */
+function nameForms(word: string): string[] {
+  const forms: string[] = [];
+  if (/[-.]/.test(word)) {
+    const joined = word.replace(/[-.]/g, "");
+    if (joined && joined !== word) forms.push(joined);
+  }
+  for (const form of [word, ...forms]) {
+    if (GREEK_LETTER.test(form)) forms.push(form.replace(GREEK_LETTER, (letter) => GREEK_NAMES[letter]!));
+    // And the other way: a query spelling the letter out, for a paper that uses it ("PPARalpha" for
+    // "PPARα"). Only at the end of a longer word, so "alphabet" is not read as a name.
+    const spelled = form.match(GREEK_NAME_END);
+    if (spelled) forms.push(form.slice(0, -spelled[1]!.length) + LETTER_FOR[spelled[1]!]!);
+  }
+  return forms;
+}
+
 function tokenize(text: string): string[] {
   const terms: string[] = [];
   for (const word of words(text)) {
@@ -51,6 +93,34 @@ function tokenize(text: string): string[] {
     }
   }
   return terms;
+}
+
+/**
+ * Two words a query writes apart that a paper may run together: "mec A" for "mecA", "H3K27 me3" for
+ * "H3K27me3", "Bm MDH2" for "BmMDH2" (harness 0.85.0). Only a pair that looks like a name is joined — one
+ * of the two holds a digit, or one is a single letter — so "cell cycle" and "ZVS load" are left alone, and
+ * "T cells" gives a term no document has, which costs a term and matches nothing. Query side only: a
+ * document that splits a name is the PDF reader's business (0.70.0 joins the pieces it can).
+ */
+/** The name forms of each word of a query (nameForms), stemmed, for the index's own spelling to match. */
+function queryNameForms(query: string): string[] {
+  return words(query)
+    .filter((w) => !STOP_WORDS.has(w))
+    .flatMap((w) => nameForms(w).filter((f) => !STOP_WORDS.has(f)).map(stem));
+}
+
+function joinedPairs(query: string): string[] {
+  // A single letter is kept though it is a stop word: "mec A" names a gene, and "a" is its second part.
+  const plain = words(query).filter((w) => !STOP_WORDS.has(w) || w.length === 1);
+  const joined: string[] = [];
+  for (let i = 0; i + 1 < plain.length; i++) {
+    const [a, b] = [plain[i]!, plain[i + 1]!];
+    // A name a space has split is letters and digits ("H3K27 me3", "Bm MDH2") or has a one-letter part
+    // ("mec A"). Anything looser joined ordinary pairs: "ZVS load" gave "zvsload" (tests/abbreviations).
+    if (!/\d/.test(a) && !/\d/.test(b) && a.length > 1 && b.length > 1) continue;
+    joined.push(stem(a + b));
+  }
+  return joined;
 }
 
 export class DocumentIndex {
@@ -219,7 +289,7 @@ export class DocumentIndex {
    * already.
    */
   expandedTerms(query: string): string[] {
-    const terms = new Set(tokenize(query));
+    const terms = new Set([...tokenize(query), ...joinedPairs(query), ...queryNameForms(query)]);
     for (const [short, longs] of this.abbreviations) {
       if (!terms.has(short) && longs.some((long) => long.every((term) => terms.has(term)))) terms.add(short);
     }
