@@ -37,6 +37,20 @@ export const OPENALEX_FIELDS: Array<[id: string, name: string]> = [
   ["fields/27", "Medicine"],
 ];
 
+/**
+ * Computer science venues a search can be limited to, as OpenAlex holds them: the ACL Anthology (NLP:
+ * ACL, EMNLP, NAACL, EACL, Findings, workshops) by its DOI prefix, and NeurIPS by its OpenAlex source,
+ * kept on any of a work's locations so a NeurIPS paper merged with its arXiv preprint counts. A browser
+ * can't read the ACL Anthology or OpenReview itself (neither allows requests from web pages), so their
+ * papers are found here and read in full from arXiv when they are there (fullTextIds, findArxiv).
+ * ICLR, ICML, JMLR and USENIX Security are not offered: OpenAlex holds 0 to 4 of their 2023 papers each
+ * (eval/cs/README.md). Their papers are nearly all on arXiv, which the arXiv source searches.
+ */
+export const OPENALEX_VENUES: Array<[id: string, name: string, filter: string]> = [
+  ["acl", "ACL Anthology (NLP)", "doi_starts_with:10.18653"],
+  ["neurips", "NeurIPS", "locations.source.id:S4363606243"],
+];
+
 /** Limits on an OpenAlex search, as the user sets them under Search in. */
 export interface OpenAlexFilters {
   /** Only works published in this year or later. */
@@ -45,14 +59,17 @@ export interface OpenAlexFilters {
   openAccess?: boolean;
   /** Only works whose main topic is in this field (OPENALEX_FIELDS). */
   field?: string;
+  /** Only works from this computer science venue (OPENALEX_VENUES). */
+  venue?: string;
 }
 
 /** OpenAlex's `filter` parameter for these limits, or undefined for none. */
-export function openAlexFilter({ fromYear, openAccess, field }: OpenAlexFilters): string | undefined {
+export function openAlexFilter({ fromYear, openAccess, field, venue }: OpenAlexFilters): string | undefined {
   const parts = [
     ...(fromYear && Number.isInteger(fromYear) && fromYear > 1000 && fromYear < 3000 ? [`from_publication_date:${fromYear}-01-01`] : []),
     ...(openAccess ? ["is_oa:true"] : []),
     ...(field && OPENALEX_FIELDS.some(([id]) => id === field) ? [`primary_topic.field.id:${field}`] : []),
+    ...OPENALEX_VENUES.filter(([id]) => id === venue).map(([, , filter]) => filter),
   ];
   return parts.length ? parts.join(",") : undefined;
 }
@@ -63,6 +80,11 @@ export interface FullTextReaders {
   arxiv?: OpenSource;
   /** The Europe PMC source: reads "europepmc:MED/<pmid>" or "europepmc:PMC/<pmcid>". */
   europepmc?: OpenSource;
+  /**
+   * With the arXiv source: the arXiv ID of a paper by its exact title (findArxivByTitle), for a work
+   * whose OpenAlex record has no arXiv link, as a conference paper kept apart from its preprint has not.
+   */
+  findArxiv?: (title: string, signal?: AbortSignal) => Promise<string | undefined>;
 }
 
 /**
@@ -189,7 +211,17 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, fi
       const key = id.slice(PREFIX.length);
       if (!/^W\d+$/.test(key)) throw new SourceError(`"${id}" is not an OpenAlex work ID.`);
       const work: Work = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}/${key}?${new URLSearchParams({ select: READ_FIELDS, ...auth })}`, signal, options);
-      for (const { reader, id: there } of fullTextIds(work, readers)) {
+      const elsewhere = fullTextIds(work, readers);
+      if (readers.arxiv && readers.findArxiv && work.display_name && !elsewhere.some(({ id }) => id.startsWith("arxiv:"))) {
+        try {
+          const found = await readers.findArxiv(work.display_name, signal);
+          if (found) elsewhere.unshift({ reader: readers.arxiv, id: `arxiv:${found}` });
+        } catch (error) {
+          if (signal?.aborted) throw error;
+          // Not found on arXiv: read it as its abstract, or from the next source.
+        }
+      }
+      for (const { reader, id: there } of elsewhere) {
         try {
           return fullTextDocument(work, await reader.fetch(there, signal), reader.label);
         } catch (error) {
@@ -197,16 +229,26 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, fi
           // Read it as its abstract, or from the next source.
         }
       }
+      const pdf = openPdf(work);
       return {
         id: workId(work),
         title: work.display_name ?? "Untitled",
-        text: workText(work),
+        text: workText(work) + (pdf ? `\nFull text (not read here; a web page cannot download it): ${pdf}. The user can download it and add it to their documents.` : ""),
         url: work.doi ?? `https://openalex.org/${key}`,
         retrievedAt: new Date().toISOString(),
         work: workInfo(work),
       };
     },
   };
+}
+
+/**
+ * A free PDF of a work that no ticked source reads, for the user to add to their documents: an ACL
+ * Anthology paper not on arXiv, for one (aclanthology.org/2023.eacl-main.252.pdf). None for an arXiv or
+ * PubMed Central copy, which their sources read.
+ */
+export function openPdf(work: Work): string | undefined {
+  return (work.locations ?? []).map((l) => l?.pdf_url ?? "").find((url) => /^https:\/\//.test(url) && !arxivIdIn(url) && !/ncbi\.nlm\.nih\.gov|europepmc\.org/.test(url));
 }
 
 /**
@@ -223,7 +265,8 @@ function fullTextDocument(work: Work, read: FetchedDocument, label: string): Fet
     text: head + read.text,
     url: read.url,
     retrievedAt: read.retrievedAt,
-    ...(read.work ? { work: read.work } : { work: workInfo(work) }),
+    // A paper found on arXiv by its title has no DataCite record behind it, so its authors and year come from OpenAlex.
+    ...(read.work ? { work: read.work.authors.length ? read.work : { ...workInfo(work), doi: read.work.doi, venue: read.work.venue } } : { work: workInfo(work) }),
     ...(read.pageStarts ? { pageStarts: read.pageStarts.map((start) => start + head.length) } : {}),
   };
 }
