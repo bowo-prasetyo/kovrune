@@ -1011,7 +1011,7 @@ What changed:
 
 ### Tables, table notes, abbreviations and snippets (0.73.0)
 
-Four changes from the [CS suite's first runs](../cs/README.md#four-changes-from-the-first-runs-0730): long tables split between rows, with their label, caption and column names repeated in each later piece; a note after a part that cites a table held in another part; a result kept for a passage that uses only an abbreviation the query spells out; and search snippets that end at a whole word. On this suite's documents they change only snippets, in 7 parts, and no `bench:retrieval` figure; their runs are recorded with the CS suite's.
+Four changes from the [CS suite's first runs](../cs/README.md#four-changes-from-the-first-runs-0730): long tables split between rows, with their label, caption and column names repeated in each later piece; a note after a part that cites a table held in another part; a result kept for a passage that uses only an abbreviation the query spells out; and search snippets that end at a whole word. On this suite's documents they change only snippets, in 7 parts, and no `bench:retrieval` figure; their runs are recorded with the CS suite's. Measured on both models, `field` is unchanged on 4B (80 of 89) and loses `f82` on 2B (69 to 68), from a snippet's last words; research, unanswerable, pdf and holdout are unchanged on both. The abbreviation's place was taken out in 0.77.0 ([decisions](../cs/README.md#the-other-suites-and-the-rules-decisions-0770)).
 
 ### A backed name with a plain suffix (0.74.0, defect fix)
 

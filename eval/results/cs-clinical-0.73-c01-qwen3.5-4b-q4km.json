@@ -1,0 +1,179 @@
+{
+  "harnessVersion": "0.73.0",
+  "createdAt": "2026-11-15T02:00:14.706Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    }
+  },
+  "config": {
+    "suites": [
+      "clinical"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "c01-typhoid-efficacy"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 21.2,
+    "decodeTokensPerSecond": 7.8,
+    "maxResearchTaskMinutes": 9.5,
+    "minutesPerSource": 2.3
+  },
+  "summary": [
+    {
+      "suite": "clinical",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.5,
+      "prefillTokensPerSecond": 90.4,
+      "medianTaskSeconds": 100.3,
+      "maxPromptTokens": 1691,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 1486,
+      "promptSeconds": 41.6,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "clinical",
+      "taskId": "c01-typhoid-efficacy",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3763,
+      "completionTokens": 436,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1691,
+      "cachedTokens": 2277,
+      "promptMs": 41553,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 100073,
+      "ttftMs": 41605,
+      "wallMs": 100298,
+      "actions": [
+        "search {\"query\":\"typhoid conjugate vaccine trial Malawi Vi-TT efficacy intention-to-treat blood culture confirmed 95% confidence interval\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"In the intention-to-treat population, the efficacy of Vi-TT against blood culture-confirmed typhoid fever was 78",
+        "read {\"docId\":\"typhoid-vaccine-malawi#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"In the intention-to-treat population, the efficacy of Vi-TT against blood culture-confirmed typhoid fever was 78.3% (95% CI"
+      ],
+      "final": "{\"found\":true,\"answer\":\"In the intention-to-treat population, the efficacy of Vi-TT against blood culture-confirmed typhoid fever was 78.3% (95% CI 66.3–86.1).\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#2\",\"quote\":\"In the intention-to-treat population, efficacy of Vi-TT was 78·3% (95% CI 66·3–86·1), and 163 (129–222) children needed to be vaccinated to prevent one case.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "typhoid-vaccine-malawi#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "7e00fcc3",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"typhoid conjugate vaccine trial Malawi Vi-TT efficacy intention-to-treat blood culture confirmed 95% confidence interval\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 282,
+            "completionTokens": 37,
+            "cachedTokens": 217,
+            "promptMs": 1994.077
+          }
+        },
+        {
+          "input": "fe7da713",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"In the intention-to-treat population, the efficacy of Vi-TT against blood culture-confirmed typhoid fever was 78.3% (95% CI 66.3–86.1).\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#2\",\"quote\":\"In the intention-to-treat population, efficacy of Vi-TT was 78·3% (95% CI 66·3–86·1), and 163 (129–222) children needed to be vaccinated to prevent one case.\"},{\"docId\":\"typhoid-vaccine-malawi#18\",\"quote\":\"Overall vaccine efficacy in preventing a first episode of blood culture-confirmed typhoid fever for the entire study period was 78·3% (95% CI 66·3–86·1) in the intention-to-treat analysis, with 24 (0·2%) of 14 069 […]\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 743,
+            "completionTokens": 233,
+            "cachedTokens": 278,
+            "promptMs": 12809.547
+          }
+        },
+        {
+          "input": "a111d7fa",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"typhoid-vaccine-malawi#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1047,
+            "completionTokens": 22,
+            "cachedTokens": 739,
+            "promptMs": 8483.012
+          }
+        },
+        {
+          "input": "9ba146a7",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"In the intention-to-treat population, the efficacy of Vi-TT against blood culture-confirmed typhoid fever was 78.3% (95% CI 66.3–86.1).\",\"evidence\":[{\"docId\":\"typhoid-vaccine-malawi#2\",\"quote\":\"In the intention-to-treat population, efficacy of Vi-TT was 78·3% (95% CI 66·3–86·1), and 163 (129–222) children needed to be vaccinated to prevent one case.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1691,
+            "completionTokens": 144,
+            "cachedTokens": 1043,
+            "promptMs": 18266.202
+          }
+        }
+      ]
+    }
+  ]
+}
