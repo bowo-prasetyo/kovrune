@@ -193,11 +193,43 @@ A wrong answer ("reduced nitric oxide production") still matches none of the gro
 
 **What the runs suggest, in order of what they would gain on this suite:**
 
-1. **Look for a sentence of the source that contradicts a backed sentence** (`l03`), as described above. It is the only wrong answer here that reached a green label on 4B.
-2. **Reach the results text, not only the figure legend** (4B's `l04`, `lh04`). Both read a legend naming the figure that holds the value and concluded the value was not given. The CS suite asked for the neighbouring part for the same reason (`cs04`, `cs12`).
+1. ~~**Look for a sentence of the source that contradicts a backed sentence**~~ (`l03`). Done at 0.75.0 ([above](#three-changes-from-the-first-runs-0750)).
+2. ~~**Reach the results text, not only the figure legend**~~ (4B's `l04`, `lh04`). Done at 0.75.0 ([above](#three-changes-from-the-first-runs-0750)): `l04` passes, and `lh04`, whose value is in a part search does not return at all, does not.
 3. **Require every part of a "from what to what" question** (2B's `l22`), which the completeness check, asked of 2B, did not find missing.
 4. **Look for a distinguishing name in the documents the model read**, not only in its quotes. The plain-suffix fix of 0.74.0 covers `l07`; a name the paper uses in another form still needs the read documents, as `inSourceSupport` uses them for sentences.
-5. Match gene and protein names however they are written, which this suite's alias test measures without a model ([above](#results)).
+5. Match gene and protein names however they are written. **Measured at 0.75.0 before building anything:** every one of the ten papers is found by the spelling it uses for a key name, and 8 of 28 spellings a researcher might type are not — a hyphen or space inside a name ("IL-10" for "IL10", "mec A", "H3K27 me3", "Bm MDH2") and a Greek letter written as its name ("PPARalpha"). `tests/retrieval.test.ts` records those misses, and should fail when a change bridges them.
+6. **Europe PMC's synonym option: measured and dropped.** Asked with `synonym=TRUE`, Europe PMC *lost* 2 of 6 of these papers that it found with the option off, and gained none: the IL10 paper's query goes from 436 hits to 3,550 and the paper falls off the first page. Kovrune keeps the five best of 25 candidates, so a wider hit set pushes the right paper out. Not adopted.
+
+### Three changes from the first runs (0.75.0)
+
+The runs above named four things to try. Three are done here, and one was measured and dropped.
+
+- **Where a figure is discussed** (`figuresDiscussedElsewhere` in `src/tools/search.ts`, `figureNote` in `src/tools/research.ts`). A paper gives a figure's values in the prose that cites it, while the legend repeats the design, so search ranks the legend high and the prose that answers sits elsewhere: 4B read Figure 1's legend and Figure 6's and answered that the documents "do not contain the specific numerical values", though the sentence citing "(Figure 1C)" gives both (`l04`). A part that holds a legend now ends with where that figure is discussed — "[Figure 1 is discussed in ppara-brown-adipocytes#13.]" — the mirror of [0.73.0's pointer](../cs/README.md#four-changes-from-the-first-runs-0730) from prose to a table it cites. At most two figures are named, and shortening an old read drops the note.
+- **A sentence of a source that says otherwise** (`contradictedSupport` in `src/agent/support.ts`). The one wrong answer that kept a green label, `l03`, quoted the introduction's sentence about reduced IL10 expression to say what the *heterozygous* knockout did, while the paper's own sentence about the heterozygote denies it. The answer and that sentence share two words in five, so no comparison between them can see it; what marks it is the **question**, which the paper's sentence covers to 78% while denying it. So the documents the model read are searched for a sentence that covers three quarters of the question's content words and speaks with a negation or denies significance, where the answer does neither. Such a sentence takes the label and is shown to the reader as **Quotes found, a source says otherwise** (`describeStatus`), with the sentence itself. A sentence inside a verified quote is skipped, so an answer that quotes a denial and reports it is not accused of contradicting it.
+- **A preprint's published version** (`publishedVersion` in `src/sources/europepmc.ts`). Europe PMC links a preprint to its published version ("Preprint of"); that version's reference and PMID now head the preprint's text, beside the retraction and protocol notes. Nothing in this suite exercises it — its papers are all published — so it is a feature with a unit test, not a measured change.
+
+**The threshold of the contradiction check is fitted to one answer**, the only instance in 86. That is a reason to judge it by what it costs rather than by what it gains, which is what the measurement below does.
+
+#### What the three were measured against
+
+**Search alone** (`bench:retrieval`): unchanged on every suite, as all three changes act after search — the figure note when a part is read, the other two after the answer. `tests/retrieval.test.ts` keeps its floors.
+
+**Recorded answers** (`bench:rescore --labels` on each of the 132 reports, 7,321 answers): **exactly one line changes**, `l03` losing its label, and it is a wrong answer. No right answer loses its label, no sentence count moves and no task result changes. This is the whole cost of the contradiction check over everything recorded, and it satisfies the rule stated before it was written: adopt only if it costs no right answer its label and takes the label from at least one wrong one.
+
+**The suites the rule protects cannot change.** The figure note reaches only a part that holds a figure's legend whose figure another part discusses. Counted over every library: 0 of the research and unanswerable parts, 0 of 2 pdf parts, 0 of 61 field parts (so holdout and multi too), 0 of 80 office, 0 of 415 clinical, 0 of 13 engineering — and 23 of 534 CS parts and 53 of 451 lab parts. So no run of the protected suites can differ, and none was made for them.
+
+**Models, on the lab suites.** `bench:replay` could not shorten this: the 0.72.0 recordings no longer replay even on unmodified `main`, because 0.73.0's chunking change moved the parts (`main` against `main` gives the same 34 undecidable tasks). So a fresh baseline was run on `main` at 0.74.0, on the same machine, build and model files as the change.
+
+| Model | Suite | Before (`main`) | After | Gained | Lost | p (McNemar) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | `lab` | 27/32 | **29/32** | 2 | 0 | 0.50 |
+| Qwen3.5-4B | `labholdout` | 9/11 | 9/11 | 0 | 0 | 1 |
+
+4B gained `l04`, the task the figure note was written for, and `l28`. **The mechanism is confirmed, not assumed:** in the new run 4B read `ppara-brown-adipocytes#14`, the Figure 1 legend, then read `#13`, the part the note points to, and answered "reduced by up to 97% in female mice and 83% in male mice". Labelled answers that are wrong: 0 of 25 before, 0 of 26 after.
+
+**`l03` answered itself this time.** In the new run 4B's first answer was rejected by the read-before-answering guard, and its second said "neither the heterozygous IL10 knockout nor a homozygous IL10 enhancer mutation had a major effect" — the right answer — so the contradiction check had nothing to fire on. The error it guards against is not deterministic: it is in the recorded 0.72.0 run, where rescoring shows the check removing its label. A guard is worth having for an error a model makes some of the time, but one run cannot show it firing.
+
+**Not measured:** the CS suites, whose 23 parts the figure note also reaches, and both models' protected suites, which the count above shows cannot change. The CS runs are the next thing to do with this change.
 
 ## Limits
 

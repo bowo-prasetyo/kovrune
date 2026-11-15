@@ -8,6 +8,7 @@ import { ResearchLibrary } from "../src/agent/research.ts";
 import { checkEvidence } from "../src/agent/evidence.ts";
 import { contradictedSupport, labelledQuotesFound, sentenceSupport } from "../src/agent/support.ts";
 import { createResearchTools, FIGURE_NOTE_LINE, figureNote } from "../src/tools/research.ts";
+import { describeStatus } from "../src/app/research/trace.ts";
 
 // A paper laid out as the converter writes one: results prose that cites a figure, then the legend.
 const PROSE = "PPARαBATKO mice displayed, upon tamoxifen treatment, a strong inhibition of Pparα mRNA levels (Figure 1C) in BAT compared to Ctrl mice (up to 97% in female and 83% in male mice).";
@@ -60,6 +61,14 @@ describe("a source sentence that denies the answer (harness 0.75.0)", () => {
     const checked = support(answer);
     assert.equal(checked.contradicted?.passage, DENIAL);
     assert.equal(labelledQuotesFound("verified", evidence, checked), false);
+  });
+
+  it("tells the reader which sentence says otherwise", () => {
+    const checked = support(answer);
+    const described = describeStatus("verified", evidence, checked);
+    assert.equal(described.label, "Quotes found, a source says otherwise");
+    assert.match(described.detail, /answers your question and says the opposite: "Neither the heterozygous IL10 knockout/);
+    assert.equal(described.severity, "check");
   });
 
   it("leaves an answer that says the same as the denial alone", () => {
