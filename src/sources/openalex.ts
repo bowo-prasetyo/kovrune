@@ -11,7 +11,7 @@ import { getJson, SourceError, type FetchedDocument, type FetchLike, type OpenSo
 
 const PREFIX = "openalex:";
 export const OPENALEX_API = "https://api.openalex.org/works";
-export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location";
+export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location,cited_by_count,referenced_works_count";
 /** What reading a work also needs: where else it is, to read it in full there. */
 export const READ_FIELDS = `${WORK_FIELDS},ids,locations`;
 /** Works asked for in a search; the best `SEARCH_RESULTS` of them are shown. */
@@ -109,6 +109,10 @@ export interface Work {
   authorships?: Array<{ author?: { display_name?: string } }>;
   abstract_inverted_index?: Record<string, number[]> | null;
   primary_location?: { source?: { display_name?: string } | null } | null;
+  /** Works OpenAlex knows that cite this one. */
+  cited_by_count?: number;
+  /** Works in this one's reference list that OpenAlex knows. */
+  referenced_works_count?: number;
 }
 
 export function rebuildAbstract(index: Record<string, number[]> | null | undefined): string {
@@ -145,6 +149,7 @@ export function workText(work: Work): string {
       .filter(Boolean)
       .join(". "),
     work.doi ? `DOI: ${work.doi.replace(/^https:\/\/doi\.org\//, "")}` : "",
+    citationCounts(work),
   ];
   const abstract = rebuildAbstract(work.abstract_inverted_index);
   lines.push(abstract ? `Abstract: ${abstract}` : "OpenAlex has no abstract for this work.");
@@ -160,6 +165,52 @@ export function pmcidOf(value: string | null | undefined): string | undefined {
   const match = value?.match(/PMC(\d+)/i) ?? value?.match(/\/pmc\/articles\/(\d+)\/?$/i);
   return match ? `PMC${match[1]}` : undefined;
 }
+
+/** "Cited by 1,088 works in OpenAlex; its references there: 32.", or "" when OpenAlex gives neither count. */
+export function citationCounts(work: Work): string {
+  const parts = [
+    ...(typeof work.cited_by_count === "number" ? [`Cited by ${work.cited_by_count.toLocaleString("en")} works in OpenAlex`] : []),
+    ...(work.referenced_works_count ? [`its references there: ${work.referenced_works_count}`] : []),
+  ];
+  return parts.length ? `${parts.join("; ")}.` : "";
+}
+
+/**
+ * A search that follows citations (harness 0.82.0): "references of W123: words" lists the works W123
+ * cites, "citing W123: words" the works that cite it, best matching the words first, or, without words,
+ * most cited first. The work can be named by its OpenAlex ID, its DOI ("doi:10.18653/v1/2023.acl-long.1")
+ * or its arXiv ID ("arxiv:2005.11401"), so a paper read from arXiv or Europe PMC can be followed too.
+ * OpenAlex's own filter names are read as well ("cites:W123", "cited_by:W123"), since a model may know them.
+ */
+export interface CitationQuery {
+  direction: "references" | "citing";
+  /** "W123", "doi:…" or "arxiv:…". */
+  work: string;
+  terms: string;
+}
+
+const WORK_REF = String.raw`(?:openalex:)?(W\d+)|doi:(\S+)|arxiv:(\S+)`;
+const CITATION_QUERY = new RegExp(
+  String.raw`^\s*(references\s+of|reference\s+list\s+of|works\s+cited\s+by|cited_by:|citing|works\s+citing|papers\s+citing|citations\s+of|cites:)\s*(?:${WORK_REF})\s*[:,]?\s*([\s\S]*)$`,
+  "i",
+);
+
+export function citationQuery(query: string): CitationQuery | undefined {
+  const m = CITATION_QUERY.exec(query);
+  if (!m) return undefined;
+  const direction = /^(references|reference|works\s+cited|cited_by)/i.test(m[1]!) ? "references" : "citing";
+  // A DOI or arXiv ID runs to the next space; a colon or comma after it introduces the words.
+  const work = m[2] ? m[2].toUpperCase() : m[3] ? `doi:${m[3].replace(/[.,;:]+$/, "")}` : `arxiv:${m[4]!.replace(/[.,;:]+$/, "").replace(/v\d+$/, "")}`;
+  return { direction, work, terms: m[5]!.replace(/^["']|["']$/g, "").trim() };
+}
+
+/** The pointer after a scholarly work's first read, when OpenAlex is searched: how to follow its citations. */
+export function citationNote(work: string): string {
+  return `\n\n[To follow its citations, search_openalex "references of ${work}: words" for works it cites, or "citing ${work}: words" for works citing it.]`;
+}
+
+/** A citation note at the end of a read (citationNote), which shortening an old read leaves out. */
+export const CITATION_NOTE_LINE = /\n*\[To follow its citations, [^\n]*\]/;
 
 /** A work's reference details. */
 export function workInfo(work: Work): WorkInfo {
@@ -203,16 +254,28 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, fi
     name: "openalex",
     label: "OpenAlex",
     async search(query, signal) {
-      const params = new URLSearchParams({ search: query, "per-page": String(SEARCH_CANDIDATES), select: WORK_FIELDS, ...(filter ? { filter } : {}), ...auth });
+      const cited = citationQuery(query);
+      const id = cited ? await openAlexId(fetchImpl, cited.work, auth, options, signal) : undefined;
+      if (cited && !id) throw new SourceError(`OpenAlex has no work ${cited.work.replace(/^doi:/, "with DOI ").replace(/^arxiv:/, "for arXiv paper ")}.`);
+      const follow = cited && id ? `${cited.direction === "references" ? "cited_by" : "cites"}:${id}` : undefined;
+      const terms = cited ? cited.terms : query;
+      const params = new URLSearchParams({
+        ...(terms ? { search: terms } : { sort: "cited_by_count:desc" }),
+        "per-page": String(SEARCH_CANDIDATES),
+        select: WORK_FIELDS,
+        ...(filter || follow ? { filter: [follow, filter].filter(Boolean).join(",") } : {}),
+        ...auth,
+      });
       const data = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}?${params}`, signal, options);
       const works: Work[] = data?.results ?? [];
       const withAbstract = (work: Work) => Boolean(work.abstract_inverted_index && Object.keys(work.abstract_inverted_index).length);
       return [...works.filter(withAbstract), ...works.filter((work) => !withAbstract(work))].slice(0, SEARCH_RESULTS).map((work) => {
         const abstract = rebuildAbstract(work.abstract_inverted_index);
         const year = work.publication_year ? ` (${work.publication_year})` : "";
+        const cites = cited && typeof work.cited_by_count === "number" ? `, cited by ${work.cited_by_count.toLocaleString("en")}` : "";
         return {
           id: workId(work),
-          title: `${work.display_name ?? "Untitled"}${year}`,
+          title: `${work.display_name ?? "Untitled"}${year.replace(/\)$/, `${cites})`) || (cites ? ` (${cites.slice(2)})` : "")}`,
           snippet: abstract ? snippetOf(abstract) : "No abstract.",
         };
       });
@@ -250,6 +313,23 @@ export function createOpenAlex(fetchImpl: FetchLike = fetch, apiKey?: string, fi
       };
     },
   };
+}
+
+/**
+ * The OpenAlex ID of a work named in a citation search: as given, or looked up by its DOI or arXiv ID
+ * (OpenAlex registers arXiv papers under arXiv's DOI, 10.48550/arXiv.<id>). Undefined when OpenAlex has
+ * no such work.
+ */
+async function openAlexId(fetchImpl: FetchLike, work: string, auth: Record<string, string>, options: RequestOptions, signal?: AbortSignal): Promise<string | undefined> {
+  if (/^W\d+$/.test(work)) return work;
+  const doi = work.startsWith("arxiv:") ? `10.48550/arXiv.${work.slice(6)}` : work.slice(4);
+  try {
+    const found: Work = await getJson(fetchImpl, "OpenAlex", `${OPENALEX_API}/doi:${encodeURIComponent(doi)}?${new URLSearchParams({ select: "id", ...auth })}`, signal, options);
+    return found?.id?.replace(/^https:\/\/openalex\.org\//, "");
+  } catch (error) {
+    if (error instanceof SourceError && /HTTP 404/.test(error.message)) return undefined;
+    throw error;
+  }
 }
 
 /**

@@ -5,6 +5,7 @@ import type { AgentTool } from "../agent/agent.ts";
 import type { EvidenceItem } from "../agent/evidence.ts";
 import { parentId } from "../documents/chunk.ts";
 import { OUTLINE_LINE, type SourceSession } from "../sources/session.ts";
+import { CITATION_NOTE_LINE } from "../sources/openalex.ts";
 import { SourceError } from "../sources/types.ts";
 import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
@@ -268,7 +269,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },
