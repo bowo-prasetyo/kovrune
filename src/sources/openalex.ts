@@ -176,7 +176,7 @@ export function citationCounts(work: Work): string {
 }
 
 /**
- * A search that follows citations (harness 0.83.0): "references of W123: words" lists the works W123
+ * A search that follows citations (harness 0.84.0): "references of W123: words" lists the works W123
  * cites, "citing W123: words" the works that cite it, best matching the words first, or, without words,
  * most cited first. The work can be named by its OpenAlex ID, its DOI ("doi:10.18653/v1/2023.acl-long.1")
  * or its arXiv ID ("arxiv:2005.11401"), so a paper read from arXiv or Europe PMC can be followed too.

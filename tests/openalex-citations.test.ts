@@ -1,4 +1,4 @@
-// Following a paper's citations through OpenAlex (harness 0.83.0): "references of W123: words" and
+// Following a paper's citations through OpenAlex (harness 0.84.0): "references of W123: words" and
 // "citing W123: words" as OpenAlex searches, and the note after a work's first read (eval/cs/README.md).
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";

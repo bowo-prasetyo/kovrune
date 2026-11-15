@@ -113,7 +113,7 @@ export class SourceSession {
 
   /**
    * After a scholarly work's first read, when OpenAlex is searched: how to follow its citations, naming the
-   * work as OpenAlex's search takes it (harness 0.83.0). An OpenAlex work by its ID, an arXiv paper by its
+   * work as OpenAlex's search takes it (harness 0.84.0). An OpenAlex work by its ID, an arXiv paper by its
    * arXiv ID, and another paper by its DOI; a Wikipedia article has no citations to follow.
    */
   private citationPointer(doc: FetchedDocument): string {

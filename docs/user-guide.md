@@ -359,6 +359,7 @@ Steps 4 to 7 ask the same small model that wrote the answer, so they catch some 
 | Text | `.txt`, Markdown (`.md`), HTML (`.html`) |
 
 - **PDFs:** Kovrune reads the text where it is on the page, so a subscript, a superscript or a symbol set against the text before it is read with it ("RDS(on) = 40 mΩ", "fsw", "−25 °C", "10−6"), paragraphs are kept apart, and a running header or footer that repeats on most pages ("IEEE TRANSACTIONS ON …", "Page 2 of 3") is read once, where it first appears. PDFs added before this version keep the text they were read with; remove one and add it again to read it this way. Formulas, figures and their labels are read as whatever text they hold, which is often not much.
+- **Pages without text:** a PDF that has text on some pages but not others, such as a scanned appendix or an older paper scanned into a newer one, says which pages have none ("Pages 2 and 4 of 5 have no text Kovrune can read"), under its name, and the summary after adding a folder counts them. Kovrune has no OCR, so a question about such a page finds nothing. A full-page figure or a blank page is marked the same way.
 - **Abbreviations:** when a document defines one, as "finite element analysis (FEA)", a search with those words also finds the passages that say only "FEA".
 - **Word and OpenDocument text files:** Kovrune reads the text, tables, and footnotes and endnotes, which follow the text. A table is read one row per line; when it has a header row, each value is labelled with its column's header, for example "Good: ◯", so **Show text** shows these labels although the document doesn't spell them out. It leaves out headers and footers, comments, and text deleted with tracked changes.
 - **A note asking you to add a file again:** documents added before Kovrune labelled table columns lost which column each value was in. Remove the document and add the file again.
@@ -507,6 +508,7 @@ In each case, the research continues with your other sources.
 | Problem | Cause | Fix |
 | --- | --- | --- |
 | A PDF shows "No text found" | The PDF is scanned images | Use a PDF with selectable text |
+| A PDF says "Pages … have no text Kovrune can read" | Those pages are scans (an older paper's pages, a scanned appendix), full-page figures without text, or blank. The rest of the PDF is read | For a scanned page, find a version with selectable text (the publisher's, or one run through OCR in Acrobat or OCRmyPDF), remove the document and add that file. Nothing is needed for a figure or a blank page |
 | A file is "password-protected" | Kovrune can't open protected files | Open it, remove the password, save it, and add it again |
 | An older Office file (.doc, .ppt, .xls) or RTF file is refused | These formats aren't read | Save it as .docx, .pptx, .xlsx or PDF, and add it again |
 

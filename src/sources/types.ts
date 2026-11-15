@@ -41,7 +41,7 @@ export interface OpenSource {
   name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc";
   /**
    * The model is told it can follow citations through this source (OpenAlex, when the user ticks it,
-   * harness 0.83.0): the search tool's usage line and a note after a work's first read give the forms.
+   * harness 0.84.0): the search tool's usage line and a note after a work's first read give the forms.
    */
   followsCitations?: boolean;
   /** Shown to the model and the user, e.g. "Wikipedia". */

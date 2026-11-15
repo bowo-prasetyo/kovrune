@@ -314,7 +314,7 @@ A paper without a source (arXiv then serves its PDF), one whose archive can't be
 
 **Limits.** A quote from the source shows no page. Text inside figures is read only from the PDF. Packages that define their own table or list environments, and macros with unusual argument syntax, can leave stray words, as can `tikz` drawings. The converter was checked on the 30 papers and on 9 well-known ones (the Transformer, BERT, RAG, Toolformer, LoRA, Chain-of-Thought, InstructGPT, Self-RAG, Lost in the Middle); no benchmark suite reads arXiv, so how much it changes the model's answers is not measured. A suite of CC BY arXiv papers with questions on their equations and tables would measure it.
 
-## Following citations through OpenAlex (0.83.0)
+## Following citations through OpenAlex (0.84.0)
 
 A literature review follows citations: what a paper builds on, and who built on it since. OpenAlex holds both directions (`cited_by:` and `cites:` filters), so the OpenAlex source now reads two search forms (`citationQuery` in `src/sources/openalex.ts`):
 
@@ -324,7 +324,7 @@ A literature review follows citations: what a paper builds on, and who built on 
 
 Live, the forms find what they should: Self-RAG's references include PPO, the GPT-4 report and Llama 2; the works citing RAG on "medical question answering" include MedExpQA; the most cited works citing Lost in the Middle are two surveys and GraphRAG; an ACL paper is found by its DOI.
 
-**Whether the model uses them** (`npm run bench:citations`; searches counted as 0.83.0's parser reads them; five questions that name a paper and ask about one it cites or one citing it; Qwen3.5-4B, OpenAlex and arXiv, no documents, prompt cache off, same day):
+**Whether the model uses them** (`npm run bench:citations`; searches counted as 0.84.0's parser reads them; five questions that name a paper and ask about one it cites or one citing it; Qwen3.5-4B, OpenAlex and arXiv, no documents, prompt cache off, same day):
 
 | What the model is told | Passed | Searches that followed citations | Report |
 | --- | --- | --- | --- |
