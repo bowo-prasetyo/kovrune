@@ -1,0 +1,2730 @@
+{
+  "createdAt": "2026-11-15T14:06:30.227Z",
+  "config": {
+    "subfields": {
+      "2102": "Energy Engineering and Power Technology",
+      "2202": "Aerospace Engineering",
+      "2203": "Automotive Engineering",
+      "2204": "Biomedical Engineering",
+      "2205": "Civil and Structural Engineering",
+      "2206": "Computational Mechanics",
+      "2207": "Control and Systems Engineering",
+      "2208": "Electrical and Electronic Engineering",
+      "2209": "Industrial and Manufacturing Engineering",
+      "2210": "Mechanical Engineering",
+      "2211": "Mechanics of Materials",
+      "2212": "Ocean Engineering",
+      "2213": "Safety, Risk, Reliability and Quality",
+      "2215": "Building and Construction"
+    },
+    "perSubfield": 10,
+    "seed": 1,
+    "years": "2020-2023",
+    "minReferences": 30
+  },
+  "citations": 16565,
+  "distinctWorks": 16322,
+  "unmatched": 222,
+  "total": {
+    "kovrune": 2046,
+    "free": 4567,
+    "abstract": 4357,
+    "none": 5595
+  },
+  "bySubfield": {
+    "Energy Engineering and Power Technology": {
+      "reviews": 10,
+      "cited": 1607,
+      "access": {
+        "kovrune": 81,
+        "free": 539,
+        "abstract": 227,
+        "none": 760
+      }
+    },
+    "Aerospace Engineering": {
+      "reviews": 10,
+      "cited": 904,
+      "access": {
+        "kovrune": 119,
+        "free": 206,
+        "abstract": 381,
+        "none": 198
+      }
+    },
+    "Automotive Engineering": {
+      "reviews": 10,
+      "cited": 753,
+      "access": {
+        "kovrune": 72,
+        "free": 223,
+        "abstract": 269,
+        "none": 189
+      }
+    },
+    "Biomedical Engineering": {
+      "reviews": 10,
+      "cited": 1119,
+      "access": {
+        "kovrune": 356,
+        "free": 190,
+        "abstract": 269,
+        "none": 304
+      }
+    },
+    "Civil and Structural Engineering": {
+      "reviews": 10,
+      "cited": 1622,
+      "access": {
+        "kovrune": 125,
+        "free": 507,
+        "abstract": 288,
+        "none": 702
+      }
+    },
+    "Computational Mechanics": {
+      "reviews": 10,
+      "cited": 1377,
+      "access": {
+        "kovrune": 223,
+        "free": 340,
+        "abstract": 396,
+        "none": 418
+      }
+    },
+    "Control and Systems Engineering": {
+      "reviews": 10,
+      "cited": 937,
+      "access": {
+        "kovrune": 123,
+        "free": 249,
+        "abstract": 248,
+        "none": 317
+      }
+    },
+    "Electrical and Electronic Engineering": {
+      "reviews": 10,
+      "cited": 1207,
+      "access": {
+        "kovrune": 166,
+        "free": 336,
+        "abstract": 505,
+        "none": 200
+      }
+    },
+    "Industrial and Manufacturing Engineering": {
+      "reviews": 10,
+      "cited": 1441,
+      "access": {
+        "kovrune": 185,
+        "free": 497,
+        "abstract": 320,
+        "none": 439
+      }
+    },
+    "Mechanical Engineering": {
+      "reviews": 10,
+      "cited": 1248,
+      "access": {
+        "kovrune": 91,
+        "free": 335,
+        "abstract": 343,
+        "none": 479
+      }
+    },
+    "Mechanics of Materials": {
+      "reviews": 10,
+      "cited": 1405,
+      "access": {
+        "kovrune": 149,
+        "free": 268,
+        "abstract": 397,
+        "none": 591
+      }
+    },
+    "Ocean Engineering": {
+      "reviews": 10,
+      "cited": 1016,
+      "access": {
+        "kovrune": 168,
+        "free": 275,
+        "abstract": 235,
+        "none": 338
+      }
+    },
+    "Safety, Risk, Reliability and Quality": {
+      "reviews": 10,
+      "cited": 1026,
+      "access": {
+        "kovrune": 123,
+        "free": 273,
+        "abstract": 311,
+        "none": 319
+      }
+    },
+    "Building and Construction": {
+      "reviews": 10,
+      "cited": 903,
+      "access": {
+        "kovrune": 65,
+        "free": 329,
+        "abstract": 168,
+        "none": 341
+      }
+    }
+  },
+  "byType": {
+    "book-chapter": {
+      "kovrune": 5,
+      "free": 37,
+      "abstract": 41,
+      "none": 291
+    },
+    "article": {
+      "kovrune": 1627,
+      "free": 3892,
+      "abstract": 3215,
+      "none": 4717
+    },
+    "report": {
+      "kovrune": 0,
+      "free": 29,
+      "abstract": 4,
+      "none": 1
+    },
+    "book": {
+      "kovrune": 0,
+      "free": 18,
+      "abstract": 82,
+      "none": 147
+    },
+    "conference-paper": {
+      "kovrune": 70,
+      "free": 299,
+      "abstract": 783,
+      "none": 65
+    },
+    "book-review": {
+      "kovrune": 0,
+      "free": 4,
+      "abstract": 7,
+      "none": 20
+    },
+    "review": {
+      "kovrune": 291,
+      "free": 231,
+      "abstract": 182,
+      "none": 262
+    },
+    "preprint": {
+      "kovrune": 31,
+      "free": 7,
+      "abstract": 0,
+      "none": 0
+    },
+    "other": {
+      "kovrune": 0,
+      "free": 3,
+      "abstract": 7,
+      "none": 10
+    },
+    "editorial": {
+      "kovrune": 14,
+      "free": 11,
+      "abstract": 10,
+      "none": 6
+    },
+    "letter": {
+      "kovrune": 3,
+      "free": 0,
+      "abstract": 1,
+      "none": 0
+    },
+    "erratum": {
+      "kovrune": 0,
+      "free": 3,
+      "abstract": 1,
+      "none": 0
+    },
+    "standard": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 4,
+      "none": 2
+    },
+    "reference-entry": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 6,
+      "none": 9
+    },
+    "conference-abstract": {
+      "kovrune": 0,
+      "free": 2,
+      "abstract": 4,
+      "none": 0
+    },
+    "paratext": {
+      "kovrune": 0,
+      "free": 5,
+      "abstract": 3,
+      "none": 57
+    },
+    "dissertation": {
+      "kovrune": 0,
+      "free": 24,
+      "abstract": 5,
+      "none": 3
+    },
+    "supplementary-materials": {
+      "kovrune": 0,
+      "free": 1,
+      "abstract": 0,
+      "none": 4
+    },
+    "dataset": {
+      "kovrune": 1,
+      "free": 1,
+      "abstract": 2,
+      "none": 1
+    },
+    "data-paper": {
+      "kovrune": 4,
+      "free": 0,
+      "abstract": 0,
+      "none": 0
+    }
+  },
+  "byDecade": {
+    "2000s": {
+      "kovrune": 174,
+      "free": 406,
+      "abstract": 924,
+      "none": 954
+    },
+    "1990s": {
+      "kovrune": 17,
+      "free": 94,
+      "abstract": 247,
+      "none": 299
+    },
+    "2010s": {
+      "kovrune": 1133,
+      "free": 2672,
+      "abstract": 2310,
+      "none": 2983
+    },
+    "1970s": {
+      "kovrune": 1,
+      "free": 13,
+      "abstract": 61,
+      "none": 66
+    },
+    "2020s": {
+      "kovrune": 712,
+      "free": 1323,
+      "abstract": 648,
+      "none": 1127
+    },
+    "1760s": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 1,
+      "none": 0
+    },
+    "1980s": {
+      "kovrune": 5,
+      "free": 29,
+      "abstract": 102,
+      "none": 90
+    },
+    "1950s": {
+      "kovrune": 1,
+      "free": 6,
+      "abstract": 21,
+      "none": 13
+    },
+    "1960s": {
+      "kovrune": 0,
+      "free": 4,
+      "abstract": 27,
+      "none": 36
+    },
+    "1890s": {
+      "kovrune": 0,
+      "free": 3,
+      "abstract": 0,
+      "none": 3
+    },
+    "1880s": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 1,
+      "none": 4
+    },
+    "1940s": {
+      "kovrune": 1,
+      "free": 0,
+      "abstract": 2,
+      "none": 2
+    },
+    "unknown": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 6,
+      "none": 0
+    },
+    "1900s": {
+      "kovrune": 0,
+      "free": 3,
+      "abstract": 1,
+      "none": 2
+    },
+    "1930s": {
+      "kovrune": 1,
+      "free": 4,
+      "abstract": 2,
+      "none": 6
+    },
+    "1860s": {
+      "kovrune": 0,
+      "free": 1,
+      "abstract": 1,
+      "none": 1
+    },
+    "1920s": {
+      "kovrune": 0,
+      "free": 4,
+      "abstract": 1,
+      "none": 5
+    },
+    "1870s": {
+      "kovrune": 0,
+      "free": 2,
+      "abstract": 0,
+      "none": 0
+    },
+    "1910s": {
+      "kovrune": 1,
+      "free": 3,
+      "abstract": 0,
+      "none": 1
+    },
+    "1840s": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 1,
+      "none": 2
+    },
+    "1810s": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 1,
+      "none": 0
+    },
+    "1800s": {
+      "kovrune": 0,
+      "free": 0,
+      "abstract": 0,
+      "none": 1
+    }
+  },
+  "byRoute": {
+    "arxiv": 528,
+    "europepmc": 1512,
+    "zenodo": 6,
+    "europepmcLikelyOpenSubset": 934
+  },
+  "closedSources": {
+    "Elsevier BV": 4101,
+    "Institute of Electrical and Electronics Engineers": 892,
+    "Wiley": 720,
+    "Springer Science+Business Media": 707,
+    "American Chemical Society": 470,
+    "Springer Nature": 246,
+    "Taylor & Francis": 241,
+    "Royal Society of Chemistry": 232,
+    "American Institute of Physics": 198,
+    "unknown": 195,
+    "Nature Portfolio": 150,
+    "Cambridge University Press": 131,
+    "SAGE Publishing": 128,
+    "American Physical Society": 79,
+    "American Association for the Advancement of Science": 73,
+    "Oxford University Press": 67,
+    "IOP Publishing": 64,
+    "ASM International": 60,
+    "Emerald Publishing Limited": 54,
+    "American Institute of Aeronautics and Astronautics": 53,
+    "Annual Reviews": 44,
+    "Association for Computing Machinery": 40,
+    "Springer International Publishing": 39,
+    "The Company of Biologists": 39,
+    "Royal Society": 35,
+    "Institute of Physics": 28,
+    "CRC Press": 23,
+    "IEEE Sensors Council": 22,
+    "SPIE": 22,
+    "IEEE Council on Superconductivity": 21,
+    "Institution of Engineering and Technology": 21,
+    "De Gruyter": 19,
+    "Pleiades Publishing": 19,
+    "American Society of Civil Engineers": 19,
+    "Canadian Science Publishing": 18,
+    "National Institutes of Health": 17,
+    "Lippincott Williams & Wilkins": 17,
+    "Springer Nature (Netherlands)": 16,
+    "American Scientific Publishers": 15,
+    "Optica Publishing Group": 15,
+    "IEEE Computer Society": 12,
+    "Mary Ann Liebert, Inc.": 11,
+    "American Society of Mechanical Engineers": 11,
+    "Maney Publishing": 11,
+    "Trans Tech Publications": 11,
+    "SAE technical papers on CD-ROM/SAE technical paper series": 10,
+    "Radiological Society of North America": 10,
+    "American Concrete Institute": 10,
+    "Inderscience Publishers": 10,
+    "Association of College and Research Libraries": 9,
+    "Bentham Science Publishers": 9,
+    "Routledge": 9,
+    "Thomas Telford Ltd.": 8,
+    "American Geophysical Union": 7,
+    "IEEE Photonics Society": 7,
+    "World Scientific": 6,
+    "American Physiological Society": 6,
+    "Academic Press": 6,
+    "American Meteorological Society": 6,
+    "American Roentgen Ray Society": 6,
+    "ICE Publishing": 6,
+    "MTS/IEEE OCEANS Conference (OCEANS)": 6,
+    "The MIT Press": 5,
+    "中国科学通报：英文版": 5,
+    "National Aeronautics and Space Administration": 5,
+    "Chinese Control Conference (CCC)": 5,
+    "University of Chicago Press": 5,
+    "Vertical Flight Society Forum": 4,
+    "AIP Publishing": 4,
+    "British Institute of Non-Destructive Testing": 4,
+    "Higher Education Press": 4,
+    "IOS Press": 4,
+    "Centre pour la Communication Scientifique Directe": 4,
+    "Hawaii International Conference on System Sciences (HICSS)": 4,
+    "American Psychological Association": 4,
+    "Microbiology Society": 4,
+    "Marcel Dekker": 3,
+    "International Sustainability and Resilience Conference": 3,
+    "Princeton University Press": 3,
+    "Technopress": 3,
+    "European Radar Conference (EuRAD)": 3,
+    "American Association for Clinical Chemistry": 3,
+    "American Association for Cancer Research": 3,
+    "American Society for Pharmacology and Experimental Therapeutics": 3,
+    "Conference on Lasers and Electro-Optics": 3,
+    "Wind and Structures": 3,
+    "European Microwave Conference (EuMC)": 3,
+    "Winter Simulation Conference": 3,
+    "ASME International Mechanical Engineering Congress and Exposition (IMECE)": 3,
+    "IEEE/ASME International Conference on Mechatronic and Embedded Systems and Applications": 3,
+    "Now Publishers": 3,
+    "IEEE Communications Society": 3,
+    "Defense Technical Information Center (DTIC)": 3,
+    "Laser Institute of America": 3,
+    "Spon Press eBooks": 3,
+    "Island Press/Center for Resource Economics eBooks": 2,
+    "Brill": 2,
+    "European Commission": 2,
+    "University of California Press": 2,
+    "ASTM Standards": 2,
+    "Edward Elgar Publishing": 2,
+    "University of Toronto Press": 2,
+    "Science and Engineering Research Support Society": 2,
+    "International Conference on Environmental Systems (ICES)": 2,
+    "Proceedings of the Satellite Division's International Technical Meeting (Online)/Proceedings of the Satellite Division's International Technical Meeting (CD-ROM)": 2,
+    "American Society of Ichthyologists and Herpetologists": 2,
+    "Massachusetts Institute of Technology": 2,
+    "International Conference on Control, Automation and Systems (ICCAS)": 2,
+    "ASEE Annual Conference & Exposition": 2,
+    "National Academies Press": 2,
+    "Birkhäuser Basel eBooks": 2,
+    "American Society of Agricultural and Biological Engineers": 2,
+    "Society for Imaging Science and Technology": 2,
+    "Harvard University Press": 2,
+    "Karger Publishers": 2,
+    "Wolters Kluwer": 2,
+    "Portland Press": 2,
+    "Thieme Medical Publishers (Germany)": 2,
+    "Acoustical Society of America": 2,
+    "Future Science Ltd": 2,
+    "Concrete": 2,
+    "International Research Publication House": 2,
+    "Russian Academy of Sciences": 2,
+    "Informa": 2,
+    "ASME 2012 10th International Conference on Nanochannels, Microchannels, and Minichannels collocated with the ASME 2012 Heat Transfer Summer Conference and the ASME 2012 Fluids Engineering Division Summer Meeting": 2,
+    "International Conference on Automation and Computing (ICAC)": 2,
+    "University of Manchester": 2,
+    "IEEE Antennas & Propagation Society": 2,
+    "IEEE Magnetics Society": 2,
+    "International Symposium on Electrical Insulating Materials (ISEIM)": 2,
+    "Academy of Management": 2,
+    "Woodhead Publishing Limited eBooks": 2,
+    "Journal of Vacuum Science & Technology B Nanotechnology and Microelectronics Materials Processing Measurement and Phenomena": 2,
+    "American Medical Association": 2,
+    "IGI Global": 2,
+    "IBM": 2,
+    "BSI Standards": 2,
+    "Association for Information Systems": 2,
+    "Johns Hopkins University Press": 2,
+    "ASME International Manufacturing Science and Engineering Conference (MSEC)": 2,
+    "Pacific Coast Entomological Society": 2,
+    "Institution of Electrical Engineers": 2,
+    "European Conference on Power Electronics and Applications": 2,
+    "AAA Foundation for Traffic Safety.": 2,
+    "Palgrave Macmillan": 2,
+    "Readex Microprint eBooks": 1,
+    "Multidisciplinary Digital Publishing Institute": 1,
+    "Transportation Research Board eBooks": 1,
+    "Ghent University": 1,
+    "University of Pisa": 1,
+    "Business analytics": 1,
+    "Econstor (Econstor)": 1,
+    "Thammasat University Digital Collections": 1,
+    "Sustainability and innovation": 1,
+    "International Journal of Information Dissemination and Technology": 1,
+    "Organization for Economic Cooperation and Development": 1,
+    "International Conference on Electrical Machines and Systems (ICEMS)": 1,
+    "Ningbo Institute of Materials Technology and Engineering, CAS Institutional Repository": 1,
+    "Stowarzyszenie Elektryków Polskich": 1,
+    "Habitation": 1,
+    "University of Arizona Press": 1,
+    "UKACC International Conference on Control": 1,
+    "ZfV - Zeitschrift für Geodäsie, Geoinformation und Landmanagement": 1,
+    "XXVIII Международный симпозиум «Оптика атмосферы и океана. Физика атмосферы»": 1,
+    "Queen's University": 1,
+    "Surface Innovations": 1,
+    "European Control Conference (ECC)": 1,
+    "University of Bristol": 1,
+    "Hindawi Publishing Corporation": 1,
+    "Association of Field Ornithologists": 1,
+    "ASME Biennial Mechanisms and Robotics Conference": 1,
+    "Georgia Institute of Technology": 1,
+    "Corwin eBooks": 1,
+    "SAE International Journal of Advances and Current Practices in Mobility": 1,
+    "Federal Reserve Bank of St. Louis": 1,
+    "Machine Vision Applications": 1,
+    "SAE International": 1,
+    "e-Bangi": 1,
+    "World Bank, Washington, DC eBooks": 1,
+    "The International Association for Information, Culture, Human and Industry Technology (AICIT)": 1,
+    "British Machine Vision Conference (BMVC)": 1,
+    "Universiti Teknikal Malaysia Melaka": 1,
+    "Deutsches Zentrum für Luft- und Raumfahrt e. V. (DLR)": 1,
+    "World Automation Congress (WAC)": 1,
+    "European Conference on Antennas and Propagation": 1,
+    "17th ITS World CongressITS JapanITS AmericaERTICO": 1,
+    "Kellogg School of Management Cases": 1,
+    "Lecture notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering": 1,
+    "International Conference of Computer Science and Renewable Energies (ICCSRE)": 1,
+    "Presses Universitaires De France": 1,
+    "SAE Standards": 1,
+    "International Journal of Medical Toxicology & Legal Medicine": 1,
+    "Best Practice & Research Clinical Obstetrics & Gynaecology": 1,
+    "American Association of Immunologists": 1,
+    "American Society of Nephrology": 1,
+    "Massachusetts Medical Society": 1,
+    "Edizioni Minerva Medica": 1,
+    "Biolife Sas": 1,
+    "Advances in nano research": 1,
+    "David Publishing Company": 1,
+    "Destech Publications": 1,
+    "Highway Research Board Proceedings": 1,
+    "North Dakota State University": 1,
+    "International Union of Pure and Applied Chemistry": 1,
+    "Henan Polytechnic University": 1,
+    "Shenyang Jianzhu University": 1,
+    "Tongji University": 1,
+    "Chinese Ceramic Society": 1,
+    "Northeast Dianli University": 1,
+    "China Concrete and Cement Products": 1,
+    "水泥工程": 1,
+    "IET International Conference on Power Electronics, Machines and Drives (PEMD)": 1,
+    "Cardiff University": 1,
+    "International Journal of Control Science and Engineering": 1,
+    "Advances in concrete construction": 1,
+    "Materials and Energy Research Center": 1,
+    "Society for Industrial and Applied Mathematics": 1,
+    "Begell House": 1,
+    "University of Rome Tor Vergata": 1,
+    "BioMed Central": 1,
+    "Editio Cantor Verlag": 1,
+    "Physics Subject Headings (PhySH)": 1,
+    "StatPearls": 1,
+    "Chalmers University of Technology": 1,
+    "応用数理": 1,
+    "Gazi University": 1,
+    "Electronic Letters on Science and Engineering": 1,
+    "Isı Bilimi ve Tekniği Dergisi": 1,
+    "De Gruyter Open": 1,
+    "Tribologia : tarcie, zużycie, smarowanie": 1,
+    "International Conference on Information and Computer Technologies (ICICT)": 1,
+    "Institute for Operations Research and the Management Sciences": 1,
+    "Signal Processing: Algorithms, Architectures, Arrangements, and Applications": 1,
+    "Parenteral Drug Association": 1,
+    "Pramana": 1,
+    "Journal of the American Statistical Association": 1,
+    "Max Planck Institute for Plasma Physics": 1,
+    "ACM SIGGRAPH": 1,
+    "M. Dekker eBooks": 1,
+    "American Association of Petroleum Geologists": 1,
+    "International Digital Organization for Scientific Information (IDOSI)": 1,
+    "Chinese Physical Society": 1,
+    "Electrochemical Society": 1,
+    "Figshare (United Kingdom)": 1,
+    "American College of Physicians": 1,
+    "Indian Institute of Science Bangalore": 1,
+    "IEEE Microwave Theory and Techniques Society": 1,
+    "Physical Society of Japan": 1,
+    "International Journal of Engineering Trends and Technology": 1,
+    "International Conference on Modern Problems of Radio Engineering, Telecommunications and Computer Science": 1,
+    "FARMACIA": 1,
+    "International Congress on Applications of Lasers & Electro-Optics (ICALEO)": 1,
+    "Biological and medical physics, biomedical engineering": 1,
+    "電子情報通信学会誌": 1,
+    "American Economic Association": 1,
+    "atp magazin": 1,
+    "International Conference on Intelligent Environments (IE)": 1,
+    "Brazilian Symposium on Databases": 1,
+    "Chinese Academy of Engineering": 1,
+    "International Workshop on Software Engineering Challenges for the Smart Grid (SE4SG)": 1,
+    "Design, Automation, and Test in Europe": 1,
+    "Molecular Interventions": 1,
+    "Libraries Unlimited eBooks": 1,
+    "De Boeck": 1,
+    "Canadian Journal of Regional Science": 1,
+    "University of Bayreuth": 1,
+    "St.Gallen University of Teacher Education": 1,
+    "American Welding Society": 1,
+    "International Symposium on Flexible Automation (ISFA)": 1,
+    "IEEE Engineering in Medicine and Biology Society": 1,
+    "Philosophy Documentation Center": 1,
+    "Psychology Press eBooks": 1,
+    "Hogrefe Verlag": 1,
+    "University of Illinois Press": 1,
+    "International Convention on Information and Communication Technology, Electronics and Microelectronics": 1,
+    "Korean Society of Computer Information": 1,
+    "Proceedings of OilGasScientificResearchProjects Institute SOCAR": 1,
+    "Birkhäuser": 1,
+    "稀有金属材料与工程": 1,
+    "Species, phylogeny and evolution": 1,
+    "Sigma Xi": 1,
+    "Zoological Society of London": 1,
+    "Magnolia Press": 1,
+    "Biologisches Zentralblatt": 1,
+    "Kansas (Central States) Entomological Society": 1,
+    "Journal of Applied Science and Engineering": 1,
+    "TechConnect Briefs": 1,
+    "Journal of the British Institution of Radio Engineers": 1,
+    "Asian Journal of Textile": 1,
+    "InTech eBooks": 1,
+    "International Conference on Transportation Information and Safety": 1,
+    "International Society of Offshore and Polar Engineers": 1,
+    "International Conference on Offshore Mechanics and Arctic Engineering (OMAE)": 1,
+    "Inter-Research": 1,
+    "Inter-Research Science Center": 1,
+    "European Safety and Reliability Conference (ESREL)": 1,
+    "Royal Statistical Society": 1,
+    "Progress in green energy": 1,
+    "Griffith Research Online": 1,
+    "University of Bath": 1,
+    "JBI eBooks": 1,
+    "European Organization for Nuclear Research": 1,
+    "Totem Publisher": 1,
+    "International Conference on Availability, Reliability and Security (ARES)": 1,
+    "The Marketing Review": 1,
+    "IJRSD": 1,
+    "European Conference on Modelling and Simulation (ECMS)": 1,
+    "European Conference on Information Systems": 1,
+    "PsycEXTRA Dataset": 1,
+    "Institut de l'Information Scientifique et Technique": 1,
+    "SAE International Journal of Passenger Cars - Mechanical Systems": 1,
+    "Pergamon Press": 1,
+    "Geological Society of London": 1,
+    "R. Oldenbourg Verlag": 1,
+    "NACE International": 1,
+    "Alexandrine Press": 1,
+    "Transportation Research Board 96th Annual MeetingTransportation Research Board": 1,
+    "生産研究": 1,
+    "WIT Press": 1,
+    "Transportation Research Board 90th Annual MeetingTransportation Research Board": 1,
+    "Advances in transportation studies": 1,
+    "Atlantis Press": 1,
+    "RAND Corporation eBooks": 1,
+    "Transportation Research Board 98th Annual MeetingTransportation Research Board": 1,
+    "International Power Electronics Conference (IPEC)": 1,
+    "Transportation Research Board 86th Annual MeetingTransportation Research Board": 1,
+    "University of Reading": 1,
+    "Office of Scientific and Technical Information": 1,
+    "University of Lancashire": 1,
+    "Journal of Environmental Science and Health Part A": 1,
+    "CSIRO Publishing": 1,
+    "Society for College and University Planning": 1,
+    "International Journal of Construction Engineering and Management": 1,
+    "Forest Research Institute Malaysia": 1,
+    "Smithsonian Institution": 1,
+    "International Conference on Computing for Sustainable Global Development": 1,
+    "Neural Information Processing Systems Foundation": 1,
+    "United Nations": 1,
+    "Universidade Estadual Paulista (Unesp)": 1,
+    "Nanjing Qixiang Xueyuan xuebao": 1,
+    "Science Press": 1,
+    "Institute of Geographic Sciences and Natural Resources Research": 1
+  },
+  "titleOnlySources": {
+    "Elsevier BV": 4080,
+    "Springer Science+Business Media": 696,
+    "Springer Nature": 243,
+    "Nature Portfolio": 150,
+    "unknown": 91,
+    "Springer International Publishing": 39,
+    "Wiley": 38,
+    "American Chemical Society": 24,
+    "Springer Nature (Netherlands)": 16,
+    "American Institute of Aeronautics and Astronautics": 14,
+    "Institute of Electrical and Electronics Engineers": 10,
+    "CRC Press": 9,
+    "American Concrete Institute": 8,
+    "American Institute of Physics": 8,
+    "Cambridge University Press": 7,
+    "Oxford University Press": 7,
+    "Taylor & Francis": 7,
+    "Academic Press": 6,
+    "中国科学通报：英文版": 5,
+    "American Association for the Advancement of Science": 5,
+    "ASM International": 4,
+    "De Gruyter": 4,
+    "SAGE Publishing": 4,
+    "Emerald Publishing Limited": 3,
+    "American Society for Pharmacology and Experimental Therapeutics": 3,
+    "National Institutes of Health": 3,
+    "Higher Education Press": 3,
+    "Centre pour la Communication Scientifique Directe": 3,
+    "Annual Reviews": 3,
+    "American Psychological Association": 3,
+    "Spon Press eBooks": 3,
+    "The MIT Press": 2,
+    "University of California Press": 2,
+    "Princeton University Press": 2,
+    "National Academies Press": 2,
+    "Royal Society of Chemistry": 2,
+    "Association of College and Research Libraries": 2,
+    "Routledge": 2,
+    "Russian Academy of Sciences": 2,
+    "BSI Standards": 2,
+    "American Scientific Publishers": 2,
+    "Readex Microprint eBooks": 1,
+    "Multidisciplinary Digital Publishing Institute": 1,
+    "Transportation Research Board eBooks": 1,
+    "Ghent University": 1,
+    "Business analytics": 1,
+    "Edward Elgar Publishing": 1,
+    "Thammasat University Digital Collections": 1,
+    "Ningbo Institute of Materials Technology and Engineering, CAS Institutional Repository": 1,
+    "National Aeronautics and Space Administration": 1,
+    "University of Arizona Press": 1,
+    "ZfV - Zeitschrift für Geodäsie, Geoinformation und Landmanagement": 1,
+    "American Society of Ichthyologists and Herpetologists": 1,
+    "University of Bristol": 1,
+    "Hindawi Publishing Corporation": 1,
+    "Lecture notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering": 1,
+    "Presses Universitaires De France": 1,
+    "Best Practice & Research Clinical Obstetrics & Gynaecology": 1,
+    "British Institute of Non-Destructive Testing": 1,
+    "Materials and Energy Research Center": 1,
+    "IOP Publishing": 1,
+    "BioMed Central": 1,
+    "Editio Cantor Verlag": 1,
+    "Physics Subject Headings (PhySH)": 1,
+    "応用数理": 1,
+    "Isı Bilimi ve Tekniği Dergisi": 1,
+    "Institution of Engineering and Technology": 1,
+    "Pramana": 1,
+    "Max Planck Institute for Plasma Physics": 1,
+    "Figshare (United Kingdom)": 1,
+    "International Journal of Engineering Trends and Technology": 1,
+    "Woodhead Publishing Limited eBooks": 1,
+    "Biological and medical physics, biomedical engineering": 1,
+    "電子情報通信学会誌": 1,
+    "Brazilian Symposium on Databases": 1,
+    "Chinese Academy of Engineering": 1,
+    "Now Publishers": 1,
+    "Association for Information Systems": 1,
+    "Canadian Journal of Regional Science": 1,
+    "Johns Hopkins University Press": 1,
+    "Royal Society": 1,
+    "Philosophy Documentation Center": 1,
+    "University of Illinois Press": 1,
+    "Korean Society of Computer Information": 1,
+    "Birkhäuser": 1,
+    "University of Toronto Press": 1,
+    "稀有金属材料与工程": 1,
+    "University of Chicago Press": 1,
+    "Sigma Xi": 1,
+    "Harvard University Press": 1,
+    "Biologisches Zentralblatt": 1,
+    "Pacific Coast Entomological Society": 1,
+    "TechConnect Briefs": 1,
+    "AIP Publishing": 1,
+    "Asian Journal of Textile": 1,
+    "University of Manchester": 1,
+    "Royal Statistical Society": 1,
+    "Brill": 1,
+    "Progress in green energy": 1,
+    "Griffith Research Online": 1,
+    "JBI eBooks": 1,
+    "European Organization for Nuclear Research": 1,
+    "European Conference on Information Systems": 1,
+    "Pergamon Press": 1,
+    "Microbiology Society": 1,
+    "R. Oldenbourg Verlag": 1,
+    "Palgrave Macmillan": 1,
+    "Transportation Research Board 96th Annual MeetingTransportation Research Board": 1,
+    "生産研究": 1,
+    "WIT Press": 1,
+    "Transportation Research Board 98th Annual MeetingTransportation Research Board": 1,
+    "University of Reading": 1,
+    "University of Lancashire": 1,
+    "Birkhäuser Basel eBooks": 1,
+    "Smithsonian Institution": 1,
+    "International Research Publication House": 1,
+    "Institute of Geographic Sciences and Natural Resources Research": 1
+  },
+  "freeByStatus": {
+    "green": 1666,
+    "diamond": 441,
+    "bronze": 831,
+    "hybrid": 804,
+    "gold": 825
+  },
+  "reviews": [
+    {
+      "id": "W3192381394",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "Industrial decarbonization via hydrogen: A critical and systematic review of developments, socio-technical systems and policy options",
+      "year": 2021,
+      "cited": 594,
+      "access": {
+        "kovrune": 30,
+        "free": 216,
+        "abstract": 57,
+        "none": 291
+      }
+    },
+    {
+      "id": "W4388796709",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "Sustainable Hydrogen Production, Storage, and Distribution – A Systematic Review for Newfoundland and Labrador",
+      "year": 2023,
+      "cited": 55,
+      "access": {
+        "kovrune": 1,
+        "free": 25,
+        "abstract": 8,
+        "none": 21
+      }
+    },
+    {
+      "id": "W4366978436",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "Contemporary avenues of the Hydrogen industry: Opportunities and challenges in the eco-friendly approach",
+      "year": 2023,
+      "cited": 203,
+      "access": {
+        "kovrune": 2,
+        "free": 67,
+        "abstract": 28,
+        "none": 106
+      }
+    },
+    {
+      "id": "W4387028885",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "The current status of hydrogen energy: an overview",
+      "year": 2023,
+      "cited": 142,
+      "access": {
+        "kovrune": 20,
+        "free": 54,
+        "abstract": 23,
+        "none": 45
+      }
+    },
+    {
+      "id": "W4323307283",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "A systematic review on green hydrogen for off-grid communities –technologies, advantages, and limitations",
+      "year": 2023,
+      "cited": 160,
+      "access": {
+        "kovrune": 3,
+        "free": 46,
+        "abstract": 4,
+        "none": 107
+      }
+    },
+    {
+      "id": "W4381999724",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "Energy crisis in Europe enhances the sustainability of green chemicals",
+      "year": 2023,
+      "cited": 44,
+      "access": {
+        "kovrune": 6,
+        "free": 25,
+        "abstract": 7,
+        "none": 6
+      }
+    },
+    {
+      "id": "W4380767578",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "A systematic review of hybrid superconducting magnetic/battery energy storage systems: Applications, control strategies, benefits, limitations and future prospects",
+      "year": 2023,
+      "cited": 134,
+      "access": {
+        "kovrune": 2,
+        "free": 42,
+        "abstract": 47,
+        "none": 43
+      }
+    },
+    {
+      "id": "W4308344315",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "Hydrogen Production Technology Promotes the Analysis and Prospect of the Hydrogen Fuel Cell Vehicles Development under the Background of Carbon Peak and Carbon Neutrality in China",
+      "year": 2022,
+      "cited": 81,
+      "access": {
+        "kovrune": 13,
+        "free": 17,
+        "abstract": 33,
+        "none": 18
+      }
+    },
+    {
+      "id": "W4382542164",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "A systematic review of hybrid renewable energy systems with hydrogen storage: Sizing, optimization, and energy management strategy",
+      "year": 2023,
+      "cited": 165,
+      "access": {
+        "kovrune": 2,
+        "free": 37,
+        "abstract": 8,
+        "none": 118
+      }
+    },
+    {
+      "id": "W3017393813",
+      "subfield": "Energy Engineering and Power Technology",
+      "title": "Decarbonising energy: The developing international activity in hydrogen technologies and fuel cells",
+      "year": 2020,
+      "cited": 29,
+      "access": {
+        "kovrune": 2,
+        "free": 10,
+        "abstract": 12,
+        "none": 5
+      }
+    },
+    {
+      "id": "W3200898569",
+      "subfield": "Aerospace Engineering",
+      "title": "Review of research into bioregenerative life support system(s) which can support humans living in space",
+      "year": 2021,
+      "cited": 65,
+      "access": {
+        "kovrune": 2,
+        "free": 10,
+        "abstract": 18,
+        "none": 35
+      }
+    },
+    {
+      "id": "W4281647217",
+      "subfield": "Aerospace Engineering",
+      "title": "MEMS Inertial Sensor Calibration Technology: Current Status and Future Trends",
+      "year": 2022,
+      "cited": 103,
+      "access": {
+        "kovrune": 21,
+        "free": 15,
+        "abstract": 55,
+        "none": 12
+      }
+    },
+    {
+      "id": "W4388041751",
+      "subfield": "Aerospace Engineering",
+      "title": "The Implementation of Precise Point Positioning (PPP): A Comprehensive Review",
+      "year": 2023,
+      "cited": 61,
+      "access": {
+        "kovrune": 3,
+        "free": 17,
+        "abstract": 19,
+        "none": 22
+      }
+    },
+    {
+      "id": "W4292014011",
+      "subfield": "Aerospace Engineering",
+      "title": "Recent advances of bio-inspired anti-icing surfaces",
+      "year": 2022,
+      "cited": 152,
+      "access": {
+        "kovrune": 29,
+        "free": 27,
+        "abstract": 72,
+        "none": 24
+      }
+    },
+    {
+      "id": "W4386580580",
+      "subfield": "Aerospace Engineering",
+      "title": "Scaling the tail beat frequency and swimming speed in underwater undulatory swimming",
+      "year": 2023,
+      "cited": 77,
+      "access": {
+        "kovrune": 15,
+        "free": 13,
+        "abstract": 32,
+        "none": 17
+      }
+    },
+    {
+      "id": "W4311965697",
+      "subfield": "Aerospace Engineering",
+      "title": "A Systematic Review of Ground-Based Infrastructure for the Innovative Urban Air Mobility",
+      "year": 2022,
+      "cited": 72,
+      "access": {
+        "kovrune": 6,
+        "free": 18,
+        "abstract": 36,
+        "none": 12
+      }
+    },
+    {
+      "id": "W4309840960",
+      "subfield": "Aerospace Engineering",
+      "title": "Opportunistic soaring by birds suggests new opportunities for atmospheric energy harvesting by flying robots",
+      "year": 2022,
+      "cited": 189,
+      "access": {
+        "kovrune": 36,
+        "free": 47,
+        "abstract": 69,
+        "none": 37
+      }
+    },
+    {
+      "id": "W4303473133",
+      "subfield": "Aerospace Engineering",
+      "title": "Spacecraft-Mounted Robotics",
+      "year": 2022,
+      "cited": 82,
+      "access": {
+        "kovrune": 3,
+        "free": 18,
+        "abstract": 38,
+        "none": 23
+      }
+    },
+    {
+      "id": "W4210869200",
+      "subfield": "Aerospace Engineering",
+      "title": "A systematic review of UAV applications to education",
+      "year": 2022,
+      "cited": 67,
+      "access": {
+        "kovrune": 2,
+        "free": 26,
+        "abstract": 31,
+        "none": 8
+      }
+    },
+    {
+      "id": "W4210452349",
+      "subfield": "Aerospace Engineering",
+      "title": "The challenges and opportunities of battery-powered flight",
+      "year": 2022,
+      "cited": 36,
+      "access": {
+        "kovrune": 2,
+        "free": 15,
+        "abstract": 11,
+        "none": 8
+      }
+    },
+    {
+      "id": "W3111728024",
+      "subfield": "Automotive Engineering",
+      "title": "Analyzing the Improvements of Energy Management Systems for Hybrid Electric Vehicles Using a Systematic Literature Review: How Far Are These Controls from Rule-Based Controls Used in Commercial Vehicles?",
+      "year": 2020,
+      "cited": 52,
+      "access": {
+        "kovrune": 3,
+        "free": 23,
+        "abstract": 11,
+        "none": 15
+      }
+    },
+    {
+      "id": "W4296007586",
+      "subfield": "Automotive Engineering",
+      "title": "Impedance response simulation strategies for lithium-ion battery models",
+      "year": 2022,
+      "cited": 67,
+      "access": {
+        "kovrune": 3,
+        "free": 36,
+        "abstract": 7,
+        "none": 21
+      }
+    },
+    {
+      "id": "W3191343975",
+      "subfield": "Automotive Engineering",
+      "title": "An Overview of Autonomous Vehicles Sensors and Their Vulnerability to Weather Conditions",
+      "year": 2021,
+      "cited": 43,
+      "access": {
+        "kovrune": 5,
+        "free": 8,
+        "abstract": 23,
+        "none": 7
+      }
+    },
+    {
+      "id": "W4386299018",
+      "subfield": "Automotive Engineering",
+      "title": "State-of-charge of individual active material particles in lithium ion batteries: a perspective of analytical techniques and their capabilities",
+      "year": 2023,
+      "cited": 84,
+      "access": {
+        "kovrune": 3,
+        "free": 31,
+        "abstract": 32,
+        "none": 18
+      }
+    },
+    {
+      "id": "W4383551954",
+      "subfield": "Automotive Engineering",
+      "title": "Strategies to Reduce Emissions from Diesel Engines under Cold Start Conditions: A Review",
+      "year": 2023,
+      "cited": 75,
+      "access": {
+        "kovrune": 0,
+        "free": 28,
+        "abstract": 11,
+        "none": 36
+      }
+    },
+    {
+      "id": "W4323664074",
+      "subfield": "Automotive Engineering",
+      "title": "A Systematic Review on Carbon Dioxide (CO2) Emission Measurement Methods under PRISMA Guidelines: Transportation Sustainability and Development Programs",
+      "year": 2023,
+      "cited": 40,
+      "access": {
+        "kovrune": 5,
+        "free": 29,
+        "abstract": 3,
+        "none": 3
+      }
+    },
+    {
+      "id": "W4362496599",
+      "subfield": "Automotive Engineering",
+      "title": "Computer Vision-based Applications in Modern Cars for safety purposes: A Systematic Literature Review",
+      "year": 2023,
+      "cited": 68,
+      "access": {
+        "kovrune": 10,
+        "free": 13,
+        "abstract": 33,
+        "none": 12
+      }
+    },
+    {
+      "id": "W3012000767",
+      "subfield": "Automotive Engineering",
+      "title": "Technology of electrochemical impedance spectroscopy for an energy-sustainable society",
+      "year": 2020,
+      "cited": 90,
+      "access": {
+        "kovrune": 1,
+        "free": 21,
+        "abstract": 18,
+        "none": 50
+      }
+    },
+    {
+      "id": "W3106149304",
+      "subfield": "Automotive Engineering",
+      "title": "The Perception System of Intelligent Ground Vehicles in All Weather Conditions: A Systematic Literature Review",
+      "year": 2020,
+      "cited": 147,
+      "access": {
+        "kovrune": 17,
+        "free": 27,
+        "abstract": 83,
+        "none": 20
+      }
+    },
+    {
+      "id": "W3203253880",
+      "subfield": "Automotive Engineering",
+      "title": "MmWave Radar and Vision Fusion for Object Detection in Autonomous Driving: A Review",
+      "year": 2022,
+      "cited": 87,
+      "access": {
+        "kovrune": 25,
+        "free": 7,
+        "abstract": 48,
+        "none": 7
+      }
+    },
+    {
+      "id": "W3206916482",
+      "subfield": "Biomedical Engineering",
+      "title": "Magnetic 3D cell culture: State of the art and current advances",
+      "year": 2021,
+      "cited": 61,
+      "access": {
+        "kovrune": 31,
+        "free": 8,
+        "abstract": 9,
+        "none": 13
+      }
+    },
+    {
+      "id": "W4294298928",
+      "subfield": "Biomedical Engineering",
+      "title": "Recent Advances in Molecular Point of Care Tests",
+      "year": 2022,
+      "cited": 31,
+      "access": {
+        "kovrune": 16,
+        "free": 6,
+        "abstract": 1,
+        "none": 8
+      }
+    },
+    {
+      "id": "W3103260805",
+      "subfield": "Biomedical Engineering",
+      "title": "Building a dual-energy CT service line in abdominal radiology",
+      "year": 2020,
+      "cited": 60,
+      "access": {
+        "kovrune": 13,
+        "free": 4,
+        "abstract": 21,
+        "none": 22
+      }
+    },
+    {
+      "id": "W4385302624",
+      "subfield": "Biomedical Engineering",
+      "title": "Sustainable electronic textiles towards scalable commercialization",
+      "year": 2023,
+      "cited": 66,
+      "access": {
+        "kovrune": 21,
+        "free": 20,
+        "abstract": 14,
+        "none": 11
+      }
+    },
+    {
+      "id": "W4220827148",
+      "subfield": "Biomedical Engineering",
+      "title": "Recent advances in biosensor devices for HER-2 cancer biomarker detection",
+      "year": 2022,
+      "cited": 112,
+      "access": {
+        "kovrune": 22,
+        "free": 12,
+        "abstract": 37,
+        "none": 41
+      }
+    },
+    {
+      "id": "W3119699462",
+      "subfield": "Biomedical Engineering",
+      "title": "Emerging Microfluidic Technologies for the Detection of Circulating Tumor Cells and Fetal Nucleated Red Blood Cells",
+      "year": 2021,
+      "cited": 99,
+      "access": {
+        "kovrune": 33,
+        "free": 18,
+        "abstract": 35,
+        "none": 13
+      }
+    },
+    {
+      "id": "W3132512235",
+      "subfield": "Biomedical Engineering",
+      "title": "Biomaterial-based osteoimmunomodulatory strategies via the TLR4-NF-κB signaling pathway: A review",
+      "year": 2021,
+      "cited": 336,
+      "access": {
+        "kovrune": 133,
+        "free": 53,
+        "abstract": 67,
+        "none": 83
+      }
+    },
+    {
+      "id": "W4213430050",
+      "subfield": "Biomedical Engineering",
+      "title": "Mechanistic Insights and Therapeutic Delivery through Micro/Nanobubble-Assisted Ultrasound",
+      "year": 2022,
+      "cited": 134,
+      "access": {
+        "kovrune": 55,
+        "free": 28,
+        "abstract": 25,
+        "none": 26
+      }
+    },
+    {
+      "id": "W3190559506",
+      "subfield": "Biomedical Engineering",
+      "title": "Application of centrifugal microfluidics in immunoassay, biochemical analysis and molecular diagnosis",
+      "year": 2021,
+      "cited": 100,
+      "access": {
+        "kovrune": 14,
+        "free": 15,
+        "abstract": 44,
+        "none": 27
+      }
+    },
+    {
+      "id": "W4214699798",
+      "subfield": "Biomedical Engineering",
+      "title": "Bioceramic-based scaffolds with antibacterial function for bone tissue engineering: A review",
+      "year": 2022,
+      "cited": 120,
+      "access": {
+        "kovrune": 18,
+        "free": 26,
+        "abstract": 16,
+        "none": 60
+      }
+    },
+    {
+      "id": "W4378974942",
+      "subfield": "Civil and Structural Engineering",
+      "title": "Photonic structures in radiative cooling",
+      "year": 2023,
+      "cited": 258,
+      "access": {
+        "kovrune": 52,
+        "free": 74,
+        "abstract": 80,
+        "none": 52
+      }
+    },
+    {
+      "id": "W4382198911",
+      "subfield": "Civil and Structural Engineering",
+      "title": "Critical parameters affecting the thermal resistance of alkali-activated aluminosilicate wastes: Current understanding and future directions",
+      "year": 2023,
+      "cited": 181,
+      "access": {
+        "kovrune": 8,
+        "free": 39,
+        "abstract": 16,
+        "none": 118
+      }
+    },
+    {
+      "id": "W4390273282",
+      "subfield": "Civil and Structural Engineering",
+      "title": "A Review on Cementitious and Geopolymer Composites with Lithium Slag Incorporation",
+      "year": 2023,
+      "cited": 123,
+      "access": {
+        "kovrune": 5,
+        "free": 38,
+        "abstract": 10,
+        "none": 70
+      }
+    },
+    {
+      "id": "W4386378042",
+      "subfield": "Civil and Structural Engineering",
+      "title": "A Review on the Application of Lignocellulosic Biomass Ash in Cement-Based Composites",
+      "year": 2023,
+      "cited": 163,
+      "access": {
+        "kovrune": 4,
+        "free": 46,
+        "abstract": 10,
+        "none": 103
+      }
+    },
+    {
+      "id": "W3016176004",
+      "subfield": "Civil and Structural Engineering",
+      "title": "A Review on Bubble Stability in Fresh Concrete: Mechanisms and Main Factors",
+      "year": 2020,
+      "cited": 101,
+      "access": {
+        "kovrune": 2,
+        "free": 19,
+        "abstract": 19,
+        "none": 61
+      }
+    },
+    {
+      "id": "W4386896538",
+      "subfield": "Civil and Structural Engineering",
+      "title": "Toward the Scaling up of Daytime Radiative Coolers: A Review",
+      "year": 2023,
+      "cited": 121,
+      "access": {
+        "kovrune": 17,
+        "free": 43,
+        "abstract": 24,
+        "none": 37
+      }
+    },
+    {
+      "id": "W4317743586",
+      "subfield": "Civil and Structural Engineering",
+      "title": "The Influence of Rehydration on the Properties of Portland Cement-Based Materials with Low Water/Binder Ratios: A Review of Existing Research",
+      "year": 2023,
+      "cited": 73,
+      "access": {
+        "kovrune": 3,
+        "free": 13,
+        "abstract": 23,
+        "none": 34
+      }
+    },
+    {
+      "id": "W4213047936",
+      "subfield": "Civil and Structural Engineering",
+      "title": "Non-Destructive Techniques for the Condition and Structural Health Monitoring of Wind Turbines: A Literature Review of the Last 20 Years",
+      "year": 2022,
+      "cited": 279,
+      "access": {
+        "kovrune": 14,
+        "free": 114,
+        "abstract": 87,
+        "none": 64
+      }
+    },
+    {
+      "id": "W4382933461",
+      "subfield": "Civil and Structural Engineering",
+      "title": "Effects of different supplementary cementitious materials on durability and mechanical properties of cement composite – Comprehensive review",
+      "year": 2023,
+      "cited": 280,
+      "access": {
+        "kovrune": 20,
+        "free": 116,
+        "abstract": 18,
+        "none": 126
+      }
+    },
+    {
+      "id": "W4300427343",
+      "subfield": "Civil and Structural Engineering",
+      "title": "Deformation failure and acoustic emission characteristics of continuous graded waste rock cemented backfill under uniaxial compression",
+      "year": 2022,
+      "cited": 43,
+      "access": {
+        "kovrune": 0,
+        "free": 5,
+        "abstract": 1,
+        "none": 37
+      }
+    },
+    {
+      "id": "W3135548292",
+      "subfield": "Computational Mechanics",
+      "title": "Uncertainty quantification implementations in human hemodynamic flows",
+      "year": 2021,
+      "cited": 122,
+      "access": {
+        "kovrune": 14,
+        "free": 45,
+        "abstract": 22,
+        "none": 41
+      }
+    },
+    {
+      "id": "W4306919353",
+      "subfield": "Computational Mechanics",
+      "title": "Elasto-Inertial Turbulence",
+      "year": 2022,
+      "cited": 120,
+      "access": {
+        "kovrune": 38,
+        "free": 16,
+        "abstract": 37,
+        "none": 29
+      }
+    },
+    {
+      "id": "W4205117370",
+      "subfield": "Computational Mechanics",
+      "title": "The Influence of Boundaries on Gravity Currents and Thin Films: Drainage, Confinement, Convergence, and Deformation Effects",
+      "year": 2022,
+      "cited": 100,
+      "access": {
+        "kovrune": 13,
+        "free": 27,
+        "abstract": 50,
+        "none": 10
+      }
+    },
+    {
+      "id": "W4281939271",
+      "subfield": "Computational Mechanics",
+      "title": "Boundary and Interface Treatments for One-Unit Pore-Scale Simulations of Heat and Mass Transfer in Porous Materials: A Mini-Review",
+      "year": 2022,
+      "cited": 56,
+      "access": {
+        "kovrune": 1,
+        "free": 13,
+        "abstract": 17,
+        "none": 25
+      }
+    },
+    {
+      "id": "W4306938727",
+      "subfield": "Computational Mechanics",
+      "title": "Turbulent Rotating Rayleigh–Bénard Convection",
+      "year": 2022,
+      "cited": 177,
+      "access": {
+        "kovrune": 60,
+        "free": 29,
+        "abstract": 79,
+        "none": 9
+      }
+    },
+    {
+      "id": "W3025293388",
+      "subfield": "Computational Mechanics",
+      "title": "Measurement in opaque flows: a review of measurement techniques for dispersed multiphase flows",
+      "year": 2020,
+      "cited": 165,
+      "access": {
+        "kovrune": 12,
+        "free": 51,
+        "abstract": 40,
+        "none": 62
+      }
+    },
+    {
+      "id": "W3025786366",
+      "subfield": "Computational Mechanics",
+      "title": "Model-Based Scale-up Methodologies for Pharmaceutical Granulation",
+      "year": 2020,
+      "cited": 156,
+      "access": {
+        "kovrune": 8,
+        "free": 35,
+        "abstract": 23,
+        "none": 90
+      }
+    },
+    {
+      "id": "W3135022218",
+      "subfield": "Computational Mechanics",
+      "title": "Fluid–Structure Interaction Analyses of Biological Systems Using Smoothed-Particle Hydrodynamics",
+      "year": 2021,
+      "cited": 82,
+      "access": {
+        "kovrune": 24,
+        "free": 14,
+        "abstract": 22,
+        "none": 22
+      }
+    },
+    {
+      "id": "W4323926390",
+      "subfield": "Computational Mechanics",
+      "title": "Past and current components-based detailing of particle image velocimetry: A comprehensive review",
+      "year": 2023,
+      "cited": 240,
+      "access": {
+        "kovrune": 3,
+        "free": 68,
+        "abstract": 71,
+        "none": 98
+      }
+    },
+    {
+      "id": "W4389133899",
+      "subfield": "Computational Mechanics",
+      "title": "Multiscale simulation of fluids: coupling molecular and continuum",
+      "year": 2023,
+      "cited": 159,
+      "access": {
+        "kovrune": 50,
+        "free": 42,
+        "abstract": 35,
+        "none": 32
+      }
+    },
+    {
+      "id": "W4312127426",
+      "subfield": "Control and Systems Engineering",
+      "title": "Current Status and Applications for Hydraulic Pump Fault Diagnosis: A Review",
+      "year": 2022,
+      "cited": 145,
+      "access": {
+        "kovrune": 11,
+        "free": 55,
+        "abstract": 38,
+        "none": 41
+      }
+    },
+    {
+      "id": "W4214900601",
+      "subfield": "Control and Systems Engineering",
+      "title": "Machine learning techniques applied to mechanical fault diagnosis and fault prognosis in the context of real industrial manufacturing use-cases: a systematic literature review",
+      "year": 2022,
+      "cited": 85,
+      "access": {
+        "kovrune": 6,
+        "free": 29,
+        "abstract": 26,
+        "none": 24
+      }
+    },
+    {
+      "id": "W4298004067",
+      "subfield": "Control and Systems Engineering",
+      "title": "Protecting Power Transmission Systems against Intelligent Physical Attacks: A Critical Systematic Review",
+      "year": 2022,
+      "cited": 67,
+      "access": {
+        "kovrune": 2,
+        "free": 14,
+        "abstract": 31,
+        "none": 20
+      }
+    },
+    {
+      "id": "W4389637695",
+      "subfield": "Control and Systems Engineering",
+      "title": "Superstructure-based carbon capture and utilization process design",
+      "year": 2023,
+      "cited": 48,
+      "access": {
+        "kovrune": 1,
+        "free": 17,
+        "abstract": 9,
+        "none": 21
+      }
+    },
+    {
+      "id": "W4281261120",
+      "subfield": "Control and Systems Engineering",
+      "title": "Detection of Mechanical Failures in Industrial Machines Using Overlapping Acoustic Anomalies: A Systematic Literature Review",
+      "year": 2022,
+      "cited": 78,
+      "access": {
+        "kovrune": 4,
+        "free": 22,
+        "abstract": 19,
+        "none": 33
+      }
+    },
+    {
+      "id": "W3203851743",
+      "subfield": "Control and Systems Engineering",
+      "title": "Process Analytical Technologies – Advances in bioprocess integration and future perspectives",
+      "year": 2021,
+      "cited": 72,
+      "access": {
+        "kovrune": 14,
+        "free": 20,
+        "abstract": 22,
+        "none": 16
+      }
+    },
+    {
+      "id": "W4205915008",
+      "subfield": "Control and Systems Engineering",
+      "title": "A physics perspective on collective animal behavior",
+      "year": 2022,
+      "cited": 161,
+      "access": {
+        "kovrune": 78,
+        "free": 28,
+        "abstract": 28,
+        "none": 27
+      }
+    },
+    {
+      "id": "W3044475430",
+      "subfield": "Control and Systems Engineering",
+      "title": "Integrated design of emulsified cosmetic products: A review",
+      "year": 2020,
+      "cited": 209,
+      "access": {
+        "kovrune": 3,
+        "free": 32,
+        "abstract": 53,
+        "none": 121
+      }
+    },
+    {
+      "id": "W4316076965",
+      "subfield": "Control and Systems Engineering",
+      "title": "Intelligent Traffic Management System using Internet of Things: A Systematic Literature Review",
+      "year": 2022,
+      "cited": 30,
+      "access": {
+        "kovrune": 2,
+        "free": 13,
+        "abstract": 10,
+        "none": 5
+      }
+    },
+    {
+      "id": "W4280650829",
+      "subfield": "Control and Systems Engineering",
+      "title": "A Systematic Literature Review of Failure Prediction in Production Environment Using Machine Learning Technique",
+      "year": 2022,
+      "cited": 42,
+      "access": {
+        "kovrune": 2,
+        "free": 19,
+        "abstract": 12,
+        "none": 9
+      }
+    },
+    {
+      "id": "W3095600755",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Nanoparticles Synthesised in the Gas-Phase and Their Applications in Sensors: A Review",
+      "year": 2020,
+      "cited": 95,
+      "access": {
+        "kovrune": 12,
+        "free": 16,
+        "abstract": 21,
+        "none": 46
+      }
+    },
+    {
+      "id": "W4317633814",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Understanding the mechanisms of mixed-ion cathode materials for aqueous and non-aqueous lithium/sodium-ion batteries – A review",
+      "year": 2023,
+      "cited": 40,
+      "access": {
+        "kovrune": 8,
+        "free": 11,
+        "abstract": 16,
+        "none": 5
+      }
+    },
+    {
+      "id": "W4386476151",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Emerging Technologies for 6G Communication Networks: Machine Learning Approaches",
+      "year": 2023,
+      "cited": 178,
+      "access": {
+        "kovrune": 37,
+        "free": 69,
+        "abstract": 62,
+        "none": 10
+      }
+    },
+    {
+      "id": "W4298119178",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Recent developments of the reconstruction in magnetic particle imaging",
+      "year": 2022,
+      "cited": 75,
+      "access": {
+        "kovrune": 31,
+        "free": 13,
+        "abstract": 28,
+        "none": 3
+      }
+    },
+    {
+      "id": "W4385318840",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "3D printing of hierarchically micro/nanostructured electrodes for high-performance rechargeable batteries",
+      "year": 2023,
+      "cited": 135,
+      "access": {
+        "kovrune": 9,
+        "free": 31,
+        "abstract": 65,
+        "none": 30
+      }
+    },
+    {
+      "id": "W2998536866",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Computer Simulation of Partial Discharges in Voids inside Epoxy Resins Using Three-Capacitance and Analytical Models",
+      "year": 2020,
+      "cited": 88,
+      "access": {
+        "kovrune": 1,
+        "free": 21,
+        "abstract": 61,
+        "none": 5
+      }
+    },
+    {
+      "id": "W4311174328",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "What drives electric vehicle adoption? Insights from a systematic review on European transport actors and behaviours",
+      "year": 2022,
+      "cited": 92,
+      "access": {
+        "kovrune": 3,
+        "free": 60,
+        "abstract": 3,
+        "none": 26
+      }
+    },
+    {
+      "id": "W3091315741",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "A Review of Inkjet Printed Graphene and Carbon Nanotubes Based Gas Sensors",
+      "year": 2020,
+      "cited": 145,
+      "access": {
+        "kovrune": 21,
+        "free": 22,
+        "abstract": 73,
+        "none": 29
+      }
+    },
+    {
+      "id": "W4377819864",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Toward Nonepitaxial Laser Diodes",
+      "year": 2023,
+      "cited": 297,
+      "access": {
+        "kovrune": 41,
+        "free": 76,
+        "abstract": 145,
+        "none": 35
+      }
+    },
+    {
+      "id": "W2997763877",
+      "subfield": "Electrical and Electronic Engineering",
+      "title": "Recent progress in perovskite solar cells: the perovskite layer",
+      "year": 2020,
+      "cited": 62,
+      "access": {
+        "kovrune": 3,
+        "free": 17,
+        "abstract": 31,
+        "none": 11
+      }
+    },
+    {
+      "id": "W3154383913",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "Industry 4.0 ten years on: A bibliometric and systematic review of concepts, sustainability value drivers, and success determinants",
+      "year": 2021,
+      "cited": 143,
+      "access": {
+        "kovrune": 8,
+        "free": 67,
+        "abstract": 29,
+        "none": 39
+      }
+    },
+    {
+      "id": "W4200550171",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "Additive manufacturing against the Covid-19 pandemic: a technological model for the adaptability and networking",
+      "year": 2021,
+      "cited": 101,
+      "access": {
+        "kovrune": 58,
+        "free": 20,
+        "abstract": 2,
+        "none": 21
+      }
+    },
+    {
+      "id": "W4384517705",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "Sensor selection and integration for Cyber-Physical Systems in context of Digital Twins – A systematic review of requirements",
+      "year": 2023,
+      "cited": 30,
+      "access": {
+        "kovrune": 3,
+        "free": 17,
+        "abstract": 9,
+        "none": 1
+      }
+    },
+    {
+      "id": "W3040388673",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "Powder-Based 3D Printing for the Fabrication of Device with Micro and Mesoscale Features",
+      "year": 2020,
+      "cited": 238,
+      "access": {
+        "kovrune": 28,
+        "free": 75,
+        "abstract": 47,
+        "none": 88
+      }
+    },
+    {
+      "id": "W3201397528",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "3D Printing of Thermo-Sensitive Drugs",
+      "year": 2021,
+      "cited": 123,
+      "access": {
+        "kovrune": 29,
+        "free": 35,
+        "abstract": 12,
+        "none": 47
+      }
+    },
+    {
+      "id": "W4289861041",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "A Primer on the Factories of the Future",
+      "year": 2022,
+      "cited": 473,
+      "access": {
+        "kovrune": 35,
+        "free": 151,
+        "abstract": 153,
+        "none": 134
+      }
+    },
+    {
+      "id": "W4311141815",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "3D printing: Innovative solutions for patients and pharmaceutical industry",
+      "year": 2022,
+      "cited": 50,
+      "access": {
+        "kovrune": 9,
+        "free": 21,
+        "abstract": 2,
+        "none": 18
+      }
+    },
+    {
+      "id": "W3122918623",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "Territorial development process based on the circular economy: a systematic literature review",
+      "year": 2021,
+      "cited": 70,
+      "access": {
+        "kovrune": 0,
+        "free": 27,
+        "abstract": 14,
+        "none": 29
+      }
+    },
+    {
+      "id": "W3114152568",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "A systematic literature review for industry 4.0 maturity modeling: state-of-the-art and future challenges",
+      "year": 2020,
+      "cited": 94,
+      "access": {
+        "kovrune": 1,
+        "free": 51,
+        "abstract": 30,
+        "none": 12
+      }
+    },
+    {
+      "id": "W4224257450",
+      "subfield": "Industrial and Manufacturing Engineering",
+      "title": "Towards the Development of 3D-Printed Food: A Rheological and Mechanical Approach",
+      "year": 2022,
+      "cited": 119,
+      "access": {
+        "kovrune": 14,
+        "free": 33,
+        "abstract": 22,
+        "none": 50
+      }
+    },
+    {
+      "id": "W2999388800",
+      "subfield": "Mechanical Engineering",
+      "title": "On Residual Stress Development, Prevention, and Compensation in Metal Additive Manufacturing",
+      "year": 2020,
+      "cited": 93,
+      "access": {
+        "kovrune": 2,
+        "free": 34,
+        "abstract": 18,
+        "none": 39
+      }
+    },
+    {
+      "id": "W4324311644",
+      "subfield": "Mechanical Engineering",
+      "title": "Tethering of twisted-fiber artificial muscles",
+      "year": 2023,
+      "cited": 148,
+      "access": {
+        "kovrune": 17,
+        "free": 27,
+        "abstract": 79,
+        "none": 25
+      }
+    },
+    {
+      "id": "W3004444312",
+      "subfield": "Mechanical Engineering",
+      "title": "Surface Characterization of Electro-Assisted Titanium Implants: A Multi-Technique Approach",
+      "year": 2020,
+      "cited": 125,
+      "access": {
+        "kovrune": 5,
+        "free": 25,
+        "abstract": 30,
+        "none": 65
+      }
+    },
+    {
+      "id": "W4383746466",
+      "subfield": "Mechanical Engineering",
+      "title": "Biology for biomimetics I: function as an interdisciplinary bridge in bio-inspired design",
+      "year": 2023,
+      "cited": 100,
+      "access": {
+        "kovrune": 17,
+        "free": 31,
+        "abstract": 27,
+        "none": 25
+      }
+    },
+    {
+      "id": "W3216118875",
+      "subfield": "Mechanical Engineering",
+      "title": "A Systematic Review of Weight Perception in Virtual Reality: Techniques, Challenges, and Road Ahead",
+      "year": 2021,
+      "cited": 167,
+      "access": {
+        "kovrune": 16,
+        "free": 57,
+        "abstract": 63,
+        "none": 31
+      }
+    },
+    {
+      "id": "W3182835517",
+      "subfield": "Mechanical Engineering",
+      "title": "Peening Techniques for Surface Modification: Processes, Properties, and Applications",
+      "year": 2021,
+      "cited": 166,
+      "access": {
+        "kovrune": 4,
+        "free": 30,
+        "abstract": 15,
+        "none": 117
+      }
+    },
+    {
+      "id": "W4221052268",
+      "subfield": "Mechanical Engineering",
+      "title": "Biomimetic Liquid Crystal Cilia and Flagella",
+      "year": 2022,
+      "cited": 70,
+      "access": {
+        "kovrune": 13,
+        "free": 19,
+        "abstract": 31,
+        "none": 7
+      }
+    },
+    {
+      "id": "W4365517321",
+      "subfield": "Mechanical Engineering",
+      "title": "Manufacturing of carbon fiber reinforced thermoplastics and its recovery of carbon fiber: A review",
+      "year": 2023,
+      "cited": 154,
+      "access": {
+        "kovrune": 10,
+        "free": 36,
+        "abstract": 27,
+        "none": 81
+      }
+    },
+    {
+      "id": "W4225138043",
+      "subfield": "Mechanical Engineering",
+      "title": "Advances in Titanium/Polymer Hybrid Joints by Carbon Fiber Plug Insert: Current Status and Review",
+      "year": 2022,
+      "cited": 72,
+      "access": {
+        "kovrune": 0,
+        "free": 26,
+        "abstract": 7,
+        "none": 39
+      }
+    },
+    {
+      "id": "W4220933681",
+      "subfield": "Mechanical Engineering",
+      "title": "Tailored surface textures to increase friction—A review",
+      "year": 2022,
+      "cited": 153,
+      "access": {
+        "kovrune": 7,
+        "free": 50,
+        "abstract": 46,
+        "none": 50
+      }
+    },
+    {
+      "id": "W3095289106",
+      "subfield": "Mechanics of Materials",
+      "title": "Dynamic adhesion due to fluid infusion",
+      "year": 2020,
+      "cited": 81,
+      "access": {
+        "kovrune": 22,
+        "free": 13,
+        "abstract": 35,
+        "none": 11
+      }
+    },
+    {
+      "id": "W4211193776",
+      "subfield": "Mechanics of Materials",
+      "title": "Modification Methods of Diamond like Carbon Coating and the Performance in Machining Applications: A Review",
+      "year": 2022,
+      "cited": 95,
+      "access": {
+        "kovrune": 2,
+        "free": 20,
+        "abstract": 6,
+        "none": 67
+      }
+    },
+    {
+      "id": "W3124489985",
+      "subfield": "Mechanics of Materials",
+      "title": "Confinement effects on compressive and ballistic performance of ceramics: a review",
+      "year": 2020,
+      "cited": 151,
+      "access": {
+        "kovrune": 0,
+        "free": 18,
+        "abstract": 43,
+        "none": 90
+      }
+    },
+    {
+      "id": "W4224300886",
+      "subfield": "Mechanics of Materials",
+      "title": "Multilayer Coatings for Tribology: A Mini Review",
+      "year": 2022,
+      "cited": 126,
+      "access": {
+        "kovrune": 5,
+        "free": 21,
+        "abstract": 14,
+        "none": 86
+      }
+    },
+    {
+      "id": "W3180042653",
+      "subfield": "Mechanics of Materials",
+      "title": "Physical constraints lead to parallel evolution of micro- and nanostructures of animal adhesive pads: a review",
+      "year": 2021,
+      "cited": 261,
+      "access": {
+        "kovrune": 48,
+        "free": 39,
+        "abstract": 91,
+        "none": 83
+      }
+    },
+    {
+      "id": "W4229016558",
+      "subfield": "Mechanics of Materials",
+      "title": "Overview on the Evaluation of the Elastic Properties of Non-Carbon Nanotubes by Theoretical Approaches",
+      "year": 2022,
+      "cited": 103,
+      "access": {
+        "kovrune": 3,
+        "free": 18,
+        "abstract": 42,
+        "none": 40
+      }
+    },
+    {
+      "id": "W4388411949",
+      "subfield": "Mechanics of Materials",
+      "title": "Photothermal Microscopy and Spectroscopy with Nanomechanical Resonators",
+      "year": 2023,
+      "cited": 92,
+      "access": {
+        "kovrune": 44,
+        "free": 18,
+        "abstract": 17,
+        "none": 13
+      }
+    },
+    {
+      "id": "W3016126249",
+      "subfield": "Mechanics of Materials",
+      "title": "Low Temperature Nanoindentation: Development and Applications",
+      "year": 2020,
+      "cited": 78,
+      "access": {
+        "kovrune": 3,
+        "free": 22,
+        "abstract": 19,
+        "none": 34
+      }
+    },
+    {
+      "id": "W4386799847",
+      "subfield": "Mechanics of Materials",
+      "title": "Probing into atomically thin layered nano-materials protective coating for aerospace and strategic defence application – A review",
+      "year": 2023,
+      "cited": 217,
+      "access": {
+        "kovrune": 14,
+        "free": 49,
+        "abstract": 61,
+        "none": 93
+      }
+    },
+    {
+      "id": "W4366775201",
+      "subfield": "Mechanics of Materials",
+      "title": "Modeling of Reactive Sputtering—History and Development",
+      "year": 2023,
+      "cited": 201,
+      "access": {
+        "kovrune": 8,
+        "free": 50,
+        "abstract": 69,
+        "none": 74
+      }
+    },
+    {
+      "id": "W4200026821",
+      "subfield": "Ocean Engineering",
+      "title": "Development of Antibacterial and Antifouling Innovative and Eco-Sustainable Sol–Gel Based Materials: From Marine Areas Protection to Healthcare Applications",
+      "year": 2021,
+      "cited": 160,
+      "access": {
+        "kovrune": 19,
+        "free": 31,
+        "abstract": 35,
+        "none": 75
+      }
+    },
+    {
+      "id": "W3157147900",
+      "subfield": "Ocean Engineering",
+      "title": "Recent Trends in Underwater Wireless Sensor Networks (UWSNs) – A Systematic Literature Review",
+      "year": 2021,
+      "cited": 47,
+      "access": {
+        "kovrune": 0,
+        "free": 13,
+        "abstract": 17,
+        "none": 17
+      }
+    },
+    {
+      "id": "W4387847612",
+      "subfield": "Ocean Engineering",
+      "title": "Research Progress on Low-Surface-Energy Antifouling Coatings for Ship Hulls: A Review",
+      "year": 2023,
+      "cited": 74,
+      "access": {
+        "kovrune": 13,
+        "free": 12,
+        "abstract": 21,
+        "none": 28
+      }
+    },
+    {
+      "id": "W3097028850",
+      "subfield": "Ocean Engineering",
+      "title": "Localisation of Unmanned Underwater Vehicles (UUVs) in Complex and Confined Environments: A Review",
+      "year": 2020,
+      "cited": 100,
+      "access": {
+        "kovrune": 11,
+        "free": 26,
+        "abstract": 48,
+        "none": 15
+      }
+    },
+    {
+      "id": "W4281476572",
+      "subfield": "Ocean Engineering",
+      "title": "Marine biofilms: diversity, interactions and biofouling",
+      "year": 2022,
+      "cited": 194,
+      "access": {
+        "kovrune": 60,
+        "free": 56,
+        "abstract": 34,
+        "none": 44
+      }
+    },
+    {
+      "id": "W4319066025",
+      "subfield": "Ocean Engineering",
+      "title": "A systematic review on energy efficiency in the internet of underwater things (IoUT): Recent approaches and research gaps",
+      "year": 2023,
+      "cited": 127,
+      "access": {
+        "kovrune": 27,
+        "free": 40,
+        "abstract": 29,
+        "none": 31
+      }
+    },
+    {
+      "id": "W4386745646",
+      "subfield": "Ocean Engineering",
+      "title": "Research Progress of Natural Products and Their Derivatives in Marine Antifouling",
+      "year": 2023,
+      "cited": 65,
+      "access": {
+        "kovrune": 7,
+        "free": 15,
+        "abstract": 25,
+        "none": 18
+      }
+    },
+    {
+      "id": "W3136625371",
+      "subfield": "Ocean Engineering",
+      "title": "Arctic shipping risk management: A bibliometric analysis and a systematic review of risk influencing factors of navigational accidents",
+      "year": 2021,
+      "cited": 115,
+      "access": {
+        "kovrune": 4,
+        "free": 47,
+        "abstract": 8,
+        "none": 56
+      }
+    },
+    {
+      "id": "W4200070314",
+      "subfield": "Ocean Engineering",
+      "title": "Evaluation of algal active compounds as potent antibiofilm agent",
+      "year": 2021,
+      "cited": 101,
+      "access": {
+        "kovrune": 25,
+        "free": 25,
+        "abstract": 18,
+        "none": 33
+      }
+    },
+    {
+      "id": "W4386776408",
+      "subfield": "Ocean Engineering",
+      "title": "Antifouling paint particles: Subject of concern?",
+      "year": 2023,
+      "cited": 33,
+      "access": {
+        "kovrune": 2,
+        "free": 10,
+        "abstract": 0,
+        "none": 21
+      }
+    },
+    {
+      "id": "W4288051015",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Determining a dosage threshold of drink‐driving enforcement operations: A systematic review",
+      "year": 2022,
+      "cited": 37,
+      "access": {
+        "kovrune": 9,
+        "free": 4,
+        "abstract": 15,
+        "none": 9
+      }
+    },
+    {
+      "id": "W4390674325",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "State-of-the-art in managing reliability in mega railway projects. A systematic literature review",
+      "year": 2023,
+      "cited": 102,
+      "access": {
+        "kovrune": 1,
+        "free": 26,
+        "abstract": 57,
+        "none": 18
+      }
+    },
+    {
+      "id": "W3193322334",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Profiling drivers to assess safe and eco-driving behavior – A systematic review of naturalistic driving studies",
+      "year": 2021,
+      "cited": 135,
+      "access": {
+        "kovrune": 10,
+        "free": 36,
+        "abstract": 33,
+        "none": 56
+      }
+    },
+    {
+      "id": "W4387654662",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Extremophilic microbial metabolism and radioactive waste disposal",
+      "year": 2023,
+      "cited": 120,
+      "access": {
+        "kovrune": 33,
+        "free": 29,
+        "abstract": 17,
+        "none": 41
+      }
+    },
+    {
+      "id": "W4319069206",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Space sharing between pedestrians and micro-mobility vehicles: A systematic review",
+      "year": 2023,
+      "cited": 107,
+      "access": {
+        "kovrune": 7,
+        "free": 34,
+        "abstract": 31,
+        "none": 35
+      }
+    },
+    {
+      "id": "W4283361515",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Data mining in predictive maintenance systems: A taxonomy and systematic review",
+      "year": 2022,
+      "cited": 145,
+      "access": {
+        "kovrune": 17,
+        "free": 66,
+        "abstract": 20,
+        "none": 42
+      }
+    },
+    {
+      "id": "W3161651929",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "A review of surrogate safety measures and their applications in connected and automated vehicles safety modeling",
+      "year": 2021,
+      "cited": 104,
+      "access": {
+        "kovrune": 9,
+        "free": 23,
+        "abstract": 27,
+        "none": 45
+      }
+    },
+    {
+      "id": "W3039968214",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Review of Health Monitoring Techniques for Capacitors Used in Power Electronics Converters",
+      "year": 2020,
+      "cited": 75,
+      "access": {
+        "kovrune": 0,
+        "free": 18,
+        "abstract": 57,
+        "none": 0
+      }
+    },
+    {
+      "id": "W4383652220",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Advances and applications of computer vision techniques in vehicle trajectory generation and surrogate traffic safety indicators",
+      "year": 2023,
+      "cited": 119,
+      "access": {
+        "kovrune": 36,
+        "free": 18,
+        "abstract": 31,
+        "none": 34
+      }
+    },
+    {
+      "id": "W3181931757",
+      "subfield": "Safety, Risk, Reliability and Quality",
+      "title": "Combustion related fire products: a review",
+      "year": 2020,
+      "cited": 82,
+      "access": {
+        "kovrune": 1,
+        "free": 19,
+        "abstract": 23,
+        "none": 39
+      }
+    },
+    {
+      "id": "W4393406279",
+      "subfield": "Building and Construction",
+      "title": "Incorporating the Applications of Building Information Modeling (BIM) Technology in the Sustainable Retrofitting of Heritage Buildings: A Systematic Review",
+      "year": 2023,
+      "cited": 58,
+      "access": {
+        "kovrune": 3,
+        "free": 36,
+        "abstract": 10,
+        "none": 9
+      }
+    },
+    {
+      "id": "W4290599581",
+      "subfield": "Building and Construction",
+      "title": "Is Wood a Material? Taking the Size Effect Seriously",
+      "year": 2022,
+      "cited": 151,
+      "access": {
+        "kovrune": 4,
+        "free": 48,
+        "abstract": 39,
+        "none": 60
+      }
+    },
+    {
+      "id": "W3080612328",
+      "subfield": "Building and Construction",
+      "title": "Environmental valorisation of bagasse fly ash: a review",
+      "year": 2020,
+      "cited": 73,
+      "access": {
+        "kovrune": 4,
+        "free": 14,
+        "abstract": 20,
+        "none": 35
+      }
+    },
+    {
+      "id": "W3196628556",
+      "subfield": "Building and Construction",
+      "title": "Laboratory characterization of relative humidity dependent properties for plasters: A systematic review",
+      "year": 2021,
+      "cited": 46,
+      "access": {
+        "kovrune": 2,
+        "free": 23,
+        "abstract": 2,
+        "none": 19
+      }
+    },
+    {
+      "id": "W4290990408",
+      "subfield": "Building and Construction",
+      "title": "Machine Learning, Deep Learning and Statistical Analysis for forecasting building energy consumption — A systematic review",
+      "year": 2022,
+      "cited": 180,
+      "access": {
+        "kovrune": 25,
+        "free": 66,
+        "abstract": 39,
+        "none": 50
+      }
+    },
+    {
+      "id": "W3135118146",
+      "subfield": "Building and Construction",
+      "title": "Sustainable Materials and their Contribution to the Sustainable Development Goals (SDGs): A Critical Review Based on an Italian Example",
+      "year": 2021,
+      "cited": 90,
+      "access": {
+        "kovrune": 17,
+        "free": 35,
+        "abstract": 9,
+        "none": 29
+      }
+    },
+    {
+      "id": "W3111205846",
+      "subfield": "Building and Construction",
+      "title": "Resource efficiency in industrialized housing construction – A systematic review of current performance and future opportunities",
+      "year": 2020,
+      "cited": 117,
+      "access": {
+        "kovrune": 0,
+        "free": 56,
+        "abstract": 26,
+        "none": 35
+      }
+    },
+    {
+      "id": "W3115707931",
+      "subfield": "Building and Construction",
+      "title": "A Review of Studies Involving the Effects of Climate Change on the Energy Consumption for Building Heating and Cooling",
+      "year": 2020,
+      "cited": 85,
+      "access": {
+        "kovrune": 8,
+        "free": 23,
+        "abstract": 13,
+        "none": 41
+      }
+    },
+    {
+      "id": "W4385477499",
+      "subfield": "Building and Construction",
+      "title": "Forecasting and gap analysis of renewable energy integration in zero energy-carbon buildings: a comprehensive bibliometric and machine learning approach",
+      "year": 2023,
+      "cited": 33,
+      "access": {
+        "kovrune": 1,
+        "free": 13,
+        "abstract": 4,
+        "none": 15
+      }
+    },
+    {
+      "id": "W4224284155",
+      "subfield": "Building and Construction",
+      "title": "A systematic review of indoor thermal environment of the vernacular dwelling climate responsiveness",
+      "year": 2022,
+      "cited": 70,
+      "access": {
+        "kovrune": 1,
+        "free": 15,
+        "abstract": 6,
+        "none": 48
+      }
+    }
+  ]
+}
