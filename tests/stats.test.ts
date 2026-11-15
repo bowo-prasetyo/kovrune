@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Report, TaskResult } from "../eval/harness/benchmark.ts";
-import { compareReports, formatComparison } from "../eval/harness/compare.ts";
+import { compareReports, formatComparison, usedPromptCache } from "../eval/harness/compare.ts";
+import { benchExtraBody } from "../eval/harness/request.ts";
 import { formatRate, mcnemar, wilson } from "../eval/harness/stats.ts";
 
 describe("benchmark statistics", () => {
@@ -98,6 +99,18 @@ describe("comparing two runs", () => {
     assert.match(compareReports(before, failed).warnings.join(" "), /stopped with an error: 0 before, 1 after/);
   });
 
+  it("warns when a run used the prompt cache, and not when it was off", () => {
+    const cached = report(after.results.map((r) => ({ ...r, cachedTokens: 217 })));
+    assert.equal(usedPromptCache(cached), true);
+    assert.match(compareReports(before, cached).warnings.join(" "), /prompt cache was on in the run after/);
+    const off = (r: Report): Report => ({ ...r, environment: { ...r.environment, extraBody: { cache_prompt: false } } });
+    assert.equal(usedPromptCache(off(before)), false);
+    assert.deepEqual(compareReports(off(before), off(after)).warnings, []);
+    const zero = report(before.results.map((r) => ({ ...r, cachedTokens: 0 })));
+    assert.equal(usedPromptCache(zero), false);
+    assert.equal(usedPromptCache(before), undefined);
+  });
+
   it("compares runs on different CPUs with the same portable build, but not across builds", () => {
     const portable = "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2";
     const here = report(before.results, "Intel Xeon @ 2.80GHz", portable);
@@ -110,5 +123,15 @@ describe("comparing two runs", () => {
     const mixed = compareReports(report(before.results, "a", portable), report(after.results, "a", tuned)).warnings.join(" ");
     assert.match(mixed, /builds differ/);
     assert.doesNotMatch(mixed, /different CPUs/);
+  });
+});
+
+describe("benchmark request fields", () => {
+  it("turns the prompt cache off unless asked to keep it", () => {
+    const thinking = { chat_template_kwargs: { enable_thinking: false } };
+    assert.deepEqual(benchExtraBody(thinking, false), { ...thinking, cache_prompt: false });
+    assert.deepEqual(benchExtraBody(undefined, false), { cache_prompt: false });
+    assert.deepEqual(benchExtraBody(thinking, true), thinking);
+    assert.deepEqual(benchExtraBody({ cache_prompt: true }, false), { cache_prompt: true });
   });
 });
