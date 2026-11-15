@@ -1282,6 +1282,15 @@ llama-server keeps the prompt it last processed and, by default (`cache_prompt`)
 - **This also limits `bench:replay`.** Its step 3 runs only the tasks that differ, so each runs after other tasks than in the full run; with the cache on, its results can differ from what a full run would give.
 - **Off by default from harness 0.75.0.** `bench:endpoint` sends `"cache_prompt": false` with every request (`eval/harness/request.ts`); `--prompt-cache`, or a `cache_prompt` in `--extra-body`, keeps it. Reports record what was added to every request (`environment.extraBody`), and `bench:compare` warns when either run used the cache, from the request fields or from cached prompt tokens in its replies, so it also warns on every earlier report. It costs speed, since every request processes the whole prompt: about 2 hours instead of 1¼ for pdf, field and holdout on 2B in a 4-core container. Cache-on reports before this are still valid as whole runs; a comparison between two of them is noisier than it looked, more so the more tasks differ.
 
+**Baselines with the cache off (0.75.0).** The rule's five suites, on the code of 0.75.0 (`4c65866`, `main` after #171), llama.cpp `fae9ac5` built portably, and the usual Q4_K_M files, on a 4-core Intel Xeon @ 2.30GHz. Every reply reported 0 cached prompt tokens, and no task stopped with an error:
+
+| Model | research | unanswerable | pdf | field | holdout | Quotes found, wrong (field) | Report |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | 19/22 | 8/8 | 4/4 | 80/89 | 36/37 | 2 of 62 | [json](../results/field-0.75-baseline-qwen3.5-4b-q4km.json) |
+| Qwen3.5-2B | 16/22 | 5/8 | 3/4 | 69/89 | 24/37 | 2 of 37 | [json](../results/field-0.75-baseline-qwen3.5-2b-q4km.json) |
+
+These are the baselines for the next change to these suites. 0.76.0 was merged after them, so a change made on top of it can start from them with `bench:replay` (steps 2 to 4 [above](#rule-for-prompt-and-guard-changes)): the tasks whose requests 0.76.0 leaves unchanged keep these results, and only the rest need running. Against the cache-off 0.70.0 runs of 2B above, field moved from 68 to 69 and holdout from 25 to 24, with 0.71.0 to 0.75.0 in between. They took about 2¼ hours for 2B and 5¼ hours for 4B.
+
 
 ## Committed documents
 
