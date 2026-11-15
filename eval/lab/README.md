@@ -235,6 +235,37 @@ Neither model lost a task, and neither held-out total fell. 4B gained `l04`, the
 
 **The CS suites were run at 0.78.0**, and they narrowed the rule: a part that holds table rows takes no figure note, because on `cs04` the note sent 4B away from the table it was reading and its quote began mid-row ([CS suite](../cs/README.md#the-figure-note-and-why-it-is-not-given-to-a-tables-part-0780)). All 53 of this suite's noted parts keep their note, so the figures above stand unchanged. Still not measured: both models' protected suites, which the count above shows cannot change.
 
+### The baseline on `main` at 0.78.0
+
+The runs above were made on the code of their own change, before `main`'s 0.75.0 turned llama-server's prompt cache off and before its 0.77.0 took out the abbreviation place. Their pairings hold — each pair ran on one machine, one server and one model file — but their totals are not what the suites give on `main` now. This is that baseline, so a later change has current figures to be judged against and the older ones are not mistaken for them.
+
+Both models, on `main` at 0.78.0, on llama.cpp `0c1e570` built portably, on CPU in a 4-core cloud container (Intel Xeon @ 2.10GHz, 16 GB), at 4,096 tokens of context, in constrained mode, with the prompt cache off:
+
+| Suite | Qwen3.5-4B | labelled, wrong | Qwen3.5-2B | labelled, wrong |
+| --- | --- | --- | --- | --- |
+| `lab` | **26/32** | 16, **0** | **19/32** | 13, 3 |
+| `labholdout` | **10/11** | 8, 0 | **10/11** | 9, 1 |
+| `cs` | **22/26** | 12, 0 | **13/26** | 8, 2 |
+| `csholdout` | **10/10** | 3, 0 | **7/10** | 2, 0 |
+
+Reports: `baseline-0.78-{lab,cs,holdouts}-qwen3.5-{4b,2b}-q4km.json`. They are four runs per model, one suite or pair of suites at a time: with the cache off, all four suites in one run do not finish inside the two hours a background command gets, and a first attempt at that was stopped with nothing written.
+
+**What moved, against the figures the write-ups above quote.**
+
+| Suite, model | Quoted above | On `main` at 0.78.0 |
+| --- | --- | --- |
+| `lab`, 4B | 29/32 (0.76.0, cache on) | 26/32 |
+| `lab`, 2B | 21/32 (0.76.0, cache on) | 19/32 |
+| `labholdout`, 4B and 2B | 9/11 | 10/11 |
+| `cs`, 4B | 22/26 (0.78.0 narrowed) | 22/26 |
+| `cs`, 2B | 13/26 (0.78.0 narrowed) | 13/26 |
+
+The CS figures carry over exactly, which is expected: those runs were made with the cache already off, and the abbreviation place they had did not reach the tasks that differ. The lab figures fall by three tasks on 4B and two on 2B, and the earlier runs' cache is the first thing to suspect: with it, a request could be answered differently depending on what ran before it, which is why 0.75.0 turned it off.
+
+**So the 0.76.0 and 0.78.0 decisions stand, and their totals do not.** Each decision compared a baseline and a change run under one set of conditions, and those comparisons are what the rule asks for. Anyone quoting an absolute figure for these suites should quote this table instead.
+
+**Still not run at 0.78.0:** the research, unanswerable, pdf, field and holdout suites, which another session last ran as a cache-off baseline at 0.75.0 (`field-0.75-baseline-*`), and the clinical, office, engineering and multi suites. The figure note reaches no part of their libraries, so nothing here changes them; a 0.78.0 run of them is its own job.
+
 ## Limits
 
 - **Journal papers with full text in Europe PMC**, so the sample leans to *eLife*, *PLOS*, Elsevier and ASM. bioRxiv preprints, which much of this literature circulates as, are not here.
