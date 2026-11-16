@@ -11,8 +11,8 @@ export const TAR_LIMITS = {
   maxFileBytes: 4 * 2 ** 20,
 };
 
-/** The files read: LaTeX, its bibliography as BibTeX ran it (.bbl), and style files that define macros. */
-const TEXT_FILE = /\.(tex|bbl|sty|cls|def|ltx)$/i;
+/** The files read: LaTeX, its bibliography as BibTeX ran it (.bbl) or its BibTeX database (.bib), and style files that define macros. */
+const TEXT_FILE = /\.(tex|bbl|bib|sty|cls|def|ltx)$/i;
 
 export class TarError extends Error {}
 

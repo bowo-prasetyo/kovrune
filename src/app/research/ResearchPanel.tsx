@@ -560,6 +560,13 @@ export function ResearchPanel({
           </p>
         )}
         {pending.saveError && running && <p className="hint">{pending.saveError}</p>}
+        {/* A failed save of answers was shown only under Past answers, so a report could lose its sections unseen. */}
+        {history.saveError && (running || state.phase === "done" || state.phase === "error") && (
+          <p className="warning" role="status">
+            {history.saveError}
+            {state.phase === "done" ? " Export as Markdown, below, keeps a copy." : ""}
+          </p>
+        )}
         <div ref={outcome} tabIndex={-1} className="outcome">
           {state.phase === "stopped" && <p className="warning">Stopped.</p>}
           {state.phase === "error" && (
