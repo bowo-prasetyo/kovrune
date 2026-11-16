@@ -474,6 +474,12 @@ textarea {
   font-size: 1.1em;
 }
 
+/* LaTeX math shown as text (math.ts): a math font where there is one; pointing at it shows the LaTeX. */
+.math {
+  font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Noto Sans Math", serif;
+  cursor: help;
+}
+
 .answer .unbacked {
   background: var(--warning);
   color: inherit;

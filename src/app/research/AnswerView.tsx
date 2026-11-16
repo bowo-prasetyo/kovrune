@@ -19,6 +19,7 @@ import {
   type SavedReport,
 } from "./answers.ts";
 import { download } from "./download.ts";
+import { mathSegments, readableMath } from "./math.ts";
 import { describeReportLabels, describeSynthesisBacking } from "./report.ts";
 import { describeStatus, type LabelSeverity } from "./trace.ts";
 
@@ -80,7 +81,9 @@ export function ResultView({ answer, live = false }: { answer: SavedAnswer; live
                 </span>{" "}
                 <SourceName docId={item.docId} answer={answer} />
                 {item.context?.pages && <span className="hint">, {quotePages(answer, item)}</span>}
-                <blockquote>{item.quote}</blockquote>
+                <blockquote>
+                  <MathText text={item.quote} />
+                </blockquote>
                 {item.context && <InContext context={item.context} />}
                 {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}
                 {item.closest && <ClosestPassage parts={item.closest} />}
@@ -90,6 +93,28 @@ export function ResultView({ answer, live = false }: { answer: SavedAnswer; live
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Text with its LaTeX math shown as text people read, "$20\times$" as "20×" (math.ts). Pointing at the
+ * math shows the LaTeX it came from, which is what the quote check and the exports read.
+ */
+function MathText({ text }: { text: string }) {
+  const segments = mathSegments(text);
+  if (segments.length === 1 && !segments[0]!.latex) return <>{text}</>;
+  return (
+    <>
+      {segments.map((segment, i) =>
+        segment.latex ? (
+          <span key={i} className="math" title={`As written: ${segment.latex}`}>
+            {segment.text}
+          </span>
+        ) : (
+          <span key={i}>{segment.text}</span>
+        ),
+      )}
+    </>
   );
 }
 
@@ -114,7 +139,12 @@ export function StatusPill({ label, severity, small = false }: { label: string; 
  */
 function Answer({ text, support, explainMarks = true }: { text: string; support?: SentenceSupport; explainMarks?: boolean }) {
   const unbacked = support?.sentences.some((s) => s.backed === false);
-  if (!support || !unbacked) return <p className="answer">{text}</p>;
+  if (!support || !unbacked)
+    return (
+      <p className="answer">
+        <MathText text={text} />
+      </p>
+    );
   return (
     <>
       <p className="answer">
@@ -125,16 +155,18 @@ function Answer({ text, support, explainMarks = true }: { text: string; support?
               className="unbacked"
               title={
                 sentence.inSource
-                  ? `Not in a quote, but nearly word for word in ${sentence.inSource.title ? `“${sentence.inSource.title}”` : "a source"}, which the model read: “${sentence.inSource.passage}”`
+                  ? `Not in a quote, but nearly word for word in ${sentence.inSource.title ? `“${sentence.inSource.title}”` : "a source"}, which the model read: “${readableMath(sentence.inSource.passage)}”`
                   : "No found quote shares most of this sentence's words"
               }
             >
               <span aria-label="Not backed by a quote">⚠ </span>
-              {sentence.text}
+              <MathText text={sentence.text} />
               {sentence.inSource && <span className="in-source"> (in the source, not quoted) </span>}
             </mark>
           ) : (
-            <span key={i}>{sentence.text}</span>
+            <span key={i}>
+              <MathText text={sentence.text} />
+            </span>
           ),
         )}
       </p>
@@ -195,9 +227,11 @@ function InContext({ context }: { context: QuoteContext }) {
       <summary>Show in the source</summary>
       <blockquote>
         {context.more.before && "… "}
-        {context.before}
-        <mark>{context.passage}</mark>
-        {context.after}
+        <MathText text={context.before} />
+        <mark>
+          <MathText text={context.passage} />
+        </mark>
+        <MathText text={context.after} />
         {context.more.after && " …"}
       </blockquote>
     </details>
@@ -272,10 +306,12 @@ function SynthesisText({ part }: { part: SynthesisPart }) {
         sentence.backed === false ? (
           <mark key={i} className="unbacked" title="No section's found quote shares most of this sentence's words">
             <span aria-label="Not backed by a quote">⚠ </span>
-            {sentence.text}
+            <MathText text={sentence.text} />
           </mark>
         ) : (
-          <span key={i}>{sentence.text}</span>
+          <span key={i}>
+            <MathText text={sentence.text} />
+          </span>
         ),
       )}
     </p>
