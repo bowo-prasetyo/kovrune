@@ -36,7 +36,7 @@ describe("paging through a long document", () => {
     assert.match(third.text, /^\[survey#37\] Survey, part 37\nDecentralized language model networks use a proof-of-stake/);
     assert.match(third.text, /\[You asked for part 3\. Reading a long document part after part takes many steps, so this is the unread part that best matches the question\. To read survey#3 anyway, ask for it again\.\]$/);
     assert.equal(third.repeatable, true);
-    assert.equal(third.shown, "survey#37, the best match, not part 3");
+    assert.equal(third.shown, "part 37 of 119, the best match, not part 3");
   });
 
   it("gives the part asked for when asked again, and redirects only to an unread part", async () => {
@@ -106,7 +106,7 @@ describe("asking again for the part a redirected read skipped", () => {
     ]);
     const result = await runResearch({ question, library: new ResearchLibrary(parts("survey", 60)), model, constrained: false });
     const reads = result.agent.calls.filter((c) => c.tool === "read");
-    assert.deepEqual(reads.map((c) => c.shown ?? ""), ["", "", "survey#37, the best match, not part 3", ""], "the third read gave the best match");
+    assert.deepEqual(reads.map((c) => c.shown ?? ""), ["", "", "part 37 of 60, the best match, not part 3", ""], "the third read gave the best match");
     const said = result.agent.transcript.map((m) => m.content).join("\n");
     assert.match(said, /\[survey#3\] Survey, part 3\nBackground material number 3/, "asked again, the part asked for, not the repeat guard's reply");
     assert.equal(result.final?.answer, "Proof-of-stake.");

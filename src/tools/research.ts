@@ -323,7 +323,7 @@ export function createResearchTools(
         const text = `[${given.id}] ${given.title}\n${given.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(given.id))}${figureNote(index.figuresDiscussedElsewhere(given.id))}`;
         if (!instead) return nextSources(text);
         const number = Number(/#(\d+)$/.exec(doc.id)![1]);
-        return { text: nextSources(`${text}${pagingNote(doc.id, number)}`), repeatable: true, shown: `${given.id}, the best match, not part ${number}` };
+        return { text: nextSources(`${text}${pagingNote(doc.id, number)}`), repeatable: true, shown: `part ${siblings.indexOf(given.id) + 1} of ${siblings.length}, the best match, not part ${number}` };
       },
       // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
       // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
