@@ -180,7 +180,7 @@ function markedPart(part: SynthesisPart): string {
 
 /** What the introduction and conclusion are, as the report view and the export say. */
 export const SYNTHESIS_NOTE =
-  "The introduction and conclusion are written by the model from the sections' answers, without new reading. Their sentences are checked against the sections' quotes like an answer's, and they do not change any section's label.";
+  "The introduction and conclusion are written by the model from the sections' answers, without new reading. Their sentences are checked against the sections' quotes like an answer's, except the introduction's sentences that only restate the report's questions, which say what it covers; they do not change any section's label.";
 
 /** A section's label, as its answer would read on its own. */
 export function sectionLabel(section: SavedAnswer): string {

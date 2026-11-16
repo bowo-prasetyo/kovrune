@@ -271,7 +271,7 @@ The CS figures carry over exactly, which is expected: those runs were made with 
 
 **Still not run at 0.78.0:** the research, unanswerable, pdf, field and holdout suites, which another session last ran as a cache-off baseline at 0.75.0 (`field-0.75-baseline-*`), and the clinical, office, engineering and multi suites. The figure note reaches no part of their libraries, so nothing here changes them; a 0.78.0 run of them is its own job.
 
-### Matching a gene or protein name however a query writes it (0.85.0)
+### Matching a gene or protein name however a query writes it (0.87.0)
 
 The gap was measured at 0.76.0 before anything was built, and recorded as a test: every one of these ten papers is found by the spelling it uses for a key name, and **8 of 28** spellings a researcher might type are not. The misses fell in two families — a hyphen or space inside a name ("IL-10" for "IL10", "mec A", "H3K27 me3", "Bm MDH2") and a Greek letter written as its name ("PPARalpha" for "PPARα").
 
@@ -296,7 +296,7 @@ A query's terms now also carry those forms (`nameForms`, `queryNameForms` and `j
 
 On the CS papers the change is **inert**: all 26 of 4B's tasks took identical actions. Their names are acronyms and dataset names, not gene names written two ways, which is what the suite is for.
 
-**Not run:** research, unanswerable, pdf, field and holdout. `bench:retrieval` gives them the same figures with and without the change, and 0.85.0 adds terms only to a query, so a task whose search results do not move cannot differ; a run of them on both models is the remaining check.
+**Not run:** research, unanswerable, pdf, field and holdout. `bench:retrieval` gives them the same figures with and without the change, and 0.87.0 adds terms only to a query, so a task whose search results do not move cannot differ; a run of them on both models is the remaining check.
 
 ## Limits
 

@@ -60,21 +60,102 @@ const done = <T>(request: IDBRequest<T>) =>
 /** A stored record, with when it was saved so lists keep their order. */
 type Stored<T> = T & { savedAt: number };
 
+/**
+ * Kovrune's database connection, opened again when the browser has closed it. Chrome can close a page's
+ * connection while the page stays open (the tab in the background, storage under pressure; the "close"
+ * event), and a newer version in another tab asks it to close ("versionchange"). Every write after that
+ * failed with InvalidStateError until a reload: a report written for an hour kept only its first save,
+ * with no sections, and said so only on the Past answers screen.
+ */
+export class Connection {
+  private db?: IDBDatabase;
+  private opening?: Promise<IDBDatabase>;
+  private readonly factory: IDBFactory;
+  constructor(factory: IDBFactory) {
+    this.factory = factory;
+  }
+
+  /** The open database, opening it when there is none. */
+  get(): Promise<IDBDatabase> {
+    if (this.db) return Promise.resolve(this.db);
+    this.opening ??= openDatabase(this.factory).then(
+      (db) => {
+        // Let a newer version of the app, opened in another tab, upgrade the database; the next use reopens.
+        db.onversionchange = () => this.drop(db);
+        db.onclose = () => this.drop(db);
+        this.db = db;
+        this.opening = undefined;
+        return db;
+      },
+      (error: unknown) => {
+        this.opening = undefined;
+        throw error;
+      },
+    );
+    return this.opening;
+  }
+
+  /** Forgets a closed or closing connection, so the next use opens a new one. */
+  drop(db?: IDBDatabase): void {
+    if (db && db !== this.db) return;
+    try {
+      this.db?.close();
+    } catch {
+      // Already closed.
+    }
+    this.db = undefined;
+  }
+}
+
+/** Errors after which the connection is opened again and the request tried once more. */
+const RECONNECT = new Set(["InvalidStateError", "UnknownError", "TransactionInactiveError"]);
+
+function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {
+  const request = factory.open(DB_NAME, DB_VERSION);
+  request.onupgradeneeded = () => {
+    for (const name of [DOCUMENTS, ANSWERS, TASKS]) {
+      if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, { keyPath: "id" });
+    }
+  };
+  return done(request);
+}
+
 class IndexedDbStore<T extends { id: string }> implements RecordStore<T> {
   readonly persistent = true;
-  private readonly db: IDBDatabase;
+  private readonly connection: Connection;
   private readonly name: string;
-  constructor(db: IDBDatabase, name: string) {
-    this.db = db;
+  constructor(connection: Connection, name: string) {
+    this.connection = connection;
     this.name = name;
   }
 
-  private store(mode: IDBTransactionMode) {
-    return this.db.transaction(this.name, mode).objectStore(this.name);
+  /**
+   * Runs `request` on this store in a new transaction, and resolves when the transaction has committed.
+   * When the connection was closed, it is opened again and the request run once more.
+   */
+  private async run<R>(mode: IDBTransactionMode, request: (store: IDBObjectStore, resolve: (value: R) => void) => void, retried = false): Promise<R> {
+    try {
+      const db = await this.connection.get();
+      return await new Promise<R>((resolve, reject) => {
+        const transaction = db.transaction(this.name, mode);
+        let result: R;
+        transaction.oncomplete = () => resolve(result);
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error ?? new DOMException("The write was aborted.", "AbortError"));
+        request(transaction.objectStore(this.name), (value) => (result = value));
+      });
+    } catch (error) {
+      if (retried || !(error instanceof DOMException) || !RECONNECT.has(error.name)) throw error;
+      this.connection.drop();
+      return this.run(mode, request, true);
+    }
   }
 
   async list() {
-    const stored = await done(this.store("readonly").getAll() as IDBRequest<Array<Stored<T> & { addedAt?: number }>>);
+    const stored = await this.run<Array<Stored<T> & { addedAt?: number }>>("readonly", (store, resolve) => {
+      const all = store.getAll();
+      all.onsuccess = () => resolve(all.result as Array<Stored<T> & { addedAt?: number }>);
+    });
     // Documents saved by database version 1 have "addedAt" instead of "savedAt".
     const time = (r: Stored<T> & { addedAt?: number }) => r.savedAt ?? r.addedAt ?? 0;
     return stored.sort((a, b) => time(a) - time(b)).map(({ savedAt: _s, addedAt: _a, ...record }) => record as unknown as T);
@@ -82,21 +163,19 @@ class IndexedDbStore<T extends { id: string }> implements RecordStore<T> {
 
   async put(record: T) {
     // A record saved again (a document given its paper details) keeps its place in the list.
-    const store = this.store("readwrite");
-    const get = store.get(record.id) as IDBRequest<(Stored<T> & { addedAt?: number }) | undefined>;
-    await new Promise<void>((resolve, reject) => {
+    await this.run<void>("readwrite", (store) => {
+      const get = store.get(record.id) as IDBRequest<(Stored<T> & { addedAt?: number }) | undefined>;
       get.onsuccess = () => {
         const savedAt = get.result?.savedAt ?? get.result?.addedAt ?? Date.now();
-        const put = store.put({ ...record, savedAt });
-        put.onsuccess = () => resolve();
-        put.onerror = () => reject(put.error);
+        store.put({ ...record, savedAt });
       };
-      get.onerror = () => reject(get.error);
     });
   }
 
   async remove(id: string) {
-    await done(this.store("readwrite").delete(id));
+    await this.run<void>("readwrite", (store) => {
+      store.delete(id);
+    });
   }
 }
 
@@ -108,24 +187,17 @@ const memoryStores = (): Stores => ({ documents: new MemoryStore(), answers: new
  */
 export async function openStores(factory: IDBFactory | undefined = globalThis.indexedDB): Promise<Stores> {
   if (!factory) return memoryStores();
+  const connection = new Connection(factory);
   try {
-    const request = factory.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
-      for (const name of [DOCUMENTS, ANSWERS, TASKS]) {
-        if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, { keyPath: "id" });
-      }
-    };
-    const db = await done(request);
-    // Let a newer version of the app, opened in another tab, upgrade the database.
-    db.onversionchange = () => db.close();
-    return {
-      documents: new IndexedDbStore(db, DOCUMENTS),
-      answers: new IndexedDbStore(db, ANSWERS),
-      tasks: new IndexedDbStore(db, TASKS),
-    };
+    await connection.get();
   } catch {
     return memoryStores();
   }
+  return {
+    documents: new IndexedDbStore(connection, DOCUMENTS),
+    answers: new IndexedDbStore(connection, ANSWERS),
+    tasks: new IndexedDbStore(connection, TASKS),
+  };
 }
 
 let shared: Promise<Stores> | undefined;
@@ -150,6 +222,20 @@ export function storeChanges<T extends { id: string }>(
     put: current.filter((d) => savedById.get(d.id) !== d),
     remove: [...savedById.keys()].filter((id) => !currentIds.has(id)),
   };
+}
+
+/**
+ * What the store holds after writes of which some failed: `saved` (what the page took as saved), except
+ * that a record whose put failed, while still the one `saved` holds, is back as it was `before` (or absent),
+ * and one whose removal failed is there again. So the next sync writes them again, instead of taking a
+ * failed write for done. A record changed since the failed write is left, as the next sync puts it anyway.
+ */
+export function afterWrites<T extends { id: string }>(saved: T[], before: T[], failedPuts: T[], failedRemoves: string[]): T[] {
+  const old = new Map(before.map((r) => [r.id, r]));
+  const failed = new Set(failedPuts);
+  const kept = saved.flatMap((r) => (failed.has(r) ? (old.has(r.id) ? [old.get(r.id)!] : []) : [r]));
+  const ids = new Set(kept.map((r) => r.id));
+  return [...kept, ...failedRemoves.flatMap((id) => (old.has(id) && !ids.has(id) ? [old.get(id)!] : []))];
 }
 
 /** The size of the documents' saved text in UTF-8 bytes: an estimate of the storage they take. */

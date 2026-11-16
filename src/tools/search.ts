@@ -42,7 +42,7 @@ export function stem(token: string): string {
  */
 /**
  * Greek letters by the names papers also spell them with, so "PPARα" and "PPARalpha" are one term
- * (harness 0.85.0). "μ" is left out: after a number it is the micro prefix ("10 μM"), not a name.
+ * (harness 0.87.0). "μ" is left out: after a number it is the micro prefix ("10 μM"), not a name.
  */
 const GREEK_NAMES: Record<string, string> = {
   α: "alpha", β: "beta", γ: "gamma", δ: "delta", ε: "epsilon", ζ: "zeta", η: "eta", θ: "theta", ι: "iota", κ: "kappa",
@@ -54,7 +54,7 @@ const GREEK_NAME_END = new RegExp(`.(${Object.values(GREEK_NAMES).join("|")})$`,
 const LETTER_FOR: Record<string, string> = Object.fromEntries(Object.entries(GREEK_NAMES).map(([letter, name]) => [name, letter]));
 
 /**
- * The forms of a gene or protein name that writing it another way gives (harness 0.85.0). A paper writes
+ * The forms of a gene or protein name that writing it another way gives (harness 0.87.0). A paper writes
  * the name one way and a researcher types another, and the lab suite measured how often that misses: every
  * one of its ten papers is found by the spelling it uses, and 8 of 28 spellings a researcher might type are
  * not (eval/lab/README.md). Two families are bridged here:
@@ -97,7 +97,7 @@ function tokenize(text: string): string[] {
 
 /**
  * Two words a query writes apart that a paper may run together: "mec A" for "mecA", "H3K27 me3" for
- * "H3K27me3", "Bm MDH2" for "BmMDH2" (harness 0.85.0). Only a pair that looks like a name is joined — one
+ * "H3K27me3", "Bm MDH2" for "BmMDH2" (harness 0.87.0). Only a pair that looks like a name is joined — one
  * of the two holds a digit, or one is a single letter — so "cell cycle" and "ZVS load" are left alone, and
  * "T cells" gives a term no document has, which costs a term and matches nothing. Query side only: a
  * document that splits a name is the PDF reader's business (0.70.0 joins the pieces it can).

@@ -2,7 +2,7 @@
 // arXiv source's choice between the source and the PDF (eval/cs/README.md).
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { latexToText, mainFile, readableLatex, readBbl, withoutComments } from "../src/documents/latex.ts";
+import { citedKeys, latexToText, mainFile, readableLatex, readBbl, readBib, withoutComments } from "../src/documents/latex.ts";
 import { gunzip, readSourceFiles, TarError } from "../src/documents/tar.ts";
 import { createArxiv } from "../src/sources/arxiv.ts";
 import type { FetchLike } from "../src/sources/types.ts";
@@ -211,5 +211,53 @@ describe("the arXiv source reads the LaTeX source first", () => {
     const off = fakeFetch(await gzip(tar({ "main.tex": long })));
     assert.equal((await createArxiv({ fetchImpl: off, extractPdf: async () => pages, readSource: false }).fetch("arxiv:2307.03172")).text, "From the PDF.");
     assert.deepEqual(off.urls, ["https://arxiv.org/pdf/2307.03172"]);
+  });
+});
+
+describe("a source with a .bib and no .bbl (harness 0.85.0)", () => {
+  const BIB = String.raw`@string{neurips = "Advances in Neural Information Processing Systems"}
+@comment{ not an entry }
+@inproceedings{samsi2023words,
+  title     = {From Words to Watts: Benchmarking the Energy Costs of Large Language Model Inference},
+  author    = {Samsi, Siddharth and Zhao, Dan and McDonald, Joseph},
+  booktitle = neurips,
+  year      = 2023,
+}
+@misc{ScaleLLM, title = "{ScaleLLM}: serving at scale", author = {Mei Li and Wei Chen}, year = {2024}}
+@article{unused, title = {Never cited}, author = {Nobody, A.}, year = {2020}}
+@misc{team, title = {Gemma}, author = {Jeanine Banks and others}, year = {2024}}`;
+  const PAPER = String.raw`\documentclass{acmart}
+\begin{document}
+\section{Cost}
+The energy cost is modest \cite{samsi2023words}, and consumer GPUs cost $20\times$ less \cite{ScaleLLM, team}. See also \citet{team}.
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{reference}
+\end{document}`;
+
+  it("keeps .bib files when unpacking", async () => {
+    const read = await readSourceFiles(await gzip(tar({ "main.tex": PAPER, "reference.bib": BIB })));
+    assert.deepEqual([...read.keys()].sort(), ["main.tex", "reference.bib"]);
+  });
+
+  it("reads entries, strings and quoted values, and skips comments", () => {
+    const entries = readBib(BIB);
+    assert.deepEqual(entries.map((e) => e.key), ["samsi2023words", "ScaleLLM", "unused", "team"]);
+    assert.equal(entries[0]!.fields.booktitle, "Advances in Neural Information Processing Systems");
+    assert.equal(entries[0]!.fields.year, "2023");
+    assert.equal(entries[1]!.fields.title, "{ScaleLLM}: serving at scale");
+    assert.deepEqual(citedKeys(PAPER), ["samsi2023words", "ScaleLLM", "team"]);
+  });
+
+  it("cites by authors and year, and lists only the cited entries, in citation order", () => {
+    const text = latexToText(new Map([["main.tex", PAPER], ["reference.bib", BIB]]))!.text;
+    assert.match(text, /The energy cost is modest \(Samsi et al\., 2023\), and consumer GPUs cost \$20\\times\$ less \(Li and Chen, 2024; Banks, 2024\)\. See also Banks \(2024\)\./);
+    assert.doesNotMatch(text, /samsi2023words|ScaleLLM\]/);
+    assert.match(text, /## References\n\n\[1\] Siddharth Samsi, Dan Zhao, Joseph McDonald\. 2023\. From Words to Watts: Benchmarking the Energy Costs of Large Language Model Inference\. Advances in Neural Information Processing Systems\.\n\[2\] Mei Li, Wei Chen\. 2024\. ScaleLLM: serving at scale\.\n\[3\] Jeanine Banks et al\. 2024\. Gemma\.\n?$/);
+    assert.doesNotMatch(text, /Never cited/);
+  });
+
+  it("prefers the .bbl when there is one", () => {
+    const text = latexToText(new Map([["main.tex", PAPER], ["reference.bib", BIB], ["main.bbl", "\\begin{thebibliography}{1}\\bibitem{samsi2023words} S. Samsi. Watts.\\end{thebibliography}"]]))!.text;
+    assert.match(text, /The energy cost is modest \[1\]/);
   });
 });

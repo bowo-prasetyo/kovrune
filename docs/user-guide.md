@@ -288,7 +288,7 @@ An answer is a few sentences, each checked against a quote. For a longer report,
 
 The report shows a summary of the sections' labels, for example "3 of 4 sections: Quotes found. 1: Quotes found, answer not confirmed.", then the introduction, each section with its own label, answer and evidence, and the conclusion. A section's label covers that section only, so check each one, as you would an answer.
 
-A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written.
+A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written. If a section can't be saved, the research screen says so while the report goes on, and saving is tried again with the next section.
 
 **Export as Markdown** writes the report, with its introduction and conclusion if it has them, each section's quotes numbered against one list of references, and the steps. **Export papers as BibTeX** collects the OpenAlex, arXiv, DataCite and Europe PMC works of every section.
 
@@ -338,6 +338,9 @@ You don't need this to use Kovrune; it says what the labels rest on.
    - **Counts:** a sentence that says how many people were recruited, enrolled or randomised is not backed by a quote that gives that number only as a target, such as "a desired sample size of 25 participants was calculated".
    - **Names one character tells apart:** a name with a Greek letter (TNF-α and TNF-β, ERα and ERβ, written with the letter or its name), a cell marker with its sign (CD45+ and CD45−, or "CD45-positive"), a genotype (Tlr4−/− and Tlr4+/+) or a species with its genus shortened ("S. aureus") must be in the quotes, the cited titles or your question, though every other word matches. A name that only adds plain letters to one the quotes give, such as a mouse line's "PPARαBATKO" beside the gene's "PPARα", counts as backed. Species written out in full, and gene names that differ in a digit, are left to the other checks (a digit is a number, and numbers are checked).
    - **Significance:** a sentence that calls a result significant is not backed by quotes that call it only "not significant", "non-significant" or "did not reach significance".
+   - **Lists in one sentence:** an answer written as "three challenges: 1) … 2) … 3) …" is checked item by item, each item a sentence of its own, so a quote backs the item it states and an item no quote backs is marked on its own. Only numbered or lettered items in order count ("1)", "(1)", "1." or "a)"), so a reference such as "as in (2)" stays in its sentence.
+   - **Document names in the answer:** a sentence that names the document it quotes, such as `- From arxiv:2608.25291#13: "…"`, is checked without the name, whose digits are not numbers the answer claims.
+   - **A report's introduction:** its sentences that only restate the report's questions ("This report examines how …") say what the report covers, not what it found, so they are not marked. A sentence of the introduction that adds a finding is checked like any other, and every sentence of the conclusion is.
 3. **A sentence that says otherwise.** The documents the model read are searched for a sentence that answers your question and denies it, where the answer does not. Such a sentence takes **Quotes found** away and is shown to you. It catches an answer built on a real quote about something else: a quote saying that reduced expression of a gene raised pathogen clearance does not answer what the heterozygous knockout did, and the paper's own sentence about the heterozygote says it had no major effect.
 4. **The model's check.** The model reads the quoted passages again and is asked whether they state what the answer says. Only a clear yes keeps **Quotes found**.
 5. **Short answers,** such as "4 KiB" or "1987年", are too short to compare word by word, so they get **Quotes found** only when the model confirms them in step 3. So far only Qwen3.5-4B is asked about them: Qwen3.5-2B confirms nearly every answer, right or wrong, so its short answers read **Quotes found, answer too short to check**.
@@ -434,6 +437,8 @@ Exports are made in the browser; nothing is uploaded.
 If a saved document or answer can't be read, for example because the browser's storage damaged it, Kovrune leaves it out of the list and says so above it. **Save to a file** keeps a copy, which you can attach to a bug report; **Delete** removes it from the browser.
 
 If the browser's storage for Kovrune is full, saving a document or an answer fails with a message saying so. Free space under **Storage and backup**, for example by deleting a model you don't use, or free disk space.
+
+If saving an answer fails for another reason, for example because the browser closed Kovrune's connection to its storage while the tab was in the background, Kovrune connects again and saves it again: at once, and then every few seconds, five times. While it can't, the research screen says so under the question, and a finished answer or report can still be kept with **Export as Markdown**.
 
 ## 7. Privacy
 

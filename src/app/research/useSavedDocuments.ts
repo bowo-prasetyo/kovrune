@@ -3,7 +3,7 @@ import type { SavedAnswer } from "./answers.ts";
 import type { LibraryDocument } from "./library.ts";
 import type { z } from "zod";
 import { answerSchema, documentSchema, readable } from "./records.ts";
-import { describeSaveError, sharedStores, storeChanges, type RecordStore, type Stores } from "./store.ts";
+import { afterWrites, describeSaveError, sharedStores, storeChanges, type RecordStore, type Stores } from "./store.ts";
 
 export interface SavedRecords<T extends { id: string }> {
   records: T[];
@@ -25,6 +25,11 @@ export interface SavedRecords<T extends { id: string }> {
  * Records loaded from the browser's storage and kept in sync with it: added records are saved
  * and removed ones deleted. Records are never edited, so the sync only adds and removes.
  */
+/** How long after a failed write it is tried again, when nothing else is saved before then. */
+export const RETRY_MS = 5000;
+/** Retries by the timer after failed writes in a row; a change to the records still tries again after. */
+export const MAX_RETRIES = 5;
+
 function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => RecordStore<T>, noun: string, schema: z.ZodType): SavedRecords<T> {
   const [records, setRecords] = useState<T[]>([]);
   const [store, setStore] = useState<RecordStore<T>>();
@@ -53,18 +58,36 @@ function useSavedRecords<T extends { id: string }>(pick: (stores: Stores) => Rec
     // Each caller passes a fixed selector, so the store is opened once.
   }, []);
 
+  // Bumped to sync again after a failed write, so it is retried even when nothing else changes.
+  const [retry, setRetry] = useState(0);
+  const retryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Failed syncs in a row: a full disk fails every time, so the timer gives up after MAX_RETRIES.
+  const failures = useRef(0);
+  useEffect(() => () => clearTimeout(retryTimer.current), []);
+
   useEffect(() => {
     if (!store) return;
     const { put, remove } = storeChanges(saved.current, records);
     if (!put.length && !remove.length) return;
+    const before = saved.current;
     saved.current = records;
     // Ask the browser not to evict saved data under storage pressure, as for model downloads.
     if (put.length && store.persistent) void navigator.storage?.persist?.().catch(() => false);
-    Promise.all([...put.map((record) => store.put(record)), ...remove.map((id) => store.remove(id))]).then(
-      () => setSaveError(undefined),
-      (error: unknown) => setSaveError(describeSaveError(error, `a ${noun}`, "it can still be used until you reload the page.")),
-    );
-  }, [store, records, noun]);
+    void Promise.allSettled([...put.map((record) => store.put(record)), ...remove.map((id) => store.remove(id))]).then((results) => {
+      const rejected = results.flatMap((r, i) => (r.status === "rejected" ? [{ i, error: r.reason as unknown }] : []));
+      if (!rejected.length) {
+        failures.current = 0;
+        return setSaveError(undefined);
+      }
+      // A write that failed is not taken for done: the next sync, or the retry below, writes it again.
+      const failedPuts = rejected.filter((f) => f.i < put.length).map((f) => put[f.i]!);
+      const failedRemoves = rejected.filter((f) => f.i >= put.length).map((f) => remove[f.i - put.length]!);
+      saved.current = afterWrites(saved.current, before, failedPuts, failedRemoves);
+      setSaveError(describeSaveError(rejected[0]!.error, `a ${noun}`, "it can still be used until you reload the page, and saving it is tried again."));
+      clearTimeout(retryTimer.current);
+      if (++failures.current <= MAX_RETRIES) retryTimer.current = setTimeout(() => setRetry((n) => n + 1), RETRY_MS);
+    });
+  }, [store, records, noun, retry]);
 
   const deleteDamaged = async () => {
     if (!store) return;

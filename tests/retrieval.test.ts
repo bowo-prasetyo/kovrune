@@ -120,7 +120,7 @@ describe("retrieval on the evaluation set", () => {
     assert.ok(found("IL-10").has("il10-tolerance-birds"), "and so does a hyphen between the letters and the number");
   });
 
-  it("finds a paper by another spelling of a name (harness 0.85.0)", async () => {
+  it("finds a paper by another spelling of a name (harness 0.87.0)", async () => {
     // Measured at 0.76.0 before building anything: every paper was found by the spelling it uses, and 8
     // of 28 spellings a researcher might type were not, in two families — a hyphen or space inside a
     // name, and a Greek letter written as its name. 0.85.0 bridges both, on the query side, and 26 of 28
