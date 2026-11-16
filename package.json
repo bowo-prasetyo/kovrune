@@ -32,6 +32,7 @@
     "bench:replay": "node --experimental-strip-types eval/replay.ts",
     "bench:europepmc": "node --experimental-strip-types eval/europepmc-check.ts",
     "bench:europepmc:model": "node --experimental-strip-types eval/europepmc-model.ts",
+    "bench:paging": "node --experimental-strip-types --no-warnings eval/paging-model.ts",
     "bench:citations": "node --experimental-strip-types --no-warnings eval/citations-model.ts",
     "bench:coverage": "NODE_USE_ENV_PROXY=1 node --experimental-strip-types --no-warnings eval/coverage.ts",
     "bench:patents": "NODE_USE_ENV_PROXY=1 node --experimental-strip-types --no-warnings eval/patent-sources.ts"

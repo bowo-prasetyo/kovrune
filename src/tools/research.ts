@@ -74,10 +74,11 @@ export const READ_FIRST_RESERVE = 2;
 /**
  * A document of at least this many parts is not read part after part (harness 0.88.0): the third read in
  * a row of the next part gives the unread part that best matches the question instead. A preview user's
- * reports read parts 1 to 8 of 119, and of 20, and ended "not found" or with one paper's answer; reading
- * a short document in order, as the field suite's 3-part articles are, is left alone.
+ * reports read parts 1 to 8 of 119, and of 20, and ended "not found" or with one paper's answer. A shorter
+ * document is read in order as asked: at 10 parts, Qwen3.5-2B lost field task f49 on the 11-part user guide,
+ * given part 10 instead of 4 and answering "localhost" without its port (eval/cs/README.md).
  */
-export const PAGING_MIN_PARTS = 10;
+export const PAGING_MIN_PARTS = 20;
 
 /** What a read says when it gave the best-matching part instead of the next one (pagingNote). */
 export const PAGING_NOTE_LINE = /\n*\[You asked for part \d+[^\n]*\]/;
