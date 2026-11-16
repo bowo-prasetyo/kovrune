@@ -630,6 +630,67 @@ export function splitSentences(answer: string): string[] {
 }
 
 /**
+ * A list written into one sentence, split at its items: "challenges: 1) cost … 2) bloat … 3) …" is a
+ * lead-in and three claims (harness 0.86.0). Checked as one sentence, it was backed only when half its
+ * words were in the quotes together, so a report section whose two quotes backed two of three items
+ * read "0 of 1 sentence backed", and one item from memory hid behind the others. Only a sequence counts:
+ * markers "1)", "(1)" or "1." (or "a)", "(a)"), the first numbered 1 or a and each the next, at least
+ * two, each after a space; so "as in (2)" or "Table 1." do not split a sentence.
+ */
+export function listItems(sentence: string): string[] {
+  const marker = /(?<=^|\s)(\(?)(\d{1,2}|[a-h])([.)])(?=\s)/g;
+  const found: Array<{ at: number; label: string }> = [];
+  for (const m of sentence.matchAll(marker)) {
+    const [, open, label, close] = m;
+    // "(1." is no marker; "1." only for numbers, as "a." ends many a word.
+    if ((open && close !== ")") || (close === "." && !/^\d/.test(label!))) continue;
+    found.push({ at: m.index!, label: label! });
+  }
+  const next = (label: string) => (/^\d+$/.test(label) ? String(Number(label) + 1) : String.fromCharCode(label.charCodeAt(0) + 1));
+  // The longest run of markers in sequence, from 1 or a.
+  let best: number[] = [];
+  for (let i = 0; i < found.length; i++) {
+    if (found[i]!.label !== "1" && found[i]!.label !== "a") continue;
+    const run = [found[i]!.at];
+    let want = next(found[i]!.label);
+    for (let j = i + 1; j < found.length; j++) {
+      if (found[j]!.label === want) {
+        run.push(found[j]!.at);
+        want = next(want);
+      }
+    }
+    if (run.length > best.length) best = run;
+  }
+  if (best.length < 2) return [sentence];
+  const cuts = [0, ...best.filter((at) => at > 0), sentence.length];
+  return cuts.slice(0, -1).map((at, i) => sentence.slice(at, cuts[i + 1])).filter((part) => part.trim());
+}
+
+/**
+ * The sentence as judged: without the IDs of the documents the answer cites, and a "From <ID>:" before
+ * them (harness 0.86.0). A model that copies its quotes into the answer writes "- From arxiv:2608.25291#13:
+ * "InsightSR achieves a 95% exact recovery rate…"", and the ID's numbers (2608.25291, 13) failed the
+ * number check, so its own quotes were marked as unbacked sentences.
+ */
+function withoutDocIds(text: string, ids: string[]): string {
+  let out = text;
+  for (const id of [...new Set(ids)].sort((a, b) => b.length - a.length)) {
+    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // The ID as a whole token: a document named "d" leaves "default" alone.
+    out = out.replace(new RegExp(String.raw`(?:\b[Ff]rom\s+)?\[?(?<![\w:./#-])${escaped}(?:#\d+)?(?![\w/#-]|[.:][\w])\]?\s*:?`, "g"), " ");
+  }
+  return out;
+}
+
+/** Words that say what a report does, not what it found: "This report examines …", "It further explores …". */
+const SCOPE_WORDS = new Set(
+  "report reports examine examines examined explore explores explored further address addresses addressed analyze analyzes analyse analyses discuss discusses consider considers investigate investigates cover covers covered look looks also finally first second third then section sections question questions focus focuses overview review reviews describe describes outline outlines present presents identify identifies identifying specifically including regarding well".split(" "),
+);
+
+/** At least this share of a sentence's other content words must be the report's own questions' for it to only restate them. */
+const SCOPE_SHARE = 0.8;
+
+/**
  * Marks each sentence of an answer as backed or not by the verified quotes: backed when at
  * least half of its content words appear in them. Unverified quotes back nothing, and neither do
  * quotes that leave out more than MAX_BACKING_ELIDED_WORDS words in one place.
@@ -670,6 +731,12 @@ export function sentenceSupport(
    * (SHORT_ANSWER_QUESTION_SHARE), and a sentence can restate the question's numbers.
    */
   question?: string,
+  /**
+   * A report's title and section questions, for its introduction (harness 0.86.0): a sentence that only
+   * restates them says what the report covers, not what it found, and is not judged. Every sentence of a
+   * preview user's introduction was marked, "This report examines how researchers currently integrate …".
+   */
+  scope?: string,
 ): SentenceSupport {
   // Only verified quotes back sentences, and of those that leave words out, only those that leave out few.
   const verified = evidence.filter((e) => e.verified && (e.elidedWords ?? 0) <= MAX_BACKING_ELIDED_WORDS);
@@ -690,13 +757,20 @@ export function sentenceSupport(
   const quotedSignificance = verified.map((e) => significance(e.quote));
   const quotedChanges = changes(quoteText);
   const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
+  const ids = evidence.map((e) => e.docId.replace(/#\d+$/, ""));
+  const scopeWords = scope ? contentWords(scope) : [];
   let judged = 0;
   let backed = 0;
-  const sentences = splitSentences(answer).map((text): AnswerSentence => {
+  const sentences = splitSentences(answer).flatMap(listItems).map((written): AnswerSentence => {
+    const text = withoutDocIds(written, ids);
     const words = contentWords(text);
-    if (words.length < MIN_JUDGED_WORDS) return { text };
+    if (scopeWords.length) {
+      const said = words.filter((w) => !SCOPE_WORDS.has(w));
+      if (said.length && said.filter((w) => scopeWords.some((q) => sameWord(w, q))).length >= said.length * SCOPE_SHARE) return { text: written };
+    }
+    if (words.length < MIN_JUDGED_WORDS) return { text: written };
     const claim = words.filter((w) => !subjectWords.some((s) => sameWord(w, s)));
-    if (!claim.length) return { text };
+    if (!claim.length) return { text: written };
     const falls = saysFall(text);
     const shared = claim.filter((w) => quoteWords.some((q) => sameWord(w, q))).length;
     // The "not" must come from a quote making the same claim: one sharing half the claim words and
@@ -722,7 +796,7 @@ export function sentenceSupport(
       namesBacked(text, namesBacking);
     judged++;
     if (isBacked) backed++;
-    return { text, backed: isBacked };
+    return { text: written, backed: isBacked };
   });
   if (!judged && question && answerInQuote(answer, question, verified, titleFor)) {
     return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true };

@@ -125,8 +125,11 @@ export async function writeSynthesis(options: {
   if (!parts) return undefined;
   // Every section's quotes, not only the answered ones': a quote is backing wherever it was found.
   const evidence = options.sections.flatMap((s) => s.evidence);
-  const check = (part: string): SynthesisPart => ({ text: part, support: sentenceSupport(part, evidence, options.titleFor) });
-  return { introduction: check(parts.introduction), conclusion: check(parts.conclusion) };
+  const check = (part: string, scope?: string): SynthesisPart => ({ text: part, support: sentenceSupport(part, evidence, options.titleFor, undefined, scope) });
+  // The introduction says what the report covers: a sentence that only restates its questions is not
+  // judged (harness 0.86.0). The conclusion sums up findings, so each of its sentences is.
+  const scope = [options.title, options.request, ...options.sections.map((s) => s.question)].join("\n");
+  return { introduction: check(parts.introduction, scope), conclusion: check(parts.conclusion) };
 }
 
 /** Judged and backed sentences over both parts. */
