@@ -271,6 +271,33 @@ The CS figures carry over exactly, which is expected: those runs were made with 
 
 **Still not run at 0.78.0:** the research, unanswerable, pdf, field and holdout suites, which another session last ran as a cache-off baseline at 0.75.0 (`field-0.75-baseline-*`), and the clinical, office, engineering and multi suites. The figure note reaches no part of their libraries, so nothing here changes them; a 0.78.0 run of them is its own job.
 
+### Matching a gene or protein name however a query writes it (0.85.0)
+
+The gap was measured at 0.76.0 before anything was built, and recorded as a test: every one of these ten papers is found by the spelling it uses for a key name, and **8 of 28** spellings a researcher might type are not. The misses fell in two families — a hyphen or space inside a name ("IL-10" for "IL10", "mec A", "H3K27 me3", "Bm MDH2") and a Greek letter written as its name ("PPARalpha" for "PPARα").
+
+A query's terms now also carry those forms (`nameForms`, `queryNameForms` and `joinedPairs` in `src/tools/search.ts`): a hyphen or dot inside a word gives the joined form, a Greek letter gives its name and a name ending in one gives the letter, and two words a paper may run together are joined when one holds a digit or is a single letter. **26 of 28 spellings now find their paper.** The two that do not are a Latin letter standing for a Greek one ("Ppara") and a name's substring ("MDH2" for "BmMDH2"), neither a spelling of the same name.
+
+**The query side only, and that was measured rather than chosen.** Adding these forms to the index as well lengthened every document, which BM25 divides by, and cost tasks: on `bench:retrieval` clinical fell from 25 to 22 of 30, cs from 27 to 26 and lab from 39 to 38. On the query side alone, retrieval **gains** a task on clinical (25 to 26 of 30) and leaves research, pdf, field, office, engineering, cs and lab exactly as they were. So a paper writing "IL-10" is still missed by a query writing "IL10"; only the researcher's direction is bridged.
+
+**The model runs**, both models, each suite against a baseline on the same machine, build and model file, prompt cache off. The lab and CS baselines are [the 0.78.0 baseline](#the-baseline-on-main-at-0780), verified to still describe `main`; the clinical baselines were run for this change on `main` at 0.84.0.
+
+| Suite | Model | Before | After | Gained | Lost | p (McNemar) |
+| --- | --- | --- | --- | --- | --- | --- |
+| `lab` | 4B | 26/32 | **27/32** | 1 | 0 | 1 |
+| `lab` | 2B | 19/32 | 19/32 | 0 | 0 | 1 |
+| `cs` | 4B | 22/26 | 22/26 | 0 | 0 | 1 |
+| `cs` | 2B | 13/26 | 13/26 | 0 | 0 | 1 |
+| `clinical` | 4B | 17/23 | **18/23** | 1 | 0 | 1 |
+| `clinical` | 2B | 12/23 | 12/23 | 0 | 0 | 1 |
+
+**Two tasks gained, none lost, on any suite or model.** Labelled answers that are wrong do not rise: 0 of 16 on lab with 4B either way, 1 of 13 to 1 of 14 on clinical with 4B, and 2B's share unchanged.
+
+**The suite it helps most is not the one it was written for.** `clinical`'s gain is `c06`, the risk ratio the clinical README has recorded 4B missing since its first runs: search returned three parts of the Discussion, which repeat the question's terms more often than the abstract's Findings, so the model read those and answered "not found". The question names "dihydroartemisinin–piperaquine", and joining what the dash separates reaches the Findings. `lab`'s gain is `l23`, the p53 R273H question, whose point mutant is the kind of string this bridges.
+
+On the CS papers the change is **inert**: all 26 of 4B's tasks took identical actions. Their names are acronyms and dataset names, not gene names written two ways, which is what the suite is for.
+
+**Not run:** research, unanswerable, pdf, field and holdout. `bench:retrieval` gives them the same figures with and without the change, and 0.85.0 adds terms only to a query, so a task whose search results do not move cannot differ; a run of them on both models is the remaining check.
+
 ## Limits
 
 - **Journal papers with full text in Europe PMC**, so the sample leans to *eLife*, *PLOS*, Elsevier and ASM. bioRxiv preprints, which much of this literature circulates as, are not here.
