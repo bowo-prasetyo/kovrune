@@ -288,7 +288,7 @@ An answer is a few sentences, each checked against a quote. For a longer report,
 
 The report shows a summary of the sections' labels, for example "3 of 4 sections: Quotes found. 1: Quotes found, answer not confirmed.", then the introduction, each section with its own label, answer and evidence, and the conclusion. A section's label covers that section only, so check each one, as you would an answer.
 
-A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written.
+A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written. If a section can't be saved, the research screen says so while the report goes on, and saving is tried again with the next section.
 
 **Export as Markdown** writes the report, with its introduction and conclusion if it has them, each section's quotes numbered against one list of references, and the steps. **Export papers as BibTeX** collects the OpenAlex, arXiv, DataCite and Europe PMC works of every section.
 
@@ -434,6 +434,8 @@ Exports are made in the browser; nothing is uploaded.
 If a saved document or answer can't be read, for example because the browser's storage damaged it, Kovrune leaves it out of the list and says so above it. **Save to a file** keeps a copy, which you can attach to a bug report; **Delete** removes it from the browser.
 
 If the browser's storage for Kovrune is full, saving a document or an answer fails with a message saying so. Free space under **Storage and backup**, for example by deleting a model you don't use, or free disk space.
+
+If saving an answer fails for another reason, for example because the browser closed Kovrune's connection to its storage while the tab was in the background, Kovrune connects again and saves it again: at once, and then every few seconds, five times. While it can't, the research screen says so under the question, and a finished answer or report can still be kept with **Export as Markdown**.
 
 ## 7. Privacy
 

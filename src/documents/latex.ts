@@ -213,6 +213,130 @@ interface Reference {
   text: string;
 }
 
+/** One BibTeX entry: its type, key and fields, the fields' names in lower case. */
+export interface BibEntry {
+  type: string;
+  key: string;
+  fields: Record<string, string>;
+}
+
+/**
+ * The entries of a .bib file. A field's value is a {…} group, a "…" string or a bare number or
+ * @string name; @string abbreviations are expanded, and @comment and @preamble are skipped.
+ */
+export function readBib(bib: string): BibEntry[] {
+  const entries: BibEntry[] = [];
+  const strings: Record<string, string> = { jan: "January", feb: "February", mar: "March", apr: "April", may: "May", jun: "June", jul: "July", aug: "August", sep: "September", oct: "October", nov: "November", dec: "December" };
+  const value = (text: string, at: number): { value: string; end: number } | undefined => {
+    let i = at;
+    while (/\s/.test(text[i] ?? "")) i++;
+    let out = "";
+    for (;;) {
+      if (text[i] === "{") {
+        const g = group(text, i);
+        if (!g) return undefined;
+        (out += g.body), (i = g.end);
+      } else if (text[i] === '"') {
+        let j = i + 1;
+        for (let depth = 0; j < text.length && !(text[j] === '"' && depth === 0); j++) depth += text[j] === "{" ? 1 : text[j] === "}" ? -1 : 0;
+        (out += text.slice(i + 1, j)), (i = j + 1);
+      } else {
+        const bare = /^[\w.:-]+/.exec(text.slice(i));
+        if (!bare) return undefined;
+        (out += strings[bare[0].toLowerCase()] ?? bare[0]), (i += bare[0].length);
+      }
+      while (/\s/.test(text[i] ?? "")) i++;
+      if (text[i] !== "#") return { value: out, end: i };
+      i++;
+      while (/\s/.test(text[i] ?? "")) i++;
+    }
+  };
+  for (const m of bib.matchAll(/@\s*(\w+)\s*[{(]/g)) {
+    const type = m[1]!.toLowerCase();
+    let at = m.index + m[0].length;
+    if (type === "comment" || type === "preamble") continue;
+    if (type === "string") {
+      const name = /^\s*([\w-]+)\s*=/.exec(bib.slice(at));
+      const v = name && value(bib, at + name[0].length);
+      if (name && v) strings[name[1]!.toLowerCase()] = v.value;
+      continue;
+    }
+    const key = /^\s*([^,\s]+)\s*,/.exec(bib.slice(at));
+    if (!key) continue;
+    at += key[0].length;
+    const fields: Record<string, string> = {};
+    for (;;) {
+      const name = /^\s*([\w-]+)\s*=/.exec(bib.slice(at));
+      if (!name) break;
+      const v = value(bib, at + name[0].length);
+      if (!v) break;
+      fields[name[1]!.toLowerCase()] = v.value.replace(/\s+/g, " ").trim();
+      at = v.end;
+      const comma = /^\s*,/.exec(bib.slice(at));
+      if (!comma) break;
+      at += comma[0].length;
+    }
+    entries.push({ type, key: key[1]!, fields });
+  }
+  return entries;
+}
+
+/** An author list's family names: "Liu, Nelson F. and Kevin Lin" → ["Liu", "Lin"]; "{OpenAI}" stays whole. */
+function familyNames(authors: string): string[] {
+  return authors
+    .split(/\s+and\s+/)
+    .map((name) => name.trim())
+    .filter((name) => name && name !== "others")
+    .map((name) => {
+      if (name.includes(",")) return name.split(",")[0]!.trim();
+      if (/^\{.*\}$/.test(name)) return name;
+      // "Ludwig van Beethoven" → "van Beethoven": lower-case words before the last name are part of it.
+      const words = name.split(/\s+/);
+      let first = words.length - 1;
+      while (first > 0 && /^[a-z]/.test(words[first - 1]!)) first--;
+      return words.slice(first).join(" ");
+    });
+}
+
+/**
+ * References from .bib entries, for a source that has no .bbl: arXiv takes a paper without one, and then
+ * the PDF's own citations are what BibTeX made of the .bib (2504.20101 cites "[samsi2023words]" otherwise).
+ * Only the entries `cited` names are kept, numbered in citation order. Each is cited by its authors and
+ * year, "(Samsi et al., 2023)", whatever the paper's style: the PDF's numbers depend on its style's sorting,
+ * which only BibTeX can reproduce, and names and a year say more than a number.
+ */
+export function bibReferences(entries: BibEntry[], cited: string[], inline: (text: string) => string): Map<string, Reference> {
+  const byKey = new Map(entries.map((e) => [e.key, e]));
+  const refs = new Map<string, Reference>();
+  for (const key of cited) {
+    const entry = byKey.get(key);
+    if (!entry || refs.has(key)) continue;
+    const f = entry.fields;
+    const families = familyNames(f.author ?? f.editor ?? "").map((n) => inline(n).trim());
+    const authors = families.length > 2 ? `${families[0]} et al.` : families.join(" and ");
+    const year = /\d{4}/.exec(f.year ?? f.date ?? "")?.[0];
+    const venue = f.journal ?? f.booktitle ?? f.publisher ?? f.howpublished ?? f.school ?? f.institution;
+    // "Samsi, Siddharth" is written "Siddharth Samsi", as a reference list prints it.
+    const person = (n: string) => (n.includes(",") ? `${n.slice(n.indexOf(",") + 1).trim()} ${n.slice(0, n.indexOf(",")).trim()}` : n.trim());
+    const names = (f.author ?? f.editor ?? "").split(/\s+and\s+/).map((n) => (n.trim() === "others" ? "et al." : inline(person(n)).trim())).filter(Boolean);
+    const list = names.join(", ").replace(/, et al\.$/, " et al.");
+    const text = [list ? (list.endsWith(".") ? list : `${list}.`) : "", year ? `${year}.` : "", f.title ? `${inline(f.title)}.` : "", venue ? `${inline(venue)}.` : ""]
+      .filter(Boolean)
+      .join(" ");
+    refs.set(key, { number: refs.size + 1, ...(authors ? { authors } : {}), ...(year ? { year } : {}), text: text.replace(/\s+/g, " ").trim() });
+  }
+  return refs;
+}
+
+/** The citation keys a text cites, in order, each once: \cite{a,b}, \citep[p.~3]{c}, \citet*{d}. */
+export function citedKeys(text: string): string[] {
+  const keys: string[] = [];
+  for (const m of text.matchAll(/\\(?:no)?cite[a-zA-Z]*\*?(?:\s*\[[^\]]*\]){0,2}\s*\{([^}]*)\}/g)) {
+    for (const key of m[1]!.split(",").map((k) => k.trim())) if (key && key !== "*" && !keys.includes(key)) keys.push(key);
+  }
+  return keys;
+}
+
 /** The references of a .bbl file, in order: BibTeX's \bibitem list, or biblatex's \entry list. */
 export function readBbl(bbl: string, inline: (text: string) => string): Map<string, Reference> {
   const refs = new Map<string, Reference>();
@@ -308,7 +432,15 @@ export function latexToText(files: Map<string, string>): ConvertedLatex | undefi
   // References, from the .bbl next to the main file (arXiv doesn't run BibTeX, so a source that cites has one).
   const bblName = [...files.keys()].find((n) => n.endsWith(".bbl") && n.replace(/\.bbl$/, "") === main.replace(/\.(tex|ltx)$/, "")) ?? [...files.keys()].find((n) => n.endsWith(".bbl"));
   const inlineText = (text: string) => inline(text, new Map(), new Map());
-  const refs = bblName ? readBbl(expandMacros(files.get(bblName)!, macros), inlineText) : /\\begin\{thebibliography\}/.test(body) ? readBbl(body.slice(body.indexOf("\\begin{thebibliography}")), inlineText) : new Map<string, Reference>();
+  // Failing both, the .bib files (bibReferences): arXiv takes a source without its .bbl.
+  const bibs = [...files.entries()].filter(([n]) => n.endsWith(".bib")).map(([, text]) => text);
+  const refs = bblName
+    ? readBbl(expandMacros(files.get(bblName)!, macros), inlineText)
+    : /\\begin\{thebibliography\}/.test(body)
+      ? readBbl(body.slice(body.indexOf("\\begin{thebibliography}")), inlineText)
+      : bibs.length
+        ? bibReferences(bibs.flatMap((b) => readBib(b)), citedKeys(body), inlineText)
+        : new Map<string, Reference>();
   // The references go where the paper prints them: before the appendix, as a rule.
   body = body.replace(/\\begin\{thebibliography\}[\s\S]*?\\end\{thebibliography\}/, "\\printbibliography");
   body = body.replace(/\\bibliography\s*\{[^}]*\}|\\printbibliography\b(\[[^\]]*\])?/, "\n\n\\section*{References}\n\n").replace(/\\bibliography\s*\{[^}]*\}|\\printbibliography\b(\[[^\]]*\])?/g, "");
