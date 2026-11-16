@@ -9,7 +9,7 @@ import { CITATION_NOTE_LINE } from "../sources/openalex.ts";
 import { SourceError } from "../sources/types.ts";
 import { latinLanguage } from "../documents/languages.ts";
 import { mainScript } from "../documents/scripts.ts";
-import { DocumentIndex, type SearchHit } from "./search.ts";
+import type { DocumentIndex, SearchHit } from "./search.ts";
 
 /**
  * After a part that cites a table held in another part, where that table is (harness 0.73.0,
@@ -70,23 +70,6 @@ export function researchSystem(options: { documents: boolean; sources: string[] 
  * quotes: one for the answer, and one for a retry if that answer is cut off (agent.ts).
  */
 export const READ_FIRST_RESERVE = 2;
-
-/**
- * A document of at least this many parts is not read part after part (harness 0.88.0): the third read in
- * a row of the next part gives the unread part that best matches the question instead. A preview user's
- * reports read parts 1 to 8 of 119, and of 20, and ended "not found" or with one paper's answer. A shorter
- * document is read in order as asked: at 10 parts, Qwen3.5-2B lost field task f49 on the 11-part user guide,
- * given part 10 instead of 4 and answering "localhost" without its port (eval/cs/README.md).
- */
-export const PAGING_MIN_PARTS = 20;
-
-/** What a read says when it gave the best-matching part instead of the next one (pagingNote). */
-export const PAGING_NOTE_LINE = /\n*\[You asked for part \d+[^\n]*\]/;
-
-/** The note after a part given instead of the next one: which part was asked for, and how to read it anyway. */
-export function pagingNote(asked: string, number: number): string {
-  return `\n\n[You asked for part ${number}. Reading a long document part after part takes many steps, so this is the unread part that best matches the question. To read ${asked} anyway, ask for it again.]`;
-}
 
 /** Documents longer than this are truncated when read, to fit small context windows. */
 export const MAX_DOC_CHARS = 2400;
@@ -157,23 +140,6 @@ export function createResearchTools(
   const answeredSources = new Set<string>();
   // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
   const readIds = new Set<string>();
-  // The parts read so far (asked for or given) and the IDs asked for in the last reads, to tell paging (PAGING_MIN_PARTS).
-  const shownIds = new Set<string>();
-  const lastReads: string[] = [];
-  /**
-   * For a read of part n of a long document after reads of parts n-2 and n-1: the unread part that best
-   * matches the question, when it is another one. `parts` are the document's parts; `best` picks among
-   * those not excluded.
-   */
-  const pagedTo = (docId: string, parts: string[], best: (exclude: Set<string>) => string | undefined): string | undefined => {
-    const number = Number(/#(\d+)$/.exec(docId)?.[1] ?? NaN);
-    const doc = parentId(docId);
-    if (!Number.isInteger(number) || parts.length < PAGING_MIN_PARTS) return undefined;
-    const [twoBack, oneBack] = lastReads.slice(-2);
-    if (twoBack !== `${doc}#${number - 2}` || oneBack !== `${doc}#${number - 1}`) return undefined;
-    const found = best(new Set([...readIds, ...shownIds]));
-    return found && found !== docId ? found : undefined;
-  };
   let askedToReadCited = false;
   // What the answer quoted from each open-source document it was sent to read, so the read gives the
   // part holding the quote rather than the part matching the question (SourceSession.read).
@@ -279,17 +245,6 @@ export function createResearchTools(
       execute: async ({ docId }: { docId: string }) => {
         if (session?.sourceFor(docId)) {
           unread.clear();
-          // Paging through a long document: the best-matching unread part instead (PAGING_MIN_PARTS).
-          const instead = pagedTo(docId, session.partsOf(docId), (exclude) => session.bestPart(docId, exclude));
-          lastReads.push(docId);
-          if (instead) {
-            readIds.add(instead);
-            shownIds.add(instead);
-            const text = await session.read(instead);
-            const number = Number(/#(\d+)$/.exec(docId)![1]);
-            const shown = /^\[[^\]\n]*\][^\n]*\((part \d+ of \d+)\)\n/.exec(text)?.[1];
-            return { text: nextSources(`${text}${pagingNote(docId, number)}`), repeatable: true, ...(shown ? { shown: `${shown}, the best match, not part ${number}` } : {}) };
-          }
           readIds.add(docId);
           const quotes = quotedFrom.get(parentId(docId)) ?? [];
           quotedFrom.delete(parentId(docId));
@@ -298,8 +253,6 @@ export function createResearchTools(
           const text = short ?? (await session.read(docId, undefined, quotes));
           // Which part was given, for the trace: a read that names no part gets the one that best matches the question.
           const part = /^\[[^\]\n]*\][^\n]*\((part \d+ of \d+|the passages? your answer quoted)\)\n/.exec(text)?.[1];
-          const given = /^\[([^\]\n]*)\]/.exec(text)?.[1];
-          if (given) shownIds.add(given);
           return { text: nextSources(text), ...(part ? { shown: part.replace("your answer quoted", "quoted") } : {}) };
         }
         const doc = index.get(docId);
@@ -310,21 +263,9 @@ export function createResearchTools(
             : `No document with ID "${docId}". Use an ID returned by search.`;
         }
         readDocument = true;
+        readIds.add(doc.id);
         unread.clear();
-        // Paging through a long document: the best-matching unread part instead (PAGING_MIN_PARTS).
-        const siblings = index.partsOf(parentId(doc.id));
-        const instead = pagedTo(doc.id, siblings, (exclude) => {
-          const others = siblings.filter((id) => !exclude.has(id)).map((id) => index.get(id)!);
-          return others.length && question ? new DocumentIndex(others).search(question)[0]?.docId : undefined;
-        });
-        lastReads.push(doc.id);
-        const given = instead ? index.get(instead)! : doc;
-        readIds.add(given.id);
-        shownIds.add(given.id);
-        const text = `[${given.id}] ${given.title}\n${given.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(given.id))}${figureNote(index.figuresDiscussedElsewhere(given.id))}`;
-        if (!instead) return nextSources(text);
-        const number = Number(/#(\d+)$/.exec(doc.id)![1]);
-        return { text: nextSources(`${text}${pagingNote(doc.id, number)}`), repeatable: true, shown: `part ${siblings.indexOf(given.id) + 1} of ${siblings.length}, the best match, not part ${number}` };
+        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(doc.id))}${figureNote(index.figuresDiscussedElsewhere(doc.id))}`);
       },
       // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
       // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
@@ -332,7 +273,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(PAGING_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },

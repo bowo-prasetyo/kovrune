@@ -392,7 +392,7 @@ For the papers you downloaded through a library or a subscription (IEEE Xplore, 
 
 ### Open sources
 
-All five are off until you tick them, and need no account. When the model first reads a part of a long article or paper from any of them, it is also shown the document's outline: which parts hold which sections and tables (for example "#3 Findings; #19 Table 1: Baseline characteristics"), so it can go to the part it needs. In a document of twenty parts or more, a model that reads part after part in order (parts 1, 2, 3 …) is given, at the third, the unread part that best matches your question instead, with a note naming the part it asked for; asking again gives that part. The steps show it, for example "Reading arXiv paper 2505.01658 (part 37 of 317, the best match, not part 3)". This applies to your own long documents too.
+All five are off until you tick them, and need no account. When the model first reads a part of a long article or paper from any of them, it is also shown the document's outline: which parts hold which sections and tables (for example "#3 Findings; #19 Table 1: Baseline characteristics"), so it can go to the part it needs.
 
 - **Wikipedia:** encyclopedia articles, in the language edition you choose. A long article is read a part at a time, the part that best matches your question first.
 - **OpenAlex:** scholarly papers of every field. OpenAlex catalogues papers and does not hold their text, so Kovrune reads their abstracts, or the full text from arXiv or Europe PMC when you tick those too (below). A question about a paper's methods or results beyond its abstract usually ends as "not found" otherwise.

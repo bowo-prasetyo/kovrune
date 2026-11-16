@@ -56,11 +56,6 @@ export interface ToolResult {
   failed?: boolean;
   /** What of a document a read gave, e.g. "part 3 of 9", when the trace cannot tell from the ID it was asked for. */
   shown?: string;
-  /**
-   * The tool did something else than asked (a read that gave the best-matching part instead of the next
-   * one, harness 0.88.0), so asking again is no repeat: the repeat guard would otherwise refuse it.
-   */
-  repeatable?: boolean;
 }
 
 export interface AgentConfig {
@@ -474,7 +469,6 @@ export async function runAgent(options: {
         if (result.resultCount !== undefined) record.resultCount = result.resultCount;
         if (result.failed) record.failed = true;
         if (result.shown) record.shown = result.shown;
-        if (result.repeatable) executed.delete(actionText);
         options.onResult?.(record, calls.length);
       }
     }

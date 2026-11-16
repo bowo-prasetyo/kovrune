@@ -1,12 +1,14 @@
 // Questions where a preview user's reports read a long paper part after part, asked again live with OpenAlex
-// and arXiv as the sources and no documents (harness 0.88.0, eval/cs/README.md):
+// and arXiv as the sources and no documents. Written to measure a guard against reading part after part,
+// which was not adopted (eval/cs/README.md, "Reading a long paper part after part"); kept to measure the next one:
 //
 //   NODE_USE_ENV_PROXY=1 npm run bench:paging -- --model qwen3.5-4b-q4km \
 //     --extra-body '{"chat_template_kwargs":{"enable_thinking":false},"cache_prompt":false}' --out paging.json
 //
 // The questions have no fixed answer, so nothing is scored right or wrong: each run records its label, the
-// reads in order, the reads that paged (part n after n-2 and n-1 of one document) and those the guard
-// redirected, and the documents the answer cites. Run on the code before and after, the same day.
+// reads in order, the reads that paged (part n after n-2 and n-1 of one document), those a guard redirected
+// (a read whose trace says "the best match"), and the documents the answer cites. Run on the code before
+// and after, the same day.
 
 import { writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";

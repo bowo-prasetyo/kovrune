@@ -191,12 +191,6 @@ export class SourceSession {
     return this.fetched.get(parentId(id))?.doc.pageStarts;
   }
 
-  /** Of a fetched document's parts not in `exclude`, the one that best matches the question; undefined when none matches. */
-  bestPart(id: string, exclude: Set<string>): string | undefined {
-    const parts = this.fetched.get(parentId(id))?.parts.filter((p) => !exclude.has(p.id)) ?? [];
-    return parts.length ? new DocumentIndex(parts).search(this.question)[0]?.docId : undefined;
-  }
-
   partsOf(id: string): string[] {
     return this.fetched.get(parentId(id))?.parts.map((p) => p.id) ?? [];
   }
