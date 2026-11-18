@@ -569,6 +569,63 @@ describe("laboratory units, opposites and names (harness 0.71.0)", () => {
   });
 });
 
+describe("physics units and opposites (harness 0.90.0)", () => {
+  const q = (quote: string, docId = "paper") => ({ docId, quote });
+
+  it("gives a value only the physics unit and prefix the quotes give it", () => {
+    const pairs: Array<[quote: string, wrong: string, right: string]> = [
+      ["The resonance has a mass of 2.5 TeV in the dijet channel.", "The resonance has a mass of 2.5 GeV in the dijet channel.", "The resonance has a mass of 2.5 TeV in the dijet channel."],
+      ["The superconducting gap is 1.5 meV at low temperature.", "The superconducting gap is 1.5 MeV at low temperature.", "The superconducting gap is 1.5 meV at low temperature."],
+      ["The transition temperature of the sample is 20 mK.", "The transition temperature of the sample is 20 K.", "The transition temperature of the sample is 20 millikelvin."],
+      ["The applied magnetic field was 9 T along the c axis.", "The applied magnetic field was 9 mT along the c axis.", "The applied magnetic field was 9 tesla along the c axis."],
+      ["The pulse duration of the laser is 30 fs.", "The pulse duration of the laser is 30 ps.", "The pulse duration of the laser is 30 femtoseconds."],
+      ["The analysis uses an integrated luminosity of 139 fb⁻¹ at 13 TeV.", "The analysis uses an integrated luminosity of 139 pb⁻¹ at 13 TeV.", "The analysis uses an integrated luminosity of 139 fb^-1 at 13 TeV."],
+      ["The galaxy lies at a distance of 16 Mpc from the Milky Way.", "The galaxy lies at a distance of 16 kpc from the Milky Way.", "The galaxy lies at a distance of 16 megaparsecs from the Milky Way."],
+      ["The lattice constant of the crystal is 3.9 Å at room temperature.", "The lattice constant of the crystal is 3.9 nm at room temperature.", "The lattice constant of the crystal is 3.9 angstroms at room temperature."],
+      ["The stellar population has an age of 2 Gyr in the bulge.", "The stellar population has an age of 2 Myr in the bulge.", "The stellar population has an age of 2 Gyr in the bulge."],
+      ["The black hole has a mass of 4 × 10^6 M☉ at the Galactic centre.", "The black hole has a mass of 4 × 10^6 M at the Galactic centre.", "The black hole has a mass of 4 × 10⁶ M⊙ at the Galactic centre."],
+      ["The source has a flux density of 12 mJy at 1.4 GHz.", "The source has a flux density of 12 Jy at 1.4 GHz.", "The source has a flux density of 12 mJy at 1.4 GHz."],
+      ["Workers received an annual dose of 2 mSv on average.", "Workers received an annual dose of 2 Sv on average.", "Workers received an annual dose of 2 millisieverts on average."],
+      // A value with its uncertainty takes the unit after both.
+      ["The measured Higgs boson mass is 125.10 ± 0.14 GeV in the combination.", "The measured Higgs boson mass is 125.10 MeV in the combination.", "The measured Higgs boson mass is 125.10 GeV in the combination."],
+    ];
+    for (const [quote, wrong, right] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(right, [q(quote)]), "+", right);
+    }
+  });
+
+  it("does not take a T cell for a tesla", () => {
+    assert.equal(marks("CD8 T cells expanded after the second dose.", [q("CD8 T cells expanded after the second dose of vaccine.")]), "+");
+    assert.equal(marks("CD8 T cells expanded after the second dose.", [q("CD8+ T cells expanded after the second dose of vaccine.")]), "+");
+  });
+
+  it("reads limits, exclusions and orderings the quotes' way round", () => {
+    const pairs: Array<[quote: string, wrong: string, right: string]> = [
+      ["We set an upper limit on the cross section of 2 fb at 95% CL.", "We set a lower limit on the cross section of 2 fb at 95% CL.", "We set an upper limit on the cross section of 2 fb at 95% CL."],
+      ["Masses below 1.2 TeV are excluded at 95% confidence level.", "Masses below 1.2 TeV are allowed at 95% confidence level.", "Masses below 1.2 TeV are excluded at 95% confidence level."],
+      ["The interaction between the vortices is attractive at short range.", "The interaction between the vortices is repulsive at short range.", "The interaction between the vortices is attractive at short range."],
+      ["The ground state of the compound is antiferromagnetic below 40 K.", "The ground state of the compound is ferromagnetic below 40 K.", "The ground state of the compound is antiferromagnetic below 40 K."],
+      ["The emission line is redshifted by 120 km/s relative to the host.", "The emission line is blueshifted by 120 km/s relative to the host.", "The emission line is redshifted by 120 km/s relative to the host."],
+      ["The transition at the critical field is first-order in the clean samples.", "The transition at the critical field is second-order in the clean samples.", "The transition at the critical field is first-order in the clean samples."],
+      ["The planet orbits its star on a retrograde orbit.", "The planet orbits its star on a prograde orbit.", "The planet orbits its star on a retrograde orbit."],
+    ];
+    for (const [quote, wrong, right] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(right, [q(quote)]), "+", right);
+    }
+    // "lower" is still higher's opposite as well.
+    assert.equal(marks("The lower bound on the lifetime is 3 years.", [q("The lower bound on the lifetime is 3 years.")]), "+");
+  });
+
+  it("reads a quantity converted from siunitx as the PDF prints it", () => {
+    const quote = q("The decay rate is 1.2 × 10⁻³ s⁻¹ and the gap is (0.52 ± 0.01) meV at 300 mK.");
+    assert.equal(marks("The decay rate is 0.0012 per second and the gap is 0.52 meV at 300 mK.", [quote]), "+");
+    assert.equal(marks("The decay rate is 1.2 × 10^3 per second and the gap is 0.52 meV at 300 mK.", [quote]), "-");
+    assert.equal(marks("The decay rate is 0.0012 per second and the gap is 0.52 MeV at 300 mK.", [quote]), "-");
+  });
+});
+
 describe("a backed name with a plain suffix (harness 0.74.0)", () => {
   const q = (quote: string, docId = "paper") => ({ docId, quote });
 
