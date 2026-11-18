@@ -20,16 +20,37 @@ Patents are central to an engineer's prior-art and design work, and none of Kovr
 - **The Lens can't be used from a page**: its preflight is refused without CORS headers, so a browser blocks every request, keyed or not.
 - **PatentsView** could not be reached from here, so it is not judged.
 
-**Not tested:** a search with a real key, for OPS or the USPTO. Both allow the key's headers from a page, but what their answers hold, and how fast they are, was not measured.
+**Not tested here:** a search with a real key for the USPTO. OPS was tried with a real key on 18 November 2026 (below).
+
+## EPO OPS with a real key (18 November 2026)
+
+With a 20-minute access token from the EPO developer portal's **Authorize** button, four engineering searches on titles and abstracts (`/published-data/search/biblio`, CQL `ta=…`) and the reads behind them:
+
+| Search | Results | In the first 25: EP or WO | With `and (pn=EP or pn=WO)` |
+| --- | --- | --- | --- |
+| `ta="totem pole" and ta=rectifier` | 88 | 2 (21 CN) | 13 |
+| `ta="silicon carbide" and ta=MOSFET and ta="gate driver"` | 9 | 3 of 9 (4 CN) | |
+| `ta="wind turbine blade" and ta=lightning` | 296 | 6 (17 CN) | 146 |
+| `ta="welded joint" and ta=fatigue` | 530 | 0 (20 CN, 4 JP) | 32 |
+
+- **Search finds engineering patents, and current ones.** Every result had an English title and an English abstract (500 to 1,550 characters), Chinese patents included, with the applicant and the publication date; the newest were published in September 2026. The searches found Vestas' blade lightning protection, a Volvo gate driver for hybrid SiC MOSFET and Si IGBT modules, and a three-phase boost PFC rectifier with flying capacitors.
+- **Results come newest first, not by relevance**, and most recent filings are Chinese (CN made up 17 to 21 of the first 25), so the first five a model would see are mostly recent Chinese utility models.
+- **Full text is there for EP and WO only.** The claims and description of WO2026130641A1 (4 KB and 18 KB of XML) and EP4560905A1 (14 KB and 63 KB) were returned in English, through the `docdb` number format (`WO.2026130641.A1`); the `epodoc` format returned "not found". US and CN publications are refused ("unsupported country code"), so for most results the abstract is all there is. A US publication's family (`equivalents`) held only itself, so the family does not always lead to an EP or WO text.
+- **Limiting a search to EP and WO** (`and (pn=EP or pn=WO)`) keeps results that can be read in full: 13 of 88, 32 of 530 and 146 of 296 here.
+- **From a page:** a keyed search answers with `Access-Control-Allow-Origin` set to the page's origin.
+- **Limits:** OPS reports its throttling with each answer; it allowed 5 searches and 50 retrievals a minute here. The whole test used under 1 MB of the weekly quota.
+- **Not tested:** getting a token from a consumer key and secret (OAuth client credentials) from a page. The pair saved for the test was refused ("Developer account is blocked") although the portal's own token worked, most likely because it was not the app's consumer key and secret, which the portal shows under the app.
+
 
 ## Recommendation
 
 Build a patent source only if prior-art searches are a regular need, and then on **EPO OPS, with the user's own key**, entered once like the optional OpenAlex key:
 
-- **Search:** OPS's CQL search on titles and abstracts (`ta=…`), which gives each result's publication number, title and applicant, and its abstract.
-- **Read:** the abstract, and the claims and description where OPS has them (EP and WO documents), cited by publication number with a link to Espacenet.
+- **Search:** OPS's CQL search on titles and abstracts (`ta=…`), with `/biblio`, which gives each result's publication number, title, applicant, date and English abstract in one request. Since results come newest first, search EP and WO first (`and (pn=EP or pn=WO)`), which can be read in full, and add the others when those find few.
+- **Read:** the claims and description for EP and WO publications (`docdb` numbers), and the abstract for the others, cited by publication number with a link to Espacenet.
+- **Within OPS's limits:** at most 5 searches a minute, which a question's few searches stay under.
 - **What it costs the user:** registering an app at the EPO for a consumer key and secret. Both are kept in this browser only, and sent only to ops.epo.org, as the OpenAlex key is to OpenAlex. The search words the model chooses go to the EPO.
 - **What it costs to build:** a source like Europe PMC's (search, read, citation), plus the token step and the XML of OPS's answers: about the size of the DataCite source.
-- **First step:** a search and a read with a real key, to see what OPS returns for engineering questions, before any code in the app.
+- **Done first:** a search and a read with a real key (above). What remains to check is the token step from a consumer key and secret, in the browser, as the app would do it.
 
 Until then, patents can be added as documents: download their PDFs from Espacenet or Google Patents and add the folder ("Adding many papers at once", user guide).
