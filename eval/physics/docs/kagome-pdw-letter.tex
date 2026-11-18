@@ -1,0 +1,92 @@
+% A made-up letter for the Kovrune physics suite (eval/physics/README.md). CsKa3Sb5 is not a real
+% compound, and the authors and results are invented. Written as a REVTeX paper with siunitx, as many
+% condensed-matter papers on arXiv are.
+\documentclass[aps,prl,twocolumn,superscriptaddress,showpacs]{revtex4-2}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\newcommand{\Tc}{T_\mathrm{c}}
+\newcommand{\Hcc}{H_\mathrm{c2}}
+\newcommand{\cmpd}{CsKa$_3$Sb$_5$}
+
+\begin{document}
+
+\title{Pair-density-wave order coexisting with uniform superconductivity in the kagome metal \cmpd}
+
+\author{Lena Marchetti}
+\affiliation{Institute for Quantum Materials, University of Westbrook}
+\author{Tomasz Wierzbicki}
+\affiliation{Institute for Quantum Materials, University of Westbrook}
+\author{Aiko Nakamura}
+\affiliation{National High Field Laboratory, Eastfield}
+
+\date{\today}
+
+\begin{abstract}
+We report scanning tunneling microscopy (STM) of the made-up kagome superconductor \cmpd, which orders into a charge density wave (CDW) at $T^* = \SI{94}{\kelvin}$ and becomes superconducting at $\Tc = \SI{2.3}{\kelvin}$. At \SI{300}{\milli\kelvin} the tunneling spectra show a superconducting gap of $\Delta = \SI{0.75(3)}{\milli\electronvolt}$ and a spatial modulation of the gap with a period of $4a/3$, the signature of a pair density wave (PDW). The ratio $2\Delta/k_B\Tc = \num{7.6 +- 0.3}$ places \cmpd{} in the strong-coupling regime. The PDW survives in fields up to \SI{9}{\tesla} applied along the $c$ axis.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Kagome metals of the $A$V$_3$Sb$_5$ family combine a frustrated lattice, van Hove singularities near the Fermi level and an unusual sequence of electronic orders~\cite{Ortiz2020,Jiang2021}. A charge density wave forms well above the superconducting transition, and several experiments have reported a modulation of the superconducting gap itself, a pair density wave~\cite{Chen2021}. Whether such a PDW is a primary order, or is induced by the coexisting CDW, is still debated.
+
+Here we study \cmpd, a member of the family in which the vanadium sites are replaced by a heavier transition metal. Its CDW transition at $T^* = \SI{94}{\kelvin}$ is close to that of CsV$_3$Sb$_5$, but its superconducting transition is higher, which makes the superconducting state accessible to STM at \SI{300}{\milli\kelvin} with a wide margin.
+
+\section{Methods}
+
+Single crystals were grown from a Cs--Sb flux. Three crystals from different growth batches, labelled S1, S2 and S3, were characterized by resistivity and magnetization; their properties are listed in Table~\ref{tab:samples}. The crystals were cleaved in ultrahigh vacuum at \SI{20}{\kelvin} and transferred into the STM head without breaking vacuum. The in-plane lattice constant measured from the topography is $a = \SI{5.50}{\angstrom}$.
+
+Differential conductance spectra were measured with a lock-in modulation of \SI{30}{\micro\volt} at \SI{300}{\milli\kelvin}, unless stated otherwise. The magnetic field was applied along the $c$ axis by a superconducting magnet, at fields up to \SI{9}{\tesla}. The energy resolution, limited by the modulation and the electronic temperature, is about \SI{0.1}{\milli\electronvolt}.
+
+\section{Results}
+
+The spectra of all three samples show a fully open gap with sharp coherence peaks. We fit them with a Dynes function, with a broadening of $\Gamma = \SI{0.05}{\milli\electronvolt}$, and obtain $\Delta = \SI{0.75(3)}{\milli\electronvolt}$ for sample S1. The temperature dependence of the gap follows the interpolation
+\begin{equation}
+\Delta(T) = \Delta_0 \tanh\!\left(1.74\sqrt{\Tc/T - 1}\right),
+\label{eq:gap}
+\end{equation}
+which we fit to spectra taken between \SI{0.3}{\kelvin} and \SI{2.2}{\kelvin}. Using Eq.~\eqref{eq:gap} and the transition temperature from resistivity, we find $2\Delta/k_B\Tc = \num{7.6 +- 0.3}$, well above the weak-coupling value of 3.53. The gap closes at $\Tc$ within our resolution, so there is no sign of a pseudogap above the transition.
+
+Maps of the coherence-peak height reveal a modulation with a period of $4a/3$ along each of the three lattice directions, with an amplitude of 8\% of the gap. The modulation is absent above $\Tc$ and is therefore a property of the superconducting state, a PDW, rather than a remnant of the CDW. Its phase is locked to the CDW, which suggests that the two orders are coupled; from the relative phase we infer that the coupling between the PDW and the uniform superconducting order is repulsive.
+
+In a magnetic field, vortices appear as regions of suppressed coherence peaks. From the vortex density we obtain the upper critical field $\Hcc(0) = \SI{1.80(5)}{\tesla}$ for S1 by extrapolating to zero temperature, and a Ginzburg--Landau coherence length $\xi = \SI{13.5(4)}{\nano\metre}$. The lower critical field estimated from magnetization is $H_\mathrm{c1} = \SI{5.0}{\milli\tesla}$. Bound states in the vortex cores appear at an energy of \SI{0.2}{\milli\electronvolt}.
+
+At $H^* = \SI{0.6}{\tesla}$ the vortex lattice changes from hexagonal to square. The transition shows a hysteresis of \SI{20}{\milli\tesla} between increasing and decreasing field, so it is first-order. The PDW modulation persists up to the highest field we reached, \SI{9}{\tesla}, in the regions between vortices; above $\Hcc$ the modulation vanishes together with the gap.
+
+\begin{table}
+\caption{The three samples: superconducting transition temperature from resistivity, gap from STM at \SI{300}{\milli\kelvin}, upper critical field extrapolated to zero temperature, and residual resistivity ratio (RRR).}
+\label{tab:samples}
+\begin{ruledtabular}
+\begin{tabular}{lcccc}
+Sample & $\Tc$ (\si{\kelvin}) & $\Delta$ (\si{\milli\electronvolt}) & $\Hcc(0)$ (\si{\tesla}) & RRR \\
+\hline
+S1 & \num{2.3} & \num{0.75(3)} & \num{1.80(5)} & 42 \\
+S2 & \num{2.1} & \num{0.68(4)} & \num{1.62(6)} & 25 \\
+S3 & \num{1.7} & \num{0.55(5)} & \num{1.21(8)} & 9 \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+The samples differ mainly in their disorder, measured by the RRR. Both $\Tc$ and $\Delta$ fall as the RRR decreases, while the ratio $2\Delta/k_B\Tc$ stays within its uncertainty. The PDW amplitude is largest in S1, the cleanest sample, and is not detected in S3.
+
+\section{Pressure}
+
+Resistivity measurements on S1 in a piston-cylinder cell show that hydrostatic pressure suppresses the CDW and raises $\Tc$. The CDW transition falls from \SI{94}{\kelvin} at ambient pressure and is no longer observed above \SI{1.6}{\giga\pascal}, while $\Tc$ rises from \SI{2.3}{\kelvin} at ambient pressure to a maximum of \SI{3.9}{\kelvin} at \SI{2.0}{\giga\pascal} and then decreases. The full data are given in the Supplemental Material.
+
+\section{Discussion}
+
+The ratio $2\Delta/k_B\Tc$ is more than twice the weak-coupling value, as in other kagome superconductors with a strong electron--phonon coupling. The PDW is locked to the CDW and disappears with the gap, and its amplitude follows the sample quality, which argues against an extrinsic origin such as tip-induced strain. A direct test would be STM under pressure, beyond \SI{1.6}{\giga\pascal}, where the CDW is absent; we expect the PDW to vanish there if it is induced by the CDW.
+
+\begin{acknowledgments}
+We thank the crystal growth facility of the University of Westbrook. This work was supported by a made-up grant.
+\end{acknowledgments}
+
+\begin{thebibliography}{3}
+\bibitem{Ortiz2020} B. R. Ortiz \textit{et al.}, Phys. Rev. Lett. \textbf{125}, 247002 (2020).
+\bibitem{Jiang2021} Y.-X. Jiang \textit{et al.}, Nat. Mater. \textbf{20}, 1353 (2021).
+\bibitem{Chen2021} H. Chen \textit{et al.}, Nature \textbf{599}, 222 (2021).
+\end{thebibliography}
+
+\end{document}

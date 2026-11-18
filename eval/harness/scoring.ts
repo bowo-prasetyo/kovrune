@@ -32,6 +32,10 @@ export function scoreResearch(task: ResearchTask, result: ResearchResult, librar
   };
   if (task.answerable) {
     checks.facts = task.facts.every((group) => group.some((option) => answer.includes(normalize(option))));
+    if (task.casedFacts) {
+      const cased = final.answer.normalize("NFC").replace(/\s+/g, " ");
+      checks.casedFacts = task.casedFacts.every((group) => group.some((option) => cased.includes(option.normalize("NFC"))));
+    }
     checks.citations = task.citations.every((group) => group.some((id) => cited.has(id)));
     checks.evidence = result.status === "verified";
   }

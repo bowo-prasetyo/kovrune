@@ -13,7 +13,8 @@
 // the questions over Word, Excel and CSV files as --suites office,officeholdout (eval/field/office.ts),
 // the questions over clinical trial reports as --suites clinical,clinicalholdout (eval/clinical/tasks.ts),
 // and the questions over computer science papers as --suites cs,csholdout (eval/cs/tasks.ts),
-// and the questions over engineering documents as --suites engineering,engineeringholdout (eval/engineering/tasks.ts).
+// the questions over engineering documents as --suites engineering,engineeringholdout (eval/engineering/tasks.ts),
+// and the questions over physics documents as --suites physics,physicsholdout (eval/physics/tasks.ts).
 //
 // The model server's prompt cache is off (cache_prompt: false, eval/harness/request.ts), so a task's
 // reply does not depend on the tasks before it; --prompt-cache keeps it on, faster but noisier to compare.

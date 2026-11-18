@@ -9,11 +9,13 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { ResearchLibrary } from "../../src/agent/research.ts";
 import { extractText, type PdfJsLike } from "../../src/documents/extract.ts";
+import { latexToText } from "../../src/documents/latex.ts";
 import type { SourceDocument } from "../../src/tools/search.ts";
 import { clinicalDocuments } from "../clinical/tasks.ts";
 import { engineeringDocuments } from "../engineering/tasks.ts";
 import { csDocuments } from "../cs/tasks.ts";
 import { labDocuments } from "../lab/tasks.ts";
+import { physicsDocuments } from "../physics/tasks.ts";
 import { officeDocuments } from "../field/office.ts";
 import { fieldDocuments, fieldTasks, type FieldDocument } from "../field/tasks.ts";
 import type { ResearchTask } from "../tasks/research.ts";
@@ -23,6 +25,7 @@ export const CLINICAL_DIR = fileURLToPath(new URL("../clinical/docs/", import.me
 export const ENGINEERING_DIR = fileURLToPath(new URL("../engineering/docs/", import.meta.url));
 export const CS_DIR = fileURLToPath(new URL("../cs/docs/", import.meta.url));
 export const LAB_DIR = fileURLToPath(new URL("../lab/docs/", import.meta.url));
+export const PHYSICS_DIR = fileURLToPath(new URL("../physics/docs/", import.meta.url));
 
 export interface FieldSuite {
   library: ResearchLibrary;
@@ -35,6 +38,8 @@ export interface FieldSuite {
   /** The computer science papers (eval/cs/tasks.ts), on their own: the library of the cs and csholdout suites. */
   csLibrary: ResearchLibrary;
   labLibrary: ResearchLibrary;
+  /** The physics documents (eval/physics/tasks.ts), on their own: the library of the physics and physicsholdout suites. */
+  physicsLibrary: ResearchLibrary;
   tasks: ResearchTask[];
   /** How many tasks and documents came from eval/field/local/; runs that include them are not comparable with others'. */
   local: { tasks: number; documents: number };
@@ -60,6 +65,12 @@ const localManifest = z
 
 async function readDocument(doc: FieldDocument, dir: string, loadPdfJs: () => Promise<PdfJsLike>): Promise<SourceDocument> {
   const bytes = await readFile(join(dir, doc.file));
+  // A LaTeX source is read as an arXiv paper's is (sources/arxiv.ts), by the app's converter.
+  if (doc.file.endsWith(".tex")) {
+    const converted = latexToText(new Map([[doc.file, bytes.toString("utf8")]]));
+    if (!converted) throw new Error(`Field document ${doc.file}: no main LaTeX file`);
+    return { id: doc.id, title: doc.title, text: converted.text };
+  }
   const file = { name: doc.file, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
   const { text, pageStarts, warning } = await extractText(file, loadPdfJs);
   if (!text) throw new Error(`Field document ${doc.file}: ${warning ?? "no text"}`);
@@ -76,6 +87,7 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   const engineering = await Promise.all(engineeringDocuments.map((doc) => readDocument(doc, ENGINEERING_DIR, loadPdfJs)));
   const cs = await Promise.all(csDocuments.map((doc) => readDocument(doc, CS_DIR, loadPdfJs)));
   const lab = await Promise.all(labDocuments.map((doc) => readDocument(doc, LAB_DIR, loadPdfJs)));
+  const physics = await Promise.all(physicsDocuments.map((doc) => readDocument(doc, PHYSICS_DIR, loadPdfJs)));
   const tasks = [...fieldTasks];
 
   const localDir = join(root, "local");
@@ -94,5 +106,5 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   }
   // The office suites' library holds the committed field documents, not local ones, so their runs stay comparable.
   const committed = documents.slice(0, fieldDocuments.length);
-  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), labLibrary: new ResearchLibrary(lab), engineeringLibrary: new ResearchLibrary(engineering), tasks, local };
+  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), labLibrary: new ResearchLibrary(lab), engineeringLibrary: new ResearchLibrary(engineering), physicsLibrary: new ResearchLibrary(physics), tasks, local };
 }
