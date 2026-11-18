@@ -67,6 +67,8 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       return `Searching DataCite for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_europepmc":
       return `Searching Europe PMC for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
+    case "search_patents":
+      return `Searching EPO patents for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "read": {
       const id = String(args.docId ?? "");
       // Which part: the one the read gave (call.shown, once it has run), else the one the ID names. Without it,
@@ -79,6 +81,7 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       if (id.startsWith("arxiv:")) return `Reading arXiv paper ${bare.slice(6)}${part}`;
       if (id.startsWith("datacite:")) return `Reading DataCite work ${bare.slice(9)}${part}`;
       if (id.startsWith("europepmc:")) return `Reading Europe PMC work ${bare.slice(10)}${part}`;
+      if (id.startsWith("patents:")) return `Reading patent ${bare.slice(8)}${part}`;
       return `Reading ${titleFor(id) ?? id}`;
     }
     case "final_answer":

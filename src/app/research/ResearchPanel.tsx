@@ -21,6 +21,7 @@ import {
   loadSourcePrefs,
   openSourceNames,
   openSourcesFor,
+  patentsReady,
   saveSourcePrefs,
   validFromYear,
   WIKIPEDIA_LANGUAGES,
@@ -408,6 +409,41 @@ export function ResearchPanel({
               <input type="checkbox" checked={prefs.europepmc} disabled={running} onChange={(e) => updatePrefs({ europepmc: e.target.checked })} />
               Europe PMC (biomedical and life-sciences papers and preprints: open-access ones read in full, others as abstracts)
             </label>
+            <label className="choice">
+              <input type="checkbox" checked={prefs.patents ?? false} disabled={running} onChange={(e) => updatePrefs({ patents: e.target.checked })} />
+              EPO patents (patents from every office: European and international ones read in full, others as abstracts; needs your free EPO key)
+            </label>
+            {prefs.patents && (
+              <div className="epo-key">
+                <label className="openalex-key">
+                  EPO consumer key
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={prefs.epoKey ?? ""}
+                    disabled={running}
+                    onChange={(e) => updatePrefs({ epoKey: e.target.value.trim() })}
+                  />
+                </label>
+                <label className="openalex-key">
+                  EPO consumer secret
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={prefs.epoSecret ?? ""}
+                    disabled={running}
+                    onChange={(e) => updatePrefs({ epoSecret: e.target.value.trim() })}
+                  />
+                </label>
+                <p className="hint">
+                  Register at the <a href="https://developers.epo.org/">EPO developer portal</a>, add an app under My Apps, and copy its consumer key
+                  and consumer secret here. They are kept in this browser and sent only to the EPO.
+                  {!patentsReady(prefs) && " Patents are searched once both are entered."}
+                </p>
+              </div>
+            )}
             {prefs.openalex && (
               <label className="openalex-key">
                 OpenAlex API key (optional)
@@ -486,7 +522,9 @@ export function ResearchPanel({
               <p className="hint">
                 The search words the model chooses, and the articles it opens, are requested from{" "}
                 {joinNames([
-                  ...openSourceNames(prefs).filter((n) => n !== "arXiv" && n !== "DataCite"),
+                  ...openSourceNames(prefs)
+                    .filter((n) => n !== "arXiv" && n !== "DataCite")
+                    .map((n) => (n === "EPO patents" ? "the EPO (ops.epo.org)" : n)),
                   ...(prefs.arxiv || prefs.datacite ? [prefs.datacite ? "DataCite" : "DataCite (for arXiv)"] : []),
                 ])}
                 {downloads.length ? `, and the papers it reads are downloaded from ${joinNames(downloads)}` : ""}. Your documents and your
@@ -506,7 +544,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite or Europe PMC, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC or EPO patents, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run

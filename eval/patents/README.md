@@ -53,4 +53,4 @@ Build a patent source only if prior-art searches are a regular need, and then on
 - **What it costs to build:** a source like Europe PMC's (search, read, citation), plus the token step and the XML of OPS's answers: about the size of the DataCite source.
 - **Done first:** a search and a read with a real key (above). What remains to check is the token step from a consumer key and secret, in the browser, as the app would do it.
 
-Until then, patents can be added as documents: download their PDFs from Espacenet or Google Patents and add the folder ("Adding many papers at once", user guide).
+Harness 0.89.0 builds this source (`src/sources/patents.ts`, user guide "EPO patents"). A patent OPS gives only as an abstract (US, CN, JP and others) can still be read in full as a document: download its PDF from Espacenet or Google Patents and add it ("Adding many papers at once", user guide).

@@ -9,6 +9,7 @@ import { createArxiv, findArxivByTitle } from "../../sources/arxiv.ts";
 import { createDataCite } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
 import { createOpenAlex, OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
+import { createPatents } from "../../sources/patents.ts";
 import type { OpenSource } from "../../sources/types.ts";
 import { createWikipedia, isWikipediaLanguage } from "../../sources/wikipedia.ts";
 
@@ -39,7 +40,18 @@ export interface SourcePrefs {
   openalexField?: string;
   /** OpenAlex searches find only works from this computer science venue (OPENALEX_VENUES); "" for any venue. */
   openalexVenue?: string;
+  /** Patents through the EPO's Open Patent Services (sources/patents.ts); searched only with a key and secret. */
+  patents?: boolean;
+  /**
+   * The user's EPO OPS app's consumer key and secret, from the EPO developer portal; empty for none. Kept in
+   * this browser only, and sent only to ops.epo.org. Backups do not include them.
+   */
+  epoKey?: string;
+  epoSecret?: string;
 }
+
+/** Whether patents are ticked and have the key and secret OPS needs. */
+export const patentsReady = (prefs: SourcePrefs) => Boolean(prefs.patents && prefs.epoKey && prefs.epoSecret);
 
 /** A year an OpenAlex search may start from: a whole number from 1900 to next year. */
 export function validFromYear(value: unknown, now = new Date()): number | undefined {
@@ -73,6 +85,9 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       ...(value.openalexFollowCitations === true ? { openalexFollowCitations: true } : {}),
       ...(typeof value.openalexField === "string" && OPENALEX_FIELDS.some(([id]) => id === value.openalexField) ? { openalexField: value.openalexField } : {}),
       ...(typeof value.openalexVenue === "string" && OPENALEX_VENUES.some(([id]) => id === value.openalexVenue) ? { openalexVenue: value.openalexVenue } : {}),
+      ...(value.patents === true ? { patents: true } : {}),
+      ...(typeof value.epoKey === "string" && value.epoKey.trim() ? { epoKey: value.epoKey.trim() } : {}),
+      ...(typeof value.epoSecret === "string" && value.epoSecret.trim() ? { epoSecret: value.epoSecret.trim() } : {}),
     };
   } catch {
     return defaults;
@@ -113,17 +128,18 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
     ...(arxiv ? [arxiv] : []),
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
     ...(europepmc ? [europepmc] : []),
+    ...(patentsReady(prefs) ? [createPatents({ key: prefs.epoKey!, secret: prefs.epoSecret! })] : []),
   ];
 }
 
 /** Whether any open source is ticked, so questions can be asked without documents. */
 export function anyOpenSource(prefs: SourcePrefs): boolean {
-  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc;
+  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || patentsReady(prefs);
 }
 
-/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC". */
+/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "EPO patents". */
 export function openSourceNames(prefs: SourcePrefs): string[] {
-  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : [])];
+  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
 }
 
 /** Common Wikipedia editions for the language picker; any valid code typed in also works. */
