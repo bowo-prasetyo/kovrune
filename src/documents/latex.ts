@@ -15,6 +15,7 @@
 // Inline math stays as written ($O(n^2)$). What can't be read this way is reported as not converted, and
 // the PDF is read instead (sources/arxiv.ts).
 
+import { readableFormula } from "./math.ts";
 import { siunitxSetup, siunitxToText } from "./siunitx.ts";
 
 /** One LaTeX argument: the text of a {…} group starting at `at` (after spaces), and where it ends. */
@@ -437,6 +438,9 @@ export function latexToText(files: Map<string, string>): ConvertedLatex | undefi
   body = siunitxToText(expandMacros(body, macros), units);
   const titleArg = group(body, (/\\title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(body)?.index ?? -1) + (/\\title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(body)?.[0].length ?? 0)) ?? group(preamble, (/\\(?:icml)?title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(preamble)?.index ?? -1) + (/\\(?:icml)?title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(preamble)?.[0].length ?? 0));
 
+  // REVTeX and AASTeX set the title after \begin{document}: it is the heading, not a line of prose too.
+  if (titleArg && /\\title\s*(\[[^\]]*\])?\s*\{/.test(body)) body = replaceCommand(body, "title", () => "");
+
   // References, from the .bbl next to the main file (arXiv doesn't run BibTeX, so a source that cites has one).
   const bblName = [...files.keys()].find((n) => n.endsWith(".bbl") && n.replace(/\.bbl$/, "") === main.replace(/\.(tex|ltx)$/, "")) ?? [...files.keys()].find((n) => n.endsWith(".bbl"));
   const inlineText = (text: string) => inline(text, new Map(), new Map());
@@ -605,7 +609,15 @@ function inline(text: string, labels: Map<string, Label>, refs: Map<string, Refe
   const math: string[] = [];
   const keep = (m: string) => `\u000e${math.push(m) - 1}\u000f`;
   let out = text.replace(/\\\$/g, "\u0007");
-  out = out.replace(/\$\$[\s\S]*?\$\$|\$(?:[^$\\]|\\[\s\S])+\$|\\\((?:[\s\S]*?)\\\)/g, (m) => keep(m.replace(/\s+/g, " ")));
+  out = out.replace(/\$\$[\s\S]*?\$\$|\$(?:[^$\\]|\\[\s\S])+\$|\\\((?:[\s\S]*?)\\\)/g, (m) => keep(m.replace(/\\ensuremath(?![a-zA-Z])\s*/g, "").replace(/\s+/g, " ")));
+  // A formula a paper's macro puts in running text with \ensuremath (harness 0.91.0), as particle-physics
+  // papers do with \newcommand{\sqs}{\ensuremath{\sqrt{s}}}: read as text where math.ts reads it ("√s",
+  // "Z′_ψ", "p_T"), else kept as math. Read as plain text, its commands were dropped: "√s = 13 TeV" was
+  // "s = 13 TeV", and "Z'_\psi" was "Z'_".
+  out = replaceCommand(out, "ensuremath", (arg) => {
+    const read = readableFormula(arg);
+    return read !== undefined ? read : keep(`$${arg.replace(/\s+/g, " ").trim()}$`);
+  });
   out = citations(out, refs);
   out = out.replace(/\\(autoref|cref|Cref|Autoref|vref|nameref)\*?\s*\{([^}]*)\}/g, (_all, kind: string, keys: string) => keys.split(",").map((k, i) => refName(labels.get(k.trim()), kind !== "cref" || i === 0)).join(" and "));
   out = out.replace(/\\eqref\s*\{([^}]*)\}/g, (_all, key: string) => `(${labels.get(key.trim())?.number ?? "??"})`);

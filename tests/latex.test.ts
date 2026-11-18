@@ -261,3 +261,29 @@ The energy cost is modest \cite{samsi2023words}, and consumer GPUs cost $20\time
     assert.match(text, /The energy cost is modest \[1\]/);
   });
 });
+
+describe("particle-physics macros and REVTeX titles (harness 0.91.0)", () => {
+  const tex = String.raw`\documentclass[aps,prd]{revtex4-2}
+\newcommand{\sqs}{\ensuremath{\sqrt{s}}}
+\newcommand{\Zpsi}{\ensuremath{Z'_\psi}}
+\newcommand{\pt}{\ensuremath{p_\mathrm{T}}}
+\newcommand{\ifb}{\ensuremath{\text{fb}^{-1}}}
+\begin{document}
+\title{A search with 139\,\ifb{} at \sqs{} = 13 TeV}
+\author{The HORIZON Collaboration}
+\maketitle
+\section{Selection}
+Data at \sqs{} = 13 TeV, 139 \ifb{} in all. The \Zpsi{} is excluded. Electrons need $\pt > 30$ GeV and \pt{} above 30 GeV.
+\end{document}`;
+  const converted = latexToText(new Map([["main.tex", tex]]))!;
+
+  it("reads a formula a macro puts in running text, and keeps one in math as math", () => {
+    assert.match(converted.text, /Data at √s = 13 TeV, 139 fb⁻¹ in all\. The Z'_ψ is excluded\./);
+    assert.match(converted.text, /Electrons need \$\{p_\\mathrm\{T\}\} > 30\$ GeV and p_T above 30 GeV\./);
+  });
+
+  it("prints a title set after \\begin{document} once, as the heading", () => {
+    assert.equal(converted.title, "A search with 139 fb⁻¹ at √s = 13 TeV");
+    assert.equal(converted.text.match(/A search with/g)?.length, 1);
+  });
+});
