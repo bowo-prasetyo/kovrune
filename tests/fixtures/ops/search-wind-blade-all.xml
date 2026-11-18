@@ -1,0 +1,1127 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="../../../style/exchange.xsl"?>
+<ops:world-patent-data xmlns="http://www.epo.org/exchange" xmlns:ops="http://ops.epo.org" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <ops:biblio-search total-result-count="296" publications-count="5">
+        <ops:query syntax="CQL">ta = "wind turbine blade" and ta = lightning</ops:query>
+        <ops:range begin="1" end="5"/>
+        <ops:search-result>
+            <exchange-documents>
+                <exchange-document system="ops.epo.org" family-id="101190566" country="CN" doc-number="122709874" kind="A">
+                    <bibliographic-data>
+                        <publication-reference>
+                            <document-id document-id-type="docdb">
+                                <country>CN</country>
+                                <doc-number>122709874</doc-number>
+                                <kind>A</kind>
+                                <date>20260908</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>CN122709874</doc-number>
+                                <date>20260908</date>
+                            </document-id>
+                        </publication-reference>
+                        <classifications-ipcr>
+                            <classification-ipcr sequence="1">
+                                <text>F03D  17/    00            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="2">
+                                <text>G01D  21/    02            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="3">
+                                <text>G01M   9/    06            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="4">
+                                <text>G01N  15/  0205            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="5">
+                                <text>G01N  15/   075            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="6">
+                                <text>G01N  27/    06            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="7">
+                                <text>G01R  31/    12            A I                    </text>
+                            </classification-ipcr>
+                        </classifications-ipcr>
+                        <patent-classifications/>
+                        <application-reference doc-id="655620810">
+                            <document-id document-id-type="docdb">
+                                <country>CN</country>
+                                <doc-number>202610802868</doc-number>
+                                <kind>A</kind>
+                                <date>20260604</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>CN202610802868</doc-number>
+                                <date>20260604</date>
+                            </document-id>
+                            <document-id document-id-type="original">
+                                <doc-number>202610802868.6</doc-number>
+                            </document-id>
+                        </application-reference>
+                        <priority-claims>
+                            <priority-claim sequence="1" kind="national">
+                                <document-id document-id-type="docdb">
+                                    <country>CN</country>
+                                    <doc-number>202610802868</doc-number>
+                                    <kind>A</kind>
+                                    <date>20260604</date>
+                                </document-id>
+                                <document-id document-id-type="epodoc">
+                                    <doc-number>CN202610802868</doc-number>
+                                    <date>20260604</date>
+                                </document-id>
+                            </priority-claim>
+                        </priority-claims>
+                        <parties>
+                            <applicants>
+                                <applicant sequence="1" data-format="epodoc">
+                                    <applicant-name>
+                                        <name>UNIV WUHAN</name>
+                                    </applicant-name>
+                                </applicant>
+                                <applicant sequence="1" data-format="original">
+                                    <applicant-name>
+                                        <name>武汉大学</name>
+                                    </applicant-name>
+                                </applicant>
+                            </applicants>
+                            <inventors>
+                                <inventor sequence="1" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>WU QIANG</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>DENG YEQIANG</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="3" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>WU ZELIANG</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="4" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>XU SHIRU</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="5" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>WANG YU</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="6" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>DU ZHENGXIAN</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="7" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>SHAO ZHUOKAI</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="1" data-format="original">
+                                    <inventor-name>
+                                        <name>吴强</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="original">
+                                    <inventor-name>
+                                        <name>邓冶强</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="3" data-format="original">
+                                    <inventor-name>
+                                        <name>吴泽梁</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="4" data-format="original">
+                                    <inventor-name>
+                                        <name>徐士如</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="5" data-format="original">
+                                    <inventor-name>
+                                        <name>王羽</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="6" data-format="original">
+                                    <inventor-name>
+                                        <name>杜正贤</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="7" data-format="original">
+                                    <inventor-name>
+                                        <name>邵茁凯</name>
+                                    </inventor-name>
+                                </inventor>
+                            </inventors>
+                        </parties>
+                        <invention-title lang="en">Fan blade lightning arresting characteristic test platform and application method thereof</invention-title>
+                        <invention-title lang="ol">一种风机叶片雷击接闪特性试验平台及其应用方法</invention-title>
+                    </bibliographic-data>
+                    <abstract lang="en">
+                        <p>The invention relates to the technical field of offshore wind driven generators, and provides a wind turbine blade lightning stroke lightning receiving characteristic test platform and an application method thereof.The wind turbine blade lightning stroke lightning receiving characteristic test platform comprises a wind tunnel test system, a test electrode assembly, a salt mist generation and measurement and control system, a high voltage application system, a multi-parameter synchronous observation system and a synchronous trigger control system, a test electrode assembly is arranged in the wind tunnel test system; the salt mist generation and measurement and control system is connected with the test electrode assembly; the high-voltage applying system is connected with the test electrode assembly; the multi-parameter synchronous observation system is used for synchronously measuring and recording electrical parameters and optical parameters in the discharge process of the test electrode assembly; and the synchronous trigger control system is connected with the high-voltage applying system and the multi-parameter synchronous observation system. According to the method, the actual application scene of the fan can be effectively reproduced, the detected fan performance is ensured to be consistent with the actual application performance, the complex atmospheric environment of actual operation of the offshore fan is reproduced in a controllable mode, and the fan performance is ensured.</p>
+                    </abstract>
+                    <abstract lang="ol">
+                        <p>[0001]    本发明涉及海上风力发电机技术领域，提出了一种风机叶片雷击接闪特性试验平台及其应用方法，包括风洞试验系统、试验电极组件、盐雾发生与测控系统、高压施加系统、多参量同步观测系统和同步触发控制系统，其中，风洞试验系统内设置有试验电极组件；盐雾发生与测控系统与试验电极组件相连接；高压施加系统与试验电极组件相连接；多参量同步观测系统，用于对试验电极组件的放电过程进行电学参数与光学参数的同步测量与记录；同步触发控制系统与高压施加系统及多参量同步观测系统相连接。本发明能够有效重现风机实际应用场景，确保检测的风机性能与实际应用性能相一致，通过以可控方式复现了海上风机实际运行的复杂大气环境，有利于确保风机性能。</p>
+                    </abstract>
+                </exchange-document>
+            </exchange-documents>
+            <exchange-documents>
+                <exchange-document system="ops.epo.org" family-id="100825365" country="CN" doc-number="122565657" kind="A">
+                    <bibliographic-data>
+                        <publication-reference>
+                            <document-id document-id-type="docdb">
+                                <country>CN</country>
+                                <doc-number>122565657</doc-number>
+                                <kind>A</kind>
+                                <date>20260814</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>CN122565657</doc-number>
+                                <date>20260814</date>
+                            </document-id>
+                        </publication-reference>
+                        <classifications-ipcr>
+                            <classification-ipcr sequence="1">
+                                <text>F03D  17/    00            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="2">
+                                <text>F03D  80/    30            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="3">
+                                <text>G06F  18/    15            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="4">
+                                <text>G06F  18/  2415            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="5">
+                                <text>G06N   3/  0442            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="6">
+                                <text>G06N   3/  0464            A I                    </text>
+                            </classification-ipcr>
+                        </classifications-ipcr>
+                        <patent-classifications>
+                            <patent-classification sequence="1">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>17</main-group>
+                                <subgroup>014</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="2">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>17</main-group>
+                                <subgroup>028</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="3">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>80</main-group>
+                                <subgroup>30</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="4">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>G</section>
+                                <class>06</class>
+                                <subclass>F</subclass>
+                                <main-group>18</main-group>
+                                <subgroup>15</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="5">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>G</section>
+                                <class>06</class>
+                                <subclass>F</subclass>
+                                <main-group>18</main-group>
+                                <subgroup>2415</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="6">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>G</section>
+                                <class>06</class>
+                                <subclass>N</subclass>
+                                <main-group>3</main-group>
+                                <subgroup>0442</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="7">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>G</section>
+                                <class>06</class>
+                                <subclass>N</subclass>
+                                <main-group>3</main-group>
+                                <subgroup>0464</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>CN</generating-office>
+                            </patent-classification>
+                        </patent-classifications>
+                        <application-reference doc-id="654124416">
+                            <document-id document-id-type="docdb">
+                                <country>CN</country>
+                                <doc-number>202610447393</doc-number>
+                                <kind>A</kind>
+                                <date>20260407</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>CN202610447393</doc-number>
+                                <date>20260407</date>
+                            </document-id>
+                            <document-id document-id-type="original">
+                                <doc-number>202610447393.3</doc-number>
+                            </document-id>
+                        </application-reference>
+                        <priority-claims>
+                            <priority-claim sequence="1" kind="national">
+                                <document-id document-id-type="docdb">
+                                    <country>CN</country>
+                                    <doc-number>202610447393</doc-number>
+                                    <kind>A</kind>
+                                    <date>20260407</date>
+                                </document-id>
+                                <document-id document-id-type="epodoc">
+                                    <doc-number>CN202610447393</doc-number>
+                                    <date>20260407</date>
+                                </document-id>
+                            </priority-claim>
+                        </priority-claims>
+                        <parties>
+                            <applicants>
+                                <applicant sequence="1" data-format="epodoc">
+                                    <applicant-name>
+                                        <name>UNIV WUHAN</name>
+                                    </applicant-name>
+                                </applicant>
+                                <applicant sequence="1" data-format="original">
+                                    <applicant-name>
+                                        <name>武汉大学</name>
+                                    </applicant-name>
+                                </applicant>
+                            </applicants>
+                            <inventors>
+                                <inventor sequence="1" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>WANG YU</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>DENG YEQIANG</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="3" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>WU QIANG</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="4" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>XU SHIRU</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="1" data-format="original">
+                                    <inventor-name>
+                                        <name>王羽</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="original">
+                                    <inventor-name>
+                                        <name>邓冶强</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="3" data-format="original">
+                                    <inventor-name>
+                                        <name>吴强</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="4" data-format="original">
+                                    <inventor-name>
+                                        <name>徐士如</name>
+                                    </inventor-name>
+                                </inventor>
+                            </inventors>
+                        </parties>
+                        <invention-title lang="en">Wind turbine blade lightning stroke lightning receiving failure risk assessment method and wind turbine blade lightning stroke lightning receiving failure risk assessment system</invention-title>
+                        <invention-title lang="ol">一种风机叶片雷击接闪失效风险评估方法及系统</invention-title>
+                    </bibliographic-data>
+                    <abstract lang="en">
+                        <p>The invention relates to the technical field of wind turbine generator lightning protection and state evaluation, and provides a wind turbine blade lightning stroke lightning receiving failure risk evaluation method and system, and the method comprises the steps: obtaining multi-source data, and carrying out the time-space synchronization and normalization processing of salt mist concentration distribution, relative humidity change and blade surface charge density; a multi-scale convolutional network is utilized to carry out gradient partition processing according to the salt mist deposition concentration, an independent convolution kernel and a humidity mutation detection gate are adopted, and phase angle codes are embedded to extract charge feature vectors; constructing a double-layer physical information neural network to separate a physical component and a residual component, and performing physical constraint prediction and data driving correction; cross-scene domain adaptation is realized through a three-layer meta-learning framework and physical residual error alignment; and outputting the blade lightning receiving failure probability, the failure mode classification and the risk area distribution. According to the method, the blade lightning receiving failure probability, the failure mode classification and the risk area distribution are given to the to-be-evaluated fan blade, and the stability and the cross-scene adaptation capability of the evaluation result are improved.</p>
+                    </abstract>
+                    <abstract lang="ol">
+                        <p>本发明涉及风电机组雷电防护与状态评估技术领域，提出了一种风机叶片雷击接闪失效风险评估方法及系统，包括：获取多源数据，对盐雾浓度分布、相对湿度变化和叶片表面荷电密度进行时空同步和归一化处理；利用多尺度卷积网络根据盐雾沉积浓度梯度分区处理，采用独立卷积核和湿度突变检测门，嵌入相位角编码提取荷电特征向量；构建双层物理信息神经网络分离物理分量和残差分量，进行物理约束预测和数据驱动修正；通过三层元学习框架和物理残差对齐实现跨场景域适应；输出叶片接闪失效概率、失效模式分类和风险区域分布。本发明对待评估风机叶片给出叶片接闪失效概率、失效模式分类和风险区域分布，提高了评估结果的稳定性与跨场景适配能力。</p>
+                    </abstract>
+                </exchange-document>
+            </exchange-documents>
+            <exchange-documents>
+                <exchange-document system="ops.epo.org" family-id="100732908" country="AU" doc-number="2026200934" kind="B1">
+                    <bibliographic-data>
+                        <publication-reference>
+                            <document-id document-id-type="docdb">
+                                <country>AU</country>
+                                <doc-number>2026200934</doc-number>
+                                <kind>B1</kind>
+                                <date>20260806</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>AU2026200934B</doc-number>
+                                <date>20260806</date>
+                            </document-id>
+                        </publication-reference>
+                        <classifications-ipcr>
+                            <classification-ipcr sequence="1">
+                                <text>F03D  80/    30            A I                    </text>
+                            </classification-ipcr>
+                        </classifications-ipcr>
+                        <patent-classifications>
+                            <patent-classification sequence="1">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>17</main-group>
+                                <subgroup>006</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="2">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>17</main-group>
+                                <subgroup>018</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="3">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>80</main-group>
+                                <subgroup>30</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="4">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>80</main-group>
+                                <subgroup>301</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="5">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>G</section>
+                                <class>01</class>
+                                <subclass>M</subclass>
+                                <main-group>7</main-group>
+                                <subgroup>00</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="6">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>05</class>
+                                <subclass>B</subclass>
+                                <main-group>2270</main-group>
+                                <subgroup>3032</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="7">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>05</class>
+                                <subclass>B</subclass>
+                                <main-group>2270</main-group>
+                                <subgroup>80</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>AU</generating-office>
+                            </patent-classification>
+                        </patent-classifications>
+                        <application-reference doc-id="653738942">
+                            <document-id document-id-type="docdb">
+                                <country>AU</country>
+                                <doc-number>2026200934</doc-number>
+                                <kind>A</kind>
+                                <date>20260209</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>AU20260200934</doc-number>
+                                <date>20260209</date>
+                            </document-id>
+                            <document-id document-id-type="original">
+                                <doc-number>2026200934</doc-number>
+                            </document-id>
+                        </application-reference>
+                        <priority-claims>
+                            <priority-claim sequence="1" kind="national">
+                                <document-id document-id-type="docdb">
+                                    <country>AU</country>
+                                    <doc-number>2026200934</doc-number>
+                                    <kind>A</kind>
+                                    <date>20260209</date>
+                                </document-id>
+                                <document-id document-id-type="epodoc">
+                                    <doc-number>AU20260200934</doc-number>
+                                    <date>20260209</date>
+                                </document-id>
+                            </priority-claim>
+                        </priority-claims>
+                        <parties>
+                            <applicants>
+                                <applicant sequence="1" data-format="epodoc">
+                                    <applicant-name>
+                                        <name>HOPKINS CLINTON PAUL MR [AU]</name>
+                                    </applicant-name>
+                                </applicant>
+                                <applicant sequence="1" data-format="original">
+                                    <applicant-name>
+                                        <name>HOPKINS, CLINTON PAUL MR</name>
+                                    </applicant-name>
+                                </applicant>
+                            </applicants>
+                            <inventors>
+                                <inventor sequence="1" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>HOPKINS CLINTON</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>FERRY JACK</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="1" data-format="original">
+                                    <inventor-name>
+                                        <name>Hopkins, Clinton</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="original">
+                                    <inventor-name>
+                                        <name>Ferry, Jack</name>
+                                    </inventor-name>
+                                </inventor>
+                            </inventors>
+                        </parties>
+                        <invention-title lang="en">System and Method for Lightning Detection and Categorisation for a Wind Turbine Blade</invention-title>
+                        <references-cited>
+                            <citation cited-phase="national-search-report" cited-by="examiner" sequence="1">
+                                <patcit dnum-type="publication number" num="1">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>JP2017181410</doc-number>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>JP</country>
+                                        <doc-number>2017181410</doc-number>
+                                        <kind>A</kind>
+                                    </document-id>
+                                </patcit>
+                            </citation>
+                            <citation cited-phase="national-search-report" cited-by="examiner" sequence="2">
+                                <patcit dnum-type="publication number" num="2">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>JP2014129493</doc-number>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>JP</country>
+                                        <doc-number>2014129493</doc-number>
+                                        <kind>A</kind>
+                                    </document-id>
+                                </patcit>
+                            </citation>
+                            <citation cited-phase="national-search-report" cited-by="examiner" sequence="3">
+                                <patcit dnum-type="publication number" num="3">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>JP2017020423</doc-number>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>JP</country>
+                                        <doc-number>2017020423</doc-number>
+                                        <kind>A</kind>
+                                    </document-id>
+                                </patcit>
+                            </citation>
+                            <citation cited-phase="national-search-report" cited-by="examiner" sequence="4">
+                                <patcit dnum-type="publication number" num="4">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>JP2013139734</doc-number>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>JP</country>
+                                        <doc-number>2013139734</doc-number>
+                                        <kind>A</kind>
+                                    </document-id>
+                                </patcit>
+                            </citation>
+                            <citation cited-phase="national-search-report" cited-by="examiner" sequence="5">
+                                <patcit dnum-type="publication number" num="5">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>US2011267027</doc-number>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>US</country>
+                                        <doc-number>2011267027</doc-number>
+                                        <kind>A1</kind>
+                                    </document-id>
+                                </patcit>
+                            </citation>
+                        </references-cited>
+                    </bibliographic-data>
+                    <abstract lang="en">
+                        <p>A system and method for detecting and classifying lightning events on a wind turbine blade is disclosed. The system utilises a sensor arrangement comprising at least two sensors of distinct modalities, coupled to a processor. The processor compares signals from the sensors to determine at least one conduction medium through which the lightning propagated, distinguishing between an intended conduction medium, propagating via the lightning protection system, a structural conduction medium propagating through structural components of the blade (e.g. through the blade shell or shear web), or an internal conduction medium, arcing within an internal cavity of the blade. The system may further utilise time difference of arrival analysis to localise the event and a ranging module to normalise signal intensity. Based on the categorised conduction medium and estimated event parameters, the system estimates blade damage and generates control signals to trigger maintenance alerts, autonomous inspection, or turbine shutdown. eb e b</p>
+                    </abstract>
+                </exchange-document>
+            </exchange-documents>
+            <exchange-documents>
+                <exchange-document system="ops.epo.org" family-id="98265913" country="WO" doc-number="2026130641" kind="A1">
+                    <bibliographic-data>
+                        <publication-reference>
+                            <document-id document-id-type="docdb">
+                                <country>WO</country>
+                                <doc-number>2026130641</doc-number>
+                                <kind>A1</kind>
+                                <date>20260625</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>WO2026130641</doc-number>
+                                <date>20260625</date>
+                            </document-id>
+                        </publication-reference>
+                        <classifications-ipcr>
+                            <classification-ipcr sequence="1">
+                                <text>F03D   1/    06            A I                    </text>
+                            </classification-ipcr>
+                            <classification-ipcr sequence="2">
+                                <text>F03D  80/    00            A I                    </text>
+                            </classification-ipcr>
+                        </classifications-ipcr>
+                        <patent-classifications>
+                            <patent-classification sequence="1">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>1</main-group>
+                                <subgroup>0675</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="2">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>80</main-group>
+                                <subgroup>004</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="3">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>80</main-group>
+                                <subgroup>301</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="4">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>05</class>
+                                <subclass>B</subclass>
+                                <main-group>2240</main-group>
+                                <subgroup>99</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="5">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>Y</section>
+                                <class>02</class>
+                                <subclass>E</subclass>
+                                <main-group>10</main-group>
+                                <subgroup>72</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                        </patent-classifications>
+                        <application-reference doc-id="641920467">
+                            <document-id document-id-type="docdb">
+                                <country>DK</country>
+                                <doc-number>2025050229</doc-number>
+                                <kind>W</kind>
+                                <date>20251211</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>WO2025DK50229</doc-number>
+                                <date>20251211</date>
+                            </document-id>
+                            <document-id document-id-type="original">
+                                <doc-number>DK2025/050229</doc-number>
+                            </document-id>
+                        </application-reference>
+                        <priority-claims>
+                            <priority-claim sequence="1" kind="national">
+                                <document-id document-id-type="docdb">
+                                    <country>DK</country>
+                                    <doc-number>PA202530054</doc-number>
+                                    <kind>A</kind>
+                                    <date>20250127</date>
+                                </document-id>
+                                <document-id document-id-type="epodoc">
+                                    <doc-number>DK2025PA30054</doc-number>
+                                    <date>20250127</date>
+                                </document-id>
+                                <document-id document-id-type="original">
+                                    <doc-number>PA202530054</doc-number>
+                                </document-id>
+                            </priority-claim>
+                            <priority-claim sequence="2" kind="national">
+                                <document-id document-id-type="docdb">
+                                    <country>US</country>
+                                    <doc-number>202463736253</doc-number>
+                                    <kind>P</kind>
+                                    <date>20241219</date>
+                                </document-id>
+                                <document-id document-id-type="epodoc">
+                                    <doc-number>US202463736253P</doc-number>
+                                    <date>20241219</date>
+                                </document-id>
+                                <document-id document-id-type="original">
+                                    <doc-number>63/736,253</doc-number>
+                                </document-id>
+                            </priority-claim>
+                        </priority-claims>
+                        <parties>
+                            <applicants>
+                                <applicant sequence="1" data-format="epodoc">
+                                    <applicant-name>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                    </applicant-name>
+                                </applicant>
+                                <applicant sequence="1" data-format="original">
+                                    <applicant-name>
+                                        <name>VESTAS WIND SYSTEMS A/S</name>
+                                    </applicant-name>
+                                </applicant>
+                            </applicants>
+                            <inventors>
+                                <inventor sequence="1" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>ARNAUD JOAO ANDRE GUERREIRO [DK]</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>MARTINS COSTA TEIXEIRA SERGIO DANIEL [DK]</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="3" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>BRILLIANT NATHAN A [DK]</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="4" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>GREGORY KARL [DK]</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="5" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>FILIPE PEDROSA CAVACO PATRICIA [DK]</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="1" data-format="original">
+                                    <inventor-name>
+                                        <name>ARNAUD, Joao Andre Guerreiro</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="2" data-format="original">
+                                    <inventor-name>
+                                        <name>MARTINS COSTA TEIXEIRA, Sergio Daniel</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="3" data-format="original">
+                                    <inventor-name>
+                                        <name>BRILLIANT, Nathan A</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="4" data-format="original">
+                                    <inventor-name>
+                                        <name>GREGORY, Karl</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="5" data-format="original">
+                                    <inventor-name>
+                                        <name>FILIPE PEDROSA CAVACO, Patricia</name>
+                                    </inventor-name>
+                                </inventor>
+                            </inventors>
+                        </parties>
+                        <invention-title lang="fr">PALE D'ÉOLIENNE</invention-title>
+                        <invention-title lang="en">A WIND TURBINE BLADE</invention-title>
+                        <references-cited>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="1" office="US">
+                                <patcit dnum-type="publication number" num="1">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>CN118369505</doc-number>
+                                        <name>VESTAS WIND SYSTEM AS</name>
+                                        <date>20240719</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>CN</country>
+                                        <doc-number>118369505</doc-number>
+                                        <kind>A</kind>
+                                        <name>VESTAS WIND SYSTEM AS</name>
+                                        <date>20240719</date>
+                                    </document-id>
+                                </patcit>
+                                <category>Y</category>
+                                <rel-claims>1-15</rel-claims>
+                                <rel-passage>
+                                    <passage>* paragraphs  [0063] - [0065] - [0 80] *</passage>
+                                    <passage>* figures 3, 4 *</passage>
+                                </rel-passage>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="2" office="US">
+                                <patcit dnum-type="publication number" num="2">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>WO2024235408</doc-number>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                        <date>20241121</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>WO</country>
+                                        <doc-number>2024235408</doc-number>
+                                        <kind>A1</kind>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                        <date>20241121</date>
+                                    </document-id>
+                                </patcit>
+                                <category>A</category>
+                                <rel-claims>1-15</rel-claims>
+                                <rel-passage>
+                                    <passage>* page  5, line  21  - line  29 *</passage>
+                                    <passage>* page  9, line  28  - line  32 *</passage>
+                                    <passage>* page  10, line  1  - line  5 *</passage>
+                                    <passage>* figure 5 *</passage>
+                                </rel-passage>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="3" office="US">
+                                <patcit dnum-type="publication number" num="3">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>US20220112885</doc-number>
+                                        <name>FINE NEAL E [US] ET AL</name>
+                                        <date>20220414</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>US</country>
+                                        <doc-number>20220112885</doc-number>
+                                        <kind>A1</kind>
+                                        <name>FINE NEAL E [US] ET AL</name>
+                                        <date>20220414</date>
+                                    </document-id>
+                                </patcit>
+                                <category>Y</category>
+                                <rel-claims>10</rel-claims>
+                                <rel-passage>
+                                    <passage>* paragraph  [0018]  - paragraph  [0025] *</passage>
+                                    <passage>* figure 4 *</passage>
+                                </rel-passage>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="4" office="US">
+                                <patcit dnum-type="publication number" num="4">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>CN114930015</doc-number>
+                                        <name>VESTAS WIND SYS AS</name>
+                                        <date>20220819</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>CN</country>
+                                        <doc-number>114930015</doc-number>
+                                        <kind>A</kind>
+                                        <name>VESTAS WIND SYS AS</name>
+                                        <date>20220819</date>
+                                    </document-id>
+                                </patcit>
+                                <category>A</category>
+                                <rel-claims>1-15</rel-claims>
+                                <rel-passage>
+                                    <passage>* paragraphs  [0065] - [0067] *</passage>
+                                    <passage>* figure 3 *</passage>
+                                </rel-passage>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="5" office="US">
+                                <patcit dnum-type="publication number" num="5">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>US6623243</doc-number>
+                                        <name>HODOS WILLIAM [US]</name>
+                                        <date>20030923</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>US</country>
+                                        <doc-number>6623243</doc-number>
+                                        <kind>B1</kind>
+                                        <name>HODOS WILLIAM [US]</name>
+                                        <date>20030923</date>
+                                    </document-id>
+                                </patcit>
+                                <category>A</category>
+                                <rel-claims>1-15</rel-claims>
+                                <rel-passage>
+                                    <passage>* column  8, line  15  - line  42 *</passage>
+                                </rel-passage>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="6">
+                                <nplcit num="1">
+                                    <text>- MAY ROEL ET AL: "Paint it black: Efficacy of increased wind turbine rotor blade visibility to reduce avian fatalities", ECOLOGY AND EVOLUTION, vol. 10, no. 16, 26 July 2020 (2020-07-26), pages 8927 - 8935, XP093367901, ISSN: 2045-7758, Retrieved from the Internet &lt;URL:https://onlinelibrary.wiley.com/doi/full-xml/10.1002/ece3.6592> DOI: 10.1002/ece3.6592</text>
+                                </nplcit>
+                                <category>Y</category>
+                                <rel-claims>1-9,11-15</rel-claims>
+                                <rel-passage>
+                                    <passage>* figure 1 *</passage>
+                                    <passage>* paragraph  [0001] *</passage>
+                                </rel-passage>
+                            </citation>
+                        </references-cited>
+                    </bibliographic-data>
+                    <abstract lang="en">
+                        <p>A wind turbine blade having an outer surface and a lightning protection system comprising an electrically conductive part adjacent the outer surface of the blade; wherein the outer surface of the blade has a first colour and a second colour, the second colour being darker than the first colour; and the second colour is located within a footprint of the electrically conductive part and does not extend substantially outside of the footprint of the electrically conductive part.</p>
+                    </abstract>
+                    <abstract lang="fr">
+                        <p>L'invention concerne une pale d'éolienne présentant une surface externe et un système de protection contre la foudre comprenant une partie électro-conductrice adjacente à la surface externe de la pale ; la surface externe de la pale présente une première couleur et une seconde couleur ; la seconde couleur est plus sombre que la première couleur, est située à l'intérieur d'une empreinte de la partie électro-conductrice et ne s'étend pas sensiblement à l'extérieur de l'empreinte de la partie électro-conductrice.</p>
+                    </abstract>
+                </exchange-document>
+            </exchange-documents>
+            <exchange-documents>
+                <exchange-document system="ops.epo.org" family-id="98265961" country="WO" doc-number="2026130643" kind="A1">
+                    <bibliographic-data>
+                        <publication-reference>
+                            <document-id document-id-type="docdb">
+                                <country>WO</country>
+                                <doc-number>2026130643</doc-number>
+                                <kind>A1</kind>
+                                <date>20260625</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>WO2026130643</doc-number>
+                                <date>20260625</date>
+                            </document-id>
+                        </publication-reference>
+                        <classifications-ipcr>
+                            <classification-ipcr sequence="1">
+                                <text>F03D  80/    30            A I                    </text>
+                            </classification-ipcr>
+                        </classifications-ipcr>
+                        <patent-classifications>
+                            <patent-classification sequence="1">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>B</section>
+                                <class>29</class>
+                                <subclass>C</subclass>
+                                <main-group>70</main-group>
+                                <subgroup>44</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="2">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>B</section>
+                                <class>29</class>
+                                <subclass>D</subclass>
+                                <main-group>99</main-group>
+                                <subgroup>0028</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="3">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>F</section>
+                                <class>03</class>
+                                <subclass>D</subclass>
+                                <main-group>80</main-group>
+                                <subgroup>30</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="4">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>B</section>
+                                <class>29</class>
+                                <subclass>L</subclass>
+                                <main-group>2031</main-group>
+                                <subgroup>085</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                            <patent-classification sequence="5">
+                                <classification-scheme office="EP" scheme="CPCI"/>
+                                <section>Y</section>
+                                <class>02</class>
+                                <subclass>E</subclass>
+                                <main-group>10</main-group>
+                                <subgroup>72</subgroup>
+                                <classification-value>I</classification-value>
+                                <generating-office>EP</generating-office>
+                            </patent-classification>
+                        </patent-classifications>
+                        <application-reference doc-id="642277453">
+                            <document-id document-id-type="docdb">
+                                <country>DK</country>
+                                <doc-number>2025050233</doc-number>
+                                <kind>W</kind>
+                                <date>20251215</date>
+                            </document-id>
+                            <document-id document-id-type="epodoc">
+                                <doc-number>WO2025DK50233</doc-number>
+                                <date>20251215</date>
+                            </document-id>
+                            <document-id document-id-type="original">
+                                <doc-number>DK2025/050233</doc-number>
+                            </document-id>
+                        </application-reference>
+                        <priority-claims>
+                            <priority-claim sequence="1" kind="national">
+                                <document-id document-id-type="docdb">
+                                    <country>DK</country>
+                                    <doc-number>PA202430761</doc-number>
+                                    <kind>A</kind>
+                                    <date>20241216</date>
+                                </document-id>
+                                <document-id document-id-type="epodoc">
+                                    <doc-number>DK2024PA30761</doc-number>
+                                    <date>20241216</date>
+                                </document-id>
+                                <document-id document-id-type="original">
+                                    <doc-number>PA202430761</doc-number>
+                                </document-id>
+                            </priority-claim>
+                        </priority-claims>
+                        <parties>
+                            <applicants>
+                                <applicant sequence="1" data-format="epodoc">
+                                    <applicant-name>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                    </applicant-name>
+                                </applicant>
+                                <applicant sequence="1" data-format="original">
+                                    <applicant-name>
+                                        <name>VESTAS WIND SYSTEMS A/S</name>
+                                    </applicant-name>
+                                </applicant>
+                            </applicants>
+                            <inventors>
+                                <inventor sequence="1" data-format="epodoc">
+                                    <inventor-name>
+                                        <name>BECH ANTON [DK]</name>
+                                    </inventor-name>
+                                </inventor>
+                                <inventor sequence="1" data-format="original">
+                                    <inventor-name>
+                                        <name>BECH, Anton</name>
+                                    </inventor-name>
+                                </inventor>
+                            </inventors>
+                        </parties>
+                        <invention-title lang="fr">SYSTÈME DE PROTECTION CONTRE LA FOUDRE</invention-title>
+                        <invention-title lang="en">LIGHTNING PROTECTION SYSTEM</invention-title>
+                        <references-cited>
+                            <citation cited-phase="undefined" cited-by="applicant" sequence="1">
+                                <patcit dnum-type="publication number" num="1">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>WO2015055215</doc-number>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>WO</country>
+                                        <doc-number>2015055215</doc-number>
+                                        <kind>A1</kind>
+                                    </document-id>
+                                </patcit>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="1" office="US">
+                                <patcit dnum-type="publication number" num="1">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>WO2022057990</doc-number>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                        <date>20220324</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>WO</country>
+                                        <doc-number>2022057990</doc-number>
+                                        <kind>A1</kind>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                        <date>20220324</date>
+                                    </document-id>
+                                </patcit>
+                                <category>Y</category>
+                                <rel-claims>9,16-18</rel-claims>
+                                <category>X</category>
+                                <rel-claims>1-2,6-7,12-14</rel-claims>
+                                <category>A</category>
+                                <rel-claims>3-5,8,10-11,15</rel-claims>
+                                <rel-passage>
+                                    <passage>* p. 9, l. 10-15, p. 10, l. 3-5, p. 15, l. 15, 16, figures 3-12 *</passage>
+                                </rel-passage>
+                            </citation>
+                            <citation cited-phase="international-search-report" cited-by="examiner" sequence="2" office="US">
+                                <patcit dnum-type="publication number" num="2">
+                                    <document-id document-id-type="epodoc">
+                                        <doc-number>WO2023104274</doc-number>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                        <date>20230615</date>
+                                    </document-id>
+                                    <document-id document-id-type="docdb">
+                                        <country>WO</country>
+                                        <doc-number>2023104274</doc-number>
+                                        <kind>A1</kind>
+                                        <name>VESTAS WIND SYS AS [DK]</name>
+                                        <date>20230615</date>
+                                    </document-id>
+                                </patcit>
+                                <category>Y</category>
+                                <rel-claims>9,16-18</rel-claims>
+                                <rel-passage>
+                                    <passage>* figures 12A-12G, claims 10,12 *</passage>
+                                </rel-passage>
+                            </citation>
+                        </references-cited>
+                    </bibliographic-data>
+                    <abstract lang="en">
+                        <p>A wind turbine blade having a blade shell with a lightning protection system. The lightning protection system includes a first metal layer, a metal plate configured to electrically connect to one or more electrical components, and a plurality of metal rods secured to the metal plate and arranged to extend therefrom. The plurality of metal rods extend over and contact the first metal layer such that the first metal layer is electrically connected to the metal plate via the plurality of metal rods.</p>
+                    </abstract>
+                    <abstract lang="fr">
+                        <p>L'invention concerne une pale d'éolienne comprenant une coque de pale avec un système de protection contre la foudre. Le système de protection contre la foudre comprend une première couche métallique, une plaque métallique configurée pour se connecter électriquement à un ou plusieurs composants électriques, et une pluralité de tiges métalliques fixées à la plaque métallique et agencées pour s'étendre à partir de celle-ci. La pluralité de tiges métalliques s'étendent sur et entrent en contact avec la première couche métallique de telle sorte que la première couche métallique est électriquement connectée à la plaque métallique par l'intermédiaire de la pluralité de tiges métalliques.</p>
+                    </abstract>
+                </exchange-document>
+            </exchange-documents>
+        </ops:search-result>
+    </ops:biblio-search>
+</ops:world-patent-data>

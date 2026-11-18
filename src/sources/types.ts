@@ -35,10 +35,12 @@ export interface WorkInfo {
   pmid?: string;
   /** PubMed Central's identifier, as "PMC…", for the works that have one. */
   pmcid?: string;
+  /** A patent publication (sources/patents.ts): its number, e.g. "EP4560905A1", and first applicant. */
+  patent?: { number: string; applicant?: string };
 }
 
 export interface OpenSource {
-  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc";
+  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc" | "patents";
   /**
    * The model is told it can follow citations through this source (OpenAlex, when the user ticks it,
    * harness 0.84.0): the search tool's usage line and a note after a work's first read give the forms.
@@ -52,11 +54,12 @@ export interface OpenSource {
 
 export type FetchLike = (
   url: string,
-  init?: { signal?: AbortSignal },
+  init?: { signal?: AbortSignal; method?: string; headers?: Record<string, string>; body?: string },
 ) => Promise<{
   ok: boolean;
   status: number;
   json(): Promise<unknown>;
+  text?(): Promise<string>;
   arrayBuffer?(): Promise<ArrayBuffer>;
   headers?: { get(name: string): string | null };
 }>;
@@ -74,7 +77,14 @@ export function stripTags(html: string): string {
     .trim();
 }
 
-export class SourceError extends Error {}
+export class SourceError extends Error {
+  /** The HTTP status of a refused request, when there was one. */
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    if (status !== undefined) this.status = status;
+  }
+}
 
 /** How long a source request may take before it counts as failed: the agent waits on it, and so does the user. */
 export const SOURCE_TIMEOUT_MS = 20_000;
@@ -84,6 +94,10 @@ export const MAX_RETRY_WAIT_MS = 10_000;
 
 export interface RequestOptions {
   timeoutMs?: number;
+  /** For a request other than a plain GET, such as EPO OPS's token request (sources/patents.ts). */
+  method?: "GET" | "POST";
+  headers?: Record<string, string>;
+  body?: string;
   /** Added to the message when the service's requests are used up for hours, e.g. how to get more. */
   limitHint?: string;
 }
@@ -99,6 +113,14 @@ export interface RequestOptions {
  */
 export async function getJson(fetchImpl: FetchLike, label: string, url: string, signal?: AbortSignal, options: RequestOptions = {}): Promise<any> {
   return request(fetchImpl, label, url, signal, options, (response) => response.json());
+}
+
+/** Fetches a text answer, such as XML, with getJson's handling of failures. */
+export async function getText(fetchImpl: FetchLike, label: string, url: string, signal?: AbortSignal, options: RequestOptions = {}): Promise<string> {
+  return request(fetchImpl, label, url, signal, options, async (response) => {
+    if (!response.text) throw new SourceError(`${label} returned no text.`);
+    return response.text();
+  });
 }
 
 /** The longest file getBytes downloads: a long paper's PDF is a few megabytes. */
@@ -137,7 +159,12 @@ async function request<T>(
     try {
       let response;
       try {
-        response = await fetchImpl(url, { signal: signal ? AbortSignal.any([signal, timeout.signal]) : timeout.signal });
+        response = await fetchImpl(url, {
+          signal: signal ? AbortSignal.any([signal, timeout.signal]) : timeout.signal,
+          ...(options.method ? { method: options.method } : {}),
+          ...(options.headers ? { headers: options.headers } : {}),
+          ...(options.body !== undefined ? { body: options.body } : {}),
+        });
       } catch (error) {
         throw failed(error);
       }
@@ -153,7 +180,7 @@ async function request<T>(
         await sleep(wait, signal);
         continue;
       }
-      if (!response.ok) throw new SourceError(`${label} returned an error (HTTP ${response.status}).`);
+      if (!response.ok) throw new SourceError(`${label} returned an error (HTTP ${response.status}).`, response.status);
       // The body is read under the same timeout: a response can stall after its headers.
       try {
         return await read(response);

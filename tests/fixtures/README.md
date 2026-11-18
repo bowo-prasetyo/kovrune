@@ -1,5 +1,9 @@
 # Test fixtures
 
+- `ops/`: answers EPO Open Patent Services gave on 18 November 2026 (`tests/patents.test.ts`): a search
+  on titles and abstracts among EP and WO publications (`search-wind-blade-ep-wo.xml`) and among all
+  offices (`search-wind-blade-all.xml`), and the claims and description of WO2026130641A1. Patent
+  publications, with the EPO's bibliographic data.
 - `pdf/scanned-pages.pdf`: a five-page PDF written for these tests by `pdf/make_scanned_pages.py`
   (reportlab and Pillow): page 2 is a scan (its words are pixels in an image, with only a printed page
   number), page 3 a figure with a caption, page 4 blank (`tests/textless-pages.test.ts`).

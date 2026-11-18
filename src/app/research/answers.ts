@@ -298,7 +298,25 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
     const citation = answer.citations[docId];
     if (!citation?.work) continue;
     const paper = docId.replace(/#\d+$/, "");
-    const { authors, year, doi, venue, pmid, pmcid } = citation.work;
+    const { authors, year, doi, venue, pmid, pmcid, patent } = citation.work;
+    // A patent is a @misc with its publication number, which plain BibTeX and biblatex both read.
+    if (patent) {
+      const key = `patent_${patent.number}`;
+      const fields: Array<[string, string | number | undefined]> = [
+        ["title", citation.title.replace(/ \([A-Z]{2}\d+[A-Z]\d?\)$/, "")],
+        ["author", authors.length ? authors.join(" and ") : undefined],
+        ["year", year],
+        ["howpublished", `Patent ${patent.number}${patent.applicant ? `, ${patent.applicant}` : ""}`],
+        ["url", citation.url],
+        ["note", `Retrieved from ${citation.source} on ${citation.retrievedAt.slice(0, 10)}`],
+      ];
+      const body = fields
+        .filter(([, value]) => value !== undefined)
+        .map(([name, value]) => `  ${name} = {${bib(String(value))}}`)
+        .join(",\n");
+      entries.set(key, `@misc{${key},\n${body}\n}`);
+      continue;
+    }
     // arXiv papers are cited as arXiv's own BibTeX does: a @misc with the identifier as eprint.
     const eprint = paper.startsWith("arxiv:") ? paper.slice("arxiv:".length) : undefined;
     // Repository works from DataCite are a @misc published by their repository, not a journal article.

@@ -4,7 +4,7 @@ import type { CallRecord } from "../src/agent/agent.ts";
 import { documentId, formatBytes } from "../src/app/research/library.ts";
 import { describeCall, describeNoAnswer, describeStatus } from "../src/app/research/trace.ts";
 import { withoutPartLabels } from "../src/agent/research.ts";
-import { defaultLanguage, openSourcesFor, parseSourcePrefs } from "../src/app/research/sources.ts";
+import { anyOpenSource, defaultLanguage, openSourceNames, openSourcesFor, parseSourcePrefs, patentsReady } from "../src/app/research/sources.ts";
 
 const call = (fields: Partial<CallRecord>): CallRecord => ({
   valid: true,
@@ -132,6 +132,27 @@ describe("open source preferences", () => {
     assert.deepEqual(openSourcesFor({ ...none, datacite: true }).map((s) => s.label), ["DataCite"]);
     assert.deepEqual(openSourcesFor({ ...none, europepmc: true }).map((s) => s.label), ["Europe PMC"]);
     assert.deepEqual(openSourcesFor(none), []);
+  });
+
+  it("search patents only when ticked with both the EPO key and secret", () => {
+    const none = { wikipedia: false, language: "en", openalex: false, arxiv: false, datacite: false, europepmc: false, openalexKey: "" };
+    const ready = { ...none, patents: true, epoKey: "k", epoSecret: "s" };
+    assert.deepEqual(openSourcesFor(ready).map((s) => s.name), ["patents"]);
+    assert.deepEqual(openSourceNames(ready), ["EPO patents"]);
+    assert.equal(anyOpenSource(ready), true);
+    for (const missing of [{ ...ready, epoSecret: undefined }, { ...ready, epoKey: "" }, { ...ready, patents: false }]) {
+      assert.equal(patentsReady(missing), false);
+      assert.deepEqual(openSourcesFor(missing), []);
+      assert.equal(anyOpenSource(missing), false);
+    }
+    assert.deepEqual(
+      parseSourcePrefs('{"patents":true,"epoKey":" k ","epoSecret":"s"}', "en"),
+      { ...none, patents: true, epoKey: "k", epoSecret: "s" },
+      "the key and secret are kept, trimmed",
+    );
+    assert.equal(parseSourcePrefs('{"patents":"yes","epoKey":42}', "en").patents, undefined);
+    assert.equal(describeCall(call({ tool: "search_patents", args: { query: "totem pole" } }), () => undefined), "Searching EPO patents for “totem pole”");
+    assert.equal(describeCall(call({ tool: "read", args: { docId: "patents:EP4560905A1#2" } }), () => undefined), "Reading patent EP4560905A1 (part 2)");
   });
 
   it("describe open-source steps in the trace", () => {
