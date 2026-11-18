@@ -1036,6 +1036,48 @@ The four cases the rule exists for keep their marks because there the suffix **i
 
 `tests/support.test.ts` ("a backed name with a plain suffix") fails before the change and passes after. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): sentence support runs after the model's final answer, so the model runs the clause asks for would repeat their recorded actions.
 
+### Physics: siunitx quantities, physics units and opposites (0.90.0, defect fix)
+
+An audit from a physicist's point of view ran the LaTeX converter (`src/documents/latex.ts`) on a REVTeX paper and the sentence check (`src/agent/support.ts`) on sentences from physics papers. It found two defects of the kinds the engineering (0.67.0) and laboratory (0.71.0) audits found in their fields.
+
+**The converter lost every unit written with siunitx.** It read a command it did not know as its argument's text, so `\SI{1.5}{\milli\electronvolt}` was "1.5" and the abstract "a gap of \SI{1.5}{\milli\electronvolt} … at \SI{300}{\milli\kelvin} in a field of \SI{9}{\tesla}" was "a gap of 1.5 … at 300 in a field of 9". The model could not quote a unit the text did not have, and the sentence check had none to compare. Many condensed-matter, AMO and applied-physics papers write quantities with siunitx, and particle-physics papers with hepunits (`125\,\GeV`, `139\,\invfb`); the converted text still passed `readableLatex`, so the PDF was not read instead. Now (`src/documents/siunitx.ts`):
+
+| The source says | Read before | Read now |
+| --- | --- | --- |
+| `\SI{1.5}{\milli\electronvolt}`, `\qty{12.5}{\pico\second}` | 1.5, 12.5 | 1.5 meV, 12.5 ps |
+| `\num{1.2e-3}~\si{\per\second}` | 1.2e-3 | 1.2 × 10⁻³ s⁻¹ |
+| `\qty{0.52 +- 0.01}{\volt}`, `\num{3.2(4)}` | as written, in math | (0.52 ± 0.01) V, 3.2(4) |
+| `\SI{73}{\kilo\metre\per\second\per\mega\parsec}` | 73 | 73 km s⁻¹ Mpc⁻¹ (km/s/Mpc with `per-mode=symbol`) |
+| `\SIrange{10}{20}{\kelvin}`, `\numlist{1;2;3}`, `\ang{1;2;3}` | 10 20, 1;2;3, 1;2;3 | 10 K to 20 K, 1, 2 and 3, 1°2′3″ |
+| `\DeclareSIUnit\gauss{G}` … `\SI{50}{\gauss}` | 50 | 50 G |
+| `139\,\invfb` (hepunits) | 139 | 139 fb⁻¹ |
+
+Quantities are read after the paper's own macros are expanded, so a macro that writes one (`\newcommand{\Hc}{\SI{50}{\gauss}}`) reads too, and a paper's own `\GeV` wins over hepunits'. A unit command the converter does not know is written as its name, never dropped. The physics package's `\qty{\frac{a}{b}}`, whose argument is not a number, is left as before.
+
+**The unit check knew no physics units.** With a real quote, these wrong sentences were marked backed:
+
+| The quote says | The answer says | Before | After |
+| --- | --- | --- | --- |
+| 2.5 **TeV**; 1.5 **meV** | 2.5 **GeV**; 1.5 **MeV** | backed | **not backed** |
+| 20 **mK**; 9 **T**; 30 **fs** | 20 **K**; 9 **mT**; 30 **ps** | backed | **not backed** |
+| 139 **fb⁻¹**; 16 **Mpc**; 3.9 **Å** | 139 **pb⁻¹**; 16 **kpc**; 3.9 **nm** | backed | **not backed** |
+| 2 **Gyr**; 4 × 10⁶ **M☉**; 12 **mJy**; 2 **mSv** | 2 **Myr**; 4 × 10⁶ **M**; 12 **Jy**; 2 **Sv** | backed | **not backed** |
+| 125.10 ± 0.14 **GeV** | 125.10 **MeV** | backed | **not backed** |
+| an **upper** limit; masses **excluded** | a **lower** limit; masses **allowed** | backed | **not backed** |
+| **attractive**; **antiferromagnetic**; **redshifted**; **first-order**; **retrograde** | **repulsive**; **ferromagnetic**; **blueshifted**; **second-order**; **prograde** | backed | **not backed** |
+| CD8 T cells | CD8 T cells (quote: CD8**+** T cells) | backed | backed |
+
+What changed:
+- **Physics units** (`ENGINEERING_UNITS`, read in their case): energies (μeV, meV, TeV, PeV, EeV), temperatures (mK, μK, nK), magnetic fields (T, mT, μT, nT, Oe, kOe), lengths (fm, picometres, Å, pc, kpc, Mpc, Gpc, ly, au), times (ps, fs, attoseconds, kyr, Myr, Gyr), cross sections and luminosities (barns, nb, μb, pb, fb), angles (rad, mrad, μrad), mHz, PHz, solar masses (M☉, M⊙, Msun), flux densities (Jy, mJy, μJy), Torr, mTorr, and radiation (Gy, mGy, Sv, mSv, μSv, Bq, kBq, MBq, GBq, Ci, mCi, μCi). "T" is a tesla after a number; a T cell names its number the same way in a quote and an answer, so it is backed as before. Left out as also common words or other units: "G" (gauss), "pm" (the time of day), "as", "mb" (megabytes), "ab".
+- **Uncertainties** (`measures`): a value with its uncertainty takes the unit after both, so "125.10 ± 0.14 GeV" and "(0.52 ± 0.01) meV" give their values in GeV and meV. Before, the value counted as given with no unit, which backs any unit.
+- **Opposites** (`OPPOSITES`): upper/lower (lower is also higher's opposite), excluded/allowed, attractive/repulsive, ferromagnetic/antiferromagnetic, paramagnetic/diamagnetic, redshift/blueshift, endothermic/exothermic, clockwise/counterclockwise, convex/concave, boson/fermion, n-type/p-type, electron-doped/hole-doped, underdoped/overdoped, longitudinal/transverse, first-order/second-order, spin-up/spin-down, prograde/retrograde, oblate/prolate, timelike/spacelike, overdamped/underdamped, overestimate/underestimate, heavier/lighter, hotter/colder, brighter/fainter. Hyphenated words are written joined ("firstorder"), as `normalizeForMatch` leaves them; the earlier lists' hyphenated forms ("wild-type") never matched, though their joined twins did.
+
+**Effect on recorded runs: RESCORE_SUMMARY**
+
+`tests/support.test.ts` ("physics units and opposites") fails on three of its four tests before the change and passes after (the fourth, T cells, guards against a false alarm); `tests/siunitx.test.ts` is new. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): the sentence check runs after the model's final answer, and the LaTeX converter changes only papers that use siunitx or hepunits, which no suite reads.
+
+**Limits:** compound units are still compared by their first part, so "73 km/s/Mpc" and "73 km/s/kpc" are one unit; the siunitx output follows its default options (no digit grouping is applied, so "12345" stays one number; `per-mode` is the only option read); a concise uncertainty "1.50(5)" is not read as "1.50 ± 0.05", so a right answer written that way is marked; the number check does not read LaTeX, so a quote of `$1.2\times10^{-3}$` does not back "1.2 × 10⁻³"; and no physics suite exists to show how often any of this happens in answers.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

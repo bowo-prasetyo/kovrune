@@ -327,6 +327,69 @@ const ENGINEERING_UNITS: Array<[string, RegExp]> = [
   ["×g", /^xg$/],
   ["U", /^U$/],
   ["mU", /^mU$/],
+  // Physics units (harness 0.90.0), where a prefix is a factor of a thousand or more, read in their case like
+  // the others: "1.5 meV" is not "1.5 MeV" (a factor of 10⁹), nor "20 mK" "20 K", "9 T" "9 mT", "16 Mpc"
+  // "16 kpc", "3.9 Å" "3.9 nm", or "139 fb⁻¹" "139 pb⁻¹" (a luminosity reads by its first part, "fb").
+  // "T" is a tesla only after a number ("9 T"); "CD8 T cells" names its "8" the same way in a quote and an
+  // answer, so it is backed as before. Left out: "G" (gauss, or giga-anything), "pm" (picometre, or the time
+  // of day), "as" (attosecond, or the word), "mb" (millibarn, or megabytes), "ab" (attobarn).
+  ["μeV", /^(?:μeV|ueV)$/],
+  ["meV", /^meV$/],
+  ["TeV", /^TeV$/],
+  ["PeV", /^PeV$/],
+  ["EeV", /^EeV$/],
+  ["mK", /^(?:mK|millikelvins?)$/],
+  ["μK", /^(?:μK|uK|microkelvins?)$/],
+  ["nK", /^(?:nK|nanokelvins?)$/],
+  ["T", /^(?:T|teslas?)$/],
+  ["mT", /^(?:mT|milliteslas?)$/],
+  ["μT", /^(?:μT|uT|microteslas?)$/],
+  ["nT", /^(?:nT|nanoteslas?)$/],
+  ["Oe", /^(?:Oe|oersteds?)$/],
+  ["kOe", /^kOe$/],
+  ["fm", /^(?:fm|femtomet(?:re|er)s?|fermis?)$/],
+  ["pm", /^picomet(?:re|er)s?$/],
+  ["Å", /^(?:Å|angstroms?|Angstroms?|ångströms?|Ångströms?)$/],
+  ["ps", /^(?:ps|picoseconds?)$/],
+  ["fs", /^(?:fs|femtoseconds?)$/],
+  ["as", /^attoseconds?$/],
+  ["mHz", /^(?:mHz|millihertz)$/],
+  ["PHz", /^(?:PHz|petahertz)$/],
+  ["rad", /^(?:rad|radians?)$/],
+  ["mrad", /^(?:mrad|milliradians?)$/],
+  ["μrad", /^(?:μrad|urad|microradians?)$/],
+  ["b", /^barns?$/],
+  ["nb", /^(?:nb|nanobarns?)$/],
+  ["μb", /^(?:μb|ub|microbarns?)$/],
+  ["pb", /^(?:pb|picobarns?)$/],
+  ["fb", /^(?:fb|femtobarns?)$/],
+  ["pc", /^(?:pc|parsecs?)$/],
+  ["kpc", /^(?:kpc|kiloparsecs?)$/],
+  ["Mpc", /^(?:Mpc|megaparsecs?)$/],
+  ["Gpc", /^(?:Gpc|gigaparsecs?)$/],
+  ["ly", /^(?:ly|lightyears?)$/],
+  ["au", /^(?:au|AU)$/],
+  ["kyr", /^kyr$/],
+  ["Myr", /^Myr$/],
+  ["Gyr", /^Gyr$/],
+  ["M☉", /^(?:M☉|M⊙|Msun|Msol)$/],
+  ["Jy", /^(?:Jy|janskys?)$/],
+  ["mJy", /^mJy$/],
+  ["μJy", /^(?:μJy|uJy)$/],
+  ["Torr", /^(?:Torr|torr)$/],
+  ["mTorr", /^mTorr$/],
+  ["Gy", /^(?:Gy|grays?)$/],
+  ["mGy", /^mGy$/],
+  ["Sv", /^(?:Sv|sieverts?)$/],
+  ["mSv", /^(?:mSv|millisieverts?)$/],
+  ["μSv", /^(?:μSv|uSv|microsieverts?)$/],
+  ["Bq", /^(?:Bq|becquerels?)$/],
+  ["kBq", /^kBq$/],
+  ["MBq", /^MBq$/],
+  ["GBq", /^GBq$/],
+  ["Ci", /^(?:Ci|curies?)$/],
+  ["mCi", /^mCi$/],
+  ["μCi", /^(?:μCi|uCi)$/],
 ];
 
 /** Units, each with the spellings that mean it. Binary and decimal sizes are one unit: models write "4 KB" for "4 KiB". */
@@ -471,6 +534,33 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["hypermethylated", "hypermethylation"], ["hypomethylated", "hypomethylation"]],
   [["phosphorylated", "phosphorylation", "phosphorylates"], ["dephosphorylated", "dephosphorylation", "dephosphorylates"]],
   [["gain-of-function"], ["loss-of-function"]],
+  // Physics opposites (harness 0.90.0): a limit, an exclusion, an interaction or an ordering read the wrong
+  // way round. "lower" is also higher's opposite; a word may stand in two pairs. Hyphenated words are written
+  // joined ("firstorder"), as normalizeForMatch leaves them.
+  [["upper"], ["lower"]],
+  [["excluded", "exclude", "excludes", "disfavored", "disfavoured"], ["allowed", "permitted", "favored", "favoured"]],
+  [["attractive"], ["repulsive"]],
+  [["ferromagnetic", "ferromagnet", "ferromagnets", "ferromagnetism"], ["antiferromagnetic", "antiferromagnet", "antiferromagnets", "antiferromagnetism"]],
+  [["paramagnetic", "paramagnet", "paramagnetism"], ["diamagnetic", "diamagnet", "diamagnetism"]],
+  [["redshift", "redshifted", "redshifts"], ["blueshift", "blueshifted", "blueshifts"]],
+  [["endothermic"], ["exothermic"]],
+  [["clockwise"], ["counterclockwise", "anticlockwise"]],
+  [["convex"], ["concave"]],
+  [["boson", "bosons", "bosonic"], ["fermion", "fermions", "fermionic"]],
+  [["ntype"], ["ptype"]],
+  [["electrondoped"], ["holedoped"]],
+  [["underdoped"], ["overdoped"]],
+  [["longitudinal"], ["transverse"]],
+  [["firstorder"], ["secondorder"]],
+  [["spinup"], ["spindown"]],
+  [["prograde"], ["retrograde"]],
+  [["oblate"], ["prolate"]],
+  [["timelike"], ["spacelike"]],
+  [["overdamped"], ["underdamped"]],
+  [["overestimate", "overestimated", "overestimates", "overestimation"], ["underestimate", "underestimated", "underestimates", "underestimation"]],
+  [["heavier", "heaviest"], ["lighter", "lightest"]],
+  [["hotter", "hottest"], ["colder", "coldest", "cooler", "coolest"]],
+  [["brighter", "brightest"], ["fainter", "faintest", "dimmer", "dimmest"]],
 ];
 
 /**
@@ -587,6 +677,9 @@ function directionsBacked(text: string, quoted: Set<string>): boolean {
   });
 }
 
+/** An uncertainty after a value, and the unit after both: " ± 0.14 GeV", " ± 0.01) meV". */
+const UNCERTAINTY_UNIT = new RegExp(String.raw`^\s*[±∓]\s*\p{Nd}+(?:[.,]\p{Nd}+)*\)?\s?(%|°?[\p{L}]+[☉⊙]?)`, "u");
+
 /**
  * The units a text gives its numbers, as "number unit" pairs ("8 GB" is "8 GB"; "4,096 tokens" is
  * "4096 token"), and the numbers it gives with no unit after them.
@@ -594,9 +687,13 @@ function directionsBacked(text: string, quoted: Set<string>): boolean {
 function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
   const pairs = new Set<string>();
   const bare = new Set<string>();
-  for (const match of numberText(text).matchAll(new RegExp(`${NUMBER}\\s?(%|°?[\\p{L}]+(?:\\s?cent)?)?`, "gu"))) {
+  const written = numberText(text);
+  for (const match of written.matchAll(new RegExp(`${NUMBER}\\s?(%|°?[\\p{L}]+[☉⊙]?(?:\\s?cent)?)?`, "gu"))) {
     const number = signed(match[1], match[2]!);
-    const unit = match[3] && unitOf(match[3]);
+    // A value with its uncertainty takes the unit after it (harness 0.90.0): "125.10 ± 0.14 GeV" and
+    // "(0.52 ± 0.01) meV" give 125.10 in GeV and 0.52 in meV, not 125.10 and 0.52 with no unit.
+    const shared = match[3] ? undefined : UNCERTAINTY_UNIT.exec(written.slice(match.index + match[0].length))?.[1];
+    const unit = (match[3] && unitOf(match[3])) || (shared && unitOf(shared));
     if (unit) pairs.add(`${number} ${unit}`);
     else bare.add(number);
   }

@@ -11,8 +11,11 @@
 // - a displayed equation as its LaTeX on a line of its own, then its number: "y = Wx + b (1)";
 // - \cite as the PDF prints it, "(Liu et al., 2023)" or "[12]", from the .bbl file arXiv requires;
 // - \ref as "Table 2", "Section 3" or "(1)", from the labels.
+// - a quantity as the PDF prints it, "1.5 meV" for \SI{1.5}{\milli\electronvolt} (siunitx.ts).
 // Inline math stays as written ($O(n^2)$). What can't be read this way is reported as not converted, and
 // the PDF is read instead (sources/arxiv.ts).
+
+import { siunitxSetup, siunitxToText } from "./siunitx.ts";
 
 /** One LaTeX argument: the text of a {…} group starting at `at` (after spaces), and where it ends. */
 function group(text: string, at: number): { body: string; end: number } | undefined {
@@ -383,7 +386,7 @@ const UNWRAP = "textbf|textit|emph|texttt|textsc|textrm|textsf|textup|textmd|tex
 const DROP = "label|vspace|hspace|vskip|hskip|includegraphics|bibliographystyle|bibliography|addbibresource|pagestyle|thispagestyle|setlength|addtolength|setcounter|addtocounter|newcounter|definecolor|usepackage|RequirePackage|documentclass|graphicspath|hypersetup|captionsetup|newtheorem|theoremstyle|renewenvironment|newenvironment|crefname|Crefname|pdfoutput|linenumbers|acknowledgments|DeclareMathOperator|newlength|lstset|tcbset|setstretch|color|textcolor|arrayrulecolor|rowcolor|cellcolor|columncolor|nocite|keywords|icmltitlerunning|icmlkeywords|icmlcorrespondingauthor|icmlaffiliation|icmlauthor|icmlsetsymbol|affil|address|email|thanks|footnotetext|orcid";
 
 /** Definitions that take several arguments and print nothing: all their […] and {…} arguments go with them. */
-const DEFINITIONS = "newtcolorbox|renewtcolorbox|DeclareTColorBox|newtcbox|tcbset|tcbuselibrary|newenvironment|renewenvironment|newtheorem|definecolor|colorlet|newfloat|floatname|lstdefinestyle|lstdefinelanguage|lstset|newcolumntype|sethlcolor|setlist|pgfplotsset|usetikzlibrary|tikzset|tikzstyle|newmdenv|mdfdefinestyle|captionsetup|hypersetup|newlist|setlength|newcounter|setcounter|crefname|Crefname|crefformat|DeclareMathOperator|newacronym|definecolorset";
+const DEFINITIONS = "DeclareSIUnit|DeclareSIPrefix|DeclareSIQualifier|DeclareSIPower|sisetup|newtcolorbox|renewtcolorbox|DeclareTColorBox|newtcbox|tcbset|tcbuselibrary|newenvironment|renewenvironment|newtheorem|definecolor|colorlet|newfloat|floatname|lstdefinestyle|lstdefinelanguage|lstset|newcolumntype|sethlcolor|setlist|pgfplotsset|usetikzlibrary|tikzset|tikzstyle|newmdenv|mdfdefinestyle|captionsetup|hypersetup|newlist|setlength|newcounter|setcounter|crefname|Crefname|crefformat|DeclareMathOperator|newacronym|definecolorset";
 
 /** Text with each definition command and all its arguments taken out. */
 function withoutDefinitions(text: string): string {
@@ -420,13 +423,18 @@ export function latexToText(files: Map<string, string>): ConvertedLatex | undefi
   if (!main) return undefined;
   const macros = new Map<string, Macro>();
   // Macros a source defines in its own style files, then in the paper.
-  for (const [name, text] of files) if (/\.(sty|def)$/i.test(name) && !/^(neurips|icml|iclr|acl|aaai|ieee|llncs|svjour|elsarticle|natbib|hyperref)/i.test(name.split("/").pop()!)) takeMacros(withoutComments(text), macros);
-  let source = withoutDefinitions(takeMacros(inlined(files, main), macros));
+  const styles: string[] = [];
+  for (const [name, text] of files) if (/\.(sty|def)$/i.test(name) && !/^(neurips|icml|iclr|acl|aaai|ieee|llncs|svjour|elsarticle|natbib|hyperref)/i.test(name.split("/").pop()!)) styles.push(takeMacros(withoutComments(text), macros));
+  const defined = takeMacros(inlined(files, main), macros);
+  // The units the paper declares for siunitx, and how it prints "per" (siunitx.ts).
+  const units = siunitxSetup([...styles, defined]);
+  let source = withoutDefinitions(defined);
   const begin = source.indexOf("\\begin{document}");
   const end = source.lastIndexOf("\\end{document}");
-  const preamble = begin >= 0 ? expandMacros(source.slice(0, begin), macros) : "";
+  const preamble = begin >= 0 ? siunitxToText(expandMacros(source.slice(0, begin), macros), units) : "";
   let body = begin >= 0 ? source.slice(begin + "\\begin{document}".length, end > begin ? end : undefined) : source;
-  body = expandMacros(body, macros);
+  // Quantities are read after the paper's macros, which may write them (\newcommand{\Tc}{\SI{2.3}{\kelvin}}).
+  body = siunitxToText(expandMacros(body, macros), units);
   const titleArg = group(body, (/\\title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(body)?.index ?? -1) + (/\\title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(body)?.[0].length ?? 0)) ?? group(preamble, (/\\(?:icml)?title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(preamble)?.index ?? -1) + (/\\(?:icml)?title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(preamble)?.[0].length ?? 0));
 
   // References, from the .bbl next to the main file (arXiv doesn't run BibTeX, so a source that cites has one).
