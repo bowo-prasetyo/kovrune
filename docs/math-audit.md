@@ -27,6 +27,8 @@ What gets in the way (details in [Findings](#findings)):
 
 The first two are converter defects. They are deterministic, can be fixed without running a model, and can be measured on the 48-paper sample. They should come first.
 
+**Status (harness 0.94.0):** M1 and M2 are fixed, and the suite of M6 is built (`eval/math/`). On the 48 papers, 1,514 of 1,518 numbered statement headings and 3,385 of 3,403 references to statements now match the PDF, against 2,171 of 3,239 references before ([field README](../eval/field/README.md#mathematics-theorem-like-statements-numbered-as-amsthm-numbers-them-0940-defect-fix)). M3, M4, M5, M7 and M8 are open.
+
 ## Findings
 
 ### M1. High: theorem environments with the paper's own names lose their heading

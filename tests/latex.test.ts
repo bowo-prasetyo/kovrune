@@ -337,3 +337,100 @@ with a $\chi^2$/NDF of 4.26/4. The (blue) open squares represent the $P_c(4450)^
     assert.equal(verified("The (blue) open squares represent the P_c(4450)^- state"), false);
   });
 });
+
+describe("theorem-like statements, numbered as amsthm numbers them (harness 0.94.0)", () => {
+  /** The text of a paper with this preamble and body. */
+  const read = (preamble: string, body: string) => latexToText(new Map([["main.tex", `\\documentclass{amsart}\n${preamble}\n\\begin{document}\n${body}\n\\end{document}`]]))!.text;
+  const shared = String.raw`\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{conj}[thm]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem*{mainthm}{Main Theorem}
+\newtheorem{question}{Question}`;
+
+  it("heads a statement the paper declares under its own name, with its number and title", () => {
+    const text = read(shared, String.raw`\section{Intro}\section{Results}
+\begin{lem}\label{l}A holds.\end{lem}
+\begin{thm}[Hardy--Littlewood]\label{t}B holds.\end{thm}
+\begin{conj}\label{c}Every toy ring is finite.\end{conj}
+\begin{mainthm}C holds.\end{mainthm}
+\begin{question}Is D true?\end{question}`);
+    assert.match(text, /^Lemma 2\.1\. A holds\.$/m);
+    assert.match(text, /^Theorem 2\.2 \(Hardy–Littlewood\)\. B holds\.$/m);
+    assert.match(text, /^Conjecture 2\.3\. Every toy ring is finite\.$/m, "a conjecture is not a plain statement");
+    assert.match(text, /^Main Theorem\. C holds\.$/m, "\\newtheorem* is unnumbered");
+    assert.match(text, /^Question 1\. Is D true\?$/m, "its own counter, not reset by sections");
+  });
+
+  it("gives a reference to a statement its number and, for \\cref and \\autoref, its name", () => {
+    const text = read(shared, String.raw`\section{Intro}\section{Results}
+\begin{lem}\label{l}A.\end{lem}
+\begin{thm}\label{t}B.\end{thm}
+\begin{proof}[Proof of Theorem~\ref{t}] By Lemma~\ref{l}. \end{proof}
+\begin{proof} Trivial. \end{proof}
+Conjecture~\ref{c} is open; see \cref{t}, \Cref{l} and \autoref{t}.
+\begin{conj}\label{c}C.\end{conj}`);
+    assert.match(text, /^Proof of Theorem 2\.2\. By Lemma 2\.1\.$/m, "a proof's title replaces 'Proof'");
+    assert.match(text, /^Proof\. Trivial\.$/m);
+    assert.match(text, /Conjecture 2\.3 is open; see Theorem 2\.2, Lemma 2\.1 and Theorem 2\.2\./);
+    assert.doesNotMatch(text, /Section 2\b/, "no reference to a statement gives its section");
+  });
+
+  it("restarts a counter numbered within a section, and letters it in the appendix", () => {
+    const text = read(String.raw`\newtheorem{theorem}{Theorem}[section]\newtheorem{lemma}[theorem]{Lemma}`, String.raw`\section{One}\begin{lemma}A.\end{lemma}\begin{theorem}B.\end{theorem}
+\section*{Unnumbered}\begin{lemma}C.\end{lemma}
+\section{Two}\begin{lemma}D.\end{lemma}
+\appendix\section{Proofs}\begin{lemma}E.\end{lemma}`);
+    assert.deepEqual([...text.matchAll(/^(\w+ [\dA-Z.]+)\./gm)].map((m) => m[1]), ["Lemma 1.1", "Theorem 1.2", "Lemma 1.3", "Lemma 2.1", "Lemma A.1"]);
+  });
+
+  it("numbers by the appendix package's environment as by \\appendix", () => {
+    const text = read(String.raw`\newtheorem{prop}{Proposition}[section]`, String.raw`\section{One}\begin{appendix}\section{Extra}\label{a}\begin{prop}\label{p}A.\end{prop}\end{appendix} See Appendix~\ref{a} and Proposition~\ref{p}.`);
+    assert.match(text, /^## A Extra$/m);
+    assert.match(text, /^Proposition A\.1\. A\.$/m);
+    assert.match(text, /See Appendix A and Proposition A\.1\./);
+  });
+
+  it("shares a counter through aliascnt, thmtools and equations, and numbers equations within sections", () => {
+    const text = read(
+      String.raw`\newtheorem{thm}{Theorem}[section]
+\newaliascnt{lem}{thm}\newtheorem{lem}[lem]{Lemma}
+\declaretheorem[name=Proposition, sibling=thm]{prop}
+\declaretheorem[numbered=no]{remark}
+\newtheorem{fact}[equation]{Fact}
+\numberwithin{equation}{section}`,
+      String.raw`\section{One}
+\begin{thm}A.\end{thm}
+\begin{lem}\label{l}B.\end{lem}
+\begin{prop}C.\end{prop}
+\begin{remark}D.\end{remark}
+\begin{equation}\label{e} x = 1 \end{equation}
+\begin{fact}E.\end{fact}
+\begin{equation*} y = 2 \tag{$\ast$}\label{s} \end{equation*}
+By Lemma~\ref{l}, \eqref{e} and \eqref{s}.`,
+    );
+    assert.deepEqual([...text.matchAll(/^(\w+(?: [\d.]+)?)\./gm)].map((m) => m[1]), ["Theorem 1.1", "Lemma 1.2", "Proposition 1.3", "Remark", "Fact 1.2"]);
+    assert.match(text, /^x = 1 \(1\.1\)$/m, "the equation counter, within its section, which the fact shares");
+    assert.match(text, /^y = 2 \(∗\)$/m, "a \\tag is the number, read as text");
+    assert.match(text, /By Lemma 1\.2, \(1\.1\) and \(∗\)\./);
+  });
+
+  it("prints a counter as the paper's \\the… macro does, and a book's sections with their chapter", () => {
+    const lettered = read(String.raw`\newtheorem{main}{Theorem}\renewcommand{\themain}{\Alph{main}}\newtheorem{theoremA}{Theorem}\renewcommand{\thetheoremA}{Z}`, String.raw`\begin{main}A.\end{main}\begin{main}B.\end{main}\begin{theoremA}C.\end{theoremA}`);
+    assert.deepEqual([...lettered.matchAll(/^Theorem (\w+)\./gm)].map((m) => m[1]), ["A", "B", "Z"]);
+    const book = latexToText(new Map([["main.tex", String.raw`\documentclass{amsbook}\newtheorem{thm}{Theorem}\numberwithin{thm}{section}
+\begin{document}\chapter{Start}\section{A}\section{B}\begin{thm}\label{t}X.\end{thm} By Theorem~\ref{t}.\end{document}`]]))!.text;
+    assert.match(book, /^Theorem 1\.2\.1\. X\.$/m);
+    assert.match(book, /By Theorem 1\.2\.1\./);
+  });
+
+  it("still heads a standard statement no declaration names, unnumbered, and leaves a statement's equations their own labels", () => {
+    const text = read("", String.raw`\section{One}\begin{theorem}\label{t}It holds that \begin{equation}\label{e} a = b \end{equation}\end{theorem}
+\begin{conjecture}C.\end{conjecture} See \eqref{e}.`);
+    assert.match(text, /^Theorem\. It holds that$/m);
+    assert.match(text, /^Conjecture\. C\.$/m);
+    assert.match(text, /^a = b \(1\)$/m);
+    assert.match(text, /See \(1\)\./);
+  });
+});
