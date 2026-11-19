@@ -40,6 +40,18 @@ export interface PdfLine {
  */
 const TOUCHING = 0.12;
 
+/**
+ * A superscript is raised by at least this share of its line's text height, and set at most `SMALLER`
+ * of it (harness 0.91.0): reportlab and LaTeX raise an exponent by about half the height, at about 70%
+ * of the size.
+ */
+const RAISED = 0.25;
+const SMALLER = 0.9;
+/** Digits and signs as superscripts: an exponent "10<sup>5</sup>" is "10⁵", not "105". */
+const SUPERSCRIPT: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "−": "⁻", "–": "⁻", "+": "⁺" };
+const RAISABLE = /^[0-9+\-−–]+$/;
+const raise = (text: string) => [...text].map((c) => SUPERSCRIPT[c] ?? c).join("");
+
 /** Whether a piece is laid out left to right and not rotated, so its x and width can be compared. */
 function upright(item: PdfTextItem): boolean {
   const t = item.transform;
@@ -49,6 +61,11 @@ function upright(item: PdfTextItem): boolean {
 /**
  * A page's lines. A line ends where pdf.js marks one (`hasEOL`). Within a line, a piece that starts
  * where the one before it ended is joined to it without a space; others are joined with one, as before.
+ *
+ * Since harness 0.91.0, a piece of digits and signs set raised and smaller than the text around it is a
+ * superscript, written as one ("10⁵", "cm⁻³", "⁸⁷Rb"). Joined to the text before it, an exponent read as
+ * part of its base: the physics suite's PDF gave "2.0 × 10<sup>5</sup> atoms" as "2.0 × 105 atoms". A
+ * superscript before the text it belongs to ("<sup>87</sup>Rb") is found when that text follows.
  */
 export function pageLines(items: PdfTextItem[]): PdfLine[] {
   const lines: PdfLine[] = [];
@@ -56,15 +73,31 @@ export function pageLines(items: PdfTextItem[]): PdfLine[] {
   // Where the previous piece ended, and how tall the text around it is; undefined when unknown.
   let end: number | undefined;
   let size = 0;
+  // The baseline and height of the line's last piece set at the text's size, and the last piece itself.
+  let base: { y: number; h: number } | undefined;
+  let last: { y: number; h: number; text: string; raised: boolean } | undefined;
   for (const item of items) {
     if (typeof item.str !== "string") continue;
     const placed = upright(item);
     if (item.str) {
+      const y = placed ? item.transform![5]! : undefined;
+      const h = item.height ?? 0;
+      const raisedAbove = (below: { y: number; h: number } | undefined) => y !== undefined && h > 0 && below !== undefined && y - below.y >= RAISED * below.h && h <= SMALLER * below.h;
+      const raised = RAISABLE.test(item.str.trim()) && raisedAbove(base);
+      // A superscript set before what it belongs to: the piece before this one, raised above it.
+      if (!raised && last && !last.raised && y !== undefined && h > 0 && RAISABLE.test(last.text.trim()) && last.y - y >= RAISED * h && last.h <= SMALLER * h && line.text.endsWith(last.text)) {
+        line.text = line.text.slice(0, -last.text.length) + raise(last.text);
+        last.raised = true;
+      }
       if (line.text && !/\s$/.test(line.text) && !/^\s/.test(item.str)) {
         const touching = placed && end !== undefined && Math.abs(item.transform![4]! - end) <= TOUCHING * Math.max(size, item.height ?? 0, 1);
         if (!touching) line.text += " ";
       }
-      line.text += item.str;
+      line.text += raised ? raise(item.str) : item.str;
+      if (y !== undefined && item.str.trim() && h > 0) {
+        if (!raised) base = { y, h };
+        last = { y, h, text: item.str, raised };
+      }
       if (placed && item.str.trim() && item.height) {
         line.x ??= item.transform![4];
         if (line.h === undefined || item.height > line.h) {
@@ -80,6 +113,8 @@ export function pageLines(items: PdfTextItem[]): PdfLine[] {
       line = { text: "" };
       end = undefined;
       size = 0;
+      base = undefined;
+      last = undefined;
     }
   }
   lines.push(line);

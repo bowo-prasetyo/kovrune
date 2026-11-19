@@ -37,3 +37,11 @@ describe("math in an answer or a quote", () => {
     assert.deepEqual(mathSegments("plain"), [{ text: "plain" }]);
   });
 });
+
+describe("a script that is a command with an argument (harness 0.91.0)", () => {
+  it("reads p_\\mathrm{T} and E_\\text{kin} whole", () => {
+    assert.equal(readableFormula("p_\\mathrm{T} > 30"), "p_T > 30");
+    assert.equal(readableFormula("E_\\text{kin}"), "Eₖᵢₙ");
+    assert.equal(readableFormula("x^{\\mathrm{2}}"), "x²");
+  });
+});

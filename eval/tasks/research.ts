@@ -13,6 +13,11 @@ export interface ResearchTask {
   question: string;
   answerable: boolean;
   facts: string[][];
+  /**
+   * Facts matched in their case (harness 0.91.0), for units whose prefix is only a case apart: "meV" is
+   * not "MeV", nor "mK" "MK". Each group needs one of its options, written as in the answer.
+   */
+  casedFacts?: string[][];
   citations: string[][];
 }
 

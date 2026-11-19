@@ -66,7 +66,9 @@ describe("PDF pages read by layout (harness 0.70.0)", () => {
     assert.match(text, /on-state resistance is RDS\(on\) = 40 mΩ at Tj = 25 °C/);
     assert.match(text, /switching frequency is fsw = 65 kHz/);
     assert.match(text, /range of −25 °C to 55 °C/);
-    assert.match(text, /2\.5 × 10−6 A/);
+    // A raised exponent is a superscript (harness 0.91.0); a quote typed "10−6" still verifies (NFKC).
+    assert.match(text, /2\.5 × 10⁻⁶ A/);
+    assert.equal(checkEvidence([{ docId: "d", quote: "stayed below 2.5 × 10−6 A" }], () => text)[0]!.verified, true);
     assert.match(text, /\n\nII\. CONVERTER DESIGN\n\n/, "a heading is a paragraph of its own");
     assert.equal(text.match(/IEEE TRANSACTIONS ON POWER ELECTRONICS/g)?.length, 1, "the running header, once");
     assert.equal(pageStarts.length, 2);
@@ -89,5 +91,39 @@ describe("quotes of PDF text that sets symbols apart (harness 0.70.0)", () => {
 
   it("still tells a negative number from a positive one", () => {
     assert.equal(verified("tested from 25 °C to 55 °C"), false);
+  });
+});
+
+describe("superscripts in PDF text (harness 0.91.0)", () => {
+  it("writes a raised exponent as a superscript, not as digits of its base", () => {
+    const lines = pageLines([
+      at("holds 2.0 × 10", 50, 700, 60),
+      at("5", 110, 704.8, 4, 7.6),
+      at(" atoms at 2.5 × 10", 114, 700, 70),
+      at("14", 184, 704.8, 8, 7.6),
+      at(" cm", 192, 700, 12),
+      at("−", 204, 704.8, 4, 7.6),
+      at("3", 208, 704.8, 4, 7.6, true),
+    ]);
+    assert.deepEqual(lines.map((l) => l.text), ["holds 2.0 × 10⁵ atoms at 2.5 × 10¹⁴ cm⁻³"]);
+  });
+
+  it("finds a superscript set before what it belongs to, and leaves subscripts and same-size digits alone", () => {
+    const isotope = pageLines([at("condensates of ", 50, 700, 60), at("87", 110, 704.8, 8, 7.6), at("Rb atoms", 118, 700, 35, 10, true)]);
+    assert.deepEqual(isotope.map((l) => l.text), ["condensates of ⁸⁷Rb atoms"]);
+    const sub = pageLines([at("a = 100 a", 50, 700, 40), at("0", 90, 695.3, 4, 7.6), at(" here", 94, 700, 20, 10, true)]);
+    assert.deepEqual(sub.map((l) => l.text), ["a = 100 a0 here"]);
+    const cell = pageLines([at("Load 20%", 50, 700, 40), at("97.1%", 120, 700, 25, 10, true)]);
+    assert.deepEqual(cell.map((l) => l.text), ["Load 20% 97.1%"]);
+  });
+
+  it("reads the physics suite's PDF with its powers of ten", async () => {
+    const pdfjs = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as unknown as PdfJsLike;
+    const { text } = await extractPdfText(new Uint8Array(await readFile(new URL("../eval/physics/docs/rb87-bec-paper.pdf", import.meta.url))), pdfjs);
+    assert.match(text, /The final condensate\nholds 2\.0 × 10⁵ atoms\./);
+    assert.match(text, /peak density of 2\.5 × 10¹⁴ cm⁻³/);
+    assert.match(text, /pressure of 3 × 10⁻¹¹ mbar/);
+    assert.match(text, /condensates of ⁸⁷Rb/);
+    assert.doesNotMatch(text, /× 105/);
   });
 });

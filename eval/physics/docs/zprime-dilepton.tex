@@ -1,0 +1,87 @@
+% A made-up search paper for the Kovrune physics suite (eval/physics/README.md). The collaboration,
+% detector and results are invented. Written as particle-physics papers on arXiv often are: hepunits for
+% units, the paper's own macros for luminosity and particle names, numbers with asymmetric uncertainties.
+\documentclass[aps,prd,twocolumn,nofootinbib]{revtex4-2}
+\usepackage{amsmath}
+\usepackage{hepunits}
+\usepackage{graphicx}
+\newcommand{\ifb}{\ensuremath{\text{fb}^{-1}}}
+\newcommand{\Zprime}{\ensuremath{Z'}}
+\newcommand{\ZSSM}{\ensuremath{Z'_\mathrm{SSM}}}
+\newcommand{\Zpsi}{\ensuremath{Z'_\psi}}
+\newcommand{\pt}{\ensuremath{p_\mathrm{T}}}
+\newcommand{\mll}{\ensuremath{m_{\ell\ell}}}
+\newcommand{\sqs}{\ensuremath{\sqrt{s}}}
+
+\begin{document}
+
+\title{Search for high-mass resonances in dielectron and dimuon final states with \mbox{139 \ifb} of proton--proton collisions at \sqs{} = 13\,\TeV{} with the HORIZON detector}
+
+\author{The HORIZON Collaboration}
+
+\begin{abstract}
+A search for new resonances decaying into two electrons or two muons is presented, using \mbox{139\,\ifb} of proton--proton collisions at \sqs{} = 13\,\TeV{} recorded by the HORIZON detector from 2015 to 2018. The dilepton invariant mass spectrum is examined between 250\,\GeV{} and 6\,\TeV. No significant excess over the Standard Model expectation is observed. The largest deviation, in the dielectron channel at a mass of 774\,\GeV, has a local significance of $3.1\sigma$ and a global significance of $1.4\sigma$. Upper limits are set on the cross section times branching ratio of a new resonance. The sequential Standard Model \ZSSM{} is excluded below a mass of 5.1\,\TeV{} at 95\% confidence level (CL), and the \Zpsi{} of the $E_6$ model below 4.5\,\TeV.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Many extensions of the Standard Model (SM) predict new heavy neutral gauge bosons, generically called \Zprime{} bosons, that couple to leptons. A resonance decaying into an electron or muon pair would appear as a narrow peak in the dilepton invariant mass \mll{} above a smoothly falling background, dominated by the Drell--Yan process. This makes the dilepton channels among the most sensitive to such states.
+
+This paper uses the full data set of the second running period, with an integrated luminosity of 139\,\ifb{} at \sqs{} = 13\,\TeV. Two benchmark models are considered: the sequential Standard Model (SSM), in which the \ZSSM{} has the same couplings to fermions as the SM $Z$ boson, and the \Zpsi{} of the $E_6$ grand unified theory, whose couplings are weaker.
+
+\section{Event selection}
+
+Events were recorded with dielectron and single-muon triggers. Electron candidates must have $\pt > 30\,\GeV$ and pseudorapidity $|\eta| < 2.47$, excluding the transition region $1.37 < |\eta| < 1.52$ between the barrel and endcap calorimeters. Muon candidates must have $\pt > 30\,\GeV$ and $|\eta| < 2.5$. Both leptons must be isolated, and events with two same-flavour leptons are kept; the two channels do not overlap.
+
+For a \ZSSM{} with a mass of 2\,\TeV, the signal efficiency, including acceptance, trigger, reconstruction and selection, is 71\% in the dielectron channel and 48\% in the dimuon channel. The lower dimuon efficiency comes from the stringent requirements on the muon spectrometer hits that keep the momentum resolution at high \pt{} under control.
+
+The dielectron mass resolution is 1.0\% at 1\,\TeV. The dimuon mass resolution degrades with mass and reaches 8\% at 3\,\TeV, because the curvature of high-momentum muon tracks is small.
+
+\section{Background estimate}
+
+The background is dominated by Drell--Yan production, with smaller contributions from top-quark pairs, single top quarks, dibosons and, in the dielectron channel, multijet events with misidentified electrons. The \mll{} distribution is fitted with a smooth function whose normalization is constrained by the Drell--Yan simulation. The fitted normalization of the Drell--Yan background relative to the simulation is $1.05^{+0.09}_{-0.08}$, consistent with unity.
+
+\section{Systematic uncertainties}
+
+The main systematic uncertainties on the signal and on the background are listed in Table~\ref{tab:syst}. They are evaluated at the masses where they matter most. The theoretical uncertainty from the parton distribution functions (PDF) dominates at high mass.
+
+\begin{table}
+\caption{Main systematic uncertainties on the expected signal yield, at the mass given for each source.}
+\label{tab:syst}
+\begin{ruledtabular}
+\begin{tabular}{lcc}
+Source & Mass & Uncertainty \\
+\hline
+Luminosity & all & 1.7\% \\
+Electron energy scale & 1\,\TeV & 0.5\% \\
+Muon momentum scale & 3\,\TeV & 2.0\% \\
+Trigger efficiency & all & 1.0\% \\
+PDF & 5\,\TeV & 8\% \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+\section{Results}
+
+The observed \mll{} spectra agree with the background expectation over the whole range searched. The largest local excess is found in the dielectron channel at $\mll = 774\,\GeV$, with a local significance of $3.1\sigma$. After accounting for the look-elsewhere effect over the mass range from 250\,\GeV{} to 6\,\TeV, its global significance is $1.4\sigma$. No excess above $2\sigma$ local significance is seen in the dimuon channel.
+
+Upper limits at 95\% CL are set on the cross section times branching ratio, $\sigma B$, of a resonance decaying into a lepton pair, using a profile-likelihood test statistic and the CL$_\mathrm{s}$ method. For a resonance with a natural width of 3\% of its mass, the combined upper limit on $\sigma B$ falls from 4.5\,fb at 500\,\GeV{} to 0.020\,fb at 6\,\TeV.
+
+From these limits, lower limits on the resonance masses are derived. The \ZSSM{} is excluded below 4.8\,\TeV{} in the dielectron channel, below 4.6\,\TeV{} in the dimuon channel, and below 5.1\,\TeV{} when the two are combined. The \Zpsi{}, whose cross section is smaller, is excluded below 4.5\,\TeV{} in the combination. Masses above these limits remain allowed.
+
+\section{Conclusion}
+
+A search for dilepton resonances with 139\,\ifb{} of data at \sqs{} = 13\,\TeV{} finds no significant excess. The sequential Standard Model \ZSSM{} is excluded below 5.1\,\TeV{} and the \Zpsi{} below 4.5\,\TeV, at 95\% CL. These limits improve on the previous HORIZON results with 36\,\ifb{} by about 1\,\TeV.
+
+\begin{acknowledgments}
+This paper is made up for the Kovrune physics suite; the HORIZON Collaboration does not exist.
+\end{acknowledgments}
+
+\begin{thebibliography}{2}
+\bibitem{Langacker} P. Langacker, Rev. Mod. Phys. \textbf{81}, 1199 (2009).
+\bibitem{Cowan} G. Cowan, K. Cranmer, E. Gross and O. Vitells, Eur. Phys. J. C \textbf{71}, 1554 (2011).
+\end{thebibliography}
+
+\end{document}

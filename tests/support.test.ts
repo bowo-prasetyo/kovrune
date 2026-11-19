@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { checkEvidence } from "../src/agent/evidence.ts";
-import { inSourceSupport, labelledQuotesFound, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
+import { inSourceSupport, labelledQuotesFound, numbers, plainNumber, sentenceSupport, splitSentences } from "../src/agent/support.ts";
 import { describeStatus } from "../src/app/research/trace.ts";
 
 const ADA = readFileSync(new URL("./fixtures/ada-lovelace-lead.txt", import.meta.url), "utf8");
@@ -669,5 +669,53 @@ describe("each claim of a sentence (harness 0.68.0)", () => {
     assert.equal(backed("Ibuprofen can have adverse effects that include diarrhea, vomiting, and abdominal pain."), true, "a list joined by and");
     assert.equal(backed("The llama.cpp server is the supported local server, while Ollama is experimental."), true);
     assert.equal(backed("The llama.cpp server is the supported local server, while Ollama is marked as experimental in the design documentation."), false);
+  });
+});
+
+describe("numbers in LaTeX, concise and asymmetric uncertainties, and significances (harness 0.91.0)", () => {
+  const q = (quote: string, docId = "paper") => ({ docId, quote });
+
+  it("reads a quote's numbers through its LaTeX math", () => {
+    const quote = q("The branching ratio is $1.2\\times10^{-3}$ for this decay channel.");
+    assert.equal(marks("The branching ratio is 1.2 × 10⁻³ for this decay channel.", [quote]), "+");
+    assert.equal(marks("The branching ratio is 0.0012 for this decay channel.", [quote]), "+");
+    assert.equal(marks("The branching ratio is 1.2 × 10^3 for this decay channel.", [quote]), "-");
+    const gap = q("We obtain $\\Delta = 0.75(3)$ meV for sample S1 at low temperature.");
+    assert.equal(marks("The gap Δ is 0.75 meV for sample S1 at low temperature.", [gap]), "+");
+    assert.equal(marks("The gap Δ is 0.75 MeV for sample S1 at low temperature.", [gap]), "-");
+  });
+
+  it("reads a concise uncertainty as a value plus or minus its last digits", () => {
+    const quote = q("The fitted gap of sample S1 is 1.50(5) meV and the coherence length is 13.5(4) nm.");
+    assert.equal(marks("The fitted gap of sample S1 is 1.50 ± 0.05 meV and the coherence length is 13.5 ± 0.4 nm.", [quote]), "+");
+    assert.equal(marks("The fitted gap of sample S1 is 1.50 ± 0.07 meV and the coherence length is 13.5 ± 0.4 nm.", [quote]), "-");
+    // Parentheses after a word or a space are not an uncertainty.
+    assert.deepEqual(numbers("as in Fig. 1(b), Eq. (3) and the 2020 (3) run"), ["1", "3", "2020", "3"]);
+    assert.deepEqual(numbers("a gap of 0.75(3) meV"), ["0.75", "0.03"]);
+  });
+
+  it("gives a value with asymmetric uncertainties the unit after them", () => {
+    const quote = q("The resonance mass is measured as $m = 2.10^{+0.12}_{-0.09}$ TeV in the combined fit.");
+    assert.equal(marks("The resonance mass is measured as 2.10 TeV in the combined fit.", [quote]), "+");
+    assert.equal(marks("The resonance mass is measured as 2.10 GeV in the combined fit.", [quote]), "-");
+  });
+
+  it("reads σ, sigma and standard deviations as one unit, and a number with σ as a quantity, not a name", () => {
+    const quote = q("The signal is observed with a significance of 5.9 standard deviations.");
+    assert.equal(marks("The signal is observed with a significance of 5.9σ.", [quote]), "+");
+    assert.equal(marks("The signal is observed with a significance of 5.9 sigma.", [quote]), "+");
+    assert.equal(marks("The signal is observed with a significance of 5.9 GeV.", [quote]), "-");
+    assert.equal(marks("The signal is observed with a significance of 3.9σ.", [quote]), "-");
+  });
+
+  it("does not add or subtract the digits of a formula or a sample's name", () => {
+    // The physics suite's "an uncertainty of 4 nm", for 13.5(4) nm, was backed as 5 − 1: CsKa3Sb5 and S1.
+    const quote = q("For sample S1 we obtain a Ginzburg–Landau coherence length $\\xi = 13.5(4)$ nm.", "kagome");
+    const title = () => "Pair-density-wave order in the kagome metal CsKa3Sb5";
+    assert.equal(marks("The coherence length of CsKa3Sb5 sample S1 is 13.5 nm with an uncertainty of 4 nm.", [quote], title), "-");
+    assert.equal(marks("The coherence length of CsKa3Sb5 sample S1 is 13.5 nm with an uncertainty of 0.4 nm.", [quote], title), "+");
+    // Quantities still give a difference: "by 30,000" from 180,000 and 150,000.
+    const sales = q("Sales rose from 150,000 units in 2022 to 180,000 units in 2023.");
+    assert.equal(marks("Sales rose by 30,000 units from 2022 to 2023.", [sales]), "+");
   });
 });

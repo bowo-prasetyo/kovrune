@@ -15,6 +15,7 @@ import { clinicalDocuments, clinicalHoldoutTasks, clinicalTasks } from "../eval/
 import { csDocuments, csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
 import { labDocuments, labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
 import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from "../eval/engineering/tasks.ts";
+import { physicsDocuments, physicsHoldoutTasks, physicsTasks } from "../eval/physics/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -208,7 +209,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -556,5 +557,62 @@ describe("engineering suite", () => {
       assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
     }
     assert.ok(engineeringHoldoutTasks.length >= engineeringTasks.length / 3, "a quarter or more of all is held out");
+  });
+});
+
+describe("physics suite", () => {
+  it("reads six made-up physics documents, three of them LaTeX sources, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(physicsDocuments.length, 6);
+    assert.equal(suite.physicsLibrary.documents.filter((d) => !d.id.includes("#")).length, physicsDocuments.length, "only the physics documents");
+    assert.equal(suite.library.documentFor("kagome-pdw-letter"), undefined, "the field suite's library is unchanged");
+    const letter = suite.physicsLibrary.documentFor("kagome-pdw-letter")!.text;
+    const search = suite.physicsLibrary.documentFor("zprime-dilepton")!.text;
+    const hubble = suite.physicsLibrary.documentFor("hubble-cepheids")!.text;
+    const bec = suite.physicsLibrary.documentFor("rb87-bec-paper")!.text;
+    // What makes physics text hard: siunitx units, hepunits and the paper's own macros, per-mode=symbol,
+    // concise and asymmetric uncertainties, and raised exponents in a PDF.
+    assert.match(letter, /At 300 mK the tunneling spectra show a superconducting gap of \$\\Delta = 0\.75\(3\) meV\$/);
+    assert.match(letter, /\| S3 \| 1\.7 \| 0\.55\(5\) \| 1\.21\(8\) \| 9 \|/);
+    assert.match(search, /using 139 fb⁻¹ of proton–proton collisions at √s = 13 TeV/);
+    assert.match(search, /\$1\.05\^\{\+0\.09\}_\{-0\.08\}\$/);
+    assert.match(hubble, /The distance to NGC 4258 from the Keplerian motion of its water megamaser is \(7\.58 ± 0\.08\) Mpc\./);
+    assert.match(hubble, /higher by 5\.6 km\/\(s Mpc\)/);
+    assert.match(bec, /holds 2\.0 × 10⁵ atoms\./);
+    assert.match(suite.physicsLibrary.documentFor("pressure-transport")!.text, /pressure_GPa: 1\.0 \| Tc_onset_K: 3\.1/);
+  });
+
+  it("asks only for facts its cited documents contain, in their case where it matters, about every document, with a third held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...physicsTasks, ...physicsHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations, task.casedFacts], [[], [], undefined], task.id);
+        continue;
+      }
+      const raw = task.citations.flat().map((id) => suite.physicsLibrary.documentFor(id)!.text).join(" ");
+      const text = normalize(raw);
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+      for (const group of task.casedFacts ?? []) assert.ok(group.some((option) => raw.includes(option)), `${task.id}: none of ${JSON.stringify(group)} is in its documents, in its case`);
+    }
+    for (const tasks of [physicsTasks, physicsHoldoutTasks]) {
+      const cited = new Set(tasks.flatMap((t) => t.citations.flat()));
+      assert.deepEqual([...cited].sort(), physicsDocuments.map((d) => d.id).sort(), "every document is asked about");
+      assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
+    }
+    assert.ok(physicsHoldoutTasks.length >= physicsTasks.length / 3, "a quarter or more of all is held out");
+  });
+});
+
+describe("facts scored in their case (harness 0.91.0)", () => {
+  const task = physicsTasks.find((t) => t.id === "ph01-gap")!;
+  const library = new ResearchLibrary(physicsDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
+  const result = (answer: string) =>
+    ({ status: "verified", final: { found: true, answer, evidence: [{ docId: "kagome-pdw-letter", quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
+
+  it("passes meV and millielectronvolts, and fails MeV, which lower case would pass", () => {
+    assert.equal(scoreResearch(task, result("The gap of sample S1 is 0.75 meV."), library).passed, true);
+    assert.equal(scoreResearch(task, result("The gap of sample S1 is 0.75 millielectronvolts."), library).passed, true);
+    const wrong = scoreResearch(task, result("The gap of sample S1 is 0.75 MeV."), library);
+    assert.deepEqual([wrong.passed, wrong.checks.facts, wrong.checks.casedFacts], [false, true, false]);
   });
 });

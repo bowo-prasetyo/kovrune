@@ -1,0 +1,78 @@
+% A made-up cosmology paper for the Kovrune physics suite (eval/physics/README.md). The authors, the
+% survey and the result are invented; some anchor distances are close to published ones. Written with
+% siunitx in per-mode=symbol and units of the paper's own (\DeclareSIUnit), as astronomy papers often are.
+\documentclass[twocolumn]{aastex631}
+\usepackage{siunitx}
+\sisetup{per-mode = symbol}
+\DeclareSIUnit\parsec{pc}
+\DeclareSIUnit\mag{mag}
+\newcommand{\Hnought}{H_0}
+\newcommand{\kmsMpc}{\si{\kilo\metre\per\second\per\mega\parsec}}
+
+\begin{document}
+
+\title{A 1.4\% Determination of the Hubble Constant from Cepheids and Type Ia Supernovae in the LUMEN Survey}
+
+\author{Priya Raghunathan}
+\affiliation{Department of Astronomy, Northgate University}
+\author{Jonas Ekholm}
+\affiliation{Observatory of the Western Isles}
+
+\begin{abstract}
+We measure the Hubble constant from 42 type Ia supernovae (SNe~Ia) in 37 host galaxies whose distances are calibrated with Cepheid variables observed by the LUMEN space telescope. Three geometric anchors set the zero point of the Cepheid period--luminosity relation: parallaxes of Milky Way Cepheids, detached eclipsing binaries in the Large Magellanic Cloud, and the water megamaser in NGC~4258. We find $\Hnought = \SI{73.0 +- 1.0}{\kilo\metre\per\second\per\mega\parsec}$, a total uncertainty of 1.4\%. This value differs from the prediction of the $\Lambda$CDM model calibrated by the cosmic microwave background, $\Hnought = \SI{67.4 +- 0.5}{\kilo\metre\per\second\per\mega\parsec}$, by $5.0\sigma$.
+\end{abstract}
+
+\section{Introduction}
+
+The expansion rate of the universe today, the Hubble constant $\Hnought$, can be measured directly with a distance ladder or inferred from the early universe by fitting a cosmological model to the cosmic microwave background (CMB). The two approaches have disagreed for a decade, and the disagreement, known as the Hubble tension, has grown more significant as both have become more precise. Either an unrecognized systematic error remains in one of the methods, or the standard $\Lambda$CDM model is incomplete.
+
+The distance ladder has three rungs. Geometric distances calibrate the luminosity of Cepheid variables; Cepheids in nearby galaxies that also hosted SNe~Ia calibrate the peak luminosity of the supernovae; and SNe~Ia in the Hubble flow, far enough that peculiar velocities matter little, give $\Hnought$. Here we present the first result of the LUMEN survey, which observed Cepheids in all 37 hosts with a single instrument and photometric system.
+
+\section{Anchors}
+
+We use three geometric anchors. The parallaxes of 75 Milky Way Cepheids come from astrometry with a precision better than 10\% each. The distance to the Large Magellanic Cloud from detached eclipsing binaries is \SI{49.59 +- 0.55}{\kilo\parsec}. The distance to NGC~4258 from the Keplerian motion of its water megamaser is \SI{7.58 +- 0.08}{\mega\parsec}.
+
+The anchors agree with each other: fitting the period--luminosity relation with each anchor alone gives values of $\Hnought$ that differ by less than their uncertainties. The slope of the relation in the near infrared is \SI{-3.30 +- 0.03}{\mag} per decade in period.
+
+\section{Hosts and supernovae}
+
+The 37 host galaxies lie at distances between \SI{6.9}{\mega\parsec} and \SI{40}{\mega\parsec}. In each we identified between 25 and 260 Cepheids with periods between 10 and 80 days. Table~\ref{tab:hosts} gives the distances of four representative hosts. The 42 SNe~Ia they hosted were standardized with the SALT light-curve fitter.
+
+\begin{table}
+\caption{Four of the 37 Cepheid hosts: distance modulus from the Cepheids, distance, and number of Cepheids used.}
+\label{tab:hosts}
+\begin{tabular}{lccc}
+\hline
+Host & $\mu_0$ (\si{\mag}) & $D$ (\si{\mega\parsec}) & Cepheids \\
+\hline
+NGC 1309 & \num{32.52 +- 0.06} & 31.9 & 61 \\
+NGC 3972 & \num{31.64 +- 0.09} & 21.3 & 52 \\
+NGC 5584 & \num{31.81 +- 0.05} & 23.0 & 165 \\
+M101 & \num{29.19 +- 0.04} & 6.9 & 259 \\
+\hline
+\end{tabular}
+\end{table}
+
+The Hubble-flow sample contains 277 SNe~Ia at redshifts $0.023 < z < 0.15$. The lower bound keeps the effect of peculiar velocities small: we assign each supernova a velocity uncertainty of \SI{250}{\kilo\metre\per\second}, which at $z = 0.023$ is 3.6\% of the recession velocity. The upper bound limits the dependence on the deceleration parameter, which we fix at $q_0 = -0.55$.
+
+\section{Result}
+
+A simultaneous fit of the three rungs gives
+\begin{equation}
+\Hnought = 73.0 \pm 1.0 \ \mathrm{km\,s^{-1}\,Mpc^{-1}},
+\label{eq:h0}
+\end{equation}
+where the uncertainty includes statistical and systematic errors. The largest contributions to the error budget are the anchor distances (0.7 \kmsMpc), the Cepheid photometry in the hosts (0.4 \kmsMpc) and the number of calibrating supernovae (0.5 \kmsMpc). The total of 1.0 \kmsMpc{} is a 1.4\% uncertainty on $\Hnought$.
+
+The CMB, analysed with the six-parameter $\Lambda$CDM model, predicts $\Hnought = \SI{67.4 +- 0.5}{\kilo\metre\per\second\per\mega\parsec}$. Our value is higher by \SI{5.6}{\kilo\metre\per\second\per\mega\parsec}, a difference of $5.0\sigma$ when the two uncertainties are combined in quadrature. Changing the reddening law, the Cepheid period range or the treatment of crowding changes $\Hnought$ by less than 0.4 \kmsMpc{} each, far less than the difference.
+
+\section{Discussion}
+
+The tension is not reduced by using any single anchor, nor by restricting the sample to hosts closer than \SI{20}{\mega\parsec}, where the Cepheids are least affected by crowding. If it is not a systematic error, it points to physics beyond $\Lambda$CDM in the early universe, for example an additional component of dark energy before recombination that would reduce the sound horizon. We do not test such models here.
+
+\begin{thebibliography}{2}
+\bibitem{Planck} Planck Collaboration, Astron. Astrophys. \textbf{641}, A6 (2020).
+\bibitem{Riess} A. G. Riess \textit{et al.}, Astrophys. J. Lett. \textbf{934}, L7 (2022).
+\end{thebibliography}
+
+\end{document}

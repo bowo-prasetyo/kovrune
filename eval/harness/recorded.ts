@@ -13,6 +13,7 @@ import { holdoutTasks } from "../field/holdout.ts";
 import { multiHoldoutTasks, multiTasks } from "../field/multi.ts";
 import { clinicalHoldoutTasks, clinicalTasks } from "../clinical/tasks.ts";
 import { engineeringHoldoutTasks, engineeringTasks } from "../engineering/tasks.ts";
+import { physicsHoldoutTasks, physicsTasks } from "../physics/tasks.ts";
 import { csHoldoutTasks, csTasks } from "../cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
@@ -37,6 +38,8 @@ export async function loadSuites(): Promise<Record<string, { library: ResearchLi
     clinicalholdout: { library: field.clinicalLibrary, tasks: clinicalHoldoutTasks },
     engineering: { library: field.engineeringLibrary, tasks: engineeringTasks },
     engineeringholdout: { library: field.engineeringLibrary, tasks: engineeringHoldoutTasks },
+    physics: { library: field.physicsLibrary, tasks: physicsTasks },
+    physicsholdout: { library: field.physicsLibrary, tasks: physicsHoldoutTasks },
     cs: { library: field.csLibrary, tasks: csTasks },
     csholdout: { library: field.csLibrary, tasks: csHoldoutTasks },
     lab: { library: field.labLibrary, tasks: labTasks },

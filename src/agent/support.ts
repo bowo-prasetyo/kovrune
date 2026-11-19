@@ -4,6 +4,7 @@
 // few words with them are marked. This is a word-overlap heuristic, not a proof.
 
 import { words } from "../documents/scripts.ts";
+import { readableMath } from "../documents/math.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
 import type { Completeness } from "./completeness.ts";
@@ -122,6 +123,20 @@ function powerOfTen(mantissa: string, exponent: string): string {
 }
 
 /**
+ * A concise uncertainty written out (harness 0.91.0): "1.50(5)" is "1.50 ± 0.05", "13.5(4)" is
+ * "13.5 ± 0.4" and "125(3)" is "125 ± 3", as physics papers and siunitx write a value with the uncertainty
+ * of its last digits in parentheses. Only digits right before the parentheses count, so "Eq. (3)",
+ * "Fig. 1(b)" and "2020 (3)" are left alone.
+ */
+function concise(text: string): string {
+  return text.replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+)(?:\.(\p{Nd}+))?\((\p{Nd}{1,2})\)/gu, (all, whole: string, decimals: string | undefined, digits: string) => {
+    const places = decimals?.length ?? 0;
+    const value = `${whole}${decimals !== undefined ? `.${decimals}` : ""}`;
+    return `${value} ± ${(Number(digits) / 10 ** places).toFixed(places)}`;
+  });
+}
+
+/**
  * A text made ready for reading its numbers and units (harness 0.67.0), as normalizeForMatch makes it
  * but with letters in their case, since "mW" is not "MW":
  * - a superscript exponent stays an exponent: "10⁻³" is 10^-3, where compatibility forms alone give
@@ -129,10 +144,12 @@ function powerOfTen(mantissa: string, exponent: string): string {
  * - a minus sign standing apart from its number is joined to it: pdf.js gives "− 25 °C" for "−25 °C";
  * - powers of ten are written out, so "1.2 × 10^-3", "1.2×10⁻³", "1.2e-3" and "0.0012" are one number,
  *   and "10^-3" is not 10^3. A power after "×" needs "^" or a sign, so "4 × 10 mm" stays a size;
- * - a prefix the PDF set apart from its unit symbol is joined to it: "40 m Ω" is "40 mΩ", "° C" is "°C".
+ * - a prefix the PDF set apart from its unit symbol is joined to it: "40 m Ω" is "40 mΩ", "° C" is "°C";
+ * - since harness 0.91.0, LaTeX math is read as math.ts reads it, so "$1.2\times10^{-3}$" is "1.2×10⁻³",
+ *   and a concise uncertainty is written out (concise).
  */
 function numberText(text: string): string {
-  const raised = text
+  const raised = concise(text.includes("$") || text.includes("\\") ? readableMath(text) : text)
     .replace(/(\p{Nd})([⁺⁻]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+)/gu, (_, digit: string, power: string) => `${digit}^${[...power].map((c) => SUPERSCRIPTS[c]).join("")}`)
     .replace(/−\s+(?=\p{Nd})/gu, "−");
   return normalizeForMatch(raised, { keepCase: true })
@@ -159,6 +176,15 @@ function signed(sign: string | undefined, digits: string): string {
  */
 export function numbers(text: string): string[] {
   return [...numberText(text).matchAll(new RegExp(NUMBER, "gu"))].map(([, sign, digits]) => signed(sign, digits!));
+}
+
+/**
+ * The numbers of a text that are quantities (harness 0.91.0): not digits written right after a letter,
+ * which belong to a name or a formula, "CsKa3Sb5", "sample S1" or "H2O". The physics suite's answer "an
+ * uncertainty of 4 nm", for 13.5(4) nm, was backed as 5 − 1, from its paper's title and its sample's name.
+ */
+function quantities(text: string): string[] {
+  return numbers(text.replace(/(?<=\p{L})\p{Nd}+/gu, (digits) => "x".repeat(digits.length)));
 }
 
 /**
@@ -190,11 +216,12 @@ export function signDropped(n: string, others: Set<string>, ownFalls: boolean, o
  * difference of two quoted numbers, as answers to "by how much" give ("by 30,000" from 180,000
  * and 150,000). Only numbers within a factor of ten of each other are compared quantities, so
  * "2021" does not pass as 2024 minus version 3.0. Signs count (numbers), but a sentence saying a value
- * fell may give the size of a negative quoted number (signDropped).
+ * fell may give the size of a negative quoted number (signDropped). Only `quantities` are added and
+ * subtracted: since harness 0.91.0, not the digits of a name or formula (quantities).
  */
-function numberCheck(quoted: string[], asked: string[], quotesFall: boolean): (n: string, sentenceFalls: boolean) => boolean {
+function numberCheck(quoted: string[], asked: string[], quotesFall: boolean, quantities: string[] = quoted): (n: string, sentenceFalls: boolean) => boolean {
   const known = new Set([...quoted, ...asked]);
-  const values = [...new Set(quoted.map(Number).filter((v) => v > 0))];
+  const values = [...new Set(quantities.map(Number).filter((v) => v > 0))];
   const comparable = (a: number, b: number) => a !== b && Math.max(a, b) <= 10 * Math.min(a, b);
   const derived = new Set(values.flatMap((a) => values.filter((b) => comparable(a, b)).flatMap((b) => [a + b, Math.abs(a - b)])));
   return (n, sentenceFalls) => known.has(n) || derived.has(Number(n)) || signDropped(n, known, sentenceFalls, quotesFall);
@@ -439,6 +466,9 @@ const UNITS: Array<[string, RegExp]> = [
   ["aa", /^(?:aa|residues?)$/],
   ["CFU", /^cfus?$/],
   ["PFU", /^pfus?$/],
+  // A significance in standard deviations (harness 0.91.0): "5.9σ", "5.9 sigma" and "5.9 standard deviations"
+  // are one unit, so a significance is not backed by the same number in GeV.
+  ["σ", /^(?:σ|sigma|standard)$/],
 ];
 
 /** The unit a word after a number names: an engineering symbol in its own case, or another unit in any case. */
@@ -677,8 +707,11 @@ function directionsBacked(text: string, quoted: Set<string>): boolean {
   });
 }
 
-/** An uncertainty after a value, and the unit after both: " ± 0.14 GeV", " ± 0.01) meV". */
-const UNCERTAINTY_UNIT = new RegExp(String.raw`^\s*[±∓]\s*\p{Nd}+(?:[.,]\p{Nd}+)*\)?\s?(%|°?[\p{L}]+[☉⊙]?)`, "u");
+/**
+ * Uncertainties after a value, and the unit after them: " ± 0.14 GeV", " ± 0.01) meV", and since harness
+ * 0.91.0 an asymmetric one as math.ts writes it, "^(+0.09)_(-0.08) TeV".
+ */
+const UNCERTAINTY_UNIT = new RegExp(String.raw`^(?:\s*(?:[±∓]\s*|\^\(?|_\(?)[-+−]?\s*\p{Nd}+(?:[.,]\p{Nd}+)*\)?)+\)?\s?(%|°?[\p{L}]+[☉⊙]?)`, "u");
 
 /**
  * The units a text gives its numbers, as "number unit" pairs ("8 GB" is "8 GB"; "4,096 tokens" is
@@ -841,7 +874,8 @@ export function sentenceSupport(
   const subjectWords = contentWords(verified.map((e) => titleFor(e.docId) ?? "").join(" "));
   const quoted = [...new Set(verified.flatMap((e) => [...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]))];
   const quoteText = verified.map((e) => e.quote).join("\n");
-  const numberBacked = numberCheck(quoted, question ? numbers(question) : [], saysFall(quoteText));
+  const sources = verified.flatMap((e) => [e.quote, titleFor(e.docId) ?? ""]);
+  const numberBacked = numberCheck(quoted, question ? numbers(question) : [], saysFall(quoteText), [...new Set(sources.flatMap(quantities))]);
   const negating = verified
     .filter((e) => hasNegation(e.quote))
     .map((e) => ({ words: contentWords(e.quote), numbers: new Set([...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]) }));
@@ -1077,6 +1111,8 @@ function nameWords(text: string): string[] {
 function distinguishingNames(text: string): string[] {
   return nameWords(text).flatMap((word) => {
     const key = nameKey(word);
+    // A number and a Greek letter is a quantity, "5.9σ", not a name (harness 0.91.0).
+    if (/^[\p{Nd}.,]+\p{Script=Greek}$/u.test(word.normalize("NFKC"))) return [];
     const greek = GREEK_LETTER.test(word) || GREEK_NAME_END.test(key);
     const genotype = /[+-]\/[+-]$/.test(key);
     const marker = /[\p{L}\p{Nd}][+]+$/u.test(key) || /[\p{L}\p{Nd}][−⁻]$/u.test(word.normalize("NFKC")) || (/\p{Lu}/u.test(word) && /\p{Nd}-$/u.test(word));
