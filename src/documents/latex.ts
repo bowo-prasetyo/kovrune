@@ -11,11 +11,13 @@
 // - a displayed equation as its LaTeX on a line of its own, then its number: "y = Wx + b (1)";
 // - \cite as the PDF prints it, "(Liu et al., 2023)" or "[12]", from the .bbl file arXiv requires;
 // - \ref as "Table 2", "Section 3" or "(1)", from the labels.
-// - a quantity as the PDF prints it, "1.5 meV" for \SI{1.5}{\milli\electronvolt} (siunitx.ts).
+// - a quantity as the PDF prints it, "1.5 meV" for \SI{1.5}{\milli\electronvolt} (siunitx.ts);
+// - a chemical formula as the PDF prints it, "CO₂" for \ce{CO2} and "Fe³⁺" for \ch{Fe^3+} (mhchem.ts).
 // Inline math stays as written ($O(n^2)$). What can't be read this way is reported as not converted, and
 // the PDF is read instead (sources/arxiv.ts).
 
 import { readableFormula } from "./math.ts";
+import { mhchemToText } from "./mhchem.ts";
 import { siunitxSetup, siunitxToText } from "./siunitx.ts";
 
 /** One LaTeX argument: the text of a {…} group starting at `at` (after spaces), and where it ends. */
@@ -432,10 +434,10 @@ export function latexToText(files: Map<string, string>): ConvertedLatex | undefi
   let source = withoutDefinitions(defined);
   const begin = source.indexOf("\\begin{document}");
   const end = source.lastIndexOf("\\end{document}");
-  const preamble = begin >= 0 ? siunitxToText(expandMacros(source.slice(0, begin), macros), units) : "";
+  const preamble = begin >= 0 ? mhchemToText(siunitxToText(expandMacros(source.slice(0, begin), macros), units)) : "";
   let body = begin >= 0 ? source.slice(begin + "\\begin{document}".length, end > begin ? end : undefined) : source;
-  // Quantities are read after the paper's macros, which may write them (\newcommand{\Tc}{\SI{2.3}{\kelvin}}).
-  body = siunitxToText(expandMacros(body, macros), units);
+  // Quantities and formulas are read after the paper's macros, which may write them (\newcommand{\Tc}{\SI{2.3}{\kelvin}}).
+  body = mhchemToText(siunitxToText(expandMacros(body, macros), units));
   const titleArg = group(body, (/\\title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(body)?.index ?? -1) + (/\\title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(body)?.[0].length ?? 0)) ?? group(preamble, (/\\(?:icml)?title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(preamble)?.index ?? -1) + (/\\(?:icml)?title\s*(\[[^\]]*\])?\s*(?=\{)/.exec(preamble)?.[0].length ?? 0));
 
   // REVTeX and AASTeX set the title after \begin{document}: it is the heading, not a line of prose too.
@@ -599,7 +601,9 @@ const ACCENTS: Record<string, Record<string, string>> = {
 
 function accents(text: string): string {
   return text
-    .replace(/\\([cvuH'`"^~=.])\s*\{?\\?([a-zA-Z])\}?/g, (all, accent: string, letter: string) => ACCENTS[accent]?.[letter] ?? letter)
+    // A letter accent is a command of its own, "\\c{c}" or "\\v s", never the start of a longer name (harness 0.93.0):
+    // "\\ce{CO2}" was read as a cedilla on "e" ("eCO2"), "\\vec v" as "ěc v" and "\\verb" as "ěrb".
+    .replace(/\\(?:([cvuH])(?![a-zA-Z])|(['`"^~=.]))\s*\{?\\?([a-zA-Z])\}?/g, (_all, letterAccent: string | undefined, symbolAccent: string | undefined, letter: string) => ACCENTS[(letterAccent ?? symbolAccent)!]?.[letter] ?? letter)
     .replace(/\{\\(?:ss)\}|\\ss\b/g, "ß").replace(/\{\\o\}|\\o\b(?![a-z])/g, "ø").replace(/\{\\O\}/g, "Ø").replace(/\{\\aa\}|\\aa\b/g, "å").replace(/\{\\AA\}/g, "Å").replace(/\{\\ae\}|\\ae\b/g, "æ").replace(/\{\\l\}|\\l\b(?![a-z])/g, "ł").replace(/\{\\L\}/g, "Ł").replace(/\\i\b(?![a-z])/g, "i");
 }
 
