@@ -719,3 +719,125 @@ describe("numbers in LaTeX, concise and asymmetric uncertainties, and significan
     assert.equal(marks("Sales rose by 30,000 units from 2022 to 2023.", [sales]), "+");
   });
 });
+
+describe("chemistry units, opposites and names (harness 0.93.0)", () => {
+  const q = (quote: string, docId = "paper") => ({ docId, quote });
+  const check = (pairs: Array<[quote: string, wrong: string, right: string]>) => {
+    for (const [quote, wrong, right] of pairs) {
+      assert.equal(marks(wrong, [q(quote)]), "-", wrong);
+      assert.equal(marks(right, [q(quote)]), "+", right);
+    }
+  };
+
+  it("gives a value only the chemistry unit, and the kind of percentage, the quotes give it", () => {
+    check([
+      ["Residual palladium in the API was 12 ppm after scavenging.", "Residual palladium in the API was 12 ppb after scavenging.", "Residual palladium in the API was 12 ppm after scavenging."],
+      ["The dopant concentration is 500 ppm.", "The dopant concentration is 500%.", "The dopant concentration is 500 ppm."],
+      ["The coupling used 2 mol% Pd(OAc)2 with SPhos as the ligand.", "The coupling used 2 wt% Pd(OAc)2 with SPhos as the ligand.", "The coupling used 2 mol % Pd(OAc)2 with SPhos as the ligand."],
+      ["The reaction used 5 equiv of K2CO3 in dioxane at 100 °C.", "The reaction used 5 mol% of K2CO3 in dioxane at 100 °C.", "The reaction used 5 equivalents of K2CO3 in dioxane at 100 °C."],
+      ["The aryl bromide (1.0 mmol) was added to the flask.", "The aryl bromide (1.0 mol) was added to the flask.", "The aryl bromide (1.0 mmol) was added to the flask."],
+      ["The vinyl proton resonates at δ 6.25 ppm with J = 15.8 Hz.", "The vinyl proton resonates at δ 6.25 Hz with J = 15.8 ppm.", "The vinyl proton resonates at δ 6.25 ppm with J = 15.8 Hz."],
+      ["The product was obtained in 92% ee and 85% yield.", "The product was obtained in 92% yield and 85% ee.", "The product was obtained in 85% yield and 92% ee."],
+      ["The ketone was reduced with an ee of 97% and a conversion of 60%.", "The ketone was reduced with 60% ee at 97% conversion.", "The ketone was reduced in 97% ee at 60% conversion."],
+    ]);
+    // A percentage whose kind one side leaves unsaid is the same unit.
+    assert.equal(marks("The enantioselectivity of the reduction was 92%.", [q("The reduction gave the alcohol with an enantioselectivity of 92% ee.")]), "+");
+  });
+
+  it("does not take a reduction potential's sign for the size of a fall", () => {
+    check([
+      ["The reduction potential is −1.25 V vs SCE in acetonitrile.", "The reduction potential is +1.25 V vs SCE in acetonitrile.", "The reduction potential is −1.25 V vs SCE in acetonitrile."],
+    ]);
+    // A fall still gives the size of a negative change.
+    assert.equal(marks("Efficiency fell by 3.2% after cycling.", [q("Efficiency changed by −3.2% after cycling.")]), "+");
+  });
+
+  it("reads chemistry opposites", () => {
+    check([
+      ["The alcohol was oxidized to the aldehyde with Dess–Martin periodinane.", "The alcohol was reduced to the aldehyde with Dess–Martin periodinane.", "The alcohol was oxidized to the aldehyde with Dess–Martin periodinane."],
+      ["NaBH4 acts as the reductant in this step.", "NaBH4 acts as the oxidant in this step.", "NaBH4 acts as the reductant in this step."],
+      ["The enolate acts as the nucleophile in the aldol step.", "The enolate acts as the electrophile in the aldol step.", "The enolate acts as the nucleophile in the aldol step."],
+      ["The kinetic product forms at −78 °C.", "The thermodynamic product forms at −78 °C.", "The kinetic product forms at −78 °C."],
+      ["The hydrolysis requires acidic conditions.", "The hydrolysis requires basic conditions.", "The hydrolysis requires acidic conditions."],
+      ["The surface became hydrophobic after silanization.", "The surface became hydrophilic after silanization.", "The surface became hydrophobic after silanization."],
+      ["The step is exergonic by 5 kcal/mol.", "The step is endergonic by 5 kcal/mol.", "The step is exergonic by 5 kcal/mol."],
+      ["The methoxy group is electron-donating.", "The methoxy group is electron-withdrawing.", "The methoxy group is electron-donating."],
+      ["The signal shifted downfield upon complexation.", "The signal shifted upfield upon complexation.", "The signal shifted downfield upon complexation."],
+      ["The tert-butyl group occupies the equatorial position.", "The tert-butyl group occupies the axial position.", "The tert-butyl group occupies the equatorial position."],
+      ["Water promotes the hydrolysis of the ester.", "Water suppresses the hydrolysis of the ester.", "Water promotes the hydrolysis of the ester."],
+      ["The complex is insoluble in hexane.", "The complex is soluble in hexane.", "The complex is insoluble in hexane."],
+      ["The film was amorphous after annealing at 300 °C.", "The film was crystalline after annealing at 300 °C.", "The film was amorphous after annealing at 300 °C."],
+    ]);
+  });
+
+  it("reads oxidation and reduction only where they name a reaction", () => {
+    // "Reduced" is a fall here, as before: the oxidation the quote names is another word.
+    assert.equal(marks("The treatment reduced oxidative damage in the liver.", [q("The treatment lowered oxidative damage in the liver.")]), "+");
+    assert.equal(marks("Mortality was reduced to 5% in the treated group.", [q("Oxidative stress fell and mortality was reduced to 5% in the treated group.")]), "+");
+  });
+
+  it("gives a stereo- or regiochemical descriptor only where the quotes give it", () => {
+    check([
+      ["(R)-ibuprofen undergoes chiral inversion in vivo.", "(S)-ibuprofen undergoes chiral inversion in vivo.", "(R)-ibuprofen undergoes chiral inversion in vivo."],
+      ["The (E)-alkene was formed with >20:1 selectivity.", "The (Z)-alkene was formed with >20:1 selectivity.", "The (E)-alkene was formed with >20:1 selectivity."],
+      ["The (1R,2S)-diol crystallized from ethanol.", "The (1S,2S)-diol crystallized from ethanol.", "The (1R,2S)-diol crystallized from ethanol."],
+      ["The cis isomer is the major product.", "The trans isomer is the major product.", "The cis isomer is the major product."],
+      ["The Diels–Alder reaction gave mainly the endo adduct.", "The Diels–Alder reaction gave mainly the exo adduct.", "The Diels–Alder reaction gave mainly the endo adduct."],
+      ["Nitration occurred mainly at the para position.", "Nitration occurred mainly at the ortho position.", "Nitration occurred mainly at the para position."],
+      ["The meta-substituted product dominated the mixture.", "The para-substituted product dominated the mixture.", "The meta-substituted product dominated the mixture."],
+      ["Hydrolysis of p-nitrophenyl acetate was followed at 400 nm.", "Hydrolysis of o-nitrophenyl acetate was followed at 400 nm.", "Hydrolysis of p-nitrophenyl acetate was followed at 400 nm."],
+      ["The enzyme accepts L-alanine as its substrate.", "The enzyme accepts D-alanine as its substrate.", "The enzyme accepts L-alanine as its substrate."],
+      ["The aldol reaction gave the syn diastereomer.", "The aldol reaction gave the anti diastereomer.", "The aldol reaction gave the syn diastereomer."],
+    ]);
+  });
+
+  it("does not take other words for descriptors", () => {
+    const pairs: Array<[quote: string, answer: string]> = [
+      // A figure's panel, a prefix and a p-value are not descriptors.
+      ["The (R)-enantiomer bound more tightly, as shown in panel E.", "The (R)-enantiomer bound more tightly (E)."],
+      ["The para isomer had anti-inflammatory activity in mice.", "The para isomer had anti-inflammatory activity in mice."],
+      ["The ortho isomer was studied in a meta-analysis of trials.", "A meta-analysis studied the ortho isomer."],
+      ["The ortho product was favoured (p-value below 0.01).", "The ortho product was favoured, with a p-value below 0.01."],
+      // A sentence stating both sides says which is which in its word order.
+      ["Heating converts the cis isomer to the trans isomer.", "The trans isomer forms from the cis isomer on heating."],
+    ];
+    for (const [quote, answer] of pairs) assert.equal(marks(answer, [q(quote)]), "+", answer);
+  });
+
+  it("gives a formula, a metal, a solvent and a substituent only as the quotes give them", () => {
+    check([
+      ["The Pd/C catalyst gave full conversion in 2 h.", "The Pt/C catalyst gave full conversion in 2 h.", "The Pd/C catalyst gave full conversion in 2 h."],
+      ["The catalyst reduces CO2 to formate in water.", "The catalyst reduces CO to formate in water.", "The catalyst reduces CO₂ to formate in water."],
+      ["The cycle begins with oxidative addition to Ni(0).", "The cycle begins with oxidative addition to Ni(II).", "The cycle begins with oxidative addition to Ni(0)."],
+      ["Cs2CO3 was the best base for the coupling.", "K2CO3 was the best base for the coupling.", "Cs₂CO₃ was the best base for the coupling."],
+      ["The pKa of the phenol is 9.95 in water.", "The pKa of the phenol is 9.95 in DMSO.", "The pKa of the phenol is 9.95 in water."],
+      ["The best solvent for the coupling was THF at reflux.", "The best solvent for the coupling was DMF at reflux.", "The best solvent for the coupling was tetrahydrofuran at reflux."],
+      ["The methyl ester hydrolyzed fastest under these conditions.", "The ethyl ester hydrolyzed fastest under these conditions.", "The methyl ester hydrolyzed fastest under these conditions."],
+      ["Spectra were recorded in CDCl3 at 298 K.", "Spectra were recorded in DMSO-d6 at 298 K.", "Spectra were recorded in chloroform-d at 298 K."],
+    ]);
+  });
+
+  it("reads one formula, metal or solvent however it is written", () => {
+    const pairs: Array<[quote: string, answer: string]> = [
+      ["The active site holds iron(III) in the resting state.", "The active site holds Fe(III) in the resting state."],
+      ["The active site holds Fe³⁺ in the resting state.", "The active site holds iron(III) in the resting state."],
+      ["Palladium on carbon gave full conversion in 2 h.", "Pd/C gave full conversion in 2 h."],
+      ["The Ni(II) precatalyst was reduced in situ.", "The Ni precatalyst was reduced in situ."],
+      ["Pd(OAc)2 (5 mol%) and SPhos were used in toluene.", "Palladium acetate (5 mol%) and SPhos were used in toluene."],
+      ["Copper-catalyzed coupling proceeded in methanol.", "Cu-catalyzed coupling proceeded in MeOH."],
+    ];
+    for (const [quote, answer] of pairs) assert.equal(marks(answer, [q(quote)]), "+", answer);
+  });
+
+  it("does not take surnames, acronyms and ordinary words for elements", () => {
+    const pairs: Array<[quote: string, answer: string, title?: string]> = [
+      ["Ni et al. reported Pd-catalyzed coupling of aryl chlorides.", "Ni et al. reported Pd-catalyzed coupling of aryl chlorides."],
+      ["Li et al. used a Pd catalyst for the coupling.", "Li et al. used a Pd catalyst for the coupling."],
+      // A document's "lead section" names no lead.
+      ["La tour Eiffel est une tour autoportante de fer puddlé de 330 m de hauteur.", "puddled iron (fer puddlé)", "Tour Eiffel (Wikipedia, lead section)"],
+      ["The PBS buffer contained 2 mM Mg2+ in the UK study.", "The PBS buffer contained 2 mM Mg2+ in the UK study."],
+      ["Phase II enrolled 120 patients with iron deficiency.", "Phase II enrolled 120 patients with iron deficiency."],
+    ];
+    for (const [quote, answer, title] of pairs) assert.equal(marks(answer, [q(quote)], title ? () => title : undefined), "+", answer);
+  });
+});

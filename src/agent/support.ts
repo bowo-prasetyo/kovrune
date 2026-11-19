@@ -4,6 +4,7 @@
 // few words with them are marked. This is a word-overlap heuristic, not a proof.
 
 import { words } from "../documents/scripts.ts";
+import { chemistryBacked, chemistryBacking } from "./chemistry.ts";
 import { readableMath } from "../documents/math.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
@@ -159,7 +160,8 @@ function numberText(text: string): string {
     .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:\.\p{Nd}+)?)[eE]([-+]?\p{Nd}+)(?![\p{L}\p{Nd}])/gu, (_, m: string, e: string) => powerOfTen(m, e))
     .replace(/(\p{Nd}) ?([pnμmkMG]) (Ω)/gu, "$1 $2$3")
     .replace(/(\p{Nd})\s*[×x]\s*g(?![\p{L}\p{Nd}])/gu, "$1 xg")
-    .replace(/° ([CF])(?!\p{L})/gu, "°$1");
+    .replace(/° ([CF])(?!\p{L})/gu, "°$1")
+    .replace(/(\p{Nd})\s?(mol|wt|vol|at)\.?\s?%/gu, "$1 $2pct");
 }
 
 /** A signed number in one form: "-40" for "−40", "40" for "+40" and "±40", and plainNumber's digits. */
@@ -194,9 +196,16 @@ function quantities(text: string): string[] {
  */
 const FALL = /^(?:decrease[sd]?|decreasing|reduc(?:e[sd]?|ing|tions?)|lowered|fell|fall(?:s|ing)?|drop(?:s|ped|ping)?|declin(?:e[sd]?|ing)|loss(?:es)?|lost|minus|negative|cooled)$/;
 
+/**
+ * Words of electrochemistry, where "reduction" names a reaction, not a fall (harness 0.93.0): "the reduction
+ * potential is +1.25 V vs SCE" was backed by "−1.25 V vs SCE", its sign taken for the size of a fall.
+ */
+const ELECTROCHEMISTRY = /\bpotentials?\b|\bvs\.?\s*(?:SCE|RHE|NHE|SHE|Fc|Ag\/Ag|Li\/Li|Hg\/Hg)|\bE1\/2\b|\bE°|\bredox\b|voltammetr|\bonset\b/i;
+
 /** Whether a text says something went down (FALL). */
 export function saysFall(text: string): boolean {
-  return words(normalizeForMatch(text)).some((w) => FALL.test(w));
+  const redox = ELECTROCHEMISTRY.test(text);
+  return words(normalizeForMatch(text)).some((w) => FALL.test(w) && !(redox && /^reduc/.test(w)));
 }
 
 /**
@@ -469,6 +478,18 @@ const UNITS: Array<[string, RegExp]> = [
   // A significance in standard deviations (harness 0.91.0): "5.9σ", "5.9 sigma" and "5.9 standard deviations"
   // are one unit, so a significance is not backed by the same number in GeV.
   ["σ", /^(?:σ|sigma|standard)$/],
+  // Chemistry units (harness 0.93.0): "12 ppm" of palladium is not "12 ppb", a loading of "2 mol%" is not "2 wt%"
+  // nor "2 equiv", and "1.0 mmol" is not "1.0 mol". numberText writes "mol%" as "molpct", so it is a unit of its
+  // own; a "%" that says what it is a share of is read in measures ("92% ee" is not "92% yield").
+  ["ppm", /^ppm[vw]?$/],
+  ["ppb", /^ppb[vw]?$/],
+  ["ppt", /^ppt[vw]?$/],
+  ["mol", /^(?:mol|moles?)$/],
+  ["equiv", /^(?:equiv|eq|equivs|equivalents?)$/],
+  ["mol%", /^molpct$/],
+  ["wt%", /^wtpct$/],
+  ["vol%", /^volpct$/],
+  ["at%", /^atpct$/],
 ];
 
 /** The unit a word after a number names: an engineering symbol in its own case, or another unit in any case. */
@@ -591,6 +612,39 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["heavier", "heaviest"], ["lighter", "lightest"]],
   [["hotter", "hottest"], ["colder", "coldest", "cooler", "coolest"]],
   [["brighter", "brightest"], ["fainter", "faintest", "dimmer", "dimmest"]],
+  // Chemistry opposites (harness 0.93.0): a reagent's role, a property or a mechanism read the wrong way round.
+  // Oxidation against reduction, acid against base and kinetic against thermodynamic control are read in
+  // chemistry.ts, from the words that say them ("reduced to the alcohol", not "reduced mortality").
+  [["oxidant", "oxidants", "oxidizer", "oxidiser", "oxidizers", "oxidisers"], ["reductant", "reductants"]],
+  [["nucleophile", "nucleophiles", "nucleophilic", "nucleophilicity"], ["electrophile", "electrophiles", "electrophilic", "electrophilicity"]],
+  [["hydrophobic", "hydrophobicity", "lipophilic", "lipophilicity"], ["hydrophilic", "hydrophilicity", "lipophobic"]],
+  [["anodic", "anodically"], ["cathodic", "cathodically"]],
+  [["exergonic"], ["endergonic"]],
+  [["soluble"], ["insoluble"]],
+  [["miscible"], ["immiscible"]],
+  [["stable"], ["unstable"]],
+  [["electrondonating", "donating"], ["electronwithdrawing", "withdrawing"]],
+  [["donor", "donors"], ["acceptor", "acceptors"]],
+  [["upfield"], ["downfield"]],
+  [["shielded"], ["deshielded"]],
+  [["amorphous"], ["crystalline"]],
+  [["concerted"], ["stepwise"]],
+  [["intramolecular", "intramolecularly"], ["intermolecular", "intermolecularly"]],
+  [["homogeneous"], ["heterogeneous"]],
+  [["polar"], ["nonpolar", "apolar"]],
+  [["aromatic"], ["antiaromatic", "nonaromatic"]],
+  [["protonated", "protonation"], ["deprotonated", "deprotonation"]],
+  [["reversible", "reversibly"], ["irreversible", "irreversibly"]],
+  [["axial", "axially"], ["equatorial", "equatorially"]],
+  [["racemic", "racemate"], ["enantiopure", "enantioenriched"]],
+  [["chiral"], ["achiral"]],
+  [["aerobic"], ["anaerobic"]],
+  [["hydrogenation", "hydrogenated"], ["dehydrogenation", "dehydrogenated"]],
+  [["anhydrous"], ["hydrated", "aqueous"]],
+  [
+    ["promote", "promotes", "promoted", "promoting", "accelerate", "accelerates", "accelerated", "accelerating"],
+    ["suppress", "suppresses", "suppressed", "suppressing", "retard", "retards", "retarded", "retarding", "inhibit", "inhibits", "inhibited", "inhibiting"],
+  ],
 ];
 
 /**
@@ -713,6 +767,23 @@ function directionsBacked(text: string, quoted: Set<string>): boolean {
  */
 const UNCERTAINTY_UNIT = new RegExp(String.raw`^(?:\s*(?:[±∓]\s*|\^\(?|_\(?)[-+−]?\s*\p{Nd}+(?:[.,]\p{Nd}+)*\)?)+\)?\s?(%|°?[\p{L}]+[☉⊙]?)`, "u");
 
+/** What a percentage is a share of in chemistry, when the words around it say: "92% ee", "a yield of 85%", "85% isolated yield". */
+const PERCENT_OF = /^(?:ee|de|er|yields?|conversions?|selectivity|fe|purity)$/i;
+const PERCENT_KINDS: Record<string, string> = { yields: "yield", conversions: "conversion" };
+
+/**
+ * The kind of share a percentage from `start` to `end` of a text is, as "ee", "yield" or "" when the words
+ * around it do not say (harness 0.93.0): the word after it ("92% ee", "85% isolated yield"), or the word before it
+ * with "of", "was", "=" or ":" ("an ee of 92%", "yield: 85%"). "92% ee and 85% yield" then gives two kinds, and the
+ * sentence "92% yield and 85% ee" does not pass for it, though its numbers and units are the same.
+ */
+function percentOf(text: string, start: number, end: number): string {
+  const kind = (word: string) => (PERCENT_OF.test(word) ? (PERCENT_KINDS[word.toLowerCase()] ?? word.toLowerCase()) : undefined);
+  const after = /^\s+(?:(?:isolated|overall|combined|average|total|faradaic|faradic)\s+)?(\p{L}+)/u.exec(text.slice(end))?.[1];
+  const before = /(\p{L}+)\s*(?:(?:of|was|were|is|reached|up\s+to|=|:)\s*)*(?:up\s+to\s+|about\s+|~\s*|>\s*|<\s*)?$/u.exec(text.slice(Math.max(0, start - 40), start))?.[1];
+  return (after && kind(after)) ?? (before && kind(before)) ?? "";
+}
+
 /**
  * The units a text gives its numbers, as "number unit" pairs ("8 GB" is "8 GB"; "4,096 tokens" is
  * "4096 token"), and the numbers it gives with no unit after them.
@@ -722,12 +793,16 @@ function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
   const bare = new Set<string>();
   const written = numberText(text);
   for (const match of written.matchAll(new RegExp(`${NUMBER}\\s?(%|°?[\\p{L}]+[☉⊙]?(?:\\s?cent)?)?`, "gu"))) {
+    // Digits right after a letter or a bracket belong to a formula or a name, "Pd(OAc)2" or "CD45" (harness
+    // 0.93.0): as a bare number, the "2" of "2 mol% Pd(OAc)2" let "2 wt%" pass, as if the quote gave 2 with no unit.
+    if (match.index > 0 && /[\p{L})\]]/u.test(written[match.index - 1]!)) continue;
     const number = signed(match[1], match[2]!);
     // A value with its uncertainty takes the unit after it (harness 0.90.0): "125.10 ± 0.14 GeV" and
     // "(0.52 ± 0.01) meV" give 125.10 in GeV and 0.52 in meV, not 125.10 and 0.52 with no unit.
     const shared = match[3] ? undefined : UNCERTAINTY_UNIT.exec(written.slice(match.index + match[0].length))?.[1];
     const unit = (match[3] && unitOf(match[3])) || (shared && unitOf(shared));
-    if (unit) pairs.add(`${number} ${unit}`);
+    if (unit === "%") pairs.add(`${number} %${percentOf(written, match.index, match.index + match[0].length)}`);
+    else if (unit) pairs.add(`${number} ${unit}`);
     else bare.add(number);
   }
   return { pairs, bare };
@@ -850,7 +925,9 @@ const SCOPE_SHARE = 0.8;
  * - since harness 0.67.0, give a number with its sign and power of ten: "40 °C" is not backed by
  *   "−40 °C" unless the sentence says the value fell, nor "10^3" by "10^-3" (numbers). Engineering
  *   units count as units ("276 GPa" is not backed by "276 MPa"), engineering opposites as directions
- *   ("maximum" and "minimum"), and a change "from" one number "to" another must go the quotes' way.
+ *   ("maximum" and "minimum"), and a change "from" one number "to" another must go the quotes' way;
+ * - since harness 0.93.0, name only the formulas, metals, solvents, substituents and stereo- and regiochemical
+ *   descriptors the quotes name, where they name one of the kind (chemistry.ts): "Pt/C" is not backed by "Pd/C".
  */
 export function sentenceSupport(
   answer: string,
@@ -888,6 +965,7 @@ export function sentenceSupport(
   const quotedSignificance = verified.map((e) => significance(e.quote));
   const quotedChanges = changes(quoteText);
   const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
+  const chemistry = chemistryBacking(context, backing);
   const ids = evidence.map((e) => e.docId.replace(/#\d+$/, ""));
   const scopeWords = scope ? contentWords(scope) : [];
   let judged = 0;
@@ -924,7 +1002,8 @@ export function sentenceSupport(
       significanceBacked(text, quotedSignificance) &&
       countsBacked(text, verified.map((e) => e.quote)) &&
       changesBacked(text, quotedChanges) &&
-      namesBacked(text, namesBacking);
+      namesBacked(text, namesBacking) &&
+      chemistryBacked(text, chemistry);
     judged++;
     if (isBacked) backed++;
     return { text: written, backed: isBacked };
@@ -1040,8 +1119,11 @@ function clausesBacked(text: string, subjectWords: string[], quoteWords: string[
 function unitsBacked(text: string, quoted: { pairs: Set<string>; bare: Set<string> }): boolean {
   return [...measures(text).pairs].every((pair) => {
     const number = pair.slice(0, pair.indexOf(" "));
-    const quotedWithUnit = [...quoted.pairs].some((p) => p.startsWith(`${number} `));
-    return quoted.pairs.has(pair) || quoted.bare.has(number) || !quotedWithUnit;
+    const unit = pair.slice(number.length + 1);
+    const quotedUnits = [...quoted.pairs].filter((p) => p.startsWith(`${number} `)).map((p) => p.slice(number.length + 1));
+    // A percentage whose kind one side does not say is the same unit as one whose kind it says: "ee of 92%" and "92%".
+    const same = (a: string, b: string) => a === b || (a.startsWith("%") && b.startsWith("%") && (a === "%" || b === "%"));
+    return quotedUnits.some((u) => same(unit, u)) || quoted.bare.has(number) || !quotedUnits.length;
   });
 }
 
