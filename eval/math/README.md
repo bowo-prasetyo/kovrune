@@ -39,4 +39,29 @@ npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b
 
 ## Results
 
-(to come)
+Qwen3.5-4B (Q4_K_M) in constrained mode, llama.cpp `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), 4,096-token context, thinking off, on a 4-core cloud CPU (Intel Xeon @ 2.10GHz): the physics suite's setup. One run each, so a task that passes or fails once may not do so again.
+
+| Run | Code | `math` | `mathholdout` | Labelled "Quotes found", wrong |
+| --- | --- | --- | --- | --- |
+| Before | 0.93.0 converter, the suite only | 9/24 | 4/10 | 0 of 7 |
+| After | 0.94.0 converter | **11/24** | **5/10** | 0 of 8 |
+
+Reports: `eval/results/math-0.94-base-qwen3.5-4b-q4km.json` (before) and `math-0.94-qwen3.5-4b-q4km.json` (after).
+
+**What the fix changed.** Four open tasks differ in a way the converter explains:
+- **ma08** (which equation counts the solutions): before, "Equation (2)", the old global number; after, "(2.1)", which passes.
+- **ma13** (which lemma fails for s ≤ 1/2): before, "Lemma (6)", the paper's equation number taken for the lemma's; after, "Lemma 3.3", which passes.
+- **ma04** (what Lemma A.1 states) and **ma07** (whether Question 1 is settled): before, the model said the documents do not contain Lemma A.1, or the question, as neither had a heading; after, it found and quoted both and answered right, and both fail only on the quote check (below).
+
+ma10 and ma17 passed after and failed before, and ma02 and ma15 the other way, with the same passages: these are two runs of the model and within their noise. So the two gains that need the fix are the fix's, and the two other tasks it reached are held back by the quote check. None of the labelled answers is wrong in either run.
+
+**What still fails, after.** Of the 13 open failures, 9 answers are right in substance:
+- **The quote check fails six right answers** (ma02, ma03, ma04, ma05, ma07, ma15). The model quotes the paper's math in another form outside `$…$`: ">=" or "≥" for `\geq`, "∩" for `\cap`, "|A|^2" without the dollars, a quote across two paragraphs. This is the audit's M4, and more than it described: reading a quote as math when it has a symbol like "≥" recovers none of them (a check on the recorded quotes), because the quote mixes LaTeX, ASCII and Unicode. ma15 also names (H1) only by its content, "V ≥ 0 and V ∈ L^{d/(2s)}", so it fails its fact too.
+- **A right "No" is reported as not found** (ma01, ma11, ma20): to "Does the paper prove …?" the model answers "No, the paper only conjectures it" and sets `found` to false. ma20's answer, "I(8) is not known; I(8) ≥ 60", is right and marked not found the same way.
+- **Four are wrong:** ma06 says the documents do not say whether p = 5 is covered, having read only the part before Remark 3.4; ma18 works out a bound from Theorem 1.1 instead of reading the lecture notes' τ(Z/7Z) = 3; ma22 says the bound holds for k = 3, against Remark 5; and ma23, unanswerable, answers "10". None is labelled.
+
+**The sentence check rarely backs a right mathematical answer.** Of the 11 passes, 4 take **Quotes found**; most others verify their quote but have 0 of 1 sentence backed, because the sentence writes in Unicode the math its quote has in LaTeX ("1 + 4s/(d+2)" against `\frac{4s}{d+2}`), and the word check does not read math. That is safe, with no wrong labels, but hides right answers; reading math on both sides of the sentence check is the same change as the quote check's.
+
+What the runs say to do next, in order: compare quotes and sentences with math normalised on both sides (LaTeX commands, ASCII and Unicode relations, scripts outside `$`), which six right answers wait for; and tell the model that a "No" or "not known" it can quote is an answer it found.
+
+Search alone (`npm run bench:retrieval`) finds every cited document and every answering passage for the 31 answerable tasks. ma06's failure is the model's: it read one part and stopped, though search finds Remark 3.4's part.
