@@ -707,4 +707,15 @@ describe("numbers in LaTeX, concise and asymmetric uncertainties, and significan
     assert.equal(marks("The signal is observed with a significance of 5.9 GeV.", [quote]), "-");
     assert.equal(marks("The signal is observed with a significance of 3.9σ.", [quote]), "-");
   });
+
+  it("does not add or subtract the digits of a formula or a sample's name", () => {
+    // The physics suite's "an uncertainty of 4 nm", for 13.5(4) nm, was backed as 5 − 1: CsKa3Sb5 and S1.
+    const quote = q("For sample S1 we obtain a Ginzburg–Landau coherence length $\\xi = 13.5(4)$ nm.", "kagome");
+    const title = () => "Pair-density-wave order in the kagome metal CsKa3Sb5";
+    assert.equal(marks("The coherence length of CsKa3Sb5 sample S1 is 13.5 nm with an uncertainty of 4 nm.", [quote], title), "-");
+    assert.equal(marks("The coherence length of CsKa3Sb5 sample S1 is 13.5 nm with an uncertainty of 0.4 nm.", [quote], title), "+");
+    // Quantities still give a difference: "by 30,000" from 180,000 and 150,000.
+    const sales = q("Sales rose from 150,000 units in 2022 to 180,000 units in 2023.");
+    assert.equal(marks("Sales rose by 30,000 units from 2022 to 2023.", [sales]), "+");
+  });
 });

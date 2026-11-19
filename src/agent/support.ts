@@ -179,6 +179,15 @@ export function numbers(text: string): string[] {
 }
 
 /**
+ * The numbers of a text that are quantities (harness 0.91.0): not digits written right after a letter,
+ * which belong to a name or a formula, "CsKa3Sb5", "sample S1" or "H2O". The physics suite's answer "an
+ * uncertainty of 4 nm", for 13.5(4) nm, was backed as 5 − 1, from its paper's title and its sample's name.
+ */
+function quantities(text: string): string[] {
+  return numbers(text.replace(/(?<=\p{L})\p{Nd}+/gu, (digits) => "x".repeat(digits.length)));
+}
+
+/**
  * Words saying a value went down, so a sentence may give the size of a change the quotes give as a
  * negative number: "efficiency fell by 3.2%" from "a change of −3.2%". Without one, "40 °C" is not
  * backed by "−40 °C". Only words for a change count: "the lowest temperature is 40 °C" is not "−40 °C".
@@ -207,11 +216,12 @@ export function signDropped(n: string, others: Set<string>, ownFalls: boolean, o
  * difference of two quoted numbers, as answers to "by how much" give ("by 30,000" from 180,000
  * and 150,000). Only numbers within a factor of ten of each other are compared quantities, so
  * "2021" does not pass as 2024 minus version 3.0. Signs count (numbers), but a sentence saying a value
- * fell may give the size of a negative quoted number (signDropped).
+ * fell may give the size of a negative quoted number (signDropped). Only `quantities` are added and
+ * subtracted: since harness 0.91.0, not the digits of a name or formula (quantities).
  */
-function numberCheck(quoted: string[], asked: string[], quotesFall: boolean): (n: string, sentenceFalls: boolean) => boolean {
+function numberCheck(quoted: string[], asked: string[], quotesFall: boolean, quantities: string[] = quoted): (n: string, sentenceFalls: boolean) => boolean {
   const known = new Set([...quoted, ...asked]);
-  const values = [...new Set(quoted.map(Number).filter((v) => v > 0))];
+  const values = [...new Set(quantities.map(Number).filter((v) => v > 0))];
   const comparable = (a: number, b: number) => a !== b && Math.max(a, b) <= 10 * Math.min(a, b);
   const derived = new Set(values.flatMap((a) => values.filter((b) => comparable(a, b)).flatMap((b) => [a + b, Math.abs(a - b)])));
   return (n, sentenceFalls) => known.has(n) || derived.has(Number(n)) || signDropped(n, known, sentenceFalls, quotesFall);
@@ -864,7 +874,8 @@ export function sentenceSupport(
   const subjectWords = contentWords(verified.map((e) => titleFor(e.docId) ?? "").join(" "));
   const quoted = [...new Set(verified.flatMap((e) => [...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]))];
   const quoteText = verified.map((e) => e.quote).join("\n");
-  const numberBacked = numberCheck(quoted, question ? numbers(question) : [], saysFall(quoteText));
+  const sources = verified.flatMap((e) => [e.quote, titleFor(e.docId) ?? ""]);
+  const numberBacked = numberCheck(quoted, question ? numbers(question) : [], saysFall(quoteText), [...new Set(sources.flatMap(quantities))]);
   const negating = verified
     .filter((e) => hasNegation(e.quote))
     .map((e) => ({ words: contentWords(e.quote), numbers: new Set([...numbers(e.quote), ...numbers(titleFor(e.docId) ?? "")]) }));

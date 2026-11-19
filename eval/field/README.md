@@ -1078,6 +1078,44 @@ What changed:
 
 **Limits:** compound units are still compared by their first part, so "73 km/s/Mpc" and "73 km/s/kpc" are one unit; the siunitx output follows its default options (no digit grouping is applied, so "12345" stays one number; `per-mode` is the only option read); a concise uncertainty "1.50(5)" is not read as "1.50 ± 0.05", so a right answer written that way is marked; the number check does not read LaTeX, so a quote of `$1.2\times10^{-3}$` does not back "1.2 × 10⁻³"; and no physics suite exists to show how often any of this happens in answers.
 
+### Physics suite, PDF exponents, LaTeX macros and math in quotes (0.91.0)
+
+The 0.90.0 limits named what a physics suite would show. `eval/physics/` is that suite ([its README](../physics/README.md)): six made-up documents (three LaTeX papers read through the converter, a two-column PDF, a commissioning report and a table) and 36 questions, ten held out. Its first runs, with Qwen3.5-4B, found four defects, and re-scoring found a fifth. All are fixed:
+
+| Where | Before | Now |
+| --- | --- | --- |
+| A PDF's raised exponent (`pdf-layout.ts`) | "2.0 × 105 atoms", "cm−3", "87Rb" | "2.0 × 10⁵ atoms", "cm⁻³", "⁸⁷Rb" |
+| A paper's `\ensuremath` macro outside math (`latex.ts`) | `\sqs` "s = 13 TeV", `\Zpsi` "Z'_" | "√s = 13 TeV", "Z′_ψ" |
+| A REVTeX title, set after `\begin{document}` | read twice | read once |
+| A quote of kept LaTeX math written another way (`evidence.ts`) | `σB` for `$\sigma B$`, `\text{c}` for `\mathrm{c}`, `\text` sent as a tab: not found | found |
+| A number from the digits of a name (`support.ts`) | "4 nm" backed as 5 − 1, from "CsKa3Sb5" and "S1" | not backed |
+
+And recommendation 3 of the audit, in the number check (`support.ts`):
+
+| The quote says | The answer says | Before | After |
+| --- | --- | --- | --- |
+| `$1.2\times10^{-3}$` | 1.2 × 10⁻³ | not backed | backed |
+| `$\Delta = 0.75(3)$ meV` | 0.75 MeV | backed (no unit read) | **not backed** |
+| 1.50(5) meV | 1.50 ± 0.05 meV; 1.50 ± 0.07 meV | not backed; not backed | backed; **not backed** |
+| `$m = 2.10^{+0.12}_{-0.09}$ TeV` | 2.10 GeV | backed | **not backed** |
+| 5.9 standard deviations | 5.9σ; 5.9 GeV | not backed; backed | backed; **not backed** |
+
+What changed:
+- **Superscripts in PDFs:** a piece of digits or signs set at least a quarter of a line higher, in smaller type, is written with superscript characters, as is one set before what it belongs to (a mass number). Quotes typed the old way ("10−6") still verify, as NFKC folds superscripts. The engineering paper's "2.5 × 10−6 A" now reads "2.5 × 10⁻⁶ A".
+- **`\ensuremath`:** outside math, its argument is read as math.ts reads math; inside kept math, the command is dropped.
+- **LaTeX math in the number check:** a quote with `$` or a backslash is read through math.ts first (`src/documents/math.ts`, moved from the app so the agent can use it). A concise uncertainty "1.50(5)" is written out as "1.50 ± 0.05" (digits right before the parentheses only, so "Eq. (3)" and "Fig. 1(b)" are left alone); an asymmetric one takes the unit after it; "σ", "sigma" and "standard deviations" are one unit, and "5.9σ" is a quantity, not a name.
+- **Quotes of LaTeX math:** a quote that fails is compared again with the math of both sides read out, and in the quote, a tab, backspace or form feed before a letter is read as the command whose backslash the JSON reply lost. A space after a Greek letter is dropped on both sides.
+- **Names' digits:** a digit written right after a letter ("Ka3", "S1", "H2O") is still a number to find, but no longer one to add or subtract to back a "by how much".
+- **Facts in their case:** a task may give `casedFacts`, compared in their case (`scoring.ts`), so a suite can tell "meV" from "MeV".
+
+**Effect on recorded runs: RESCORE_EFFECT**
+
+**Effect on the physics suite:** before, 20 of 26 open and 10 of 10 held-out tasks; after, 19 and 10 as run, and 23 and 10 re-scored with the quote and name-digit fixes. No labelled answer is wrong in any of them ([results](../physics/README.md#results)).
+
+Tests: `tests/pdf-layout.test.ts` ("superscripts in PDF text"), `tests/latex.test.ts` ("particle-physics macros and REVTeX titles", "quotes of LaTeX math written another way"), `tests/support.test.ts` ("numbers in LaTeX, concise and asymmetric uncertainties, and significances"), `tests/math.test.ts` and `tests/field.test.ts` ("physics suite", "facts scored in their case"). Each new test of the checks fails before its change. Adopted as a [defect fix](#rule-for-prompt-and-guard-changes): the quote and sentence checks run after the model's final answer, and the converter changes only text the suites' documents did not have (raised PDF digits, `\ensuremath` outside math, a REVTeX title).
+
+**Limits:** search does not read math, so a question about the "upper critical field" misses a table whose column is headed `$H_\mathrm{c2}(0)$`, and a value written only in math, like ph03's ratio, is hard for the model to find. A superscript is found by its height and size, so a PDF that sets exponents at the baseline in small type, or raises whole words, reads as before. Compound units are still compared by their first part. The suite is one author's, with made-up documents and one run of one model.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
