@@ -6,6 +6,7 @@ import { quoteContext, quoteHas } from "../agent/evidence.ts";
 import { chunkDocument, parentId } from "../documents/chunk.ts";
 import { outlineOf } from "../documents/outline.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
+import { inspireCitationNote } from "./inspire.ts";
 import { citationNote } from "./openalex.ts";
 import { SourceError, type FetchedDocument, type OpenSource, type WorkInfo } from "./types.ts";
 
@@ -117,13 +118,19 @@ export class SourceSession {
    * arXiv ID, and another paper by its DOI; a Wikipedia article has no citations to follow.
    */
   private citationPointer(doc: FetchedDocument): string {
-    if (!this.sources.some((s) => s.followsCitations) || this.pointed.has(doc.id)) return "";
+    const following = this.sources.filter((s) => s.followsCitations);
+    if (!following.length || this.pointed.has(doc.id)) return "";
+    // Since harness 0.92.0, INSPIRE follows citations too: a record of its own is followed there, and
+    // another paper through the first source that follows citations, OpenAlex before INSPIRE.
+    const inspire = /^inspire:(\d+)$/.exec(doc.id)?.[1];
+    const via = inspire ? following.find((s) => s.name === "inspire") : following.find((s) => s.name === "openalex") ?? following[0];
+    if (!via) return "";
     const openalex = /^openalex:(W\d+)$/.exec(doc.id)?.[1];
     const arxiv = /^10\.48550\/arxiv\.(.+)$/i.exec(doc.work?.doi ?? "")?.[1];
-    const work = openalex ?? (arxiv ? `arxiv:${arxiv}` : doc.work?.doi ? `doi:${doc.work.doi}` : undefined);
+    const work = inspire && via.name === "inspire" ? `inspire:${inspire}` : (via.name === "openalex" ? openalex : undefined) ?? (arxiv ? `arxiv:${arxiv}` : doc.work?.doi ? `doi:${doc.work.doi}` : undefined);
     if (!work) return "";
     this.pointed.add(doc.id);
-    return citationNote(work);
+    return via.name === "inspire" ? inspireCitationNote(work) : citationNote(work);
   }
 
   /**

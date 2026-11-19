@@ -178,6 +178,19 @@ describe("saved answers", () => {
     assert.doesNotMatch(bibtex, /pmid|pmcid/);
   });
 
+  it("keys an INSPIRE record by its TeX key, as INSPIRE's BibTeX does (harness 0.92.0)", async () => {
+    const answer = await savedAnswer();
+    const work = { authors: ["ATLAS Collaboration"], year: 2012, doi: "10.1016/j.physletb.2012.08.020", venue: "Phys.Lett.B", texkey: "ATLAS:2012yve" };
+    const citation = { title: "Observation of a new particle in the search for the Standard Model Higgs boson with the ATLAS detector at the LHC", url: "https://inspirehep.net/literature/1124337", retrievedAt: "2026-11-19T00:00:00Z", source: "INSPIRE-HEP", work };
+    const inspire: SavedAnswer = { ...answer, evidence: [{ docId: "inspire:1124337", quote: "A search for the Standard Model Higgs boson", verified: true }], citations: { "inspire:1124337": citation } };
+    const bibtex = answerToBibtex(inspire)!;
+    assert.match(bibtex, /^@article\{ATLAS:2012yve,\n {2}title = \{Observation of a new particle/);
+    assert.match(bibtex, / {2}author = \{ATLAS Collaboration\},\n {2}year = \{2012\},\n {2}journal = \{Phys\.Lett\.B\},\n {2}doi = \{10\.1016\/j\.physletb\.2012\.08\.020\},/);
+    // Without a TeX key, by its record number.
+    const plain = answerToBibtex({ ...inspire, citations: { "inspire:1124337": { ...citation, work: { ...work, texkey: undefined } } } })!;
+    assert.match(plain, /^@article\{inspire_1124337,/);
+  });
+
   it("exports PubMed identifiers with a paper that has them", async () => {
     const answer = await savedAnswer();
     const id = "openalex:W2741809807";

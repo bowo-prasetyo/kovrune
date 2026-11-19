@@ -410,6 +410,22 @@ export function ResearchPanel({
               Europe PMC (biomedical and life-sciences papers and preprints: open-access ones read in full, others as abstracts)
             </label>
             <label className="choice">
+              <input type="checkbox" checked={prefs.inspire ?? false} disabled={running} onChange={(e) => updatePrefs({ inspire: e.target.checked })} />
+              INSPIRE-HEP (high-energy physics: abstracts, journal references and citations, or full texts through arXiv when ticked)
+            </label>
+            {prefs.inspire && (
+              <div className="openalex-limits">
+                <label className="choice">
+                  <input type="checkbox" checked={prefs.inspireFollowCitations ?? false} disabled={running} onChange={(e) => updatePrefs({ inspireFollowCitations: e.target.checked })} />
+                  Let the model follow citations through INSPIRE (experimental: small models often follow the wrong paper's)
+                </label>
+                <p className="hint">
+                  {prefs.arxiv ? "A record that is on arXiv is read in full from there. " : "Tick arXiv too to read a record's paper in full, not only its abstract. "}
+                  INSPIRE covers particle, nuclear and astroparticle physics, gravitation and cosmology; for other fields, use OpenAlex or arXiv.
+                </p>
+              </div>
+            )}
+            <label className="choice">
               <input type="checkbox" checked={prefs.patents ?? false} disabled={running} onChange={(e) => updatePrefs({ patents: e.target.checked })} />
               EPO patents (patents from every office: European and international ones read in full, others as abstracts; needs your free EPO key)
             </label>
@@ -544,7 +560,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC or EPO patents, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC, INSPIRE-HEP or EPO patents, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run

@@ -31,6 +31,8 @@ export const CONNECT_HOSTS = [
   "https://zenodo.org",
   // Europe PMC: its search, records and open-access full texts (sources/europepmc.ts).
   "https://www.ebi.ac.uk",
+  // INSPIRE-HEP: its search and records (sources/inspire.ts).
+  "https://inspirehep.net",
   // EPO Open Patent Services: its token, searches and patents, with the user's own key (sources/patents.ts).
   "https://ops.epo.org",
 ];
