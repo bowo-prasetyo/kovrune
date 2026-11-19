@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { openSourceNames, openSourcesFor, parseSourcePrefs, anyOpenSource } from "../src/app/research/sources.ts";
-import { createInspire, inspireCitationQuery, inspireWords, inspireWorkInfo, journalRef, READ_FIELDS, recordText, wordTries, type InspireRecord } from "../src/sources/inspire.ts";
+import { createInspire, inspireCitationQuery, namedPaper, inspireWords, inspireWorkInfo, journalRef, READ_FIELDS, recordText, wordTries, type InspireRecord } from "../src/sources/inspire.ts";
 import { SourceSession } from "../src/sources/session.ts";
 import { SourceError, type FetchedDocument, type FetchLike, type OpenSource } from "../src/sources/types.ts";
 
@@ -220,5 +220,26 @@ describe("INSPIRE-HEP in the app (harness 0.92.0)", () => {
     assert.deepEqual(openSourceNames(prefs), ["INSPIRE-HEP"]);
     const sources = openSourcesFor(prefs);
     assert.deepEqual(sources.map((s) => [s.name, s.label, s.followsCitations ?? false]), [["inspire", "INSPIRE-HEP", true]]);
+  });
+});
+
+describe("INSPIRE-HEP finds a paper named by its arXiv ID or DOI (harness 0.92.0)", () => {
+  it("reads an arXiv ID or a DOI in a plain query, and nothing in a plain number", () => {
+    assert.deepEqual(namedPaper("ATLAS Higgs boson discovery paper arXiv:1207.7214"), { work: "arxiv:1207.7214", rest: "ATLAS Higgs boson discovery paper  " });
+    assert.equal(namedPaper("1507.03414")?.work, "arxiv:1507.03414");
+    assert.equal(namedPaper("hep-th/9711200 Maldacena")?.work, undefined, "an old-style ID needs its arXiv prefix");
+    assert.equal(namedPaper("arXiv:hep-th/9711200 Maldacena")?.work, "arxiv:hep-th/9711200");
+    assert.equal(namedPaper("doi:10.1016/j.physletb.2012.08.020.")?.work, "doi:10.1016/j.physletb.2012.08.020");
+    assert.equal(namedPaper("W boson mass 80.4 GeV"), undefined);
+  });
+
+  it("lists the named paper first, then what the other words find", async () => {
+    const { fetchImpl, urls } = inspireFetch((q) => (q === "arxiv:1207.7214" ? [HIGGS] : q.startsWith("title:(ATLAS Higgs boson discovery)") ? [BROKEN, HIGGS] : []));
+    const hits = await createInspire(fetchImpl).search("ATLAS Higgs boson discovery paper arXiv:1207.7214");
+    assert.deepEqual(hits.map((h) => h.id), ["inspire:1124337", "inspire:11883"]);
+    assert.equal(new URL(urls[0]!).searchParams.get("q"), "arxiv:1207.7214");
+    const alone = inspireFetch((q) => (q === "arxiv:1507.03414" ? [HIGGS] : []));
+    assert.deepEqual((await createInspire(alone.fetchImpl).search("arXiv:1507.03414")).map((h) => h.id), ["inspire:1124337"]);
+    assert.equal(alone.urls.length, 1, "no word search without other words");
   });
 });

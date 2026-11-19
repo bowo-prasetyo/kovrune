@@ -111,6 +111,19 @@ export function inspireCitationQuery(query: string): InspireCitationQuery | unde
   return { direction: other.direction, work: other.work, terms: other.terms };
 }
 
+/**
+ * An arXiv ID or DOI named in a plain query: "ATLAS Higgs boson discovery paper arXiv:1207.7214" names one
+ * paper. Searched as words, the ID found nothing, and Qwen3.5-4B, asked about that paper's references, never
+ * read its record (eval/field/README.md). Undefined for a query naming none.
+ */
+export function namedPaper(query: string): { work: string; rest: string } | undefined {
+  const arxiv = /(?:arxiv\s*[:/]?\s*|arxiv\.org\/(?:abs|pdf)\/)?\b(\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?\b/i.exec(query);
+  if (arxiv && (/arxiv/i.test(arxiv[0]) || /^\d{4}\.\d{4,5}$/.test(arxiv[1]!))) return { work: `arxiv:${arxiv[1]}`, rest: query.replace(arxiv[0], " ") };
+  const doi = /(?:doi\s*:\s*|https?:\/\/doi\.org\/)?\b(10\.\d{4,9}\/[^\s"<>]+?)[.,;)]?(?=\s|$)/i.exec(query);
+  if (doi) return { work: `doi:${doi[1]}`, rest: query.replace(doi[0], " ") };
+  return undefined;
+}
+
 /** The pointer after a record's first read, when the model is told it can follow citations through INSPIRE. */
 export function inspireCitationNote(work: string): string {
   return `\n\n[To follow its citations, search_inspire "citing ${work}" for records citing it, or "references of ${work}" for records it cites; add a colon and a topic to narrow them.]`;
@@ -301,9 +314,18 @@ export function createInspire(fetchImpl: FetchLike = fetch, readers: Pick<FullTe
         }
       }
       let found: InspireRecord[] = [];
+      // A paper named by its arXiv ID or DOI comes first, then what the rest of the words find.
+      const named = cited ? undefined : namedPaper(query);
+      if (named) {
+        const q = named.work.startsWith("arxiv:") ? `arxiv:${named.work.slice(6)}` : `doi:"${named.work.slice(4).replace(/"/g, "")}"`;
+        found = await records(q, 1, SEARCH_FIELDS, signal);
+        words = inspireWords(named.rest).filter((w) => !/^(?:arxiv|doi)$/i.test(w));
+      }
       // Within a paper's citations, a topic that matches none of them lists them all, most cited first.
-      for (const tried of within ? [...wordTries(words), []] : wordTries(words)) {
-        found = await byWords(tried, within, signal);
+      for (const tried of within ? [...wordTries(words), []] : named && found.length ? [words] : wordTries(words)) {
+        const more = await byWords(tried, within, signal);
+        const seen = new Set(found.map((r) => r.control_number));
+        found = [...found, ...more.filter((r) => !seen.has(r.control_number))].slice(0, SEARCH_RESULTS);
         if (found.length) break;
       }
       return found.map((record) => {

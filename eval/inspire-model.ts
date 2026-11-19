@@ -118,6 +118,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         status: result.status,
         ...(final ? { answer: final.answer } : {}),
         cited: [...new Set((final?.evidence ?? []).map((e) => e.docId.replace(/#\d+$/, "")))],
+        // Each quote as checked, and why one was not found, to tell a wrong answer from a quote written another way.
+        evidence: result.evidence.map((e) => ({ docId: e.docId, quote: e.quote, verified: e.verified, ...(e.reason ? { reason: e.reason } : {}) })),
         actions: result.agent.calls.filter((c) => c.valid).map((c) => `${c.tool} ${JSON.stringify(c.args)}`),
         errors: result.sourceErrors,
         seconds: Math.round((Date.now() - start) / 1000),
