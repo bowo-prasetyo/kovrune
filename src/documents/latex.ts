@@ -459,8 +459,13 @@ export function latexToText(files: Map<string, string>): ConvertedLatex | undefi
   body = body.replace(/\\begin\{thebibliography\}[\s\S]*?\\end\{thebibliography\}/, "\\printbibliography");
   body = body.replace(/\\bibliography\s*\{[^}]*\}|\\printbibliography\b(\[[^\]]*\])?/, "\n\n\\section*{References}\n\n").replace(/\\bibliography\s*\{[^}]*\}|\\printbibliography\b(\[[^\]]*\])?/g, "");
 
-  const labels = numberLabels(body);
-  let text = convertBody(body, labels, refs);
+  // The appendix package's environments are \appendix: the sections after them are lettered (harness 0.94.0).
+  body = body.replace(/\\begin\{(?:appendix|appendices|subappendices)\}/g, "\\appendix ").replace(/\\end\{(?:appendix|appendices|subappendices)\}/g, "");
+  // Theorem-like statements, declared in the paper or its style files, numbered with the equations.
+  const statements = numberStatements(body, statementSetup([...styles, defined], macros));
+  body = statements.body;
+  const labels = numberLabels(body, statements);
+  let text = convertBody(body, labels, refs, statements);
   if (refs.size && !/^## References$/m.test(text)) text = text.replace(/\n*$/, "") + "\n\n## References";
   text = text.replace(/^## References$/m, () => `## References\n\n${[...refs.values()].map((r) => `[${r.number}] ${r.text}`).join("\n")}`);
   const title = titleArg ? inlineText(titleArg.body.replace(/\\\\/g, " ")).replace(/\s+/g, " ").trim() : undefined;
@@ -469,8 +474,10 @@ export function latexToText(files: Map<string, string>): ConvertedLatex | undefi
 }
 
 interface Label {
-  kind: "section" | "table" | "figure" | "equation" | "algorithm" | "appendix" | "item";
+  kind: "section" | "table" | "figure" | "equation" | "algorithm" | "appendix" | "item" | "theorem";
   number: string;
+  /** A theorem-like statement's printed name, "Lemma" or "Conjecture", which \cref and \autoref write. */
+  name?: string;
 }
 
 const FLOAT_ENV = new RegExp(String.raw`\\begin\{(${FLOATS})\}([\s\S]*?)\\end\{\1\}`, "g");
@@ -482,21 +489,293 @@ function floatKind(env: string): "table" | "figure" | "algorithm" {
   return /table/.test(env) ? "table" : /algorithm/.test(env) ? "algorithm" : "figure";
 }
 
-/** A displayed equation environment's rows, each with its number or none: an align numbers each row not marked \nonumber. */
-function mathRows(env: string, star: string, inner: string, next: () => number): Array<{ latex: string; number?: number; labels: string[] }> {
+/**
+ * A displayed equation environment's rows, each with its number or none: an align numbers each row not
+ * marked \nonumber, and a row with \tag{…} has that tag for its number (harness 0.94.0), starred or not,
+ * without stepping the counter.
+ */
+function mathRows(env: string, star: string, inner: string, next: () => string): Array<{ latex: string; number?: string; labels: string[] }> {
   const rows = /align|gather|eqnarray|flalign|alignat/.test(env) ? inner.split(/\\\\(?:\[[^\]]*\])?/) : [inner];
   return rows.flatMap((row) => {
     const labels = [...row.matchAll(/\\label\{([^}]*)\}/g)].map((l) => l[1]!.trim());
-    const latex = row.replace(/\\(?:label\{[^}]*\}|nonumber|notag)/g, "").replace(/\s+/g, " ").trim();
+    let tag: string | undefined;
+    // A tag is read as text, "∗" for \ast, so a reference to it keeps it.
+    const untagged = replaceCommand(row, "tag", (arg) => {
+      const written = arg.replace(/\$/g, "").trim();
+      tag = readableFormula(written) ?? written;
+      return "";
+    });
+    const latex = untagged.replace(/\\(?:label\{[^}]*\}|nonumber|notag)/g, "").replace(/\s+/g, " ").trim();
     if (!latex) return [];
     const numbered = !star && !/\\(?:nonumber|notag)\b/.test(row);
-    return [{ latex, ...(numbered ? { number: next() } : {}), labels }];
+    const number = tag !== undefined ? tag : numbered ? next() : undefined;
+    return [{ latex, ...(number !== undefined ? { number } : {}), labels }];
   });
 }
 
-/** The number each \label gets, as LaTeX numbers it: sections, tables, figures, algorithms, equations. */
-function numberLabels(body: string): Map<string, Label> {
+/*
+ * Theorem-like statements (harness 0.94.0), numbered as amsthm numbers them. A mathematics audit found that
+ * the converter wrote a heading only for ten fixed environment names, while most papers declare their own
+ * (\newtheorem{thm}{Theorem}[section], \newtheorem{conj}[thm]{Conjecture}): of 48 recent arXiv mathematics
+ * papers, 37 did, and 507 statements lost their heading, among them 23 conjectures, which read as plain
+ * statements. No statement was numbered, and a \ref to one gave the number of its section: "we prove
+ * Theorem 1.2 … and Theorem 1.4" read "we prove Theorem 1 … and Theorem 1" (docs/math-audit.md, M1 and M2).
+ */
+
+/** A theorem-like environment: the name it prints, and the counter it steps (none for \newtheorem*). */
+interface StatementEnv {
+  name: string;
+  counter?: string;
+}
+
+/** A counter: its value, and the sectioning level that resets it and prefixes its number (\newtheorem's [section], \numberwithin). */
+interface Counter {
+  value: number;
+  within?: number;
+}
+
+export interface StatementSetup {
+  envs: Map<string, StatementEnv>;
+  counters: Map<string, Counter>;
+  /** How a counter prints, where the paper says (\renewcommand{\thetheoremA}{A}, {\Alph{main}}): the macro's body, keyed by counter. */
+  formats: Map<string, string>;
+}
+
+/** Statement environments a class or package may define without the paper declaring them: printed with their name, unnumbered. */
+const STANDARD_STATEMENTS = "theorem lemma proposition corollary definition remark example assumption claim conjecture problem question hypothesis notation fact observation".split(" ");
+
+const WITHIN_LEVELS: Record<string, number> = { chapter: 1, section: 2, subsection: 3, subsubsection: 4 };
+
+/**
+ * The theorem-like environments a source declares, in the order of `texts` (style files, then the paper):
+ * \newtheorem{env}{Name}, \newtheorem{env}{Name}[section], \newtheorem{env}[shared]{Name},
+ * \newtheorem*{env}{Name}, llncs's \spnewtheorem in the same forms, thmtools's
+ * \declaretheorem[name=…, numberwithin=…, sibling=…, numbered=no]{env}, \numberwithin{counter}{section}
+ * (also for equations), and aliascnt's \newaliascnt{lem}{thm}, with which papers that use cleveref share
+ * a counter: \newaliascnt{lem}{thm} then \newtheorem{lem}[lem]{Lemma} numbers lemmas with theorems. A
+ * counter's \the… macro, among `macros`, says how it prints when it is plain enough to read.
+ */
+export function statementSetup(texts: string[], macros: Map<string, Macro> = new Map()): StatementSetup {
+  const envs = new Map<string, StatementEnv>();
+  const counters = new Map<string, Counter>([["equation", { value: 0 }]]);
+  const aliases = new Map<string, string>();
+  const counterOf = (name: string) => (envs.has(name) ? envs.get(name)!.counter : (aliases.get(name) ?? name));
+  const share = (name: string) => {
+    const counter = counterOf(name) ?? name;
+    if (!counters.has(counter)) counters.set(counter, { value: 0 });
+    return counter;
+  };
+  const pattern = /\\(newtheorem|spnewtheorem|declaretheorem|numberwithin|counterwithin|newaliascnt)(\*?)(?![a-zA-Z])/g;
+  for (const text of texts) {
+    for (let m = pattern.exec(text); m; m = pattern.exec(text)) {
+      const at = m.index + m[0].length;
+      if (m[1] === "newaliascnt") {
+        const alias = group(text, at);
+        const target = alias && group(text, alias.end);
+        if (alias && target) aliases.set(alias.body.trim(), share(target.body.trim()));
+        continue;
+      }
+      if (m[1] === "numberwithin" || m[1] === "counterwithin") {
+        const counter = group(text, at);
+        const level = counter && group(text, counter.end);
+        if (!counter || !level || m[2]) continue;
+        const name = counterOf(counter.body.trim());
+        const within = WITHIN_LEVELS[level.body.trim()];
+        if (name && within !== undefined) counters.set(name, { value: 0, ...counters.get(name), within });
+        continue;
+      }
+      if (m[1] === "declaretheorem") {
+        const before = optional(text, at);
+        const env = group(text, before?.end ?? at);
+        if (!env) continue;
+        const after = optional(text, env.end);
+        const keys = new Map<string, string>();
+        for (const pair of `${before?.body ?? ""},${after?.body ?? ""}`.split(",")) {
+          const [key, ...value] = pair.split("=");
+          if (key?.trim()) keys.set(key.trim(), value.join("=").replace(/^\s*\{?|\}?\s*$/g, ""));
+        }
+        const id = env.body.trim();
+        const name = keys.get("name") ?? keys.get("title") ?? keys.get("heading") ?? id[0]!.toUpperCase() + id.slice(1);
+        const shared = keys.get("sibling") ?? keys.get("sharenumber") ?? keys.get("sharecounter");
+        if (m[2] || /^(?:no|false)$/.test(keys.get("numbered") ?? "")) envs.set(id, { name });
+        else if (shared) envs.set(id, { name, counter: share(shared.trim()) });
+        else {
+          const within = WITHIN_LEVELS[(keys.get("numberwithin") ?? keys.get("parent") ?? keys.get("within") ?? "").trim()];
+          counters.set(id, { value: 0, ...(within !== undefined ? { within } : {}) });
+          envs.set(id, { name, counter: id });
+        }
+        continue;
+      }
+      // \newtheorem and \spnewtheorem: {env}[shared]{Name}[within].
+      const env = group(text, at);
+      if (!env) continue;
+      const shared = optional(text, env.end);
+      const printed = group(text, shared?.end ?? env.end);
+      if (!printed) continue;
+      const id = env.body.trim();
+      const name = inline(printed.body, new Map(), new Map()).replace(/\s+/g, " ").trim();
+      if (m[2]) envs.set(id, { name });
+      else if (shared) envs.set(id, { name, counter: share(shared.body.trim()) });
+      else {
+        const within = WITHIN_LEVELS[optional(text, printed.end)?.body.trim() ?? ""];
+        counters.set(id, { value: 0, ...(within !== undefined ? { within } : {}) });
+        envs.set(id, { name, counter: id });
+      }
+    }
+  }
+  const formats = new Map<string, string>();
+  for (const [name, macro] of macros) if (name.startsWith("the") && macro.args === 0 && !/#/.test(macro.body)) formats.set(name.slice(3), macro.body);
+  return { envs, counters, formats };
+}
+
+/** What numberStatements finds: the body with each statement's heading written, the equations' numbers in order, and the statements' labels. */
+interface Statements {
+  body: string;
+  equations: string[];
+  labels: Map<string, Label>;
+}
+
+/** A number in Roman numerals, for \Roman and \roman. */
+function roman(n: number): string {
+  const numerals: Array<[number, string]> = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let out = "";
+  for (const [size, numeral] of numerals) for (; n >= size; n -= size) out += numeral;
+  return out;
+}
+
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Numbers the theorem-like statements and the displayed equations in the order the paper has them, with the
+ * sections around them, as LaTeX does: a counter declared [section] restarts at each section and prints
+ * "2.3", a shared counter ([thm], or [equation]) runs on across the environments that share it, and an
+ * equation counter put \numberwithin a section prints "(2.1)". Each statement's \begin becomes its printed
+ * heading, "Theorem 2.3 (Hardy–Littlewood).", or "Proof of Theorem 2.3." for a proof given a title. Floats
+ * are left out, as numberLabels and convertBody leave them out.
+ */
+function numberStatements(body: string, setup: StatementSetup): Statements {
+  const counters = new Map([...setup.counters].map(([name, counter]) => [name, { ...counter }]));
+  const envs = new Map(setup.envs);
+  for (const name of STANDARD_STATEMENTS) {
+    for (const id of [name, `${name}*`]) if (!envs.has(id)) envs.set(id, { name: name[0]!.toUpperCase() + name.slice(1) });
+  }
+  const names = [...envs.keys(), "proof"].sort((a, b) => b.length - a.length).map(escapeRegExp).join("|");
+  // Floats blanked, so positions stay those of the body.
+  const outside = body.replace(FLOAT_ENV, (all) => " ".repeat(all.length));
+  type Event = { at: number; kind: "section" | "appendix" | "statement" | "math"; match: RegExpMatchArray };
+  const events: Event[] = [];
+  for (const m of outside.matchAll(/\\(part|chapter|section|subsection|subsubsection)(\*?)(?![a-zA-Z])|\\appendix\b/g)) events.push({ at: m.index, kind: m[1] ? "section" : "appendix", match: m });
+  for (const m of outside.matchAll(new RegExp(String.raw`\\begin\{(${names})\}`, "g"))) events.push({ at: m.index, kind: "statement", match: m });
+  for (const m of outside.matchAll(MATH_ENV)) events.push({ at: m.index, kind: "math", match: m });
+  events.sort((a, b) => a.at - b.at);
+
+  const sections = [0, 0, 0, 0, 0];
+  let appendix = false;
+  // A book's sections print with their chapter, "4.2", and its appendix letters chapters, not sections.
+  const book = events.some((e) => e.kind === "section" && e.match[1] === "chapter");
+  const letter = (n: number) => String.fromCharCode(64 + n);
+  const SECTIONING: Record<string, number> = { chapter: 1, section: 2, subsection: 3, subsubsection: 4 };
+  const value = (name: string) => (SECTIONING[name] !== undefined ? sections[SECTIONING[name]!]! : (counters.get(name)?.value ?? 0));
+  const STYLES: Record<string, (n: number) => string> = {
+    arabic: String,
+    Alph: letter,
+    alph: (n) => letter(n).toLowerCase(),
+    Roman: (n) => roman(n),
+    roman: (n) => roman(n).toLowerCase(),
+  };
+  /** A counter as the paper's \the… macro prints it, or undefined when that macro is more than counters and text. */
+  const formatted = (name: string, depth = 0): string | undefined => {
+    const format = setup.formats.get(name);
+    if (format === undefined || depth > 4) return undefined;
+    let ok = true;
+    const out = format
+      .replace(/\\(arabic|Alph|alph|Roman|roman)\s*\{([^}]*)\}/g, (_all, style: string, counter: string) => STYLES[style]!(value(counter.trim())))
+      .replace(/\\the([a-zA-Z]+)/g, (_all, counter: string) => shown(counter, depth + 1) ?? ((ok = false), ""));
+    return ok && !/[\\{}]/.test(out) ? out.trim() : undefined;
+  };
+  /** A sectioning level as printed: "2", "B", "4.2" in a book. */
+  const level = (l: number): string => {
+    if (l === 1) return appendix && book ? letter(sections[1]!) : String(sections[1]);
+    const top = appendix && !book ? letter(sections[2]!) : String(sections[2]);
+    return [...(book ? [level(1)] : []), top, ...sections.slice(3, l + 1)].join(".");
+  };
+  /** Any counter as printed: by the paper's \the… macro when it has a readable one, else as LaTeX prints it by default. */
+  function shown(name: string, depth = 0): string {
+    const own = formatted(name, depth);
+    if (own !== undefined) return own;
+    if (SECTIONING[name] !== undefined) return level(SECTIONING[name]!);
+    const counter = counters.get(name);
+    const within = counter?.within;
+    const prefix = within === undefined ? "" : `${formatted(Object.keys(SECTIONING).find((k) => SECTIONING[k] === within)!, depth) ?? level(within)}.`;
+    return prefix + (counter?.value ?? 0);
+  }
+  const step = (name: string) => {
+    const counter = counters.get(name) ?? { value: 0 };
+    counters.set(name, counter);
+    counter.value++;
+    return shown(name);
+  };
+  const equations: string[] = [];
   const labels = new Map<string, Label>();
+  const edits: Array<{ start: number; end: number; text: string }> = [];
+  for (const { at, kind, match } of events) {
+    if (kind === "appendix") {
+      appendix = true;
+      sections[book ? 1 : 2] = 0;
+    } else if (kind === "section") {
+      if (match[2] || match[1] === "part") continue;
+      const level = SECTION_LEVELS[match[1]!]!;
+      sections[level]!++;
+      for (let l = level + 1; l < sections.length; l++) sections[l] = 0;
+      // A counter numbered within this level or a deeper one restarts.
+      for (const counter of counters.values()) if (counter.within !== undefined && counter.within >= level) counter.value = 0;
+    } else if (kind === "math") {
+      mathRows(match[1]!, match[2]!, match[3]!, () => {
+        const number = step("equation");
+        equations.push(number);
+        return number;
+      });
+    } else {
+      const id = match[1]!;
+      let end = at + match[0].length;
+      const title = optional(body, end);
+      if (title) end = title.end;
+      const titleText = title?.body.trim();
+      if (id === "proof") {
+        edits.push({ start: at, end, text: `\n\n${titleText ? titleText.replace(/\.$/, "") : "Proof"}. ` });
+        continue;
+      }
+      const env = envs.get(id)!;
+      const number = env.counter ? step(env.counter) : "";
+      edits.push({ start: at, end, text: `\n\n${env.name}${number ? ` ${number}` : ""}${titleText ? ` (${titleText})` : ""}. ` });
+      // The statement's own label: the first outside its equations and lists, which have their own numbers.
+      const close = body.indexOf(`\\end{${id}}`, end);
+      const inside = body.slice(end, close < 0 ? undefined : close).replace(MATH_ENV, "").replace(/\\begin\{(itemize|enumerate|description)\}[\s\S]*?\\end\{\1\}/g, "");
+      const label = /\\label\{([^}]*)\}/.exec(inside)?.[1]?.trim();
+      if (label) labels.set(label, { kind: "theorem", number, name: env.name });
+    }
+  }
+  let out = "";
+  let last = 0;
+  for (const edit of edits) {
+    out += body.slice(last, edit.start) + edit.text;
+    last = edit.end;
+  }
+  out += body.slice(last);
+  out = out.replace(new RegExp(String.raw`\\end\{(?:${names})\}`, "g"), "\n\n");
+  return { body: out, equations, labels };
+}
+
+/** Each equation number in turn, as numberStatements gave them. */
+function equationNumbers(statements: Statements): () => string {
+  let i = 0;
+  return () => statements.equations[i++] ?? String(i);
+}
+
+/** The number each \label gets, as LaTeX numbers it: sections, tables, figures, algorithms, equations, and statements (numberStatements). */
+function numberLabels(body: string, statements: Statements): Map<string, Label> {
+  const labels = new Map<string, Label>(statements.labels);
+  const nextEquation = equationNumbers(statements);
   const counts = { table: 0, figure: 0, algorithm: 0 };
   for (const [, env, inner] of body.matchAll(FLOAT_ENV)) {
     const kind = floatKind(env!);
@@ -505,9 +784,8 @@ function numberLabels(body: string): Map<string, Label> {
     for (const l of inner!.matchAll(/\\label\{([^}]*)\}/g)) labels.set(l[1]!.trim(), { kind, number });
   }
   const outside = body.replace(FLOAT_ENV, "");
-  let equation = 0;
   for (const [, env, star, inner] of outside.matchAll(MATH_ENV)) {
-    for (const row of mathRows(env!, star!, inner!, () => ++equation)) for (const l of row.labels) labels.set(l, { kind: "equation", number: row.number ? String(row.number) : "" });
+    for (const row of mathRows(env!, star!, inner!, nextEquation)) for (const l of row.labels) labels.set(l, { kind: "equation", number: row.number ?? "" });
   }
   const sections = [0, 0, 0, 0, 0];
   let appendix = false;
@@ -533,7 +811,7 @@ function numberLabels(body: string): Map<string, Label> {
 /** "Table 2", "Section 3", "Appendix B", "Figure 1", "Equation (4)", as \autoref and \cref write them. */
 function refName(label: Label | undefined, capital = true): string {
   if (!label) return "??";
-  const word = { section: "Section", table: "Table", figure: "Figure", equation: "Equation", algorithm: "Algorithm", appendix: "Appendix", item: "" }[label.kind];
+  const word = label.kind === "theorem" ? (label.name ?? "") : { section: "Section", table: "Table", figure: "Figure", equation: "Equation", algorithm: "Algorithm", appendix: "Appendix", item: "" }[label.kind];
   const shown = label.kind === "equation" ? `(${label.number})` : label.number;
   return `${capital ? word : word.toLowerCase()} ${shown}`.trim();
 }
@@ -622,6 +900,13 @@ function inline(text: string, labels: Map<string, Label>, refs: Map<string, Refe
     const read = readableFormula(arg);
     return read !== undefined ? read : keep(`$${arg.replace(/\s+/g, " ").trim()}$`);
   });
+  // \texorpdfstring{TeX}{bookmark} (hyperref), common in headings: the TeX, not both (harness 0.94.0).
+  // "\section{Proof of \texorpdfstring{\cref{thm:main}}{Theorem 1.1}}" read "Proof of Theorem 1.1Theorem 1.1".
+  for (let at = out.search(/\\texorpdfstring(?![a-zA-Z])/); at >= 0; at = out.search(/\\texorpdfstring(?![a-zA-Z])/)) {
+    const tex = group(out, at + "\\texorpdfstring".length);
+    const bookmark = tex && group(out, tex.end);
+    out = out.slice(0, at) + (tex?.body ?? "") + out.slice(bookmark?.end ?? tex?.end ?? at + "\\texorpdfstring".length);
+  }
   out = citations(out, refs);
   out = out.replace(/\\(autoref|cref|Cref|Autoref|vref|nameref)\*?\s*\{([^}]*)\}/g, (_all, kind: string, keys: string) => keys.split(",").map((k, i) => refName(labels.get(k.trim()), kind !== "cref" || i === 0)).join(" and "));
   out = out.replace(/\\eqref\s*\{([^}]*)\}/g, (_all, key: string) => `(${labels.get(key.trim())?.number ?? "??"})`);
@@ -721,8 +1006,9 @@ function tabulars(env: string): string[] {
 }
 
 /** Each float, list, environment, equation and heading as a block of text, then the prose between them. */
-function convertBody(body: string, labels: Map<string, Label>, refs: Map<string, Reference>): string {
-  const counts = { table: 0, figure: 0, algorithm: 0, equation: 0 };
+function convertBody(body: string, labels: Map<string, Label>, refs: Map<string, Reference>, statements: Statements): string {
+  const counts = { table: 0, figure: 0, algorithm: 0 };
+  const nextEquation = equationNumbers(statements);
   const sections = [0, 0, 0, 0, 0];
   let appendix = false;
   const blocks: string[] = [];
@@ -756,13 +1042,11 @@ function convertBody(body: string, labels: Map<string, Label>, refs: Map<string,
   });
   // Displayed equations: their LaTeX on a line of their own, then their number.
   out = out.replace(MATH_ENV, (_all, env: string, star: string, inner: string) =>
-    block(mathRows(env, star, inner, () => ++counts.equation).map((row) => (row.number ? `${row.latex} (${row.number})` : row.latex)).join("\n")),
+    block(mathRows(env, star, inner, nextEquation).map((row) => (row.number ? `${row.latex} (${row.number})` : row.latex)).join("\n")),
   );
   out = out.replace(/\\\[([\s\S]*?)\\\]|\$\$([\s\S]*?)\$\$|\\begin\{(displaymath|math)\}([\s\S]*?)\\end\{\3\}/g, (_all, a: string | undefined, b: string | undefined, _c, d: string | undefined) => block((a ?? b ?? d ?? "").replace(/\\label\{[^}]*\}/g, "").replace(/\s+/g, " ").trim()));
-  // The abstract, and other titled environments.
+  // The abstract (theorem-like statements have their headings from numberStatements).
   out = out.replace(/\\begin\{abstract\}([\s\S]*?)\\end\{abstract\}/g, (_all, inner: string) => `\n\n\u0013## Abstract\u0014\n\n${inner}\n\n`);
-  out = out.replace(/\\begin\{(theorem|lemma|proposition|corollary|definition|remark|example|proof|assumption|claim)\*?\}(\[[^\]]*\])?/g, (_all, env: string, name: string | undefined) => `\n\n${env[0]!.toUpperCase()}${env.slice(1)}${name ? ` (${name.slice(1, -1)})` : ""}. `);
-  out = out.replace(/\\end\{(theorem|lemma|proposition|corollary|definition|remark|example|proof|assumption|claim)\*?\}/g, "\n\n");
   // Lists: each item on a line of its own.
   out = out.replace(/\s*\\item\s*(\[[^\]]*\])?/g, (_all, label: string | undefined) => `\n\u0015${label ? `${label.slice(1, -1)} ` : ""}`);
   out = out.replace(/\\(?:begin|end)\{(?:itemize|enumerate|description|compactitem|compactenum|inparaenum|outline)\}(\[[^\]]*\])?/g, "\n\n");

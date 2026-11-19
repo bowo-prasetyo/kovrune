@@ -16,6 +16,7 @@ import { csDocuments, csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
 import { labDocuments, labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
 import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from "../eval/engineering/tasks.ts";
 import { physicsDocuments, physicsHoldoutTasks, physicsTasks } from "../eval/physics/tasks.ts";
+import { mathDocuments, mathHoldoutTasks, mathTasks } from "../eval/math/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -209,7 +210,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -600,6 +601,52 @@ describe("physics suite", () => {
       assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
     }
     assert.ok(physicsHoldoutTasks.length >= physicsTasks.length / 3, "a quarter or more of all is held out");
+  });
+});
+
+describe("mathematics suite", () => {
+  it("reads four made-up mathematics documents, two of them LaTeX sources, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(mathDocuments.length, 4);
+    assert.equal(suite.mathLibrary.documents.filter((d) => !d.id.includes("#")).length, mathDocuments.length, "only the mathematics documents");
+    assert.equal(suite.library.documentFor("teller-sets"), undefined, "the field suite's library is unchanged");
+    const teller = suite.mathLibrary.documentFor("teller-sets")!.text;
+    const odum = suite.mathLibrary.documentFor("odum-flow")!.text;
+    const note = suite.mathLibrary.documentFor("ishikawa-note")!.text;
+    // What makes mathematics hard to read: statements under the paper's own names, numbered as amsthm
+    // numbers them, with counters shared through aliascnt and thmtools, lettered main theorems, tagged
+    // hypotheses, equations within sections, an appendix environment, and references to all of them.
+    assert.match(teller, /^Theorem 1\.1 \(Main Theorem\)\. Let \$p \\geq 7\$ be a prime\./m);
+    assert.match(teller, /^Conjecture 1\.4\. As \$p \\to \\infty\$/m, "a conjecture keeps its heading");
+    assert.match(teller, /^Proof of Theorem 1\.1\. Suppose .* By Lemma 3\.1 there is .* By Lemma 3\.2, \$A\$ contains/m);
+    assert.match(teller, /^## 3 Proof of Theorem 1\.1$/m);
+    assert.match(teller, /^Question 1\. Is the sequence/m);
+    assert.match(teller, /^## A A numerical estimate\n\nLemma A\.1\. /m);
+    assert.match(teller, /\\overline\{\\widehat\{1_A\}\(\\chi\^3\)\}\. \(2\.1\)$/m);
+    assert.match(odum, /^Theorem A\. Let \$d \\geq 3\$/m);
+    assert.match(odum, /^\\\|V\\\|_\{L\^\{d\/\(2s\)\}\} < \\frac\{1\}\{8\}\. \(H2\)$/m);
+    assert.match(odum, /the Nash-type inequality of Lemma 3\.3 fails, or the critical exponent itself; see Conjecture 5\.3\./);
+    assert.match(odum, /^q_\{\*\} = 1 \+ \\frac\{4s\}\{d\+2\}\. \(1\.2\)$/m);
+    assert.match(note, /Theorem 2\. For every k ≥ 5, we have I\(k\) ≤ k² − 2\./);
+    assert.match(note, /I\(k\) 9 14 23 34 47 not known \(≥ 60\)/);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with a third held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...mathTasks, ...mathHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations, task.casedFacts], [[], [], undefined], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.mathLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    for (const tasks of [mathTasks, mathHoldoutTasks]) {
+      const cited = new Set(tasks.flatMap((t) => t.citations.flat()));
+      assert.deepEqual([...cited].sort(), mathDocuments.map((d) => d.id).sort(), "every document is asked about");
+      assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
+    }
+    assert.ok(mathHoldoutTasks.length >= mathTasks.length / 3, "a third or more as many held out");
   });
 });
 

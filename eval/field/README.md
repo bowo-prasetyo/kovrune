@@ -1230,6 +1230,57 @@ What changed:
 - Only the solvents and substituents listed are known, and only metals are compared by element: a non-metal swapped in a name ("chloro" for "bromo") is left to the share of shared words.
 - Structures drawn with `\chemfig` and in images, and structures given as SMILES or InChI, are not read.
 
+### Mathematics: theorem-like statements, numbered as amsthm numbers them (0.94.0, defect fix)
+
+An audit from a mathematician's point of view ([`docs/math-audit.md`](../../docs/math-audit.md)) ran the LaTeX converter (`src/documents/latex.ts`) on the sources of 48 recent arXiv mathematics papers, six each from math.AG, AP, CO, DG, GT, NT, PR and RT. It found two defects in how it read theorems, lemmas and the other statements a paper numbers (M1 and M2), and the 0.94.0 converter fixes both.
+
+**Statements under the paper's own names lost their heading.** The converter wrote a heading for ten fixed environment names (`theorem`, `lemma`, …, `claim`) and dropped `\newtheorem`. Most papers declare their own: `\newtheorem{thm}{Theorem}[section]`, `\newtheorem{conj}[thm]{Conjecture}`. In 37 of the 48 papers, 507 statements read as plain paragraphs, among them 23 conjectures, which then read as facts. arXiv 2611.24215 states a conjecture that read "For χ = 1 (the trivial character), there is an isomorphism …".
+
+**No statement was numbered, and a reference to one gave its section's number.** A `\label` in a statement fell through to the section around it, so `Lemma~\ref{lem:key}` read "Lemma 3" for the PDF's "Lemma 3.2", and `\cref{thm:main}` read "Section 2". In arXiv 2611.23874, "we prove Theorem 1.2 … we prove Theorem 1.4" read "we prove Theorem 1 … we prove Theorem 1".
+
+| The source says | Read before | Read now |
+| --- | --- | --- |
+| `\newtheorem{lem}[thm]{Lemma}` … `\begin{lem}[Key Lemma]\label{lem:key}` in Section 3 | (no heading) | Lemma 3.2 (Key Lemma). |
+| `\newtheorem{conj}[thm]{Conjecture}` … `\begin{conj}` | (no heading) | Conjecture 1.4. |
+| `\begin{proof}[Proof of Theorem~\ref{thm:main}]` | Proof (Proof of Theorem 1). | Proof of Theorem 1.1. |
+| `By \cref{lem:density} and Lemma~\ref{lem:key}` | By Section 3 and Lemma 3 | By Lemma 3.1 and Lemma 3.2 |
+| `\newaliascnt{lem}{thm}\newtheorem{lem}[lem]{Lemma}` (aliascnt, for cleveref) | (no heading) | lemmas numbered with theorems |
+| `\declaretheorem[sibling=theorem]{lemma}`, `[numbered=no]` (thmtools) | Lemma. | Lemma 3.3., Remark. |
+| `\declaretheorem{main}` with `\renewcommand{\themain}{\Alph{main}}` | (no heading) | Theorem A. |
+| `\numberwithin{equation}{section}`, `\eqref{eq:count}` | (2) | (2.1) |
+| `\begin{equation}\tag{H2}\label{H2}`, `\eqref{H2}` | … (3), and (3) | … (H2), and (H2) |
+| `\begin{appendix}\section{…}` (the appendix package) | ## 4 …, Lemma 4 | ## A …, Lemma A.1 |
+| `\section{Proof of \texorpdfstring{\cref{thm:main}}{Theorem 1.1}}` | Proof of Section 3Theorem 1.1 | Proof of Theorem 1.1 |
+| an `amsbook` with `\numberwithin{thm}{section}` | (no heading), "Theorem 4" | Theorem 4.4.19, chapter, section, number |
+
+What changed (`statementSetup`, `numberStatements`):
+- **Declarations are read before they are dropped**, from the paper and its style files, in order: `\newtheorem{env}{Name}[within]`, `\newtheorem{env}[shared]{Name}`, `\newtheorem*`, llncs's `\spnewtheorem` in the same forms, thmtools's `\declaretheorem` (`name`, `numberwithin`, `sibling`, `numbered=no`), aliascnt's `\newaliascnt`, and `\numberwithin` for statements and equations. A counter's `\the…` macro, when it is only counters and text (`\Alph{main}`, a fixed "A"), says how it prints.
+- **One pass numbers statements and equations in document order**, with the sections, as amsthm and LaTeX do: a counter declared `[section]` restarts at each section, a shared counter runs on across the environments that share it, equations included, a starred section does not count, the appendix letters sections (chapters in a book), and a book's sections print with their chapter. A `\tag` is an equation's number without stepping the counter.
+- **A statement reads "Theorem 2.3 (Title).", a proof given a title reads as its title ("Proof of Theorem 2.3."), and a reference to a statement gives its number, with its printed name for `\cref` and `\autoref`.** A standard name no declaration covers, from the document class, keeps its heading unnumbered as before, and `conjecture`, `problem`, `question`, `hypothesis`, `notation`, `fact` and `observation` join the standard names.
+- Two fixes found on the way: `\begin{appendix}`, `appendices` and `subappendices` are read as `\appendix`, and `\texorpdfstring{TeX}{bookmark}` keeps its TeX only.
+
+**Measured against the PDFs.** For each of the 48 papers, every statement heading and every reference to a statement ("by Lemma 3.2") the converted text writes was looked for, with its number, in the paper's own PDF as pdf.js reads it:
+
+| | Before | After |
+| --- | --- | --- |
+| Statement headings written | 1,165 | 1,671 |
+| …with a number that the PDF has | 0 | 1,514 of 1,518 |
+| Conjectures with their heading | 0 | 18, in 12 papers |
+| References to statements whose number the PDF has | 2,171 of 3,239 (67%) | 3,385 of 3,403 (99.5%) |
+| Time to convert the 48 sources | 1.43 s | 1.53 s |
+
+The four headings still wrong are in one paper that declares an environment named `algorithm`, which the converter takes for a float, so its counter misses a step. The 18 references still missing have several causes, none common: that paper's three references to its Theorem 4.13, citation notes naming another paper's statement ("[10, Remark 3.2]"), which the check counts though they are not references, and a few references printed with another name than the PDF gives them.
+
+**Effect on recorded runs: none.** No committed document declares a theorem-like statement, tags an equation, numbers equations within sections or sets an appendix environment: the three physics papers, the only LaTeX in any suite before this one, convert to exactly the same text. So no recorded answer can change, and none was re-scored. The effect on answers is measured by the new mathematics suite ([eval/math](../math/README.md)), which needs the fix: 10 of its 31 answerable questions name a numbered statement of one of its LaTeX papers or ask for one's number, and 3 more ask whether a statement there is proved.
+
+`tests/latex.test.ts` ("theorem-like statements, numbered as amsthm numbers them") fails on all seven of its tests before the change and passes after.
+
+**Limits:**
+- Statements built from other environments (`\newenvironment{mythm}{\begin{thm}}{\end{thm}}`), thmtools's `restatable`, numbers set by hand (`\setcounter`), and a counter's `\the…` macro that does more than print counters, keep the default number, which may differ from the PDF's.
+- An environment named like a float (`algorithm`, `figure`) is read as the float.
+- A section's own heading in a book is still numbered without its chapter ("## 2 B" for the PDF's "1.2 B"), as before; statements in it print the chapter.
+- Labels inside a statement's list items get the statement's number, not the item's.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
