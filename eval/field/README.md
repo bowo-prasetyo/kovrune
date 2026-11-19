@@ -1108,7 +1108,7 @@ What changed:
 - **Names' digits:** a digit written right after a letter ("Ka3", "S1", "H2O") is still a number to find, but no longer one to add or subtract to back a "by how much".
 - **Facts in their case:** a task may give `casedFacts`, compared in their case (`scoring.ts`), so a suite can tell "meV" from "MeV".
 
-**Effect on recorded runs: RESCORE_EFFECT**
+**Effect on recorded runs: none.** `bench:rescore`, run on each report on its own, re-scores 9,492 answers in 138 reports, 4,344 of them labelled **Quotes found** (the files 0.90.0 lists still cannot be read). No label and no count of backed or judged sentences changed, so neither the quote check's second reading nor the number check's LaTeX, concise uncertainties, σ and name digits cost a right answer its label on these suites. The physics reports are new in this version and are not part of that count.
 
 **Effect on the physics suite:** before, 20 of 26 open and 10 of 10 held-out tasks; after, 19 and 10 as run, and 23 and 10 re-scored with the quote and name-digit fixes. No labelled answer is wrong in any of them ([results](../physics/README.md#results)).
 
