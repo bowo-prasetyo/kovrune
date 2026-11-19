@@ -38,6 +38,7 @@ const KNOWN = [
   "https://zenodo.org/api/records/15310522/files/paper.pdf/content",
   "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
   "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC10865779/fullTextXML",
+  "https://inspirehep.net/api/literature?q=recid%3A1124337",
 ];
 
 describe("content security policy", () => {

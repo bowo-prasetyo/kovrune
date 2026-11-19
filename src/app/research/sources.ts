@@ -1,5 +1,5 @@
 // Which open sources the user lets the agent search. Off by default: searching them
-// sends the model's search words to Wikipedia, OpenAlex, DataCite or Europe PMC (arXiv is
+// sends the model's search words to Wikipedia, OpenAlex, DataCite, Europe PMC or INSPIRE-HEP (arXiv is
 // searched through DataCite), reading an arXiv paper downloads its PDF from arxiv.org, and
 // reading a DataCite work on Zenodo downloads its record and PDF from zenodo.org.
 
@@ -8,6 +8,7 @@ import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
 import { createArxiv, findArxivByTitle } from "../../sources/arxiv.ts";
 import { createDataCite } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
+import { createInspire } from "../../sources/inspire.ts";
 import { createOpenAlex, OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
 import { createPatents } from "../../sources/patents.ts";
 import type { OpenSource } from "../../sources/types.ts";
@@ -40,6 +41,10 @@ export interface SourcePrefs {
   openalexField?: string;
   /** OpenAlex searches find only works from this computer science venue (OPENALEX_VENUES); "" for any venue. */
   openalexVenue?: string;
+  /** High-energy physics through INSPIRE-HEP (sources/inspire.ts): records with abstracts, read whole from arXiv when arXiv is ticked. */
+  inspire?: boolean;
+  /** The model is told it can follow a paper's citations through INSPIRE (experimental, off by default, as for OpenAlex). */
+  inspireFollowCitations?: boolean;
   /** Patents through the EPO's Open Patent Services (sources/patents.ts); searched only with a key and secret. */
   patents?: boolean;
   /**
@@ -85,6 +90,8 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       ...(value.openalexFollowCitations === true ? { openalexFollowCitations: true } : {}),
       ...(typeof value.openalexField === "string" && OPENALEX_FIELDS.some(([id]) => id === value.openalexField) ? { openalexField: value.openalexField } : {}),
       ...(typeof value.openalexVenue === "string" && OPENALEX_VENUES.some(([id]) => id === value.openalexVenue) ? { openalexVenue: value.openalexVenue } : {}),
+      ...(value.inspire === true ? { inspire: true } : {}),
+      ...(value.inspireFollowCitations === true ? { inspireFollowCitations: true } : {}),
       ...(value.patents === true ? { patents: true } : {}),
       ...(typeof value.epoKey === "string" && value.epoKey.trim() ? { epoKey: value.epoKey.trim() } : {}),
       ...(typeof value.epoSecret === "string" && value.epoSecret.trim() ? { epoSecret: value.epoSecret.trim() } : {}),
@@ -113,8 +120,8 @@ export function saveSourcePrefs(prefs: SourcePrefs): void {
 const extractPdf = async (bytes: Uint8Array) => extractPdfText(bytes, await loadBrowserPdfJs());
 
 /**
- * The ticked sources. OpenAlex reads a work in full from arXiv or Europe PMC only when that source is
- * ticked too, so no site is asked that the user did not choose (openalex.ts).
+ * The ticked sources. OpenAlex reads a work in full from arXiv or Europe PMC, and INSPIRE a record from
+ * arXiv, only when that source is ticked too, so no site is asked that the user did not choose (openalex.ts).
  */
 export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
   const arxiv = prefs.arxiv ? createArxiv({ extractPdf }) : undefined;
@@ -128,18 +135,19 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
     ...(arxiv ? [arxiv] : []),
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
     ...(europepmc ? [europepmc] : []),
+    ...(prefs.inspire ? [createInspire(fetch, { arxiv }, { followCitations: prefs.inspireFollowCitations === true })] : []),
     ...(patentsReady(prefs) ? [createPatents({ key: prefs.epoKey!, secret: prefs.epoSecret! })] : []),
   ];
 }
 
 /** Whether any open source is ticked, so questions can be asked without documents. */
 export function anyOpenSource(prefs: SourcePrefs): boolean {
-  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || patentsReady(prefs);
+  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || patentsReady(prefs);
 }
 
-/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "EPO patents". */
+/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "EPO patents". */
 export function openSourceNames(prefs: SourcePrefs): string[] {
-  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
+  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(prefs.inspire ? ["INSPIRE-HEP"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
 }
 
 /** Common Wikipedia editions for the language picker; any valid code typed in also works. */

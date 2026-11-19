@@ -67,6 +67,8 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       return `Searching DataCite for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_europepmc":
       return `Searching Europe PMC for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
+    case "search_inspire":
+      return `Searching INSPIRE-HEP for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_patents":
       return `Searching EPO patents for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "read": {
@@ -81,6 +83,7 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       if (id.startsWith("arxiv:")) return `Reading arXiv paper ${bare.slice(6)}${part}`;
       if (id.startsWith("datacite:")) return `Reading DataCite work ${bare.slice(9)}${part}`;
       if (id.startsWith("europepmc:")) return `Reading Europe PMC work ${bare.slice(10)}${part}`;
+      if (id.startsWith("inspire:")) return `Reading INSPIRE record ${bare.slice(8)}${part}`;
       if (id.startsWith("patents:")) return `Reading patent ${bare.slice(8)}${part}`;
       return `Reading ${titleFor(id) ?? id}`;
     }

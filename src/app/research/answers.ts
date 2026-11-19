@@ -298,7 +298,7 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
     const citation = answer.citations[docId];
     if (!citation?.work) continue;
     const paper = docId.replace(/#\d+$/, "");
-    const { authors, year, doi, venue, pmid, pmcid, patent } = citation.work;
+    const { authors, year, doi, venue, pmid, pmcid, patent, texkey } = citation.work;
     // A patent is a @misc with its publication number, which plain BibTeX and biblatex both read.
     if (patent) {
       const key = `patent_${patent.number}`;
@@ -321,13 +321,18 @@ function addBibtex(answer: SavedAnswer, entries: Map<string, string>): void {
     const eprint = paper.startsWith("arxiv:") ? paper.slice("arxiv:".length) : undefined;
     // Repository works from DataCite are a @misc published by their repository, not a journal article.
     const repository = paper.startsWith("datacite:");
-    const key = eprint
+    // An INSPIRE record is keyed by its TeX key ("Aad:2012tfa"), as INSPIRE's own BibTeX and physicists' papers are.
+    const key = texkey && /^[\w:.-]+$/.test(texkey)
+      ? texkey
+      : eprint
       ? `arxiv_${eprint.replace(/[^\w]/g, "_")}`
       : repository
         ? `datacite_${paper.slice("datacite:".length).replace(/[^\w]/g, "_")}`
         : paper.startsWith("europepmc:")
           ? `europepmc_${paper.slice("europepmc:".length).replace(/[^\w]/g, "_")}`
-          : `openalex_${paper.replace(/^openalex:/, "")}`;
+          : paper.startsWith("inspire:")
+            ? `inspire_${paper.slice("inspire:".length)}`
+            : `openalex_${paper.replace(/^openalex:/, "")}`;
     const fields: Array<[string, string | number | undefined]> = [
       ["title", citation.title],
       ["author", authors.length ? authors.join(" and ") : undefined],

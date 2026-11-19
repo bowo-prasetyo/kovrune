@@ -5,7 +5,7 @@
 // which do (sources/arxiv.ts).
 
 export interface SourceHit {
-  /** Source-prefixed ID, e.g. "wikipedia:Alan_Turing", "openalex:W2741809807", "arxiv:2005.11401", "datacite:10.5281/zenodo.15310522" or "europepmc:MED/38012345". */
+  /** Source-prefixed ID, e.g. "wikipedia:Alan_Turing", "openalex:W2741809807", "arxiv:2005.11401", "datacite:10.5281/zenodo.15310522", "europepmc:MED/38012345" or "inspire:1124337". */
   id: string;
   title: string;
   snippet: string;
@@ -35,12 +35,14 @@ export interface WorkInfo {
   pmid?: string;
   /** PubMed Central's identifier, as "PMC…", for the works that have one. */
   pmcid?: string;
+  /** INSPIRE-HEP's TeX key, e.g. "Aad:2012tfa", which physicists cite by and BibTeX exports use as the key (sources/inspire.ts). */
+  texkey?: string;
   /** A patent publication (sources/patents.ts): its number, e.g. "EP4560905A1", and first applicant. */
   patent?: { number: string; applicant?: string };
 }
 
 export interface OpenSource {
-  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc" | "patents";
+  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc" | "patents" | "inspire";
   /**
    * The model is told it can follow citations through this source (OpenAlex, when the user ticks it,
    * harness 0.84.0): the search tool's usage line and a note after a work's first read give the forms.

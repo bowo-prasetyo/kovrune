@@ -183,6 +183,16 @@ export function checkEvidence(
       const readElided = containsWords(readText, readQuote) ? undefined : containsElided(readText, readQuote);
       if (readElided === undefined || readElided >= 0) return { ...item, verified: true, ...(readElided !== undefined ? { elidedWords: readElided } : {}) };
     }
+    // LaTeX quoted without its markup (harness 0.92.0): "P_c(4450)^+" for "$P_c(4450)^+$", whose math reading
+    // ("P_c(4450)⁺") no longer matches the quote, and "\nsin^22\theta" for "\sin^22\theta", a backslash
+    // the JSON reply turned into a line break. Compared once more without "$" and "\" on either side.
+    if (hasMath(text) && /[$\\^_]/.test(item.quote)) {
+      const bare = (s: string) => s.replace(/[$\\]/g, "").replace(/ +/g, " ").trim();
+      const bareQuote = bare(quote);
+      const bareText = bare(normalized);
+      const bareElided = containsWords(bareText, bareQuote) ? undefined : containsElided(bareText, bareQuote);
+      if (bareElided === undefined || bareElided >= 0) return { ...item, verified: true, ...(bareElided !== undefined ? { elidedWords: bareElided } : {}) };
+    }
     const closest = closestPassage(item.quote, text);
     // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a
     // quote; but "not found" misleads: a preview user's arXiv quote joined two sentences of the same

@@ -1116,6 +1116,63 @@ Tests: `tests/pdf-layout.test.ts` ("superscripts in PDF text"), `tests/latex.tes
 
 **Limits:** search does not read math, so a question about the "upper critical field" misses a table whose column is headed `$H_\mathrm{c2}(0)$`, and a value written only in math, like ph03's ratio, is hard for the model to find. A superscript is found by its height and size, so a PDF that sets exponents at the baseline in small type, or raises whole words, reads as before. Compound units are still compared by their first part. The suite is one author's, with made-up documents and one run of one model.
 
+### INSPIRE-HEP as an open source; NASA ADS can't be (0.92.0)
+
+A physicist's review of Kovrune's sources (after 0.91.0) found the field's own databases missing: particle physicists search INSPIRE-HEP and astronomers NASA ADS, whose citation graphs are curated and far more complete than OpenAlex's, and which hold conference contributions and collaboration notes that never reach arXiv. Both were checked from the app's origin before anything was written:
+
+| | INSPIRE-HEP | NASA ADS |
+| --- | --- | --- |
+| A web page may call it | yes: `Access-Control-Allow-Origin: *`, preflight with `Authorization` allowed | **no**: it answers cross-origin requests only from `https://ui.adsabs.harvard.edu`; for the app's origin, localhost and `null` it sends no `Access-Control-Allow-Origin` |
+| Key | none | a free token, sent in `Authorization` |
+| Limit | 15 requests per 5 seconds per address | 5,000 a day per token |
+
+So ADS would need a server to relay requests, which Kovrune, local-first, does not have; only INSPIRE is added (`src/sources/inspire.ts`, the **INSPIRE-HEP** box).
+
+**Searching.** INSPIRE's search needs every word of a query, reads "a …" as an author search, "t …" as a title search, "and"/"or"/"not" as operators and ":", "/", quotes and brackets as syntax, and its plain search reads full texts and references too. Measured on a dozen physicist's queries before writing the source, some of them:
+
+| Query | INSPIRE's own relevance order | Plain search, most cited first | Kovrune's search |
+| --- | --- | --- | --- |
+| observation of a new boson higgs 125 GeV | discovery papers not in the first 25 | ATLAS's discovery first | CMS's paper on the new boson first |
+| muon g-2 | not tried | Planck 2018 results first | "The Muon g-2" first |
+| W boson mass CDF | not tried | a two-Higgs-doublet review first | CDF's 2022 measurement first |
+| a search for dark photons | not tried | nothing ("a" read as an author search) | LHCb's dark-photon search first |
+| Planck 2018 results cosmological parameters | Planck not in the first 25 | Planck's parameters paper first | Planck's parameters paper first |
+
+Kovrune's search keeps a query's content words (letters, digits and inner ".+-", so "g-2" and "fb-1" stay; "a", operators and question words go), asks for records with all of them in the **title**, most cited first, and fills the five results with records that have them in the title, abstract or author list. A search that finds nothing is tried again without plain numbers ("0.20", not "GW170817"), then with the first three words. Results leave out the author lists: a collaboration's paper lists thousands of names (ATLAS's Higgs discovery: 2,932). A record is read through the search with the fields it needs, since the record's own URL ignores the field list: 110 kB against 1.1 MB for that paper.
+
+**Reading.** A record reads as its title, authors (or "ATLAS Collaboration (2,932 authors)"), journal reference ("Phys.Lett.B 716 (2012) 1-29"), DOI, arXiv number, report numbers, INSPIRE TeX key, citations with and without self-citations, linked references, and abstract (the arXiv one first; a publisher's JATS XML and MathML titles are read as text). With **arXiv** ticked, a record on arXiv is read in full from there, under its INSPIRE ID with INSPIRE's details first, as OpenAlex works are. **Export papers as BibTeX** keys it by its TeX key (`@article{ATLAS:2012yve, …}`) and cites a large collaboration by its name.
+
+**Citations.** "citing inspire:1124337: dark matter" and "references of inspire:1124337: Higgs" use INSPIRE's `refersto:` and `citedby:` searches; the paper can be named by its record, arXiv ID, DOI or title, and INSPIRE's own forms are read. Within a reference list, titles are not searched first: there are few records, and a question about them names an author as often as a topic ("Higgs" finds his 1964 papers, whose titles do not name him); a topic that matches none lists the references most cited first. As for OpenAlex, the model is told it can follow citations only when the user ticks **Let the model follow citations through INSPIRE (experimental)**, and a read record's note then names INSPIRE's forms.
+
+**Effect, live.** `npm run bench:inspire` (`eval/inspire-model.ts`) asks eight questions about real papers with no documents: five values from an abstract, a journal reference, and two papers in a reference list. Qwen3.5-4B (Q4_K_M, constrained, 4,096-token context, llama.cpp `fae9ac5` built portably) answered each once with OpenAlex and arXiv, and once with INSPIRE-HEP and arXiv; both were told they can follow citations. An answer passes when it is found, its quotes verified, and it gives the facts.
+
+| Question | OpenAlex + arXiv | INSPIRE + arXiv |
+| --- | --- | --- |
+| i1 ATLAS Higgs discovery: journal and volume | pass | pass |
+| i2 CDF W mass (Science, not on arXiv) | pass | pass |
+| i3 Muon g-2 at 0.20 ppm: a_μ | not found | not found |
+| i4 LHCb pentaquarks: the two masses | not found (the masses in its answer) | right, quote not verified → **pass** re-scored |
+| i5 Daya Bay: sin²2θ₁₃ | wrong (0.024, sin²θ₁₃), unverified | right, quote not verified → **pass** re-scored |
+| i6 CMS 2012: local significance | wrong (2.8σ), unverified | pass |
+| i7 A 1964 Higgs paper cited by the ATLAS discovery | pass | pass |
+| i8 Gell-Mann's 1964 paper cited by LHCb's pentaquarks | not found | pass |
+| **Passed** | **3 of 8** | **5 of 8; 7 of 8 re-scored** |
+
+INSPIRE's runs were faster too where both passed (i1 164 s against 369 s, i2 299 s against 910 s). One run of each, on one day: the databases change daily, and a single task can go either way on another run.
+
+The first INSPIRE run passed 3 of 8 and found two defects, both fixed before the run above:
+
+1. **A paper named by its arXiv ID was not found.** Asked about the references of "the ATLAS Higgs boson discovery paper (arXiv:1207.7214)", the model searched INSPIRE for "ATLAS Higgs boson discovery paper arXiv:1207.7214" and "arXiv:1507.03414"; split into words, the IDs matched nothing, so it never read the record or saw how to follow its references. A plain query naming an arXiv ID or DOI now looks that record up and lists it first (`namedPaper`). With it, i7 and i8 pass.
+2. **Quotes of LaTeX without its markup failed.** i4 quoted LHCb's caption "the P_c(4450)^+ state" where the source has `$P_c(4450)^+$`, whose math reading ("P_c(4450)⁺") no longer matches; i5 quoted Daya Bay's "\nsin^22\theta_{13}=0.092…" for `\sin^22\theta_{13}=0.092…`, a backslash its JSON turned into a line break. Both are the paper's words. A quote that fails both earlier comparisons is compared once more with "$" and "\" removed on both sides (`src/agent/evidence.ts`). This check runs after the answer, so re-scoring gives its effect: i4 and i5 pass, from the quotes the run recorded and the same arXiv texts read again. Re-scoring every recorded report changes no label: 9,492 answers in 138 reports, 4,344 of them labelled, and the 72 answers of the two 0.91.0 physics reports, against main's code.
+
+Still failing: i3. INSPIRE's first result was the paper, and the model read it, then its arXiv source again, from its first part (with the abstract) to parts 29 to 34, and answered that the value is not given. The abstract writes it in math, `$a_\mu\text{(FNAL)} = 116\,592\,055(24) \times 10^{-11}$`, which the model did not take for the number asked.
+
+Reports: `eval/results/inspire-0.92-qwen3.5-4b-q4km.json` (the OpenAlex outcomes come from the first run's log, which a time limit stopped before it wrote its report).
+
+`tests/inspire.test.ts` is new (queries, papers named by ID, records, searches, citations, full texts, the citation note and the app's settings), with a BibTeX test in `tests/answers.test.ts`, INSPIRE's host in `tests/csp.test.ts`, and the quote comparison without markup in `tests/latex.test.ts` ("quotes of LaTeX without its markup"), which fails before the change. That comparison is adopted as a [defect fix](#rule-for-prompt-and-guard-changes).
+
+**Limits:** INSPIRE covers high-energy physics and neighbouring fields; condensed matter, optics and most of astronomy are thinly covered, so OpenAlex and arXiv stay the sources for those. Most-cited-first ranks landmark papers above the newest, so a question about recent work should say so in its words. A record without an arXiv version (CDF's W mass in Science) is read as its abstract only. ADS remains out of reach for a web page.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

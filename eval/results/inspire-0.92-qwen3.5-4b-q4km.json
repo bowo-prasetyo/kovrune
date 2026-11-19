@@ -1,0 +1,379 @@
+{
+  "model": "qwen3.5-4b-q4km",
+  "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+  "context": 4096,
+  "harness": "0.92.0",
+  "note": "OpenAlex outcomes are from the first run's log (2026-11-19), which was stopped by a time limit before writing its report, so their answers are cut at 160 characters and have no actions or quotes. INSPIRE outcomes are the rerun with the final search (2026-11-19). 'rescored' gives each outcome after the 0.92.0 quote comparison without LaTeX markup.",
+  "outcomes": [
+    {
+      "setup": "openalex",
+      "taskId": "i1-higgs-journal",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "seconds": 369,
+      "answer": "The ATLAS paper reporting the observation of a new particle in the search for the Standard Model Higgs boson (2012) was published in the journal Physics Letters",
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i2-cdf-w-mass",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "seconds": 910,
+      "answer": "The CDF II high-precision measurement published in 2022 obtained a W boson mass of M_W = 80433.5 ± 9.4 MeV.",
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i3-muon-g2",
+      "passed": false,
+      "facts": false,
+      "status": "not-found",
+      "seconds": 721,
+      "answer": "The provided documents do not contain the specific value of the muon anomalous magnetic moment a_mu reported by the Fermilab Muon g-2 measurement to 0.20 ppm. T",
+      "rescored": {
+        "passed": false
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i4-pentaquark-masses",
+      "passed": false,
+      "facts": true,
+      "status": "not-found",
+      "seconds": 853,
+      "answer": "The provided documents do not contain the specific masses reported by LHCb for the two pentaquark states observed in Lambda_b decays in 2015. While the document",
+      "rescored": {
+        "passed": false
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i5-daya-bay",
+      "passed": false,
+      "facts": false,
+      "status": "unverified",
+      "seconds": 143,
+      "answer": "The Daya Bay experiment reported sin^2(theta_13) = 0.024 +/- 0.005 (1 sigma) in its 2012 observation of electron-antineutrino disappearance. The value of sin^2(",
+      "rescored": {
+        "passed": false
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i6-cms-significance",
+      "passed": false,
+      "facts": false,
+      "status": "unverified",
+      "seconds": 161,
+      "answer": "The CMS experiment observed a local significance of 2.8 sigma for a new boson at a mass of 125 GeV in 2012.",
+      "rescored": {
+        "passed": false
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i7-higgs-1964",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "seconds": 677,
+      "answer": "Broken symmetries, massless particles and gauge fields",
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "openalex",
+      "taskId": "i8-gell-mann",
+      "passed": false,
+      "facts": false,
+      "status": "not-found",
+      "seconds": 782,
+      "answer": "The document does not contain the title of Murray Gell-Mann's 1964 paper on quarks. It only mentions that the 2015 LHCb pentaquark paper cites it, but does not ",
+      "rescored": {
+        "passed": false
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i1-higgs-journal",
+      "kind": "journal",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "answer": "The ATLAS paper reporting the observation of a new particle in the search for the Standard Model Higgs boson (2012) was published in the journal Physical Letters B (Phys.Lett.B), volume 716.",
+      "cited": [
+        "inspire:1124337"
+      ],
+      "evidence": [
+        {
+          "docId": "inspire:1124337",
+          "quote": "Journal: Phys.Lett.B 716 (2012) 1-29",
+          "verified": true
+        }
+      ],
+      "actions": [
+        "search_inspire {\"query\":\"ATLAS observation Standard Model Higgs boson 2012\"}",
+        "read {\"docId\":\"inspire:1124337\"}",
+        "search_arxiv {\"query\":\"ATLAS Higgs boson observation 2012\"}",
+        "final_answer {\"found\":true,\"answer\":\"The ATLAS paper reporting the observation of a new particle in the search for the Standard Model Higgs boson (2012) was published in the journal Physical Letters B (Phys.Lett.B), volume 716.\",\"evidence\":[{\"docId\":\"inspire:1124337\",\"quote\":\"Journal: Phys.Lett.B 716 (2012) 1-29\"}]}"
+      ],
+      "errors": [],
+      "seconds": 164,
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i2-cdf-w-mass",
+      "kind": "value",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "answer": "The CDF II high-precision measurement published in 2022 obtained a W boson mass of M_W = 80,433.5 ± 9.4 MeV/c^2 (where the uncertainty is 6.4 MeV statistical and 6.9 MeV systematic).",
+      "cited": [
+        "inspire:2064224"
+      ],
+      "evidence": [
+        {
+          "docId": "inspire:2064224",
+          "quote": "We measure the W boson mass, M W , using data corresponding to 8.8 inverse femtobarns of integrated luminosity collected in proton-antiproton collisions at a 1.96 tera–electron volt center-of-mass energy with the CDF II detector at the Fermilab Tevatron collider. A sample of approximately 4 million W boson candidates is used to obtain M W = 80 , 433.5 ± 6.4 stat ± 6.9 syst = 80 , 433.5 ± 9.4 MeV / c 2",
+          "verified": true
+        }
+      ],
+      "actions": [
+        "search_inspire {\"query\":\"CDF II W boson mass 2022\"}",
+        "search_arxiv {\"query\":\"CDF II W boson mass 2022\"}",
+        "read {\"docId\":\"arxiv:2302.10234\"}",
+        "search_inspire {\"query\":\"CDF II W boson mass 2022 Science 376\"}",
+        "read {\"docId\":\"inspire:2064224\"}",
+        "final_answer {\"found\":true,\"answer\":\"The CDF II high-precision measurement published in 2022 obtained a W boson mass of M_W = 80,433.5 ± 9.4 MeV/c^2 (where the uncertainty is 6.4 MeV statistical and 6.9 MeV systematic).\",\"evidence\":[{\"docId\":\"inspire:2064224\",\"quote\":\"We measure the W boson mass, M W , using data corresponding to 8.8 inverse femtobarns of integrated luminosity collected in proton-antiproton collisions at a 1.96 tera–electron volt center-of-mass energy with the CDF II detector at the Fermilab Tevatron collider. A sample of approximately 4 million W boson candidates is used to obtain M W = 80 , 433.5 ± 6.4 stat ± 6.9 syst = 80 , 433.5 ± 9.4 MeV / c 2\"}]}"
+      ],
+      "errors": [],
+      "seconds": 299,
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i3-muon-g2",
+      "kind": "value",
+      "passed": false,
+      "facts": false,
+      "status": "not-found",
+      "answer": "The provided documents do not contain the specific numerical value of the muon anomalous magnetic moment (a_mu) reported by the Fermilab Muon g-2 measurement to 0.20 ppm. While the documents confirm the measurement was performed with 0.20 ppm precision and discuss corrections to the Run-1 result, they do not state the final reported value of a_mu.",
+      "cited": [],
+      "evidence": [],
+      "actions": [
+        "search_inspire {\"query\":\"Fermilab Muon g-2 measurement 0.20 ppm a_mu\"}",
+        "read {\"docId\":\"inspire:2687002\"}",
+        "search_arxiv {\"query\":\"Muon g-2 2023 0.20 ppm a_mu\"}",
+        "read {\"docId\":\"arxiv:2308.06230\"}",
+        "read {\"docId\":\"arxiv:2308.06230#1\"}",
+        "read {\"docId\":\"arxiv:2308.06230#29\"}",
+        "read {\"docId\":\"arxiv:2308.06230#30\"}",
+        "read {\"docId\":\"arxiv:2308.06230#31\"}",
+        "read {\"docId\":\"arxiv:2308.06230#32\"}",
+        "read {\"docId\":\"arxiv:2308.06230#33\"}",
+        "read {\"docId\":\"arxiv:2308.06230#34\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain the specific numerical value of the muon anomalous magnetic moment (a_mu) reported by the Fermilab Muon g-2 measurement to 0.20 ppm. While the documents confirm the measurement was performed with 0.20 ppm precision and discuss corrections to the Run-1 result, they do not state the final reported value of a_mu.\",\"evidence\":[]}"
+      ],
+      "errors": [],
+      "seconds": 813,
+      "rescored": {
+        "passed": false
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i4-pentaquark-masses",
+      "kind": "value",
+      "passed": false,
+      "facts": true,
+      "status": "unverified",
+      "answer": "The LHCb collaboration reported masses of approximately 4380 MeV and 4450 MeV for the two pentaquark states (P_c(4380)^+ and P_c(4450)^+) in the J/psi p mass distribution from Lambda_b decays.",
+      "cited": [
+        "inspire:1382595"
+      ],
+      "evidence": [
+        {
+          "docId": "inspire:1382595#6",
+          "quote": "The (blue) open squares with the shaded histogram represent the P_c(4450)^+ state, and the shaded histogram topped with (purple) filled squares represents the P_c(4380)^+ state.",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "actions": [
+        "search_inspire {\"query\":\"LHCb J/psi p resonances Lambda_b decays 2015 pentaquark\"}",
+        "search_arxiv {\"query\":\"LHCb J/psi p resonances Lambda_b decays 2015 pentaquark masses\"}",
+        "read {\"docId\":\"arxiv:2502.05495\"}",
+        "search_inspire {\"query\":\"LHCb J/psi p resonances Lambda_b decays 2015 pentaquark masses\"}",
+        "search_arxiv {\"query\":\"LHCb J/psi p resonances Lambda_b 2015 Phys Rev Lett 115 072001\"}",
+        "read {\"docId\":\"arxiv:1611.01277\"}",
+        "read {\"docId\":\"arxiv:1611.01277#18\"}",
+        "search_inspire {\"query\":\"LHCb J/psi p resonances Lambda_b 2015 Phys Rev Lett 115 072001\"}",
+        "read {\"docId\":\"inspire:1382595\"}",
+        "read {\"docId\":\"inspire:1382595#6\"}",
+        "read {\"docId\":\"inspire:1382595#33\"}",
+        "final_answer {\"found\":true,\"answer\":\"The LHCb collaboration reported masses of approximately 4380 MeV and 4450 MeV for the two pentaquark states (P_c(4380)^+ and P_c(4450)^+) in the J/psi p mass distribution from Lambda_b decays.\",\"evidence\":[{\"docId\":\"inspire:1382595#6\",\"quote\":\"The (blue) open squares with the shaded histogram represent the P_c(4450)^+ state, and the shaded histogram topped with (purple) filled squares represents the P_c(4380)^+ state.\"}]}"
+      ],
+      "errors": [],
+      "seconds": 826,
+      "rescored": {
+        "passed": true,
+        "status": "verified"
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i5-daya-bay",
+      "kind": "value",
+      "passed": false,
+      "facts": true,
+      "status": "unverified",
+      "answer": "The Daya Bay experiment reported sin^2(2 theta_13) = 0.092 +/- 0.016 (stat) +/- 0.005 (syst) in its 2012 observation of electron-antineutrino disappearance.",
+      "cited": [
+        "arxiv:1203.1669"
+      ],
+      "evidence": [
+        {
+          "docId": "arxiv:1203.1669#24",
+          "quote": "The best-fit value is \\nsin^22\\theta_{13}=0.092\\pm 0.016({\\rm stat})\\pm0.005({\\rm syst})",
+          "verified": false,
+          "reason": "quote not found in the document"
+        }
+      ],
+      "actions": [
+        "search_inspire {\"query\":\"Daya Bay 2012 observation electron-antineutrino disappearance sin^2(2 theta_13)\"}",
+        "search_arxiv {\"query\":\"Daya Bay 2012 observation electron-antineutrino disappearance sin^2(2 theta_13)\"}",
+        "read {\"docId\":\"arxiv:1203.1669\"}",
+        "read {\"docId\":\"arxiv:1203.1669#24\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Daya Bay experiment reported sin^2(2 theta_13) = 0.092 +/- 0.016 (stat) +/- 0.005 (syst) in its 2012 observation of electron-antineutrino disappearance.\",\"evidence\":[{\"docId\":\"arxiv:1203.1669#24\",\"quote\":\"The best-fit value is \\\\nsin^22\\\\theta_{13}=0.092\\\\pm 0.016({\\\\rm stat})\\\\pm0.005({\\\\rm syst})\"}]}"
+      ],
+      "errors": [],
+      "seconds": 244,
+      "rescored": {
+        "passed": true,
+        "status": "verified"
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i6-cms-significance",
+      "kind": "value",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "answer": "The CMS experiment observed a new boson at a mass of 125.3 GeV with a local significance of 5.0 sigma.",
+      "cited": [
+        "arxiv:1210.0021"
+      ],
+      "evidence": [
+        {
+          "docId": "arxiv:1210.0021",
+          "quote": "Combined Significance | 5.9 σ 126.0 GeV | 5.0 σ 125.3 GeV",
+          "verified": true
+        }
+      ],
+      "actions": [
+        "search_inspire {\"query\":\"CMS boson 125 GeV 2012 local significance\"}",
+        "search_arxiv {\"query\":\"CMS Higgs 125 GeV 2012 local significance 5 sigma\"}",
+        "read {\"docId\":\"arxiv:1202.1487\"}",
+        "read {\"docId\":\"arxiv:1202.1487#8\"}",
+        "read {\"docId\":\"arxiv:1202.1487#25\"}",
+        "read {\"docId\":\"arxiv:1202.1487#26\"}",
+        "read {\"docId\":\"arxiv:1202.1487#29\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain the answer to the question about the local significance of the CMS observation of a new boson at 125 GeV in 2012. The documents searched are from 2012 and discuss searches for the Higgs boson decaying into two photons at sqrt(s)=7 TeV, but they do not report the discovery significance at 125 GeV. The discovery of the Higgs boson at 125 GeV with a local significance of approximately 5 sigma was reported in 2012 using data from sqrt(s)=8 TeV, which is not covered in the provided snippets.\",\"evidence\":[]}",
+        "search_inspire {\"query\":\"CMS Higgs 125 GeV 2012 discovery significance\"}",
+        "search_arxiv {\"query\":\"CMS Higgs 125 GeV 2012 discovery 5 sigma\"}",
+        "read {\"docId\":\"arxiv:1210.0021\"}",
+        "final_answer {\"found\":true,\"answer\":\"The CMS experiment observed a new boson at a mass of 125.3 GeV with a local significance of 5.0 sigma.\",\"evidence\":[{\"docId\":\"arxiv:1210.0021\",\"quote\":\"Combined Significance | 5.9 σ 126.0 GeV | 5.0 σ 125.3 GeV\"}]}"
+      ],
+      "errors": [],
+      "seconds": 824,
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i7-higgs-1964",
+      "kind": "reference",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "answer": "Broken Symmetries and the Masses of Gauge Bosons",
+      "cited": [
+        "inspire:11883"
+      ],
+      "evidence": [
+        {
+          "docId": "inspire:11883",
+          "quote": "Broken Symmetries and the Masses of Gauge Bosons",
+          "verified": true
+        }
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"arXiv:1207.7214\"}",
+        "search_inspire {\"query\":\"ATLAS Higgs boson discovery paper arXiv:1207.7214\"}",
+        "read {\"docId\":\"arxiv:2605.19416\"}",
+        "read {\"docId\":\"inspire:1124337\"}",
+        "search_inspire {\"query\":\"references of inspire:1124337: Peter Higgs\"}",
+        "final_answer {\"found\":true,\"answer\":\"Broken Symmetries and the Masses of Gauge Bosons\",\"evidence\":[{\"docId\":\"inspire:11883\",\"quote\":\"Broken Symmetries and the Masses of Gauge Bosons (1964, cited by 9,146)\"}]}",
+        "read {\"docId\":\"inspire:11883\"}",
+        "final_answer {\"found\":true,\"answer\":\"Broken Symmetries and the Masses of Gauge Bosons\",\"evidence\":[{\"docId\":\"inspire:11883\",\"quote\":\"Broken Symmetries and the Masses of Gauge Bosons\"}]}"
+      ],
+      "errors": [
+        "arXiv returned an error (HTTP 404)."
+      ],
+      "seconds": 399,
+      "rescored": {
+        "passed": true
+      }
+    },
+    {
+      "setup": "inspire",
+      "taskId": "i8-gell-mann",
+      "kind": "reference",
+      "passed": true,
+      "facts": true,
+      "status": "verified",
+      "answer": "A Schematic Model of Baryons and Mesons",
+      "cited": [
+        "inspire:11880"
+      ],
+      "evidence": [
+        {
+          "docId": "inspire:11880",
+          "quote": "A Schematic Model of Baryons and Mesons",
+          "verified": true
+        }
+      ],
+      "actions": [
+        "search_arxiv {\"query\":\"arXiv:1507.03414\"}",
+        "search_inspire {\"query\":\"arXiv:1507.03414\"}",
+        "read {\"docId\":\"inspire:1382595\"}",
+        "search_inspire {\"query\":\"references of inspire:1382595:quarks\"}",
+        "search_arxiv {\"query\":\"arXiv:1507.03414 Gell-Mann 1964\"}",
+        "read {\"docId\":\"arxiv:1510.08787\"}",
+        "search_inspire {\"query\":\"references of inspire:1382595:Gell-Mann 1964\"}",
+        "read {\"docId\":\"inspire:11880\"}",
+        "final_answer {\"found\":true,\"answer\":\"A Schematic Model of Baryons and Mesons\",\"evidence\":[{\"docId\":\"inspire:11880\",\"quote\":\"A Schematic Model of Baryons and Mesons\"}]}"
+      ],
+      "errors": [],
+      "seconds": 546,
+      "rescored": {
+        "passed": true
+      }
+    }
+  ]
+}

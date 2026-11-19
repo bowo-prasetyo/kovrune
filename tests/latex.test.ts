@@ -315,3 +315,25 @@ with $\Delta_0 = 0.75(3)$ meV.`;
     assert.equal(verified("the combined upper limit on τB falls to 0.020 fb"), false);
   });
 });
+
+describe("quotes of LaTeX without its markup (harness 0.92.0)", () => {
+  // From the INSPIRE run: Daya Bay's arXiv source keeps a display equation as written, LHCb's a symbol in math.
+  const source = String.raw`fit it to the data. The best-fit value is
+
+\sin^22\theta_{13}=0.092\pm 0.016({\rm stat})\pm0.005({\rm syst})
+
+with a $\chi^2$/NDF of 4.26/4. The (blue) open squares represent the $P_c(4450)^+$ state, and the filled squares the $P_c(4380)^+$ state.`;
+  const verified = (quote: string) => checkEvidence([{ docId: "d", quote }], () => source)[0]!.verified;
+
+  it("finds math quoted without its dollar signs, or with a backslash the JSON reply made a line break", () => {
+    assert.equal(verified("The (blue) open squares represent the P_c(4450)^+ state, and the filled squares the P_c(4380)^+ state."), true);
+    // The model's JSON had "\\nsin": a line break written out, where "\sin" was meant.
+    assert.equal(verified(String.raw`The best-fit value is \nsin^22\theta_{13}=0.092\pm 0.016({\rm stat})\pm0.005({\rm syst})`), true);
+  });
+
+  it("still fails another number or symbol", () => {
+    assert.equal(verified("The (blue) open squares represent the P_c(4457)^+ state"), false);
+    assert.equal(verified(String.raw`The best-fit value is \sin^22\theta_{13}=0.089\pm 0.016`), false);
+    assert.equal(verified("The (blue) open squares represent the P_c(4450)^- state"), false);
+  });
+});
