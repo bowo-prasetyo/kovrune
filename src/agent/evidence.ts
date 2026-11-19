@@ -2,6 +2,7 @@
 // quote is verified against the cited document. Small models invent answers, so
 // the app shows whether an answer is backed by text that is really there.
 
+import { readableMath } from "../documents/math.ts";
 import { dropUnspacedGaps, isUnspaced, unspacedCount } from "../documents/scripts.ts";
 
 export interface EvidenceItem {
@@ -126,6 +127,27 @@ export function normalizeForMatch(text: string, { keepCase = false }: { keepCase
   return dropUnspacedGaps(unified).replace(/\s+/g, " ").trim();
 }
 
+/** Whether a text has LaTeX math or a command in it. */
+const hasMath = (text: string) => /[$\\]/.test(text);
+
+/** A tab, backspace or form feed before a letter: a JSON reply's "\text", "\bigg" or "\frac" with one backslash. */
+const ESCAPED_COMMAND = /\\?([\t\b\f])(?=[A-Za-z])/g;
+
+/**
+ * A quote or a document with its LaTeX math read as math.ts reads it (harness 0.91.0). The LaTeX converter
+ * keeps inline math as it is written, "$T_\mathrm{c}$" and "$\sigma B$", and a model quoting it writes the
+ * same math another way: "$T_\text{c}$", "\bigg(" for "\left(", or "σB". Read as math, both are "T_c" and
+ * "σB". The physics suite's first run failed four right answers this way. A space after a Greek letter is
+ * dropped, as "σ B" and "σB" are one product.
+ *
+ * In a quote, a tab, backspace or form feed before a letter is read as the command it was: a JSON reply must
+ * write a backslash twice, and a model that writes "\text" once sends a tab and "ext".
+ */
+function mathRead(text: string, { quote = false } = {}): string {
+  const repaired = quote ? text.replace(ESCAPED_COMMAND, (_, ch: string) => `\\${ch === "\t" ? "t" : ch === "\b" ? "b" : "f"}`) : text;
+  return readableMath(repaired).replace(/(\p{Script=Greek})\s+(?=\p{L})/gu, "$1");
+}
+
 function stripEdgePunctuation(text: string): string {
   // Also drops the "[…]" that marks a shortened search snippet.
   return text.replace(/^[\s"'.,;:…\[\]-]+|[\s"'.,;:…\[\]-]+$/g, "");
@@ -153,6 +175,13 @@ export function checkEvidence(
     if (elidedWords === undefined || elidedWords >= 0) {
       const context = quoteContext(item.quote, text, resolvePageStarts(item.docId));
       return { ...item, verified: true, ...(context ? { context } : {}), ...(elidedWords !== undefined ? { elidedWords } : {}) };
+    }
+    // LaTeX math quoted in another form, read as math (mathRead).
+    if (hasMath(text) && (hasMath(item.quote) || /[\t\b\f][A-Za-z]/.test(item.quote) || /\p{Script=Greek}/u.test(item.quote))) {
+      const readQuote = stripEdgePunctuation(normalizeForMatch(mathRead(item.quote, { quote: true })));
+      const readText = normalizeForMatch(mathRead(text));
+      const readElided = containsWords(readText, readQuote) ? undefined : containsElided(readText, readQuote);
+      if (readElided === undefined || readElided >= 0) return { ...item, verified: true, ...(readElided !== undefined ? { elidedWords: readElided } : {}) };
     }
     const closest = closestPassage(item.quote, text);
     // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a

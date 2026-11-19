@@ -2,6 +2,7 @@
 // arXiv source's choice between the source and the PDF (eval/cs/README.md).
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { checkEvidence } from "../src/agent/evidence.ts";
 import { citedKeys, latexToText, mainFile, readableLatex, readBbl, readBib, withoutComments } from "../src/documents/latex.ts";
 import { gunzip, readSourceFiles, TarError } from "../src/documents/tar.ts";
 import { createArxiv } from "../src/sources/arxiv.ts";
@@ -285,5 +286,32 @@ Data at \sqs{} = 13 TeV, 139 \ifb{} in all. The \Zpsi{} is excluded. Electrons n
   it("prints a title set after \\begin{document} once, as the heading", () => {
     assert.equal(converted.title, "A search with 139 fb⁻¹ at √s = 13 TeV");
     assert.equal(converted.text.match(/A search with/g)?.length, 1);
+  });
+});
+
+describe("quotes of LaTeX math written another way (harness 0.91.0)", () => {
+  // Text as the converter keeps it: inline math as written, a display equation as written.
+  const source = String.raw`The combined upper limit on $\sigma B$ falls to 0.020 fb at 6 TeV. While $T_\mathrm{c}$ rises from 2.3 K to 3.9 K at 2.0 GPa, the gap follows
+\Delta(T) = \Delta_0 \tanh\!\left(1.74\sqrt{T_\mathrm{c}/T - 1}\right), (1)
+with $\Delta_0 = 0.75(3)$ meV.`;
+  const verified = (quote: string) => checkEvidence([{ docId: "d", quote }], () => source)[0]!.verified;
+
+  it("finds math quoted read out, or with other commands for the same symbols", () => {
+    assert.equal(verified("the combined upper limit on σB falls to 0.020 fb at 6 TeV"), true);
+    assert.equal(verified("the combined upper limit on σ B falls to 0.020 fb"), true);
+    assert.equal(verified(String.raw`While $T_\text{c}$ rises from 2.3 K to 3.9 K at 2.0 GPa`), true);
+    assert.equal(verified(String.raw`\Delta(T) = \Delta_0 \tanh\!\bigg(1.74\sqrt{T_\mathrm{c}/T - 1}\bigg), (1)`), true);
+  });
+
+  it("reads a command whose backslash a JSON reply turned into a tab or a backspace", () => {
+    // The model wrote "\text" and "\bigg" with one backslash in its JSON: a tab and "ext", a backspace and "igg".
+    assert.equal(verified(JSON.parse(String.raw`"While $T_\text{c}$ rises from 2.3 K"`)), true);
+    assert.equal(verified(JSON.parse(String.raw`"\\Delta_0 \\tanh\\!\\\bigg(1.74\\sqrt{T_\\mathrm{c}/T - 1}\\bigg)"`)), true);
+  });
+
+  it("still fails math with another number or symbol in it", () => {
+    assert.equal(verified("the combined upper limit on σB falls to 0.20 fb at 6 TeV"), false);
+    assert.equal(verified(String.raw`While $T_\text{N}$ rises from 2.3 K to 3.9 K`), false);
+    assert.equal(verified("the combined upper limit on τB falls to 0.020 fb"), false);
   });
 });
