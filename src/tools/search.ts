@@ -5,6 +5,7 @@
 import { withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
 import { definitions } from "./abbreviations.ts";
+import { chemicalNameTerms } from "./chemical-names.ts";
 
 export interface SourceDocument {
   id: string;
@@ -289,7 +290,8 @@ export class DocumentIndex {
    * already.
    */
   expandedTerms(query: string): string[] {
-    const terms = new Set([...tokenize(query), ...joinedPairs(query), ...queryNameForms(query)]);
+    // A chemical's other spellings (harness 0.94.0): "dichloromethane" also searches "CH2Cl2" and "DCM" (chemical-names.ts).
+    const terms = new Set([...tokenize(query), ...joinedPairs(query), ...queryNameForms(query), ...chemicalNameTerms(query, tokenize)]);
     for (const [short, longs] of this.abbreviations) {
       if (!terms.has(short) && longs.some((long) => long.every((term) => terms.has(term)))) terms.add(short);
     }

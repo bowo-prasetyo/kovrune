@@ -8,6 +8,7 @@ import { DISTRACTOR_PREFIX, distractorDocuments } from "../eval/harness/distract
 import { baseLibrary } from "../eval/harness/suites.ts";
 import { csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
+import { chemHoldoutTasks, chemTasks } from "../eval/chem/tasks.ts";
 import { pdfTasks } from "../eval/tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../eval/tasks/research.ts";
 
@@ -165,6 +166,60 @@ const LAB_FLOOR = { documentRecall: 0.976, passageRecall: 0.945, complete: 39 };
 // documents near its topics added (eval/harness/distractors.ts), search still has to find what it
 // finds now. Over seeds 1 to 5 the figures are 90.9–93.5% and 89.9–91%, 67 to 69 tasks, so a change
 // that falls below the floors of seed 1 loses ground to a larger library, not to chance in the seed.
+describe("chemical names in search (harness 0.94.0)", () => {
+  it("finds a chemistry paper by a chemist's other spelling of a reagent, solvent or catalyst", async () => {
+    // Measured before the dictionary was written: every spelling the papers use found its paper among the first
+    // three results, and 13 of these 30 did not (eval/chem/README.md). The dictionary was written with these in
+    // view, so this records the gap closed, not how general the dictionary is.
+    const field = await loadFieldSuite();
+    const found = (query: string) => new Set(appSearch(3)(field.chemLibrary, query).map((id) => id.replace(/#\d+$/, "")));
+    const aliases: Array<[string, string]> = [
+      ["bis(cyclooctadiene)nickel", "nickel-fluorobenzofuran-coupling"],
+      ["tricyclohexylphosphine", "nickel-fluorobenzofuran-coupling"],
+      ["potassium carbonate", "nickel-fluorobenzofuran-coupling"],
+      ["dibromomethane", "nickel-fluorobenzofuran-coupling"],
+      ["dimethylacetamide", "nickel-photoredox-hydroxytrifluoroethylation"],
+      ["DMA", "nickel-photoredox-hydroxytrifluoroethylation"],
+      ["trimethylacetic anhydride", "nickel-photoredox-hydroxytrifluoroethylation"],
+      ["HEH", "nickel-photoredox-hydroxytrifluoroethylation"],
+      ["Hünig's base", "propargylation-biisoquinoline-dioxide"],
+      ["iPr2NEt", "propargylation-biisoquinoline-dioxide"],
+      ["dichloromethane", "propargylation-biisoquinoline-dioxide"],
+      ["DCM", "propargylation-biisoquinoline-dioxide"],
+      ["trichlorosilane allenylation", "propargylation-biisoquinoline-dioxide"],
+      ["sodium carbonate", "photoredox-isonitrile-arylation"],
+      ["tris(bipyridine)ruthenium", "photoredox-isonitrile-arylation"],
+      ["isocyanide", "photoredox-isonitrile-arylation"],
+      ["cesium carbonate", "photoredox-isonitrile-arylation"],
+      ["sodium 4-methylbenzenesulfinate", "polyaza-helicene-photoredox"],
+      ["paraquat", "polyaza-helicene-photoredox"],
+      ["potassium bicarbonate", "copper-step-edges-co2-reduction"],
+      ["potassium hydrogen carbonate", "copper-step-edges-co2-reduction"],
+      ["formic acid", "copper-step-edges-co2-reduction"],
+      ["carbon nanofibres", "copper-step-edges-co2-reduction"],
+      ["FeTPP", "porphyrin-aggregation-co2-reduction"],
+      ["silver hexafluorophosphate", "porphyrin-aggregation-co2-reduction"],
+      ["ferrocenium", "porphyrin-aggregation-co2-reduction"],
+      ["Bu4NPF6", "porphyrin-aggregation-co2-reduction"],
+      ["methyloxirane", "frustrated-lewis-pairs-co2-capture"],
+      ["1,2-epoxypropane", "frustrated-lewis-pairs-co2-capture"],
+      ["propylene carbonate", "frustrated-lewis-pairs-co2-capture"],
+    ];
+    const missed = aliases.filter(([alias, paper]) => !found(alias).has(paper)).map(([alias]) => alias);
+    assert.deepEqual(missed, []);
+    // The papers' own spellings still find them.
+    for (const [own, paper] of [["Ni(cod)2", "nickel-fluorobenzofuran-coupling"], ["CH2Cl2", "propargylation-biisoquinoline-dioxide"], ["N,N-diisopropylethylamine", "propargylation-biisoquinoline-dioxide"], ["TBAPF6", "porphyrin-aggregation-co2-reduction"], ["KHCO3", "copper-step-edges-co2-reduction"]] as const) {
+      assert.ok(found(own).has(paper), `"${own}" finds its paper`);
+    }
+  });
+
+  it("keeps the chemistry papers' retrieval at least where it is", async () => {
+    const field = await loadFieldSuite();
+    const summary = summarizeRetrieval(measureRetrieval(field.chemLibrary, [...chemTasks, ...chemHoldoutTasks]));
+    assert.ok(summary.complete >= 46, `${summary.complete} of ${summary.tasks} complete`);
+  });
+});
+
 describe("retrieval in a library of hundreds of documents", () => {
   it("generates the same documents for the same seed, apart from the real ones", () => {
     const docs = distractorDocuments(300);
