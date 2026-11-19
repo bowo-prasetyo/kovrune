@@ -203,10 +203,9 @@ export function checkEvidence(
     if (MATHLIKE.test(text) || MATHLIKE.test(item.quote)) {
       const keyQuote = stripEdgePunctuation(normalizeForMatch(mathMatchKey(item.quote.replace(ESCAPED_COMMAND, (_, ch: string) => `\\${ch === "\t" ? "t" : ch === "\b" ? "b" : "f"}`))));
       const keyText = normalizeForMatch(mathMatchKey(text));
-      if (wordCount(keyQuote) >= MIN_QUOTE_WORDS) {
-        const keyElided = containsWords(keyText, keyQuote) ? undefined : containsElided(keyText, keyQuote);
-        if (keyElided === undefined || keyElided >= 0) return { ...item, verified: true, ...(keyElided !== undefined ? { elidedWords: keyElided } : {}) };
-      }
+      // The quote passed the length check as written; its key has fewer spaces, not fewer words.
+      const keyElided = containsWords(keyText, keyQuote) ? undefined : containsElided(keyText, keyQuote);
+      if (keyElided === undefined || keyElided >= 0) return { ...item, verified: true, ...(keyElided !== undefined ? { elidedWords: keyElided } : {}) };
     }
     const closest = closestPassage(item.quote, text);
     // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a
