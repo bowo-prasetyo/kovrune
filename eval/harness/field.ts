@@ -11,6 +11,7 @@ import { ResearchLibrary } from "../../src/agent/research.ts";
 import { extractText, type PdfJsLike } from "../../src/documents/extract.ts";
 import { latexToText } from "../../src/documents/latex.ts";
 import type { SourceDocument } from "../../src/tools/search.ts";
+import { chemDocuments } from "../chem/tasks.ts";
 import { clinicalDocuments } from "../clinical/tasks.ts";
 import { engineeringDocuments } from "../engineering/tasks.ts";
 import { csDocuments } from "../cs/tasks.ts";
@@ -26,6 +27,7 @@ export const ENGINEERING_DIR = fileURLToPath(new URL("../engineering/docs/", imp
 export const CS_DIR = fileURLToPath(new URL("../cs/docs/", import.meta.url));
 export const LAB_DIR = fileURLToPath(new URL("../lab/docs/", import.meta.url));
 export const PHYSICS_DIR = fileURLToPath(new URL("../physics/docs/", import.meta.url));
+export const CHEM_DIR = fileURLToPath(new URL("../chem/docs/", import.meta.url));
 
 export interface FieldSuite {
   library: ResearchLibrary;
@@ -40,6 +42,8 @@ export interface FieldSuite {
   labLibrary: ResearchLibrary;
   /** The physics documents (eval/physics/tasks.ts), on their own: the library of the physics and physicsholdout suites. */
   physicsLibrary: ResearchLibrary;
+  /** The chemistry papers (eval/chem/tasks.ts), on their own: the library of the chem and chemholdout suites. */
+  chemLibrary: ResearchLibrary;
   tasks: ResearchTask[];
   /** How many tasks and documents came from eval/field/local/; runs that include them are not comparable with others'. */
   local: { tasks: number; documents: number };
@@ -88,6 +92,7 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   const cs = await Promise.all(csDocuments.map((doc) => readDocument(doc, CS_DIR, loadPdfJs)));
   const lab = await Promise.all(labDocuments.map((doc) => readDocument(doc, LAB_DIR, loadPdfJs)));
   const physics = await Promise.all(physicsDocuments.map((doc) => readDocument(doc, PHYSICS_DIR, loadPdfJs)));
+  const chem = await Promise.all(chemDocuments.map((doc) => readDocument(doc, CHEM_DIR, loadPdfJs)));
   const tasks = [...fieldTasks];
 
   const localDir = join(root, "local");
@@ -106,5 +111,5 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   }
   // The office suites' library holds the committed field documents, not local ones, so their runs stay comparable.
   const committed = documents.slice(0, fieldDocuments.length);
-  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), labLibrary: new ResearchLibrary(lab), engineeringLibrary: new ResearchLibrary(engineering), physicsLibrary: new ResearchLibrary(physics), tasks, local };
+  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), labLibrary: new ResearchLibrary(lab), engineeringLibrary: new ResearchLibrary(engineering), physicsLibrary: new ResearchLibrary(physics), chemLibrary: new ResearchLibrary(chem), tasks, local };
 }
