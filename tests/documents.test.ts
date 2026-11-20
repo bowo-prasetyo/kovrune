@@ -433,8 +433,9 @@ describe("statements and proofs across parts (harness 0.97.0)", async () => {
   const filler = (n: number) => Array.from({ length: n }, (_, i) => `Step ${i + 1} of the argument bounds the count again by the same estimate.`).join(" ");
 
   it("moves a statement, with its displayed equations, to the part where its proof starts", () => {
+    // Thirteen sentences of filler put the statement and its equation at the end of the first part, before 0.97.0.
     const text = [
-      filler(14),
+      filler(13),
       "Lemma 3.3. Let 1/2 < s < 1. For f in the space,",
       "\\|f\\|_2 \\leq N \\|f\\|_1 (3.1)",
       "Proof. The kernel is integrable away from the origin, so the classical argument applies. ∎",
