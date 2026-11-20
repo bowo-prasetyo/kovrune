@@ -9,6 +9,8 @@ import { createArxiv, findArxivByTitle, parseArxivSubjects } from "../../sources
 import { createDataCite } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
 import { createInspire } from "../../sources/inspire.ts";
+import { createPubChem } from "../../sources/pubchem.ts";
+import { createChemRxiv } from "../../sources/chemrxiv.ts";
 import { createOpenAlex, OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
 import { createPatents } from "../../sources/patents.ts";
 import type { OpenSource } from "../../sources/types.ts";
@@ -47,6 +49,10 @@ export interface SourcePrefs {
   inspire?: boolean;
   /** The model is told it can follow a paper's citations through INSPIRE (experimental, off by default, as for OpenAlex). */
   inspireFollowCitations?: boolean;
+  /** Compounds through PubChem (sources/pubchem.ts): formulas, identifiers, descriptions and measured properties. */
+  pubchem?: boolean;
+  /** ChemRxiv preprints through Crossref (sources/chemrxiv.ts): records and abstracts. */
+  chemrxiv?: boolean;
   /** Patents through the EPO's Open Patent Services (sources/patents.ts); searched only with a key and secret. */
   patents?: boolean;
   /**
@@ -95,6 +101,8 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       ...(typeof value.openalexVenue === "string" && OPENALEX_VENUES.some(([id]) => id === value.openalexVenue) ? { openalexVenue: value.openalexVenue } : {}),
       ...(value.inspire === true ? { inspire: true } : {}),
       ...(value.inspireFollowCitations === true ? { inspireFollowCitations: true } : {}),
+      ...(value.pubchem === true ? { pubchem: true } : {}),
+      ...(value.chemrxiv === true ? { chemrxiv: true } : {}),
       ...(value.patents === true ? { patents: true } : {}),
       ...(typeof value.epoKey === "string" && value.epoKey.trim() ? { epoKey: value.epoKey.trim() } : {}),
       ...(typeof value.epoSecret === "string" && value.epoSecret.trim() ? { epoSecret: value.epoSecret.trim() } : {}),
@@ -139,18 +147,20 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
     ...(europepmc ? [europepmc] : []),
     ...(prefs.inspire ? [createInspire(fetch, { arxiv }, { followCitations: prefs.inspireFollowCitations === true })] : []),
+    ...(prefs.pubchem ? [createPubChem()] : []),
+    ...(prefs.chemrxiv ? [createChemRxiv()] : []),
     ...(patentsReady(prefs) ? [createPatents({ key: prefs.epoKey!, secret: prefs.epoSecret! })] : []),
   ];
 }
 
 /** Whether any open source is ticked, so questions can be asked without documents. */
 export function anyOpenSource(prefs: SourcePrefs): boolean {
-  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || patentsReady(prefs);
+  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || prefs.pubchem === true || prefs.chemrxiv === true || patentsReady(prefs);
 }
 
-/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "EPO patents". */
+/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "PubChem", "ChemRxiv", "EPO patents". */
 export function openSourceNames(prefs: SourcePrefs): string[] {
-  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(prefs.inspire ? ["INSPIRE-HEP"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
+  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(prefs.inspire ? ["INSPIRE-HEP"] : []), ...(prefs.pubchem ? ["PubChem"] : []), ...(prefs.chemrxiv ? ["ChemRxiv"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
 }
 
 /** Common Wikipedia editions for the language picker; any valid code typed in also works. */

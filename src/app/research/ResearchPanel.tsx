@@ -446,6 +446,14 @@ export function ResearchPanel({
               </div>
             )}
             <label className="choice">
+              <input type="checkbox" checked={prefs.pubchem ?? false} disabled={running} onChange={(e) => updatePrefs({ pubchem: e.target.checked })} />
+              PubChem (compounds: formulas, CAS numbers and other identifiers, descriptions, and measured properties with their sources)
+            </label>
+            <label className="choice">
+              <input type="checkbox" checked={prefs.chemrxiv ?? false} disabled={running} onChange={(e) => updatePrefs({ chemrxiv: e.target.checked })} />
+              ChemRxiv (chemistry preprints, through Crossref: titles, authors and abstracts, and the journal version when there is one)
+            </label>
+            <label className="choice">
               <input type="checkbox" checked={prefs.patents ?? false} disabled={running} onChange={(e) => updatePrefs({ patents: e.target.checked })} />
               EPO patents (patents from every office: European and international ones read in full, others as abstracts; needs your free EPO key)
             </label>
@@ -580,7 +588,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC, INSPIRE-HEP or EPO patents, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC, INSPIRE-HEP, PubChem, ChemRxiv or EPO patents, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run

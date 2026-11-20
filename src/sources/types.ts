@@ -5,7 +5,7 @@
 // which do (sources/arxiv.ts).
 
 export interface SourceHit {
-  /** Source-prefixed ID, e.g. "wikipedia:Alan_Turing", "openalex:W2741809807", "arxiv:2005.11401", "datacite:10.5281/zenodo.15310522", "europepmc:MED/38012345" or "inspire:1124337". */
+  /** Source-prefixed ID, e.g. "wikipedia:Alan_Turing", "openalex:W2741809807", "arxiv:2005.11401", "datacite:10.5281/zenodo.15310522", "europepmc:MED/38012345", "inspire:1124337", "pubchem:8028" or "chemrxiv:10.26434/chemrxiv-2023-k3l5x-v2". */
   id: string;
   title: string;
   snippet: string;
@@ -42,12 +42,14 @@ export interface WorkInfo {
 }
 
 export interface OpenSource {
-  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc" | "patents" | "inspire";
+  name: "wikipedia" | "openalex" | "arxiv" | "datacite" | "europepmc" | "patents" | "inspire" | "pubchem" | "chemrxiv";
   /**
    * The model is told it can follow citations through this source (OpenAlex, when the user ticks it,
    * harness 0.84.0): the search tool's usage line and a note after a work's first read give the forms.
    */
   followsCitations?: boolean;
+  /** Said after the search tool's usage line, when the source wants a query of its own kind: PubChem a compound's name. */
+  searchHint?: string;
   /** Shown to the model and the user, e.g. "Wikipedia". */
   label: string;
   search(query: string, signal?: AbortSignal): Promise<SourceHit[]>;
