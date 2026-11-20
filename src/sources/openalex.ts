@@ -11,7 +11,7 @@ import { getJson, SourceError, type FetchedDocument, type FetchLike, type OpenSo
 
 const PREFIX = "openalex:";
 export const OPENALEX_API = "https://api.openalex.org/works";
-export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location,cited_by_count,referenced_works_count";
+export const WORK_FIELDS = "id,display_name,publication_year,doi,authorships,abstract_inverted_index,primary_location,cited_by_count,referenced_works_count,is_retracted";
 /** What reading a work also needs: where else it is, to read it in full there. */
 export const READ_FIELDS = `${WORK_FIELDS},ids,locations`;
 /** Works asked for in a search; the best `SEARCH_RESULTS` of them are shown. */
@@ -21,7 +21,8 @@ export const SEARCH_RESULTS = 5;
 /**
  * OpenAlex's fields of research (its topics' second level, from Scopus's classification), as the user
  * picks them for a search, by their OpenAlex ID. The ones an engineering or physical-sciences researcher
- * is most likely to want; OpenAlex has 26.
+ * is most likely to want, and since harness 0.101.0 the social sciences' (docs/social-sciences-audit.md,
+ * S5); OpenAlex has 26.
  */
 export const OPENALEX_FIELDS: Array<[id: string, name: string]> = [
   ["fields/22", "Engineering"],
@@ -35,6 +36,12 @@ export const OPENALEX_FIELDS: Array<[id: string, name: string]> = [
   ["fields/19", "Earth and Planetary Sciences"],
   ["fields/23", "Environmental Science"],
   ["fields/27", "Medicine"],
+  ["fields/33", "Social Sciences"],
+  ["fields/32", "Psychology"],
+  ["fields/20", "Economics, Econometrics and Finance"],
+  ["fields/14", "Business, Management and Accounting"],
+  ["fields/18", "Decision Sciences"],
+  ["fields/12", "Arts and Humanities"],
 ];
 
 /**
@@ -80,6 +87,8 @@ export interface FullTextReaders {
   arxiv?: OpenSource;
   /** The Europe PMC source: reads "europepmc:MED/<pmid>" or "europepmc:PMC/<pmcid>". */
   europepmc?: OpenSource;
+  /** With the DataCite source, a Zenodo record's PDF: reads "zenodo:<record ID>" (datacite.ts createZenodoReader). */
+  zenodo?: OpenSource;
   /**
    * With the arXiv source: the arXiv ID of a paper by its exact title (findArxivByTitle), for a work
    * whose OpenAlex record has no arXiv link, as a conference paper kept apart from its preprint has not.
@@ -113,6 +122,8 @@ export interface Work {
   cited_by_count?: number;
   /** Works in this one's reference list that OpenAlex knows. */
   referenced_works_count?: number;
+  /** OpenAlex marks the work as retracted (harness 0.101.0). */
+  is_retracted?: boolean;
 }
 
 export function rebuildAbstract(index: Record<string, number[]> | null | undefined): string {
@@ -140,10 +151,19 @@ function workId(work: Work): string {
   return PREFIX + work.id.replace(/^https:\/\/openalex\.org\//, "");
 }
 
-/** A citable text for a work: its details, then the abstract if OpenAlex has one. */
+/**
+ * A warning put first in the text of a work OpenAlex marks as retracted (harness 0.101.0), as Europe PMC's
+ * are (europepmc.ts RETRACTED_NOTE). OpenAlex marks 9,680 works in the Social Sciences, Psychology and
+ * Economics so, among them LaCour and Green's "When contact changes minds", which searches showed as an
+ * ordinary paper cited 137 times (docs/social-sciences-audit.md, S6).
+ */
+export const OPENALEX_RETRACTED_NOTE = "Note: OpenAlex marks this work as retracted. Its findings should not be relied on.";
+
+/** A citable text for a work: a retraction's note, its details, then the abstract if OpenAlex has one. */
 export function workText(work: Work): string {
   const authors = (work.authorships ?? []).map((a) => a.author?.display_name).filter(Boolean);
   const lines = [
+    work.is_retracted ? OPENALEX_RETRACTED_NOTE : "",
     work.display_name ?? "Untitled",
     [authors.slice(0, 5).join(", ") + (authors.length > 5 ? " et al." : ""), work.publication_year, work.primary_location?.source?.display_name]
       .filter(Boolean)
@@ -254,10 +274,20 @@ export function workInfo(work: Work): WorkInfo {
   };
 }
 
+/** A Zenodo record's ID in a URL or DOI: "zenodo.org/records/7654973", "zenodo.org/record/7976342", "10.5281/zenodo.7716415". */
+const ZENODO_RECORD = /(?:zenodo\.org\/records?\/|10\.5281\/zenodo\.)(\d+)/i;
+
+/** The Zenodo record a URL or DOI names, if any. */
+export function zenodoRecordIn(text: string): string | undefined {
+  return ZENODO_RECORD.exec(text)?.[1];
+}
+
 /**
  * Where a work can be read in full by a source the user ticked: its ID there. arXiv first, since its PDF
  * is the paper as the authors wrote it; then Europe PMC for a work in PubMed Central, by its PubMed ID
- * where it has one, as Europe PMC files most records.
+ * where it has one, as Europe PMC files most records; then, since harness 0.101.0, a copy on Zenodo, with
+ * DataCite ticked. A record's own link ("zenodo.org/records/…") comes before a DOI, which may name the
+ * concept of all its versions.
  */
 export function fullTextIds(work: Work, readers: FullTextReaders): Array<{ reader: OpenSource; id: string }> {
   const ids: Array<{ reader: OpenSource; id: string }> = [];
@@ -266,6 +296,11 @@ export function fullTextIds(work: Work, readers: FullTextReaders): Array<{ reade
   const pmcid = pmcidOf(work.ids?.pmcid);
   const pmid = work.ids?.pmid?.match(/\d+$/)?.[0];
   if (readers.europepmc && pmcid) ids.push({ reader: readers.europepmc, id: pmid ? `europepmc:MED/${pmid}` : `europepmc:PMC/${pmcid}` });
+  if (readers.zenodo) {
+    const places = (work.locations ?? []).flatMap((l) => [l?.landing_page_url ?? "", l?.pdf_url ?? ""]);
+    const record = [...places.filter((url) => /zenodo\.org\/records?\//i.test(url)), ...places, work.doi ?? ""].map(zenodoRecordIn).find(Boolean);
+    if (record) ids.push({ reader: readers.zenodo, id: `zenodo:${record}` });
+  }
   return ids;
 }
 
@@ -317,11 +352,14 @@ export function createOpenAlex(
       const withAbstract = (work: Work) => Boolean(work.abstract_inverted_index && Object.keys(work.abstract_inverted_index).length);
       return [...works.filter(withAbstract), ...works.filter((work) => !withAbstract(work))].slice(0, SEARCH_RESULTS).map((work) => {
         const abstract = rebuildAbstract(work.abstract_inverted_index);
-        const year = work.publication_year ? ` (${work.publication_year})` : "";
-        const cites = cited && typeof work.cited_by_count === "number" ? `, cited by ${work.cited_by_count.toLocaleString("en")}` : "";
+        const about = [
+          ...(work.is_retracted ? ["RETRACTED"] : []),
+          ...(work.publication_year ? [String(work.publication_year)] : []),
+          ...(cited && typeof work.cited_by_count === "number" ? [`cited by ${work.cited_by_count.toLocaleString("en")}`] : []),
+        ];
         return {
           id: workId(work),
-          title: `${work.display_name ?? "Untitled"}${year.replace(/\)$/, `${cites})`) || (cites ? ` (${cites.slice(2)})` : "")}`,
+          title: `${work.display_name ?? "Untitled"}${about.length ? ` (${about.join(", ")})` : ""}`,
           snippet: abstract ? snippetOf(abstract) : "No abstract.",
         };
       });

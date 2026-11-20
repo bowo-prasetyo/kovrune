@@ -159,7 +159,12 @@ function concise(text: string): string {
  *   and "10^-3" is not 10^3. A power after "×" needs "^" or a sign, so "4 × 10 mm" stays a size;
  * - a prefix the PDF set apart from its unit symbol is joined to it: "40 m Ω" is "40 mΩ", "° C" is "°C";
  * - since harness 0.91.0, LaTeX math is read as math.ts reads it, so "$1.2\times10^{-3}$" is "1.2×10⁻³",
- *   and a concise uncertainty is written out (concise).
+ *   and a concise uncertainty is written out (concise);
+ * - since harness 0.101.0, a number written without its leading zero is given one, keeping its sign:
+ *   "p < .05" is 0.05 and "r = −.34" is −0.34, as APA style writes p, r, α and standardized β. Read as
+ *   digits after a point, ".34" was 34, so "r = −.34" backed "r = .34" and "34%", and "d = 0.45" was not
+ *   backed by "d = .45" (docs/social-sciences-audit.md, S1). Only a point with no letter, digit, point or
+ *   comma before it, so "v.2", "3.5", "..." and "1,.5" are left alone.
  */
 function numberText(text: string): string {
   const raised = concise(text.includes("$") || text.includes("\\") ? readableMath(text) : text)
@@ -167,6 +172,7 @@ function numberText(text: string): string {
     .replace(/−\s+(?=\p{Nd})/gu, "−");
   return normalizeForMatch(raised, { keepCase: true })
     .replace(/^\d+[.)]\s+/, "")
+    .replace(/(?<![\p{L}\p{Nd}.,])([-+±]?)\.(?=\p{Nd})/gu, (_, sign: string) => `${sign}0.`)
     .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:[.,]\p{Nd}+)?)\s*[×x*]\s*10\s*(?:\^\s*([-+]?\s?\p{Nd}+)|([-+]\s?\p{Nd}+))(?![\p{Nd}.])/gu, (_, m: string, a?: string, b?: string) => powerOfTen(m, (a ?? b)!))
     .replace(/(?<![\p{L}\p{Nd}.,^])10\s*\^\s*([-+]?\p{Nd}+)(?![\p{Nd}.])/gu, (_, e: string) => powerOfTen("1", e))
     .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:\.\p{Nd}+)?)[eE]([-+]?\p{Nd}+)(?![\p{L}\p{Nd}])/gu, (_, m: string, e: string) => powerOfTen(m, e))

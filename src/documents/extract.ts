@@ -7,7 +7,7 @@ import { describePageNumbers, pagesWithoutText } from "./pages.ts";
 import { decodeText, parseDelimited, sniffDelimiter } from "./delimited.ts";
 import { extractOfficeText, joinPages, OFFICE_READER_VERSION, PAGE_UNITS, type OfficeKind } from "./office.ts";
 import { MAX_SHEET_ROWS, readRows } from "./sheets.ts";
-import { pageLines, pageText, withoutRunningLines, type PdfTextItem } from "./pdf-layout.ts";
+import { pageLines, pageTexts, withoutRunningLines, type PdfTextItem } from "./pdf-layout.ts";
 
 export type DocumentKind = "text" | "markdown" | "html" | "pdf" | "csv" | "tsv" | OfficeKind | "cif" | "molfile" | "jcamp";
 
@@ -197,7 +197,7 @@ export async function extractPdfText(
     const pdf = await task.promise;
     const lines = [];
     for (let n = 1; n <= pdf.numPages; n++) lines.push(pageLines((await (await pdf.getPage(n)).getTextContent()).items));
-    const pages = withoutRunningLines(lines).map((page) => joinHyphenatedLines(pageText(page)));
+    const pages = pageTexts(withoutRunningLines(lines)).map(joinHyphenatedLines);
     return { ...joinPages(pages), pages: pdf.numPages };
   } finally {
     await task.destroy();

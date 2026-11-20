@@ -217,6 +217,63 @@ function paragraphEnds(a: PdfLine, b: PdfLine, spacing: number | undefined): boo
   return false;
 }
 
+/** Footnotes are set at most this share of the size of the text above them. */
+const FOOTNOTE_SMALLER = 0.85;
+/** Lines of one footnote block differ in size by at most this share. */
+const FOOTNOTE_SIZES = 0.1;
+/** A footnote starts with its number, raised or not, or a symbol and a space: "1 Putnam's …", "¹ See …", "* Corresponding". */
+const FOOTNOTE_START = /^(?:[⁰¹²³⁴⁵⁶⁷⁸⁹]{1,3}|\p{Nd}{1,3}[.)]?|[*†‡§])\s*\p{L}/u;
+/** A page needs this many lines in larger type above its footnotes: a page set all in small type has none. */
+const MIN_BODY_LINES = 2;
+
+/**
+ * Where a page's footnotes start, as an index into its lines; the number of lines when it has none (harness
+ * 0.101.0). Footnotes are the page's last lines, set in one smaller size, below a line at least
+ * 1/FOOTNOTE_SMALLER larger, from the first of them that starts as a footnote does (FOOTNOTE_START). A table
+ * note ("Note: …", "*p < .05") does not start as one.
+ */
+export function footnotesAt(lines: PdfLine[]): number {
+  const size = lines.at(-1)?.h;
+  if (!size) return lines.length;
+  let start = lines.length;
+  while (start > 0) {
+    const h = lines[start - 1]!.h;
+    if (!h || Math.abs(h - size) > FOOTNOTE_SIZES * size) break;
+    start--;
+  }
+  const above = lines[start - 1];
+  if (!above?.h || size > FOOTNOTE_SMALLER * above.h) return lines.length;
+  if (lines.slice(0, start).filter((l) => l.h && size <= FOOTNOTE_SMALLER * l.h).length < MIN_BODY_LINES) return lines.length;
+  if (above.y !== undefined && lines.slice(start).some((l) => l.y !== undefined && l.y >= above.y!)) return lines.length;
+  const first = lines.slice(start).findIndex((l) => FOOTNOTE_START.test(l.text));
+  return first < 0 ? lines.length : start + first;
+}
+
+/**
+ * The pages' texts (pageText), with footnotes moved out of a sentence they would cut (harness 0.101.0): when
+ * a page's text ends mid-sentence above its footnotes, the footnotes are read after the paragraph that
+ * finishes the sentence on the next page, rather than between its two halves. "… higher turnout among
+ * homeowners² [footnotes] but not among renters" read the finding without its condition, and a quote of the
+ * whole finding was not found (docs/social-sciences-audit.md, S3). Other pages read as before.
+ */
+export function pageTexts(pages: PdfLine[][]): string[] {
+  let carried: string | undefined;
+  const texts = pages.map((lines, i) => {
+    const at = footnotesAt(lines);
+    const body = lines.slice(0, at);
+    const cut = at < lines.length && body.length > 0 && !SENTENCE_END.test(body.at(-1)!.text) && i + 1 < pages.length;
+    let text = cut ? pageText(body) : pageText(lines);
+    if (carried !== undefined) {
+      const end = text.indexOf("\n\n");
+      text = end < 0 ? `${text}\n\n${carried}` : `${text.slice(0, end)}\n\n${carried}${text.slice(end)}`;
+      carried = undefined;
+    }
+    if (cut) carried = pageText(lines.slice(at));
+    return text;
+  });
+  return texts;
+}
+
 /** A page's text from its lines: a line break between lines, a blank line where a paragraph ends. */
 export function pageText(lines: PdfLine[]): string {
   const spacing = lineSpacing(lines);
