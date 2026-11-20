@@ -427,3 +427,49 @@ describe("quote checks from the second live run", () => {
     assert.equal(check("is fundamental to human cognition and learning. […]", abstract).verified, true, "a snippet's […] marker is ignored");
   });
 });
+
+describe("statements and proofs across parts (harness 0.97.0)", async () => {
+  const { proofNote, proofsContinued, STATEMENT_START } = await import("../src/documents/chunk.ts");
+  const filler = (n: number) => Array.from({ length: n }, (_, i) => `Step ${i + 1} of the argument bounds the count again by the same estimate.`).join(" ");
+
+  it("moves a statement, with its displayed equations, to the part where its proof starts", () => {
+    const text = [
+      filler(14),
+      "Lemma 3.3. Let 1/2 < s < 1. For f in the space,",
+      "\\|f\\|_2 \\leq N \\|f\\|_1 (3.1)",
+      "Proof. The kernel is integrable away from the origin, so the classical argument applies. ∎",
+    ].join("\n\n");
+    const parts = chunkDocument({ id: "d", title: "D", text }, 1000);
+    const holding = parts.find((p) => p.text.includes("Proof. The kernel"))!;
+    assert.match(holding.text, /^Lemma 3\.3\. Let 1\/2 < s < 1\./, "the statement starts the part its proof is in");
+    assert.match(holding.text, /\(3\.1\)/);
+  });
+
+  it("says which proof a part continues, until the proof's box", () => {
+    const text = [
+      "Theorem 1.1 (Main Theorem). Every Teller set is small.",
+      "Lemma 3.2. If the set is large, it has a quadruple.",
+      `Proof of Theorem 1.1. ${filler(12)}`,
+      filler(12),
+      `${filler(4)} This proves the theorem. ∎`,
+      "Remark 3.4. The hypothesis is used once.",
+      `Proof. ${filler(12)}`,
+      filler(12),
+    ].join("\n\n");
+    const parts = chunkDocument({ id: "d", title: "D", text }, 800);
+    const continued = proofsContinued(parts);
+    const notes = parts.map((_, i) => proofNote(continued[i]));
+    const firstProof = parts.findIndex((p) => p.text.includes("Proof of Theorem 1.1."));
+    assert.match(notes[firstProof + 1]!, /^\[This part continues the proof of Theorem 1\.1, which begins in d#\d+\.\]\n$/);
+    const remark = parts.findIndex((p) => p.text.includes("Remark 3.4."));
+    assert.equal(notes[remark], "", "the box closed the proof, so the part with the remark continues none");
+    // A proof titled only "Proof" proves the statement before it.
+    assert.match(notes.at(-1)!, /continues the proof of Remark 3\.4/);
+    assert.equal(notes[0], "");
+  });
+
+  it("reads statement headings as the converter and PDFs write them, and not other sentences", () => {
+    for (const s of ["Lemma 3.2 (Key Lemma). If", "Theorem A. Let", "Conjecture 1.4. As", "Question 1. Is", "Main Theorem. For", "Proposition 4.2. Assume"]) assert.ok(STATEMENT_START.test(s), s);
+    for (const s of ["Theorem 1.1 is proved in Section 3.", "Lemmas are useful. We", "Table 2. Results"]) assert.ok(!STATEMENT_START.test(s), s);
+  });
+});

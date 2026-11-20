@@ -762,6 +762,8 @@ function numberStatements(body: string, setup: StatementSetup): Statements {
     last = edit.end;
   }
   out += body.slice(last);
+  // A proof ends with the box amsthm prints (harness 0.97.0), so a part of a long paper can tell where it ends (chunk.ts proofsContinued).
+  out = out.replace(/\\end\{proof\}/g, " ∎\n\n");
   out = out.replace(new RegExp(String.raw`\\end\{(?:${names})\}`, "g"), "\n\n");
   return { body: out, equations, labels };
 }
