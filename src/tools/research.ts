@@ -141,6 +141,8 @@ export function createResearchTools(
   // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
   const readIds = new Set<string>();
   let askedToReadCited = false;
+  // Whether final_answer has asked, once, about a "not found" answer that came with quotes.
+  let askedAboutQuotedNotFound = false;
   // What the answer quoted from each open-source document it was sent to read, so the read gives the
   // part holding the quote rather than the part matching the question (SourceSession.read).
   const quotedFrom = new Map<string, string[]>();
@@ -317,6 +319,21 @@ export function createResearchTools(
           return {
             message: `Before concluding that the sources do not answer the question, search ${joinNames((session?.sources ?? []).map((s) => s.label))} again with shorter terms: the name of each thing the question is about, on its own, as an article title would be. Read what fits, then answer.`,
             step: "About to conclude that the sources don't answer this; searching for each topic on its own first",
+          };
+        }
+        // A "not found" answer with quotes, which the system prompt says should have none (harness 0.96.0).
+        // Asked to tell whether the documents answer the question at all, the model reported "not found"
+        // for answers that are "no", "not proved" or "not known": the mathematics suite's "No, the paper
+        // does not prove that …; it conjectures it (Conjecture 1.4)" and "I(8) is not known; a search ruled
+        // out every N < 60", each with the quote that says so (ma01, ma11, ma20). Across the recorded runs,
+        // 23 answers to answerable questions and 37 right refusals came this way, so the model is asked, not
+        // overruled, and may keep "not found". Asked once.
+        if (!found && evidence.length && !askedAboutQuotedNotFound) {
+          askedAboutQuotedNotFound = true;
+          return {
+            message:
+              'You set "found" to false but gave quotes. If the passages you quoted answer the question, also when the answer is "no", "not proved" or "not known", set "found" to true and keep the quotes. If they do not answer it, keep "found" false and give no evidence.',
+            step: "Concluded that the sources don't answer this, but quoted them; asking whether the quotes answer it",
           };
         }
         // Read before answering, the same guard for an answer: a snippet is one sentence and can cut a
