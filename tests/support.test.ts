@@ -910,3 +910,34 @@ describe("mathematics: the question's formula, formulas, quantifiers and status 
     assert.equal(backed("There exists a prime $p$ with $p \\equiv 2$", "For every prime p we have p ≡ 2."), false);
   });
 });
+
+describe("locants in chemical names (harness 0.99.0)", () => {
+  const q = (quote: string) => ({ docId: "paper", quote });
+
+  it("reads a name's positions whole, not as a number", () => {
+    assert.deepEqual(numbers("2,4-D is a herbicide."), ["2,4-"]);
+    assert.deepEqual(numbers("1,3,5-triazine"), ["1,3,5-"]);
+    assert.deepEqual(numbers("2,2'-bipyridine and 4,4′-dimethoxybenzil"), ["2,2'-", "4,4'-"]);
+    assert.deepEqual(numbers("1,10-phenanthroline"), ["1,10-"]);
+    // Numbers stay numbers: a decimal comma, thousands, a fold change, a list of numbers.
+    assert.deepEqual(numbers("at 1,5 mol%"), ["1.5"]);
+    assert.deepEqual(numbers("a 1,5-fold rise and a 1,000-fold drop"), ["1.5", "1000"]);
+    assert.deepEqual(numbers("compounds 2,4 and 6"), ["2.4", "6"]);
+    assert.deepEqual(numbers("N,N-dimethylformamide"), []);
+  });
+
+  it("does not back a quantity with a name's positions", () => {
+    assert.equal(marks("The dose of 2,4-D was 2.4 mg per plant.", [q("Plants were sprayed with 2,4-D at the recommended dose.")]), "-");
+    assert.equal(marks("The triazine melts at 135 °C.", [q("1,3,5-Triazine was recrystallised from ethanol.")]), "-");
+    assert.equal(marks("Plants were sprayed with 2,4-D at the recommended dose.", [q("Plants were sprayed with 2,4-D at the recommended dose.")]), "+");
+  });
+
+  it("still tells one set of positions from another", () => {
+    const quote = q("2,4-Dinitrophenol was the most toxic congener.");
+    assert.equal(marks("2,6-Dinitrophenol was the most toxic congener.", [quote]), "-");
+    assert.equal(marks("2,4-Dinitrophenol was the most toxic congener.", [quote]), "+");
+    const mesityl = q("The 2,4,6-trimethylphenyl group (mesityl) protects the boron.");
+    assert.equal(marks("The 2,4,5-trimethylphenyl group (mesityl) protects the boron.", [mesityl]), "-");
+    assert.equal(marks("The 2,4,6-trimethylphenyl group (mesityl) protects the boron.", [mesityl]), "+");
+  });
+});

@@ -1381,6 +1381,48 @@ Recommendations 3 and 4 of the chemistry researcher's audit (0.93.0, above). **A
 
 **Chemical names in search** (`src/tools/chemical-names.ts`): a built-in list of 161 solvents, bases, acids, reagents, catalysts, small molecules, techniques and metals, each with its spellings. A query naming one also searches the others, on the query side only, as the gene-name forms of 0.87.0. Before it, 13 of 30 spellings a chemist might type found their paper among the first three results ("dichloromethane" for CH2Cl2, "Hünig's base", "tricyclohexylphosphine" for PCy3); with it, 30 of 30, though the list was written with these in view. `bench:retrieval` is unchanged on every other suite, the chemistry suite gains one complete task (45 to 46 of 49), and `bench:replay` finds no task of the protected suites that would make a different request; With Qwen3.5-4B the suite scores 33/40 and 12/12 held out, with 2B 22/40 and 10/12. On the tasks whose requests differ, the list gains 2 and loses none on 4B and gains 1 and loses 2 on 2B: no measurable effect on answers either way, so its case rests on search ([results](../chem/README.md#results-with-models)).
 
+### PubChem and ChemRxiv, chemistry files, and locants (0.99.0)
+
+Recommendations 5 and 6 of the chemistry researcher's audit (0.93.0, above), the last two.
+
+**PubChem** (`src/sources/pubchem.ts`), a source a user ticks. A search is a compound's name, synonym, CAS number or InChIKey. A question in words is read for the name it holds: "boiling point of tetrahydrofuran" is tried as written, then as "tetrahydrofuran". A name PubChem does not know is tried through PubChem's autocomplete. Each hit shows the compound's formula, weight and IUPAC name. Reading a compound gives:
+- its computed properties and identifiers (IUPAC name, formula, weights, XLogP3, InChI, InChIKey, SMILES), said to be computed by PubChem;
+- its CAS numbers, picked from its synonyms by their check digit;
+- other names;
+- its descriptions, each with its source;
+- its measured properties from PUG View's "Experimental Properties", up to six values each, each with the database it came from ("66 °C (Hazardous Substances Data Bank (HSDB))").
+
+A part PubChem does not give is left out, and the text says so. The search tool's usage line tells the model to query one compound's name, CAS number or InChIKey, not a question; it is shown only when PubChem is ticked.
+
+**ChemRxiv through Crossref** (`src/sources/chemrxiv.ts`). ChemRxiv registers its DOIs (prefix 10.26434) with Crossref, so the DataCite source never finds them. A search uses Crossref's `prefix:10.26434,type:posted-content` filter and keeps the first of each title, since every version of a preprint has a DOI of its own. A DOI in the query is looked up directly. A preprint is read as its title, authors, year, DOI and abstract (Crossref's JATS, as text), with its journal version's DOI when Crossref records one. Its full text, on chemrxiv.org, is not read. A reference gives "ChemRxiv" as the venue.
+
+**Not checked against the live services.** This container's network refused both hosts when the sources were written, and once they were allowed, the session's permission check refused the requests. Two things are therefore unconfirmed:
+- that both services let a web page call them (`Access-Control-Allow-Origin`), which the app needs;
+- that their answers have the fields the code reads.
+
+Both sources are built from PUG REST, PUG View's and Crossref's documentation. Their tests (`tests/pubchem.test.ts`, `tests/chemrxiv.test.ts`) answer from records shaped as those documents give them, not recorded from the services. PubChem renamed its SMILES properties in 2025, so if PubChem refuses the property list (HTTP 400), the read asks again without SMILES. A run with a model on either source is still to be done.
+
+**Chemistry files** (`src/documents/chemfiles.ts`). Three kinds of file are now read when added:
+- **CIF:** each item as "cell length a: 3.7155(4)", and each loop as a table whose rows are labelled with their columns, as spreadsheets are. Unknown values ("?" and ".") are left out, and a loop is read up to 2,000 rows.
+- **Molfiles (V2000 and V3000) and SD files:** each structure's name, its formula and molecular weight, the atoms and bonds drawn, and its data items. The formula and weight are worked out from the atoms, with the hydrogens each atom's usual valence leaves (charges and radicals counted), and the text says they were worked out. Checked on ethanol, benzene with aromatic bonds, DMSO (sulfur at valence 4), pyridinium and acetate.
+- **JCAMP-DX:** a spectrum's header lines with their meaning ("Observe frequency (MHz): 400.13"), its number of points and range, and its peak table, `(XY..XY)`, `(XYW..XYW)` or `(XYM..XYM)`. The points themselves are not read.
+
+**Locants** (`numbers` in `src/agent/support.ts`). The positions in a chemical name were read as numbers: "2,4" in "2,4-D" as 2.4, "1,3,5" in "1,3,5-triazine" as 135, "1,10" in "1,10-phenanthroline" as 1.10. So a quote naming 2,4-D backed "2.4 mg", and one naming 1,3,5-triazine backed "135 °C". A list of positions of one or two digits, with optional primes, followed by a hyphen and a letter or bracket, is now kept whole as "2,4-". Only the same positions match it, so "2,6-dinitrophenol" is still not backed by "2,4-dinitrophenol". "1,5-fold", "1,000-fold", "at 1,5 mol%" and "compounds 2,4 and 6" are still numbers. Positions with a letter ("4a,8a-") are not read this way: the text the check reads has already lost the hyphen after a letter.
+
+**Effect on recorded runs: none.**
+- `bench:rescore`, each report on its own, with the code of `main` and of this change, gives the same label for every one of 9,928 answers in 154 reports.
+- `bench:retrieval` is identical on every suite.
+- No benchmark task uses the new sources or file kinds, and the prompts change only when PubChem is ticked.
+
+`tests/support.test.ts` ("locants in chemical names") fails on `main` and passes with the change. `tests/chemfiles.test.ts` covers the three readers and the file picker's new kinds.
+
+**Limits:**
+- The live checks above.
+- PubChem's safety and hazard data (GHS) are not read.
+- A spectrum without a peak table can't answer where a band or peak is.
+- Hydrogens counted from usual valences can be wrong for metals, hypervalent atoms written without their charges, and radicals the file does not mark.
+- A CIF's long loops are cut at 2,000 rows.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

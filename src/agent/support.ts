@@ -184,8 +184,21 @@ function signed(sign: string | undefined, digits: string): string {
  * item's own number ("1. Open the perspective") is not one of them.
  */
 export function numbers(text: string): string[] {
-  return [...numberText(text).matchAll(new RegExp(NUMBER, "gu"))].map(([, sign, digits]) => signed(sign, digits!));
+  const found: string[] = [];
+  const rest = numberText(text).replace(LOCANTS, (all, list: string) => (found.push(`${list.replace(/[′’]/g, "'")}-`), " ".repeat(all.length)));
+  return [...found, ...[...rest.matchAll(new RegExp(NUMBER, "gu"))].map(([, sign, digits]) => signed(sign, digits!))];
 }
+
+/**
+ * Locants (harness 0.99.0): the positions in a chemical name, "2,4-" in "2,4-dinitrophenol" and "2,4-D",
+ * "1,3,5-" in "1,3,5-triazine", "2,2'-" in "2,2'-bipyridine". Read as numbers, "2,4" was 2.4 and "1,3,5" was
+ * 135, so a quote naming 2,4-D backed "2.4 mg" and one naming 1,3,5-triazine backed "135 °C". They are kept
+ * whole, as "2,4-", which only the same positions match: "2,6-dinitrophenol" is still not "2,4-dinitrophenol".
+ * A locant list has two or more positions of one or two digits, each with optional primes ("4,4'-"), and a
+ * hyphen before a letter or bracket; "1,5-fold" and "1,000-fold" are numbers. Positions with a letter
+ * ("4a,8a-") are not read: the text the check reads has lost the hyphen after a letter.
+ */
+const LOCANTS = /(?<![\p{L}\p{Nd}.,'′’])(\p{Nd}{1,2}['′’]*(?:,\p{Nd}{1,2}['′’]*)+)-(?=[\p{L}(\[])(?!fold\b)/gu;
 
 /**
  * The numbers of a text that are quantities (harness 0.91.0): not digits written right after a letter,
