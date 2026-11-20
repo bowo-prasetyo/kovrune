@@ -130,6 +130,7 @@ export function describeStatus(
     sentences?: Array<{ backed?: boolean; inSource?: unknown }>;
     answerInQuote?: boolean;
     contradicted?: { docId: string; title?: string; passage: string };
+    offQuestion?: string;
     review?: ReviewVerdict;
     crossCheck?: CrossCheck;
     completeness?: Completeness;
@@ -166,6 +167,16 @@ export function describeStatus(
         return {
           label: "Quotes found, a source says otherwise",
           detail: `Every quote below is word for word in the source it cites, but another sentence of ${where} answers your question and says the opposite: "${support.contradicted.passage}". The answer may rest on a passage about something else: read that sentence and check which one answers what you asked.`,
+          tone: "unverified",
+          severity: "check",
+        };
+      }
+      // Every quote is found, but the question names a formula that neither the answer nor its quotes has
+      // (mathematics.ts formulaOffQuestion): the answer may be about another formula than the one asked about.
+      if (support?.offQuestion && found === evidence.length && status === "verified") {
+        return {
+          label: "Quotes found, answer not confirmed",
+          detail: `Every quote below is word for word in the source it cites, but your question asks about "${support.offQuestion}", and neither the answer nor its quotes mention it. The answer may be about something else, such as a related result: check that it answers what you asked.`,
           tone: "unverified",
           severity: "check",
         };

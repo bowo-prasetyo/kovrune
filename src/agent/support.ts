@@ -5,6 +5,7 @@
 
 import { words } from "../documents/scripts.ts";
 import { chemistryBacked, chemistryBacking } from "./chemistry.ts";
+import { formulaOffQuestion, mathBacked, mathBacking } from "./mathematics.ts";
 import { readableMath } from "../documents/math.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
@@ -40,6 +41,12 @@ export interface SentenceSupport {
    * (contradictedSupport, harness 0.76.0). Absent when there is none, which is the usual case.
    */
   contradicted?: { docId: string; title?: string; passage: string };
+  /**
+   * A formula the question names that neither the answer nor any verified quote has (mathematics.ts
+   * formulaOffQuestion, harness 0.96.0): the answer may be about another formula than the one asked about.
+   * Absent when the question names none, or each is there.
+   */
+  offQuestion?: string;
   /**
    * The model's own check (review.ts), asked of answers the word checks would label "Quotes found"
    * and of answers too short for them to judge (reviewAsked): whether the quoted passages state what
@@ -966,6 +973,7 @@ export function sentenceSupport(
   const quotedChanges = changes(quoteText);
   const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
   const chemistry = chemistryBacking(context, backing);
+  const math = mathBacking(backing);
   const ids = evidence.map((e) => e.docId.replace(/#\d+$/, ""));
   const scopeWords = scope ? contentWords(scope) : [];
   let judged = 0;
@@ -1003,15 +1011,18 @@ export function sentenceSupport(
       countsBacked(text, verified.map((e) => e.quote)) &&
       changesBacked(text, quotedChanges) &&
       namesBacked(text, namesBacking) &&
-      chemistryBacked(text, chemistry);
+      chemistryBacked(text, chemistry) &&
+      mathBacked(text, math);
     judged++;
     if (isBacked) backed++;
     return { text: written, backed: isBacked };
   });
   if (!judged && question && answerInQuote(answer, question, verified, titleFor)) {
-    return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true };
+    const offQuestion = formulaOffQuestion(question, answer, verified.map((e) => e.quote));
+    return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true, ...(offQuestion ? { offQuestion } : {}) };
   }
-  return { sentences, judged, backed };
+  const offQuestion = question ? formulaOffQuestion(question, answer, verified.map((e) => e.quote)) : undefined;
+  return { sentences, judged, backed, ...(offQuestion ? { offQuestion } : {}) };
 }
 
 /** Passages of a document tried for each sentence no quote backs: those sharing the most of its claim words. */
@@ -1371,9 +1382,9 @@ export function crossCheckIncomplete(check: CrossCheck | undefined): boolean {
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness; contradicted?: { passage: string } },
+  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness; contradicted?: { passage: string }; offQuestion?: string },
 ): boolean {
-  if (support?.contradicted) return false;
+  if (support?.contradicted || support?.offQuestion) return false;
   if (support?.review) {
     return support.review === "yes" && !crossCheckRejects(support.crossCheck) && support.completeness?.complete !== false && reviewAsked(status, evidence, support);
   }
@@ -1384,9 +1395,9 @@ export function labelledQuotesFound(
 export function wordChecksPass(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; contradicted?: { passage: string } },
+  support?: { judged: number; backed: number; contradicted?: { passage: string }; offQuestion?: string },
 ): boolean {
-  if (support?.contradicted) return false;
+  if (support?.contradicted || support?.offQuestion) return false;
   return status === "verified" && evidence.every((e) => e.verified) && (!support || (support.judged > 0 && support.backed === support.judged));
 }
 
