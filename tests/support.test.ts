@@ -841,3 +841,72 @@ describe("chemistry units, opposites and names (harness 0.93.0)", () => {
     for (const [quote, answer, title] of pairs) assert.equal(marks(answer, [q(quote)], title ? () => title : undefined), "+", answer);
   });
 });
+
+describe("mathematics: the question's formula, formulas, quantifiers and status (harness 0.96.0)", async () => {
+  const { formulaOffQuestion, questionFormulas } = await import("../src/agent/mathematics.ts");
+  const { checkEvidence } = await import("../src/agent/evidence.ts");
+  const { labelledQuotesFound, sentenceSupport } = await import("../src/agent/support.ts");
+
+  it("finds the formulas a question names, and not names written with Greek letters, slashes or underscores", () => {
+    assert.deepEqual(questionFormulas("What bound does the Teller-set paper give for Teller sets in Z/pZ × F_5^n?"), ["Z/pZ × F_5^n"]);
+    assert.deepEqual(questionFormulas("Is it proved that I(k) = k² − 2 for every k ≥ 5?"), ["I(k) = k² − 2", "k ≥ 5"]);
+    assert.deepEqual(questionFormulas("Is the conjecture (1/5 + o(1))p proved?").includes("1/5"), true);
+    for (const q of ["Which organization maintains LumenDB?", "What does PPARα knockdown do to β3-adrenergic signalling?", "Was CRISPR/Cas9 used on ALK/MYCN cells?", "Which runs used Q4_K_M?", "At what rate does the L² norm decay?"]) {
+      assert.deepEqual(questionFormulas(q), [], q);
+    }
+  });
+
+  it("does not label an answer about another formula than the question's (math mah01)", () => {
+    const question = "What bound does the Teller-set paper give for Teller sets in Z/pZ × F_5^n?";
+    const off = formulaOffQuestion(question, "The paper proves that for every n >= 3, a Teller set in F_5^n has at most 4.6812^n elements.", [
+      "Theorem 1.2. For every n >= 3, every Teller set in F_5^n has at most 4.6812^n elements.",
+    ]);
+    assert.equal(off, "Z/pZ × F_5^n");
+    assert.equal(labelledQuotesFound("verified", [{ verified: true }], { judged: 1, backed: 1, review: "yes", offQuestion: off }), false);
+    // The right answer quotes the formula in LaTeX, and is labelled.
+    assert.equal(
+      formulaOffQuestion(question, "τ(Z/pZ × F_5^n) ≤ (p/4 + 3) · 4.6812^n", [String.raw`we have $\tau(\mathbb{Z}/p\mathbb{Z} \times \mathbb{F}_5^n) \leq (p/4 + 3) \cdot 4.6812^n$`]),
+      undefined,
+    );
+    assert.equal(formulaOffQuestion("Which organization maintains LumenDB?", "Tessel.", ["maintained by the Tessel Foundation"]), undefined);
+    // A formula naming a single object sets the scene, and a right answer's quote need not repeat it (math mah08).
+    assert.equal(
+      formulaOffQuestion("Whose earlier bound for Teller sets in F_5^n does the Teller-set paper improve, and what was that bound?", "The paper improves Kessler's bound of 4.8100^n.", [
+        "The second bound improves the bound 4.8100^n of Kessler.",
+      ]),
+      undefined,
+    );
+  });
+
+  const doc = String.raw`We expect a positive answer to Question 1, but we have no proof. If $n \mid m$ then $\varphi(n) \leq \varphi(m)$ for all positive integers. We show the running time is $O(n^{3/2} \log n)$ for every input graph. Every planar graph has a vertex of degree at most $5$. The series converges absolutely for $\Re(s) > 1$. Conjecture 1.4. Every toy ring of characteristic zero is finite. We prove that every Teller set is small. There exists a prime $p$ with $p \equiv 2$.`;
+  const backed = (quote: string, answer: string) => {
+    const support = sentenceSupport(answer, checkEvidence([{ docId: "d", quote }], () => doc), () => "Toy paper", "What does the paper show?");
+    return support.judged > 0 && support.backed === support.judged;
+  };
+
+  it("marks a formula the quotes give with another relation, number, set operation or part (audit M3)", () => {
+    const ineq = String.raw`If $n \mid m$ then $\varphi(n) \leq \varphi(m)$ for all positive integers`;
+    assert.equal(backed(ineq, "If n divides m then φ(n) ≥ φ(m) for all positive integers."), false);
+    assert.equal(backed(ineq, "If n divides m then φ(n) ≤ φ(m) for all positive integers."), true);
+    const time = String.raw`We show the running time is $O(n^{3/2} \log n)$ for every input graph`;
+    assert.equal(backed(time, "The running time is O(n^{1/2} log n) for every input graph."), false);
+    assert.equal(backed(time, "The running time is O(n^{3/2} log n) for every input graph."), true);
+    const series = String.raw`The series converges absolutely for $\Re(s) > 1$`;
+    assert.equal(backed(series, "The series converges absolutely for Re(s) ≥ 1."), false);
+    assert.equal(backed(series, "The series converges absolutely for Im(s) > 1."), false);
+    assert.equal(backed(series, "The series converges absolutely when Re(s) > 1."), true);
+    const degree = String.raw`Every planar graph has a vertex of degree at most $5$`;
+    assert.equal(backed(degree, "Every planar graph has a vertex of degree at least 5."), false);
+    assert.equal(backed(degree, "Every planar graph has a vertex of degree at most 5."), true);
+  });
+
+  it("marks a conjecture stated as proved, and a claim about some stated about every one", () => {
+    assert.equal(backed("Conjecture 1.4. Every toy ring of characteristic zero is finite", "The paper proves that every toy ring of characteristic zero is finite."), false);
+    assert.equal(backed("Conjecture 1.4. Every toy ring of characteristic zero is finite", "The paper conjectures that every toy ring of characteristic zero is finite."), true);
+    assert.equal(backed("We prove that every Teller set is small", "The paper proves that every Teller set is small."), true);
+    // "We have no proof" says the statement is not proved (math ma07).
+    assert.equal(backed("We expect a positive answer to Question 1, but we have no proof", "It is not known whether the answer to Question 1 is positive; the paper has no proof."), true);
+    assert.equal(backed("We expect a positive answer to Question 1, but we have no proof", "The paper proves that the answer to Question 1 is positive."), false);
+    assert.equal(backed("There exists a prime $p$ with $p \\equiv 2$", "For every prime p we have p ≡ 2."), false);
+  });
+});
