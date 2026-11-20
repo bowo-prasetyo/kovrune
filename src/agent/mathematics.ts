@@ -102,6 +102,9 @@ export function questionFormulas(question: string): string[] {
   return [...new Set(spans.map(balanced).filter((s) => formulaText(s).replace(/\s/g, "").length >= 3))];
 }
 
+/** A relation or an operator between two things, in a formula as the question writes it. */
+const RELATING = /[=<>≤≥≠∈∉⊂⊃⊆⊇∩∪×⊗⊕+·−]|\s-\s|\\(?:times|cdot|leq?|geq?|neq?|in|subseteq?|cap|cup|otimes|oplus)\b/;
+
 /** Whether `key` is in `text` as a whole: not inside a longer number or name. */
 function containsWhole(text: string, key: string): boolean {
   for (let at = text.indexOf(key); at >= 0; at = text.indexOf(key, at + 1)) {
@@ -120,7 +123,11 @@ function containsWhole(text: string, key: string): boolean {
  * "Z/pZ × F_5^n", and has the question's formula nowhere.
  */
 export function formulaOffQuestion(question: string, answer: string, quotes: string[]): string | undefined {
-  const formulas = questionFormulas(question);
+  // Only a formula relating or combining things is what a question asks about: "Z/pZ × F_5^n", "s ≤ 1/2",
+  // "k = 3". One naming a single object ("F_5^n", "Z/pZ") sets the scene, and a right answer's quote need not
+  // repeat it: mah08 asks whose bound "for Teller sets in F_5^n" the paper improves, and the right answer
+  // quotes "The second bound improves the bound 4.8100^n of Kessler".
+  const formulas = questionFormulas(question).filter((f) => RELATING.test(f));
   if (!formulas.length) return undefined;
   const sources = [answer, ...quotes].map(formulaText);
   return formulas.find((f) => {
@@ -161,7 +168,11 @@ const UNIVERSAL = /\b(?:every|for all|for each|for any)\b|∀/i;
 const EXISTENTIAL = /\b(?:there (?:exists?|is|are)|exists?)\b|∃/i;
 /** Words saying a statement is proved, and words saying it is only conjectured or open. */
 const PROVED = /\b(?:prove[sdn]?|proving|proof|established|is a theorem)\b/i;
-const CONJECTURED = /\b(?:conjectur(?:e|es|ed|al)|remains? open|open (?:problem|question)|is (?:not known|unknown)|(?:do|does) not know)\b/i;
+/** A proof denied: "we have no proof", "has not been proved", "unproven". It says the statement is not proved. */
+const UNPROVED = /\b(?:no|without) proofs?\b|\bnot (?:yet )?(?:been )?prove[dn]\b|\bunproven\b/gi;
+const CONJECTURED = /\b(?:conjectur(?:e|es|ed|al)|remains? open|open (?:problem|question)|is (?:not known|unknown)|(?:do|does) not know|(?:no|without) proofs?|not (?:yet )?(?:been )?prove[dn]|unproven)\b/i;
+/** Whether a text says a statement is proved, not counting a proof it denies. */
+const saysProved = (text: string) => PROVED.test(text.replace(UNPROVED, " "));
 
 export interface MathBacking {
   /** The formula tokens of the quotes, as written for comparing. */
@@ -187,7 +198,7 @@ export function mathBacking(backing: string): MathBacking {
     shapes,
     universal: UNIVERSAL.test(backing),
     existential: EXISTENTIAL.test(backing),
-    proved: PROVED.test(backing),
+    proved: saysProved(backing),
     conjectured: CONJECTURED.test(backing),
   };
 }
@@ -213,7 +224,7 @@ export function mathBacked(text: string, backing: MathBacking): boolean {
     if (universal && backing.existential && !backing.universal) return false;
     if (existential && backing.universal && !backing.existential) return false;
   }
-  const proved = PROVED.test(text);
+  const proved = saysProved(text);
   const conjectured = CONJECTURED.test(text);
   if (proved !== conjectured) {
     if (proved && backing.conjectured && !backing.proved) return false;

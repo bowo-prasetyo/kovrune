@@ -869,9 +869,16 @@ describe("mathematics: the question's formula, formulas, quantifiers and status 
       undefined,
     );
     assert.equal(formulaOffQuestion("Which organization maintains LumenDB?", "Tessel.", ["maintained by the Tessel Foundation"]), undefined);
+    // A formula naming a single object sets the scene, and a right answer's quote need not repeat it (math mah08).
+    assert.equal(
+      formulaOffQuestion("Whose earlier bound for Teller sets in F_5^n does the Teller-set paper improve, and what was that bound?", "The paper improves Kessler's bound of 4.8100^n.", [
+        "The second bound improves the bound 4.8100^n of Kessler.",
+      ]),
+      undefined,
+    );
   });
 
-  const doc = String.raw`If $n \mid m$ then $\varphi(n) \leq \varphi(m)$ for all positive integers. We show the running time is $O(n^{3/2} \log n)$ for every input graph. Every planar graph has a vertex of degree at most $5$. The series converges absolutely for $\Re(s) > 1$. Conjecture 1.4. Every toy ring of characteristic zero is finite. We prove that every Teller set is small. There exists a prime $p$ with $p \equiv 2$.`;
+  const doc = String.raw`We expect a positive answer to Question 1, but we have no proof. If $n \mid m$ then $\varphi(n) \leq \varphi(m)$ for all positive integers. We show the running time is $O(n^{3/2} \log n)$ for every input graph. Every planar graph has a vertex of degree at most $5$. The series converges absolutely for $\Re(s) > 1$. Conjecture 1.4. Every toy ring of characteristic zero is finite. We prove that every Teller set is small. There exists a prime $p$ with $p \equiv 2$.`;
   const backed = (quote: string, answer: string) => {
     const support = sentenceSupport(answer, checkEvidence([{ docId: "d", quote }], () => doc), () => "Toy paper", "What does the paper show?");
     return support.judged > 0 && support.backed === support.judged;
@@ -897,6 +904,9 @@ describe("mathematics: the question's formula, formulas, quantifiers and status 
     assert.equal(backed("Conjecture 1.4. Every toy ring of characteristic zero is finite", "The paper proves that every toy ring of characteristic zero is finite."), false);
     assert.equal(backed("Conjecture 1.4. Every toy ring of characteristic zero is finite", "The paper conjectures that every toy ring of characteristic zero is finite."), true);
     assert.equal(backed("We prove that every Teller set is small", "The paper proves that every Teller set is small."), true);
+    // "We have no proof" says the statement is not proved (math ma07).
+    assert.equal(backed("We expect a positive answer to Question 1, but we have no proof", "It is not known whether the answer to Question 1 is positive; the paper has no proof."), true);
+    assert.equal(backed("We expect a positive answer to Question 1, but we have no proof", "The paper proves that the answer to Question 1 is positive."), false);
     assert.equal(backed("There exists a prime $p$ with $p \\equiv 2$", "For every prime p we have p ≡ 2."), false);
   });
 });
