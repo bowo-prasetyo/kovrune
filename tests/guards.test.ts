@@ -269,3 +269,30 @@ describe("read before answering", () => {
     assert.deepEqual(steps(result.agent.calls), ["search", "final_answer"]);
   });
 });
+
+describe("a not-found answer with quotes (harness 0.96.0)", () => {
+  const quote = [{ docId: "lumen-overview", quote: "maintained by the Tessel Foundation since 2022" }];
+  const notFoundQuoted = JSON.stringify({ tool: "final_answer", args: { found: false, answer: "No, it is not maintained by a company: the Tessel Foundation maintains it.", evidence: quote } });
+  const foundQuoted = JSON.stringify({ tool: "final_answer", args: { found: true, answer: "No, it is not maintained by a company: the Tessel Foundation maintains it.", evidence: quote } });
+
+  it("asks once whether the quotes answer the question, so a quoted \"no\" can be reported as found (math ma01, ma11, ma20)", async () => {
+    const model = new ScriptedModel([search("LumenDB maintainer"), read("lumen-overview"), notFoundQuoted, foundQuoted]);
+    const result = await runResearch({ question: "Is LumenDB maintained by a company?", library, model });
+    assert.deepEqual(steps(result.agent.calls), ["search", "read", "final_answer (rejected)", "final_answer"]);
+    assert.equal(result.status, "verified");
+    assert.ok(result.agent.transcript.some((m) => m.role === "user" && /also when the answer is "no", "not proved" or "not known", set "found" to true/.test(m.content)));
+  });
+
+  it("lets the model keep not found, and asks only once", async () => {
+    const model = new ScriptedModel([search("LumenDB maintainer"), read("lumen-overview"), notFoundQuoted, notFoundQuoted]);
+    const result = await runResearch({ question: "How many employees does the Tessel Foundation have?", library, model });
+    assert.deepEqual(steps(result.agent.calls), ["search", "read", "final_answer (rejected)", "final_answer"]);
+    assert.equal(result.status, "not-found");
+  });
+
+  it("does not ask about a not-found answer without quotes", async () => {
+    const model = new ScriptedModel([search("LumenDB maintainer"), read("lumen-overview"), notFound]);
+    const result = await runResearch({ question: "How many employees does the Tessel Foundation have?", library, model });
+    assert.deepEqual(steps(result.agent.calls), ["search", "read", "final_answer"]);
+  });
+});
