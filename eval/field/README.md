@@ -1281,6 +1281,42 @@ The four headings still wrong are in one paper that declares an environment name
 - A section's own heading in a book is still numbered without its chapter ("## 2 B" for the PDF's "1.2 B"), as before; statements in it print the chapter.
 - Labels inside a statement's list items get the statement's number, not the item's.
 
+### Quotes of math in any common form (0.95.0, defect fix)
+
+The mathematics suite's first runs ([eval/math](../math/README.md#results)) failed six right answers on the quote check (ma02, ma03, ma04, ma05, ma07, ma15), the audit's M4 ([`docs/math-audit.md`](../../docs/math-audit.md)). The converter keeps a paper's inline math as LaTeX, and the model quoted it in another form, seldom inside dollar signs, mixing LaTeX it copied with ASCII and Unicode it typed:
+
+| The source says | The model quoted | Before | After |
+| --- | --- | --- | --- |
+| `Let $p \geq 7$ be a prime. Every Teller set $A \subseteq \mathbb{Z}/p\mathbb{Z}$ …` | Let p >= 7 be a prime. Every Teller set A \subseteq \mathbb{Z}/p\mathbb{Z} … | not found | found |
+| `$|A \cap (A + r)| \geq |A|^2/(2p)$` | \|A ∩ (A + r)\| ≥ \|A\|^2/(2p) | not found | found |
+| `V \geq 0 \quad \text{and} \quad V \in L^{d/(2s)}(\mathbb{R}^d), (H1)` | V >= 0 and V in L^{d/(2s)}(R^d), (H1) | not found | found |
+| `\|V\|_{L^{d/(2s)}} < \frac{1}{8}. (H2)` | ‖V‖_{L^{d/(2s)}} < 1/8. (H2) | not found | found |
+| `… answer.` (blank line) `Question 1. Is the sequence $\tau(\mathbb{F}_5^n)^{1/n}$ …` | … answer.\\n\\nQuestion 1. Is the sequence τ(ℱ_5^n)^{1/n} … | not found | found |
+| `Let $p \geq 7$ be a prime` | Let p >= 5 / p > 7 / p ≤ 7 be a prime | not found | not found |
+| `$|A \cap (A + r)|`, `$\Re(s) > 1$`, `\frac{1}{8}` | \|A ∪ (A + r)\|, Im(s) > 1, Re(s) ≥ 1, 1/4 | not found | not found |
+
+The 0.91.0 and 0.92.0 comparisons did not reach these: the first reads math only inside dollar signs, and only when the quote has LaTeX or a Greek letter; the second drops "$" and "\\" but keeps the commands' names, so "geq" is not "≥".
+
+**What changed.** `mathMatchKey` (`src/documents/math.ts`) writes a text so that the common forms of a formula are one, and the quote check (`src/agent/evidence.ts`) tries it last, on both the quote and the source, when either has math in it (LaTeX, a script mark, ">=", or a Unicode math symbol, arrow or script). In it:
+- LaTeX commands are read as their symbols wherever they are, in or out of "$" (`\geq` is "≥", `\cap` "∩"), a wrapper as its argument (`\mathbb{Z}` is "Z", `\operatorname{Re}` "Re"), `\frac{a}{b}` as "a/b" and `\sqrt{x}` as "√x";
+- "$", braces, "^" and "_" are dropped, and NFKC then makes "²" "2" and "ℤ" "Z", so `$|A|^2$`, "|A|^2" and "|A|²" are one;
+- ASCII relations are their symbols (">=" is "≥", "->" "→"), "∈" reads as the word "in", "ℜ" and "ℑ" as "Re" and "Im", and the variant Greek letters (ϕ, ϵ, ϑ) as the usual ones;
+- spaces around relations, operators, brackets and punctuation are ignored, so "p/4 + 3" is "p/4+3";
+- a line break written out as "\\n" by the model's JSON is a break, not a command `\nQuestion`.
+
+Every number, relation, operator and letter is kept, so a quote with other math still fails. What the key loses: "x^2" and "x_2" are one, as are "x2"; a set's braces; and spacing. A quote that differs only in those is found.
+
+**Effect on recorded runs.** `bench:rescore`, run on each report on its own with the code of `main` and of this change, re-scores 9,632 answers in 142 reports (the other 39 files are side reports it cannot read, the same on both), 4,402 of them labelled **Quotes found** before and 4,411 after:
+- **No label is lost, and no answer stops passing.**
+- **Mathematics suite** (the 0.94.0 run on the 0.94.0 converter): six answers pass that failed (ma02, ma03, ma04, ma05, ma07, and held-out mah09); four of them gain **Quotes found**, all right. Two answers the scorer counts wrong gain it too: ma15, which gives assumption (H1)'s content, "V ≥ 0 and V ∈ L^{d/(2s)}", without naming it, and is right in substance; and held-out mah01, which is asked for the bound in Z/pZ × F₅ⁿ and quotes the bound in F₅ⁿ word for word, a real error. Re-scoring does not ask the model's own check again, which the app asks once a quote verifies. A model run of the suite on this change asked it: the model gave the same 24 open answers as at 0.94.0, the suite went from 11/24 and 5/10 to 16/24 and 6/10, and the model's check passed mah01, so held-out false reassurance on this suite rises from 0 of 4 to 1 of 5 ([suite](../math/README.md#quotes-of-math-in-any-common-form-0950)). The answer is off the question, which no quote check can see, but it is a rise, so adopting the change is the project owner's decision under the [rule for label changes](#rule-for-prompt-and-guard-changes). The 0.94.0 base run, recorded on the old converter's text, gains the same kinds of labels (ma05, held-out mah08, right; held-out mah01, wrong).
+- **Everywhere else, one task changes:** field f11 on Qwen3.5-2B, in 19 reports, now passes. Its quote of the design document, "… re-planned for the actual team (issue #36). ### M0 — Benchmark gate (2–3 weeks)", is real, and failed because the source has a line break inside the Markdown link "[issue\\n#36](…)", which the normalizer's link rule does not span; with spaces dropped around brackets, it does. The answer, "2–3 weeks", is right; it is too short to take the label, and does not.
+
+`tests/latex.test.ts` ("quotes of math in any common form") fails on its first two tests before the change and passes after; the third guards wrong quotes, which fail both before and after.
+
+**Limits:**
+- Most right mathematical answers whose quote verifies still do not take **Quotes found**: the sentence check finds few of their words in the quote, because the answer restates the question ("the smallness condition … on the potential V") around a formula the quote gives alone. That is the share of words the label rule asks for, not the reading of math, and is left as it is.
+- Commands the key does not know keep their names, so a quote writing `\Hom` as "Hom" matches, but one writing a paper's own macro by its meaning does not.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).

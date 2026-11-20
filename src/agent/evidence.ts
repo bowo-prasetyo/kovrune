@@ -2,7 +2,7 @@
 // quote is verified against the cited document. Small models invent answers, so
 // the app shows whether an answer is backed by text that is really there.
 
-import { readableMath } from "../documents/math.ts";
+import { mathMatchKey, readableMath } from "../documents/math.ts";
 import { dropUnspacedGaps, isUnspaced, unspacedCount } from "../documents/scripts.ts";
 
 export interface EvidenceItem {
@@ -130,6 +130,9 @@ export function normalizeForMatch(text: string, { keepCase = false }: { keepCase
 /** Whether a text has LaTeX math or a command in it. */
 const hasMath = (text: string) => /[$\\]/.test(text);
 
+/** A sign of math, in a quote or a source: LaTeX, a script mark, a relation in ASCII, or a Unicode math symbol, arrow or script. */
+const MATHLIKE = /[$\\^_]|>=|<=|!=|[\u00b2\u00b3\u00b9\u2070-\u209f\u2190-\u22ff\u2a7d\u2a7e]/;
+
 /** A tab, backspace or form feed before a letter: a JSON reply's "\text", "\bigg" or "\frac" with one backslash. */
 const ESCAPED_COMMAND = /\\?([\t\b\f])(?=[A-Za-z])/g;
 
@@ -192,6 +195,17 @@ export function checkEvidence(
       const bareText = bare(normalized);
       const bareElided = containsWords(bareText, bareQuote) ? undefined : containsElided(bareText, bareQuote);
       if (bareElided === undefined || bareElided >= 0) return { ...item, verified: true, ...(bareElided !== undefined ? { elidedWords: bareElided } : {}) };
+    }
+    // Math in any of its common forms (harness 0.95.0): "p >= 7" or "p ≥ 7" for "$p \geq 7$", "|A|^2/(2p)" for
+    // "$|A|^2/(2p)$", "1/8" for "$\frac{1}{8}$", with or without dollar signs, compared with both sides
+    // written as mathMatchKey writes them. The mathematics suite's first runs failed six right answers on
+    // such quotes, which neither comparison above read: the model mixed LaTeX, ASCII and Unicode outside "$".
+    if (MATHLIKE.test(text) || MATHLIKE.test(item.quote)) {
+      const keyQuote = stripEdgePunctuation(normalizeForMatch(mathMatchKey(item.quote.replace(ESCAPED_COMMAND, (_, ch: string) => `\\${ch === "\t" ? "t" : ch === "\b" ? "b" : "f"}`))));
+      const keyText = normalizeForMatch(mathMatchKey(text));
+      // The quote passed the length check as written; its key has fewer spaces, not fewer words.
+      const keyElided = containsWords(keyText, keyQuote) ? undefined : containsElided(keyText, keyQuote);
+      if (keyElided === undefined || keyElided >= 0) return { ...item, verified: true, ...(keyElided !== undefined ? { elidedWords: keyElided } : {}) };
     }
     const closest = closestPassage(item.quote, text);
     // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a

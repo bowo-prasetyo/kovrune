@@ -216,3 +216,72 @@ export function readableMath(text: string): string {
     .map((s) => s.text)
     .join("");
 }
+
+/*
+ * Math compared as math (harness 0.95.0). A model quoting a paper's LaTeX writes the same formula in another
+ * form, and seldom inside dollar signs: "p >= 7" or "p ≥ 7" for "$p \geq 7$", "|A ∩ (A + r)|" for
+ * "$|A \cap (A + r)|$", "|A|^2/(2p)" for "$|A|^2/(2p)$", "1/8" for "$\frac{1}{8}$". The mathematics suite's
+ * first runs failed six right answers this way (eval/math/README.md). mathMatchKey writes a text so that
+ * these forms are one: each is read the same way on both sides, the quote and the source, whatever their
+ * dollar signs. It is for comparing only, never shown, and loses what a comparison of quotes can spare.
+ */
+
+/** Wrappers whose argument is the text: "\mathrm{Gal}" is "Gal", "\mathbb{Z}" is "Z". */
+const KEY_WRAPPERS = new Set([...KEEP, "mathbb", "mathfrak", "mathds", "mathbbm", "ensuremath", "hat", "widehat", "bar", "overline", "tilde", "widetilde", "vec", "dot", "ddot", "underline"]);
+
+/** One spelling for relations and operators written in ASCII, other Unicode forms or other letters. */
+const KEY_SYMBOLS: Array<[RegExp, string]> = [
+  [/>=|⩾|≧/g, "≥"],
+  [/<=|⩽|≦/g, "≤"],
+  [/!=|=\/=/g, "≠"],
+  [/<->|↔/g, "⟷"],
+  [/->|⟶/g, "→"],
+  [/<-|⟵/g, "←"],
+  [/=>|⟹/g, "⇒"],
+  [/[∣∥‖]/g, "|"],
+  [/[⋅∙]/g, "·"],
+  [/∗/g, "*"],
+  [/[−–]/g, "-"],
+  [/ϕ/g, "φ"],
+  [/ϵ/g, "ε"],
+  [/ϑ/g, "θ"],
+  [/ϱ/g, "ρ"],
+  [/…|\.\.\./g, "⋯"],
+  // "V in L^p" is how a model writes "$V \in L^p$" in words.
+  [/∈/g, " in "],
+];
+
+/** Characters around which spacing means nothing in a formula: relations, operators and brackets. */
+const KEY_TIGHT = /\s*([≤≥≠=<>+\-·×÷±∓/*∩∪∉∋⊂⊆⊃⊇∖→←⇒⇔⟷↦|()[\]⟨⟩,.:;?!^_√∑∏∫∞∀∃¬∧∨⊕⊗∘])\s*/g;
+
+/**
+ * A text written so that math in any of its common forms reads the same: LaTeX commands read as their
+ * symbols wherever they are (in or out of "$"), a wrapper as its argument, "\frac{a}{b}" as "a/b" and
+ * "\sqrt{x}" as "√x"; "$", braces, "^" and "_" dropped (NFKC, which normalizeForMatch applies, then makes
+ * "²" "2" and "ℤ" "Z"); ASCII relations as their symbols (">=" is "≥"); and no spaces around relations,
+ * operators and brackets. An unknown command keeps its name without its backslash.
+ */
+export function mathMatchKey(text: string): string {
+  let out = text;
+  // \frac and \sqrt first, inside out, while their braces still group.
+  for (let pass = 0; pass < 4; pass++) {
+    out = out.replace(/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "($1)/($2)").replace(/\\sqrt\s*\{([^{}]*)\}/g, "√($1)");
+  }
+  out = out.replace(/\\([a-zA-Z]+)\*?/g, (all, name: string) => {
+    if (SYMBOLS[name] !== undefined) return ` ${SYMBOLS[name]} `;
+    // A wrapper is its argument, joined as it was: "p\mathbb{Z}" is "pZ".
+    if (NOTHING.has(name) || KEY_WRAPPERS.has(name) || ACCENTS[name] !== undefined) return "";
+    if (SPACES[name] !== undefined) return " ";
+    if (FUNCTIONS.has(name)) return ` ${name} `;
+    // A line break or tab a model's JSON wrote out ("\\nQuestion 1"), not a command.
+    if (/^[nrt](?:[A-Z]|$)/.test(name)) return ` ${name.slice(1)}`;
+    return name;
+  });
+  out = out.replace(/\\[,;:! ]/g, " ").replace(/\\[nrt](?![a-zA-Z])/g, " ").replace(/[$]/g, "").replace(/[{}]/g, "").replace(/[\^_]/g, "");
+  // The real and imaginary parts as models write them, and as \operatorname{Re} reads, before NFKC makes "ℜ" an "R".
+  out = out.replace(/ℜ/g, "Re").replace(/ℑ/g, "Im").normalize("NFKC");
+  for (const [pattern, symbol] of KEY_SYMBOLS) out = out.replace(pattern, symbol);
+  // A fraction's parentheses are its own, so "(1)/(8)" is "1/8", and "(4s)/(d+2)" stays as written.
+  out = out.replace(/\((\w+)\)\/\((\w+)\)/g, "$1/$2").replace(/\((\w+)\)\//g, "$1/").replace(/\/\((\w+)\)/g, "/$1");
+  return out.replace(KEY_TIGHT, "$1").replace(/\s+/g, " ").trim();
+}
