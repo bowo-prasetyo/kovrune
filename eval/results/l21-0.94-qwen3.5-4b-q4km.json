@@ -1,0 +1,171 @@
+{
+  "harnessVersion": "0.94.0",
+  "createdAt": "2026-11-20T03:17:03.940Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "extraBody": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "cache_prompt": false
+    }
+  },
+  "config": {
+    "suites": [
+      "lab"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "l21-mdh-act-mechanism"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 27.3,
+    "decodeTokensPerSecond": 7.7,
+    "maxResearchTaskMinutes": 10.7,
+    "minutesPerSource": 2.6
+  },
+  "summary": [
+    {
+      "suite": "lab",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.7,
+      "prefillTokensPerSecond": 38,
+      "medianTaskSeconds": 78,
+      "maxPromptTokens": 1007,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 1934,
+      "promptSeconds": 50.8,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "lab",
+      "taskId": "l21-mdh-act-mechanism",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1934,
+      "completionTokens": 206,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1007,
+      "cachedTokens": 0,
+      "promptMs": 50798,
+      "modelMs": 77713,
+      "ttftMs": 50833,
+      "wallMs": 78048,
+      "actions": [
+        "search {\"query\":\"ADP-ribose study activator protein ACT methanol dehydrogenase activity catalysis\"}",
+        "read {\"docId\":\"adp-ribose-methanol-dehydrogenase#5\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, the activator protein ACT does not increase methanol dehydrogenase activity by directly enhancing catalysis. Instead, i"
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, the activator protein ACT does not increase methanol dehydrogenase activity by directly enhancing catalysis. Instead, it increases activity by removing ADP-ribose (ADPR), a potent competitive inhibitor, through its ADPRase activity. This process restores MDH activity and resolves the 'pseudo-activation' phenomenon.\",\"evidence\":[{\"docId\":\"adp-ribose-methanol-dehydrogenase#5\",\"quote\":\"By integrating crystallographic analysis, catalysis kinetics data, and inhibition assays, we demonstrate that ACT-mediated hydrolysis of ADPR restores MDH activity, thereby resolving the 'pseudo-activation' phenomenon.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "adp-ribose-methanol-dehydrogenase#5",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 3,
+        "backed": 1
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "10cdc5cd",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"ADP-ribose study activator protein ACT methanol dehydrogenase activity catalysis\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 259,
+            "completionTokens": 30,
+            "cachedTokens": 0,
+            "promptMs": 6832.312
+          }
+        },
+        {
+          "input": "abb09de5",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"adp-ribose-methanol-dehydrogenase#5\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 668,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 17632.793
+          }
+        },
+        {
+          "input": "f94dc229",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"No, the activator protein ACT does not increase methanol dehydrogenase activity by directly enhancing catalysis. Instead, it increases activity by removing ADP-ribose (ADPR), a potent competitive inhibitor, through its ADPRase activity. This process restores MDH activity and resolves the 'pseudo-activation' phenomenon.\",\"evidence\":[{\"docId\":\"adp-ribose-methanol-dehydrogenase#5\",\"quote\":\"By integrating crystallographic analysis, catalysis kinetics data, and inhibition assays, we demonstrate that ACT-mediated hydrolysis of ADPR restores MDH activity, thereby resolving the 'pseudo-activation' phenomenon.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1007,
+            "completionTokens": 150,
+            "cachedTokens": 0,
+            "promptMs": 26332.813
+          }
+        }
+      ]
+    }
+  ]
+}

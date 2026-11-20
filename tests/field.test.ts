@@ -17,6 +17,7 @@ import { labDocuments, labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
 import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from "../eval/engineering/tasks.ts";
 import { physicsDocuments, physicsHoldoutTasks, physicsTasks } from "../eval/physics/tasks.ts";
 import { mathDocuments, mathHoldoutTasks, mathTasks } from "../eval/math/tasks.ts";
+import { chemDocuments, chemHoldoutTasks, chemTasks, NO_EFFECT as CHEM_NO_EFFECT } from "../eval/chem/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -210,7 +211,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks, ...chemTasks, ...chemHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -430,6 +431,101 @@ describe("cs suite", () => {
     });
     assert.equal(report.results.length, 1);
     assert.equal(report.results[0]!.suite, "cs");
+    assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
+  });
+});
+
+describe("chemistry suite", () => {
+  it("reads eight CC BY chemistry papers as published, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(chemDocuments.length, 8);
+    for (const doc of chemDocuments) {
+      const text = suite.chemLibrary.documentFor(doc.id)?.text ?? "";
+      assert.ok(text.length > 14_000, `${doc.id}: ${text.length} characters`);
+      assert.match(text, /Creative Commons Attribution 4\.0|creativecommons\.org\/licenses\/by\/4\.0/i, `${doc.id}: keeps its licence statement`);
+    }
+    assert.equal(suite.chemLibrary.documents.filter((d) => !d.id.includes("#")).length, chemDocuments.length, "only the chemistry papers");
+    assert.equal(suite.library.documentFor("nickel-fluorobenzofuran-coupling"), undefined, "the field suite's library is unchanged");
+    // What these papers are read for survives the converter: a loading and an equivalent, a shift and its coupling
+    // constants, a potential with its reference, an enantiomeric ratio, a stereodescriptor.
+    const text = (id: string) => suite.chemLibrary.documentFor(id)!.text;
+    assert.match(text("nickel-fluorobenzofuran-coupling"), /Ni\(cod\)2 \(10 mol %\)/);
+    assert.match(text("nickel-fluorobenzofuran-coupling"), /55\.0 ppm \(JFP = 53, 42 Hz\)/);
+    assert.match(text("nickel-photoredox-hydroxytrifluoroethylation"), /−1\.17 V vs SCE/);
+    assert.match(text("propargylation-biisoquinoline-dioxide"), /78:22 er/);
+    assert.match(text("frustrated-lewis-pairs-co2-capture"), /\(S\)-epoxide/);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with some held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...chemTasks, ...chemHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.chemLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    const ids = [...chemTasks, ...chemHoldoutTasks].map((t) => t.id);
+    assert.equal(new Set(ids).size, ids.length, "task IDs are unique");
+    for (const tasks of [chemTasks, chemHoldoutTasks]) {
+      const cited = new Set(tasks.flatMap((t) => t.citations.flat()));
+      assert.deepEqual([...cited].sort(), chemDocuments.map((d) => d.id).sort(), "every document is asked about");
+      assert.ok(tasks.some((t) => !t.answerable), "a question the papers do not answer");
+      assert.ok(tasks.some((t) => t.facts.some((group) => CHEM_NO_EFFECT.every((way) => group.includes(way)))), "a control that showed nothing");
+    }
+    assert.ok(chemTasks.some((t) => t.kind === "comparison"), "a question over two papers");
+    assert.ok(chemHoldoutTasks.length >= chemTasks.length / 4, "a held-out set at least a quarter the size of the open one");
+  });
+
+  it("fails an answer that swaps a unit, a descriptor, a name or a direction, and passes right ones", () => {
+    const library = new ResearchLibrary(chemDocuments.map((d) => ({ id: d.id, title: d.title, text: "" })));
+    const result = (answer: string, docId: string): ResearchResult =>
+      ({ status: "verified", final: { found: true, answer, evidence: [{ docId, quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
+    const task = (id: string) => [...chemTasks, ...chemHoldoutTasks].find((t) => t.id === id)!;
+    const passes = (id: string, answer: string, docId: string) => scoreResearch(task(id), result(answer, docId), library).passed;
+    const cases: Array<[id: string, docId: string, right: string, wrong: string]> = [
+      // mol% and equiv swapped: 5 mol% catalyst, 1.2 equiv base.
+      ["c01-nif-best-conditions", "nickel-fluorobenzofuran-coupling", "5 mol% Ni(cod)2 with 1.2 equiv K2CO3 gave 98%.", "5 equiv Ni(cod)2 with 1.2 mol% K2CO3 gave 98%."],
+      // A chemical shift given in Hz.
+      ["c05-nif-eb-fluorine-nmr", "nickel-fluorobenzofuran-coupling", "A broad double doublet at 55.0 ppm with JFP = 53 and 42 Hz.", "A broad double doublet at 55.0 Hz with JFP = 53 and 42 ppm."],
+      // A potential with its sign dropped.
+      ["c12-nip-nickel-potential", "nickel-photoredox-hydroxytrifluoroethylation", "Ered(NiI/Ni0) = −1.17 V vs SCE.", "Ered(NiI/Ni0) = +1.17 V vs SCE."],
+      // The other enantiomer.
+      ["c35-flp-enantiomer", "frustrated-lewis-pairs-co2-capture", "The (R) product is favoured, with 96% ee.", "The (S) product is favoured, with 96% ee."],
+      // A direction reversed.
+      ["c14-prop-narrow-pocket", "propargylation-biisoquinoline-dioxide", "The enantioselectivity consistently decreased.", "The enantioselectivity consistently increased."],
+      // Lifetimes in each other's unit.
+      ["c24-hel-lifetimes", "polyaza-helicene-photoredox", "The singlet lives 9.6 ns and the triplet about 28 µs.", "The singlet lives 9.6 µs and the triplet about 28 ns."],
+      // H-type for J-type aggregates.
+      ["c33-por-j-aggregates", "porphyrin-aggregation-co2-reduction", "J-type (staircase) aggregates, from the red-shifted Soret band.", "H-type (face-to-face) aggregates, from a blue-shifted Soret band."],
+      // A negative turned into an effect.
+      ["c29-cu-no-leaching", "copper-step-edges-co2-reduction", "No: ICP-OES showed no detectable leaching of Cu.", "Yes, about 10% of the copper leached into the electrolyte."],
+      // Kelvin read as Celsius.
+      ["c37-flp-temperature", "frustrated-lewis-pairs-co2-capture", "At 273.0 K.", "At 273 °C."],
+    ];
+    for (const [id, docId, right, wrong] of cases) {
+      assert.equal(passes(id, right, docId), true, `${id}: ${right}`);
+      assert.equal(passes(id, wrong, docId), false, `${id}: ${wrong}`);
+    }
+  });
+
+  it("runs as its own suite, over its own library", async () => {
+    const suite = await loadFieldSuite();
+    const answer = JSON.stringify({
+      tool: "final_answer",
+      args: { found: true, answer: "No: ICP-OES shows no detectable leaching of Cu from the Cu/GNF electrocatalyst.", evidence: [{ docId: "copper-step-edges-co2-reduction", quote: "Analysis of the reaction solution by inductively coupled plasma optical emission spectroscopy (ICP-OES) shows no detectable leaching of Cu from Cu/GNF electrocatalyst." }] },
+    });
+    const model = new ScriptedModel([`{"tool":"search","args":{"query":"copper leaching Cu/GNF ICP-OES"}}`, `{"tool":"read","args":{"docId":"copper-step-edges-co2-reduction"}}`, answer, answer]);
+    const report = await runBenchmark({
+      model,
+      runner: new NodeCodeRunner(),
+      field: suite,
+      environment: { runtime: "scripted", modelId: "scripted", contextLength: 4096, hardwareClass: "other", hardware: {} },
+      config: { suites: ["chem"], modes: ["constrained"], taskIds: ["c29-cu-no-leaching"] },
+    });
+    assert.equal(report.results.length, 1);
+    assert.equal(report.results[0]!.suite, "chem");
     assert.equal(report.results[0]!.passed, true, JSON.stringify(report.results[0]!.checks));
   });
 });

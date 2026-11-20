@@ -18,6 +18,7 @@ import { clinicalHoldoutTasks, clinicalTasks } from "./clinical/tasks.ts";
 import { engineeringHoldoutTasks, engineeringTasks } from "./engineering/tasks.ts";
 import { physicsHoldoutTasks, physicsTasks } from "./physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "./math/tasks.ts";
+import { chemHoldoutTasks, chemTasks } from "./chem/tasks.ts";
 import { csHoldoutTasks, csTasks } from "./cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "./lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "./field/office.ts";
@@ -49,6 +50,7 @@ const suites = [
   { name: "math (and mathholdout)", library: field.mathLibrary, tasks: [...mathTasks, ...mathHoldoutTasks] },
   { name: "cs (and csholdout)", library: field.csLibrary, tasks: [...csTasks, ...csHoldoutTasks] },
   { name: "lab (and labholdout)", library: field.labLibrary, tasks: [...labTasks, ...labHoldoutTasks] },
+  { name: "chem (and chemholdout)", library: field.chemLibrary, tasks: [...chemTasks, ...chemHoldoutTasks] },
   ...(distractors
     ? [
         {

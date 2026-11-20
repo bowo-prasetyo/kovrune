@@ -1,0 +1,195 @@
+{
+  "harnessVersion": "0.94.0",
+  "createdAt": "2026-11-20T03:18:32.741Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-2b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "build": "llama.cpp fae9ac5, -DGGML_NATIVE=OFF, AVX2",
+    "extraBody": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "cache_prompt": false
+    }
+  },
+  "config": {
+    "suites": [
+      "lab"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "l21-mdh-act-mechanism"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-overview\"}}",
+    "seconds": 8.6,
+    "decodeTokensPerSecond": 16.2,
+    "maxResearchTaskMinutes": 5.1,
+    "minutesPerSource": 1.2
+  },
+  "summary": [
+    {
+      "suite": "lab",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 15.8,
+      "prefillTokensPerSecond": 98.8,
+      "medianTaskSeconds": 74,
+      "maxPromptTokens": 1872,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 5766,
+      "promptSeconds": 58.3,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "lab",
+      "taskId": "l21-mdh-act-mechanism",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5766,
+      "completionTokens": 241,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1872,
+      "cachedTokens": 0,
+      "promptMs": 58320,
+      "modelMs": 73675,
+      "ttftMs": 58386,
+      "wallMs": 74000,
+      "actions": [
+        "search {\"query\":\"ADP-ribose study methanol dehydrogenase activator protein ACT\"}",
+        "read {\"docId\":\"adp-ribose-methanol-dehydrogenase#1\"}",
+        "read {\"docId\":\"adp-ribose-methanol-dehydrogenase#1\"}",
+        "read {\"docId\":\"adp-ribose-methanol-dehydrogenase#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"No, the activator protein ACT does not increase methanol dehydrogenase activity by directly enhancing catalysis. According "
+      ],
+      "final": "{\"found\":true,\"answer\":\"No, the activator protein ACT does not increase methanol dehydrogenase activity by directly enhancing catalysis. According to the ADP-ribose study, ACT increases MDH activity by removing ADP-ribose (ADPR), a potent inhibitor, thereby relieving inhibition rather than directly enhancing catalysis.\",\"evidence\":[{\"docId\":\"adp-ribose-methanol-dehydrogenase#1\",\"quote\":\"This discovery challenges the previously proposed 'activation' models, revealing that ACT-mediated ADPR clearance disinhibits MDH rather than directly enhancing catalysis.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "adp-ribose-methanol-dehydrogenase#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "10cdc5cd",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"ADP-ribose study methanol dehydrogenase activator protein ACT\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 259,
+            "completionTokens": 27,
+            "cachedTokens": 0,
+            "promptMs": 2673.306
+          }
+        },
+        {
+          "input": "b048caa7",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"adp-ribose-methanol-dehydrogenase#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 654,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 6800.784
+          }
+        },
+        {
+          "input": "4eb71e47",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"adp-ribose-methanol-dehydrogenase#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1182,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 11798.128
+          }
+        },
+        {
+          "input": "f277e0d7",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"adp-ribose-methanol-dehydrogenase#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1799,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 18009.228
+          }
+        },
+        {
+          "input": "e48f71c8",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"No, the activator protein ACT does not increase methanol dehydrogenase activity by directly enhancing catalysis. According to the ADP-ribose study, ACT increases MDH activity by removing ADP-ribose (ADPR), a potent inhibitor, thereby relieving inhibition rather than directly enhancing catalysis.\",\"evidence\":[{\"docId\":\"adp-ribose-methanol-dehydrogenase#1\",\"quote\":\"This discovery challenges the previously proposed 'activation' models, revealing that ACT-mediated ADPR clearance disinhibits MDH rather than directly enhancing catalysis.\"}]}\n\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1872,
+            "completionTokens": 136,
+            "cachedTokens": 0,
+            "promptMs": 19039.188
+          }
+        }
+      ]
+    }
+  ]
+}

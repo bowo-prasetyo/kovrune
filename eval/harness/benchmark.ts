@@ -12,6 +12,7 @@ import { clinicalHoldoutTasks, clinicalTasks } from "../clinical/tasks.ts";
 import { engineeringHoldoutTasks, engineeringTasks } from "../engineering/tasks.ts";
 import { physicsHoldoutTasks, physicsTasks } from "../physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "../math/tasks.ts";
+import { chemHoldoutTasks, chemTasks } from "../chem/tasks.ts";
 import { csHoldoutTasks, csTasks } from "../cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
@@ -24,7 +25,7 @@ import { ReplayingModel, type RecordedCall } from "../../src/agent/replay.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.97.0";
+export const HARNESS_VERSION = "0.98.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -396,7 +397,7 @@ export async function runBenchmark(options: {
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
   /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
-  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; physicsLibrary?: ResearchLibrary; mathLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
+  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; physicsLibrary?: ResearchLibrary; mathLibrary?: ResearchLibrary; chemLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -407,7 +408,7 @@ export async function runBenchmark(options: {
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
   if (FIELD_SUITES.some((suite) => config.suites.includes(suite)) && !options.field) {
-    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, cs, csholdout, lab, labholdout, engineering, engineeringholdout, physics, physicsholdout, math and mathholdout suites need field (loadFieldSuite).");
+    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, cs, csholdout, lab, labholdout, engineering, engineeringholdout, physics, physicsholdout, math, mathholdout, chem and chemholdout suites need field (loadFieldSuite).");
   }
   const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
@@ -432,6 +433,8 @@ export async function runBenchmark(options: {
     { suite: "physicsholdout" as const, tasks: pick("physicsholdout", physicsHoldoutTasks), library: options.field?.physicsLibrary ?? baseLibrary },
     { suite: "math" as const, tasks: pick("math", mathTasks), library: options.field?.mathLibrary ?? baseLibrary },
     { suite: "mathholdout" as const, tasks: pick("mathholdout", mathHoldoutTasks), library: options.field?.mathLibrary ?? baseLibrary },
+    { suite: "chem" as const, tasks: pick("chem", chemTasks), library: options.field?.chemLibrary ?? baseLibrary },
+    { suite: "chemholdout" as const, tasks: pick("chemholdout", chemHoldoutTasks), library: options.field?.chemLibrary ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;

@@ -27,12 +27,14 @@ import { scoreCoding, scoreResearch, type Score } from "./scoring.ts";
  * (eval/engineering/tasks.ts); physics and physicsholdout: questions over made-up physics documents
  * (LaTeX papers, a two-column PDF, a report, a table), the second read only as totals (eval/physics/tasks.ts);
  * math and mathholdout: questions over made-up mathematics documents (LaTeX papers, lecture notes, a PDF),
- * the second read only as totals (eval/math/tasks.ts).
+ * the second read only as totals (eval/math/tasks.ts);
+ * chem and chemholdout: questions over open-access chemistry papers, the second read only as totals
+ * (eval/chem/tasks.ts).
  */
-export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout" | "office" | "officeholdout" | "clinical" | "clinicalholdout" | "cs" | "csholdout" | "lab" | "labholdout" | "engineering" | "engineeringholdout" | "physics" | "physicsholdout" | "math" | "mathholdout";
+export type SuiteName = "research" | "unanswerable" | "pdf" | "coding" | "field" | "holdout" | "multi" | "multiholdout" | "office" | "officeholdout" | "clinical" | "clinicalholdout" | "cs" | "csholdout" | "lab" | "labholdout" | "engineering" | "engineeringholdout" | "physics" | "physicsholdout" | "math" | "mathholdout" | "chem" | "chemholdout";
 
 /** The suites over the field documents, which need them loaded (loadFieldSuite). */
-export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout", "office", "officeholdout", "clinical", "clinicalholdout", "cs", "csholdout", "lab", "labholdout", "engineering", "engineeringholdout", "physics", "physicsholdout", "math", "mathholdout"];
+export const FIELD_SUITES: SuiteName[] = ["field", "holdout", "multi", "multiholdout", "office", "officeholdout", "clinical", "clinicalholdout", "cs", "csholdout", "lab", "labholdout", "engineering", "engineeringholdout", "physics", "physicsholdout", "math", "mathholdout", "chem", "chemholdout"];
 
 /** The evaluation set the gate needs. The field suite is reported separately, so M0 comparisons stay valid. */
 export const ALL_SUITES: SuiteName[] = ["research", "unanswerable", "pdf", "coding"];
