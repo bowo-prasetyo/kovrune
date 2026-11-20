@@ -28,6 +28,7 @@ import {
   type SourcePrefs,
 } from "./sources.ts";
 import { OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
+import { parseArxivSubjects } from "../../sources/arxiv.ts";
 import { describeProgress, resumability, TASK_ID, type SavedTask } from "./tasks.ts";
 import { describeCall, REVIEW_STEP } from "./trace.ts";
 import { usePendingTask } from "./usePendingTask.ts";
@@ -401,6 +402,25 @@ export function ResearchPanel({
               <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
               arXiv (preprints, read in full from their LaTeX source, or their PDF)
             </label>
+            {prefs.arxiv && (
+              <div className="openalex-limits">
+                <label>
+                  Subjects
+                  <input
+                    type="text"
+                    spellCheck={false}
+                    placeholder="all, or e.g. math.CO, math.NT"
+                    defaultValue={prefs.arxivSubjects ?? ""}
+                    disabled={running}
+                    onChange={(e) => updatePrefs({ arxivSubjects: parseArxivSubjects(e.target.value).join(", ") || undefined })}
+                  />
+                </label>
+                <p className="hint">
+                  arXiv archives or categories to search in, such as math, math.CO or hep-th; leave empty for all of arXiv. Each paper found shows
+                  its categories, and the MSC codes its authors gave.
+                </p>
+              </div>
+            )}
             <label className="choice">
               <input type="checkbox" checked={prefs.datacite} disabled={running} onChange={(e) => updatePrefs({ datacite: e.target.checked })} />
               DataCite (repositories such as Zenodo: read in full where the PDF is open, else abstracts)

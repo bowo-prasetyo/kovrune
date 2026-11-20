@@ -3,7 +3,7 @@
 // each citation keeps its URL and retrieval time.
 
 import { quoteContext, quoteHas } from "../agent/evidence.ts";
-import { chunkDocument, parentId } from "../documents/chunk.ts";
+import { chunkDocument, parentId, proofNote, proofsContinued } from "../documents/chunk.ts";
 import { outlineOf } from "../documents/outline.ts";
 import { DocumentIndex, type SourceDocument } from "../tools/search.ts";
 import { inspireCitationNote } from "./inspire.ts";
@@ -105,7 +105,8 @@ export class SourceSession {
     const outline = this.outlined.has(doc.id) ? undefined : outlineOf(parts);
     this.outlined.add(doc.id);
     return (
-      `[${part.id}] ${doc.title} (part ${number} of ${parts.length})\n${part.text}\n\n` +
+      // A part that starts inside a proof says whose (chunk.ts proofsContinued).
+      `[${part.id}] ${doc.title} (part ${number} of ${parts.length})\n${proofNote(proofsContinued(parts)[number - 1])}${part.text}\n\n` +
       `Other parts: ${doc.id}#1 to ${doc.id}#${parts.length}.` +
       (outline ? `\n${outlineNote(doc.id, outline)}` : "") +
       note

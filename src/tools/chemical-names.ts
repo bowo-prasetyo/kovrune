@@ -1,4 +1,4 @@
-// Chemical names a search should treat as one (harness 0.97.0): a reagent, solvent, catalyst, element or
+// Chemical names a search should treat as one (harness 0.98.0): a reagent, solvent, catalyst, element or
 // technique a paper writes one way and a chemist types another. Chemists rarely define these: a paper writes
 // "CH2Cl2" or "Hünig's base" or "PCy3" throughout, and a question asking about "dichloromethane", "DIPEA" or
 // "tricyclohexylphosphine" matched it nowhere. The library's own abbreviations (abbreviations.ts) bridge only

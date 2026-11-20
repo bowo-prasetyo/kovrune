@@ -1347,7 +1347,35 @@ Of the audit's nine wrong sentences, five are now marked (the changed bound, as 
 - Change 1 looks only for formulas, so an answer about another *thing* named in words ("the second bound" for "the first") is still left to the model's checks.
 - The status rule needs the words in the quote or the title: a quote of a conjecture without its heading says nothing of its status.
 
-### Chemistry suite and chemical names in search (0.97.0)
+### arXiv subjects, and proofs across parts (0.97.0)
+
+The audit's M5 and M7 ([`docs/math-audit.md`](../../docs/math-audit.md)).
+
+**zbMATH Open can't be offered (M5).** It is the natural source for mathematics: records with MSC codes and reviews, linked to arXiv. Its API (`api.zbmath.org`) answers searches, but sends no `Access-Control-Allow-Origin` header on any endpoint, for any origin tried (Kovrune's own, `null`, `localhost`), and answers a preflight with 405. A web page can't read it, so, as NASA ADS (0.92.0), it is not a source.
+
+**arXiv subjects instead** (`src/sources/arxiv.ts`, `SourcePrefs.arxivSubjects`). DataCite's arXiv records carry each paper's arXiv categories ("Combinatorics (math.CO)") and, for many, the MSC codes the authors gave ("11B75, 20K01"), which zbMATH would have given most. Two changes:
+- **A setting limits arXiv searches to archives or categories** the user names under arXiv, **Subjects**: "math", "math.CO, math.NT", "hep-th". DataCite matches a category or a hyphenated archive as a phrase (`subjects.subject:"math.CO"`, `"hep-ex"`), in any case, and a bare archive by its codes' prefix (`subjects.subject:*math.*`), since the phrase "math" also matches "Mathematical Physics (math-ph)" and a wildcard with a hyphen matches nothing (each form checked live). A paper cross-listed in a named subject counts. Empty, the default, searches all of arXiv as before, with the same query.
+- **Each result shows its categories and MSC codes** before its abstract: "[math.NT, math.CO; MSC 11B30, 15A06] Let A be …", so the model and the user see a paper's field, which a title often does not say.
+
+Live, Kovrune's arXiv search for "spectral gap" gave two quant-ph papers first; limited to "math", its five results are all mathematics (math.LO, math.SP, math.GR, math.MG, math.OA). "random walk on graphs" gave two cond-mat.stat-mech papers among five; limited to "math", none. A setting is the user's choice, not the model's, so no prompt changes and no benchmark run is affected: no suite reads arXiv live.
+
+**Proofs across parts (M7)** (`src/documents/chunk.ts`, `latex.ts`, the read tools). A long paper is read a part of about 1,800 characters at a time, and a proof runs over several parts, so a model reading the middle of one could not tell which result it proved, and a statement at the end of one part was read without its proof, which began the next.
+- **A statement moves on with the start of its proof**, as a heading moves on with what it introduces (0.57.0): when a part would end on "Lemma 3.2. …", with its displayed equations, and the next paragraph is "Proof. …", the statement starts the next part, if it fits there.
+- **A proof ends with "∎"**, which the LaTeX converter now writes at `\end{proof}`, where amsthm prints its box, so where a proof ends is known. PDFs print the box as "∎", "□" or "■", read the same way.
+- **A part that starts inside a proof says whose**: "[This part continues the proof of Theorem 1.1, which begins in teller-sets#3.]", before its text, as tables and figures say where they are cited. A proof titled only "Proof" proves the statement before it. A proof is taken to end at its box, or at the next statement or heading.
+
+On the audit's 48 arXiv mathematics papers, at the app's part size: statements cut off from the proof that follows them, 139 before and 17 after (those that do not fit in one part with it); parts starting with a proof, 191 and 75; and 1,001 of 3,278 parts start inside a proof and now say whose (a sample of six, each checked, all inside one). In 43 of the 48 papers, the converted text has as many "∎" as proofs; the other five differ by one to five, from proofs written outside the proof environment or environments nested in one.
+
+**Effect on recorded runs: none.** Of the 1,617 parts of every suite's library, only the parts of the mathematics suite's two LaTeX papers change, and they changed where they break, not what the documents say beyond the box. Re-scoring the four mathematics reports gives the same labels on `main` and on this change, since a quote is checked against its whole document, and search finds every cited document and answering passage for the suite's 31 answerable tasks, as before. No suite has a proof long enough to be read across parts, so what the notes gain on answers is not measured; a suite question that needs one would be.
+
+`tests/documents.test.ts` ("statements and proofs across parts") and `tests/arxiv.test.ts` ("arXiv subjects") fail before the change and pass after.
+
+**Limits:**
+- A proof environment of the paper's own (`\begin{pf}`), or a proof written as a paragraph starting "Proof." without the environment, has no box, so it is taken to run to the next statement or heading.
+- A part that starts inside a proof says whose; one that holds the end of a proof whose start is in another part says nothing more.
+- The subjects setting limits the arXiv source only: OpenAlex and INSPIRE searches, which read papers from arXiv, are not limited by it.
+
+### Chemistry suite and chemical names in search (0.98.0)
 
 Recommendations 3 and 4 of the chemistry researcher's audit (0.93.0, above). **A chemistry suite**, `chem` (40 questions) and `chemholdout` (12), over eight CC BY 4.0 papers from Europe PMC: two nickel-catalysed couplings, an enantioselective propargylation, two photoredox papers and a photocatalyst study, a copper CO₂ electrocatalyst, iron porphyrins and a computational frustrated Lewis pair. The questions ask for units (mol% and equiv, ppm and Hz, ns and µs, a potential and its reference electrode), one entry of a screening table, names a character apart, stereochemistry, directions, negatives and aliases ([chemistry suite](../chem/README.md)).
 

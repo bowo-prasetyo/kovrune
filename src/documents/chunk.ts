@@ -33,9 +33,12 @@ export function chunkDocument(doc: SourceDocument, maxChars = CHUNK_CHARS): Sour
       // A chunk does not end with the heading of what comes next: it moves on with it, so a table
       // or section is not cut off from its name (eval/field/README.md, "Headings kept with what they introduce").
       // Only if they fit with the paragraph they introduce; otherwise they stay where they are.
-      const headings = trailingHeadings(current);
+      // A theorem-like statement moves on with its proof too (harness 0.97.0): a part ending on "Lemma 3.2. If
+      // …" and the next starting "Proof. Let B = …" gave the proof without what it proves.
+      const statement = PROOF_START.test(unit) ? statementBefore(current) : [];
+      const headings = statement.length ? [...trailingHeadings(current.slice(0, current.length - statement.length)), ...statement] : trailingHeadings(current);
       const fits = headings.reduce((sum, h) => sum + textWeight(h) + 2, 0) + textWeight(unit) <= maxChars;
-      const carried = fits ? headings : [];
+      const carried = fits && headings.length < current.length ? headings : [];
       pieces.push(current.slice(0, current.length - carried.length).join("\n\n"));
       current = [];
       weight = 0;
@@ -51,6 +54,67 @@ export function chunkDocument(doc: SourceDocument, maxChars = CHUNK_CHARS): Sour
     text: piece,
   }));
 }
+
+/*
+ * Proofs across parts (harness 0.97.0), from the mathematician's audit (docs/math-audit.md, M7). A proof runs
+ * over several parts of a long paper, and a part in the middle of one said nothing of what it proves: a
+ * model reading "Since p - 1 > 5, the map b ↦ 3b - 2r takes at most two values …" could not tell which
+ * result it was reading the proof of. A statement is kept with the start of its proof (chunkDocument), and
+ * a part that starts inside a proof says whose (proofContinued), as tables and figures say where they are
+ * cited (DocumentIndex.tablesCitedElsewhere). A proof ends with "∎", which the LaTeX converter writes where
+ * amsthm prints its box, and which PDFs print as "∎", "□" or "■".
+ */
+
+/** A theorem-like statement's heading as the LaTeX converter and PDFs write it: "Lemma 3.2 (Key Lemma). If …", "Theorem A. Let …". */
+export const STATEMENT_START =
+  /^(?:Main )?(Theorem|Lemma|Proposition|Corollary|Claim|Conjecture|Definition|Remark|Example|Fact|Observation|Question|Problem|Assumption|Hypothesis|Notation)(?: ([0-9A-Z][0-9A-Za-z]*(?:\.[0-9A-Za-z]+)*))?(?: \([^)\n]{1,80}\))?\.\s/;
+/** A proof's start: "Proof. …", "Proof of Theorem 1.1. …", "Proof (sketch). …". */
+export const PROOF_START = /^Proof(?: of (.+?))?(?: \([^)\n]{1,40}\))?\.(?:\s|$)/;
+/** A proof's end: the box amsthm prints, as the converter writes it ("∎") or a PDF gives it. */
+const PROOF_END = /[∎□■]\s*$/;
+
+/**
+ * For each part of a document, in order, the proof it starts inside, if any: what the proof proves ("Theorem
+ * 1.1", or the statement before it) and the part where the proof begins. A proof is open from its "Proof"
+ * paragraph to the paragraph ending with its box, or to the next statement or heading, whichever comes first.
+ */
+export function proofsContinued(parts: SourceDocument[]): Array<{ proof: string; partId: string } | undefined> {
+  let statement: string | undefined;
+  let open: { proof: string; partId: string } | undefined;
+  return parts.map((part) => {
+    const atStart = open;
+    for (const paragraph of part.text.split(/\n\s*\n/).map((p) => p.trim())) {
+      if (!paragraph) continue;
+      const head = STATEMENT_START.exec(paragraph);
+      const proof = PROOF_START.exec(paragraph);
+      if (head || /^#{1,6}\s/.test(paragraph)) open = undefined;
+      if (head) statement = [head[1], head[2]].filter(Boolean).join(" ");
+      if (proof) open = { proof: proof[1]?.trim() || statement || "the statement before it", partId: part.id };
+      if (open && PROOF_END.test(paragraph)) open = undefined;
+    }
+    return atStart;
+  });
+}
+
+/**
+ * The statement a part's paragraphs end with, with the displayed equations it holds ("Lemma 3.3. … For f ∈ L¹,",
+ * then "‖f‖₂ ≤ … (3.1)"), when what comes next is its proof: at most three paragraphs, the later ones neither a
+ * statement, a proof nor a heading. None when the statement is all the part holds.
+ */
+function statementBefore(units: string[]): string[] {
+  for (let k = units.length - 1; k >= Math.max(1, units.length - 3); k--) {
+    if (STATEMENT_START.test(units[k]!)) return units.slice(k);
+    if (PROOF_START.test(units[k]!) || /^#{1,6}\s/.test(units[k]!)) return [];
+  }
+  return [];
+}
+
+/** The note on a part that starts inside a proof: "[This part continues the proof of Theorem 1.1, which begins in teller-sets#3.]". */
+export function proofNote(continued: { proof: string; partId: string } | undefined): string {
+  return continued ? `[This part continues the proof of ${continued.proof}, which begins in ${continued.partId}.]\n` : "";
+}
+
+export const PROOF_NOTE_LINE = /\[This part continues the proof of [^\n]*\]\n?/;
 
 /** A heading-like line is at most this long: a title, a subject name or a label, not a sentence. */
 const MAX_HEADING_CHARS = 80;
