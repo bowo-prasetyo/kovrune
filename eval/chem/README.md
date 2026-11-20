@@ -70,7 +70,29 @@ Each task's comment names its kind, counted here by its first kind:
 
 The gain is `c35`, the asymmetric FLP's enantiomer: the question writes "enantiomeric excess", and the passage that gives the 96% writes "%ee". The misses: `c24` (the singlet and triplet lifetimes are in two passages, and search finds one), `c31` (the inverse dependence is said in many places, none of which search ranks first), and `c38`, the comparison, which finds one of its two papers.
 
-RESULTS_PLACEHOLDER
+## Results with models (0.94.0)
+
+Qwen3.5-4B and 2B (Q4_K_M, llama.cpp fae9ac5, CPU, 4096-token context, thinking off, constrained mode), with the chemical-name list. The 2B run was cut short twice by container restarts and was run again in batches of eight questions, merged with `bench:replay --merge`; nothing else differs.
+
+| Model | chem | chemholdout | "Quotes found" answers that failed |
+| --- | --- | --- | --- |
+| Qwen3.5-4B | 33/40 | 12/12 | 0 of 33 |
+| Qwen3.5-2B | 22/40 | 10/12 | 4 of 21 |
+
+Reports: `eval/results/chem-0.94-qwen3.5-4b-q4km.json`, `eval/results/chem-0.94-qwen3.5-2b-q4km.json`.
+
+The 4B's seven misses are of two kinds. In `c05` and `c21` the answer is right but the quote fails the quote check: `c05` joins two sentences with the ³¹P sentence between them left out and no "…", and `c21` leaves out more than the 200 characters "…" may stand for. In `c07` (PCy₃ asked for by its full name), `c30` (a binding-energy difference on Cu(311)), `c37` (273.0 K) and `c38` (the two-paper comparison) it answers that the documents do not say. `c24` gives one of the two lifetimes. The 2B misses most questions that need a number read from a table, and answers two unanswerable questions from a neighbouring result (`c39` with the 98% yield, `ch12` with "21").
+
+**With and without the name list.** `bench:replay --base c77500d` finds 23 tasks (4B) and 24 (2B) whose requests differ once the list is in search; those were run on the code without it and merged with the tasks that repeat (`eval/results/chem-0.94-base-qwen3.5-{4b,2b}-q4km.json`; compare with `bench:compare`).
+
+| Model | Suite | Without | With | Gained | Lost | p (McNemar) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-4B | chem | 31/40 | 33/40 | 2 | 0 | 0.50 |
+| Qwen3.5-4B | chemholdout | 12/12 | 12/12 | 0 | 0 | 1 |
+| Qwen3.5-2B | chem | 23/40 | 22/40 | 1 | 2 | 1 |
+| Qwen3.5-2B | chemholdout | 10/12 | 10/12 | 0 | 0 | 1 |
+
+The 4B gains `c31` and `c33` (both on the porphyrin paper); the 2B gains `c07`, the PCy₃ alias question, and loses `c30` (it now reads the passage after the one with the answer, and gives 0.485 eV from it) and `c31` (it reads the same passage as without the list and states the dependence the wrong way round). **This is no measurable effect on answers either way**: 3 gained and 2 lost over two models, where search alone went from 13 to 30 of 30 alias probes. The list's case rests on the search measurement, and on no protected suite making a different request.
 
 ## Chemical names in search (0.94.0)
 
@@ -84,7 +106,12 @@ RESULTS_PLACEHOLDER
 
 **Replaying the recorded runs.** `bench:replay --base c77500d` runs each recorded task of the latest reports with replies (field and held out at 0.75.0, clinical, CS and lab at 0.84.0, the CS and lab held-out suites at 0.78.0, physics at 0.91.0, both models) on the code without the list and with it. **No task of research, unanswerable, pdf, field, holdout, csholdout, labholdout, clinical, cs or physics makes a different request.** The ones it cannot decide (two research, one unanswerable, one clinical, three physics) cannot be decided on `main` against itself either. One lab task differs on both models, `l21-mdh-act-mechanism`, whose question names "methanol dehydrogenase": its paper writes "CH3OH" once, and the list's "methanol" now finds it. It was run with both models at both versions (below).
 
-L21_PLACEHOLDER
+| `l21-mdh-act-mechanism` | without the list (c77500d) | with it |
+| --- | --- | --- |
+| Qwen3.5-4B | pass | pass |
+| Qwen3.5-2B | pass | pass |
+
+It passes on both models at both versions (`eval/results/l21-0.94-*.json`).
 
 ## Limits
 
