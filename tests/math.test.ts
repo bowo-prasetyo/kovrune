@@ -18,7 +18,7 @@ describe("math in an answer or a quote", () => {
   it("keeps a script that has no Unicode letter as ^ or _, and an unknown command as written", () => {
     assert.equal(readableFormula("x^{q+1}"), "x^(q+1)", "q has no superscript");
     assert.equal(readableFormula("W_Q"), "W_Q");
-    assert.equal(readableMath("with $\\mathfrak{g}$ here"), "with $\\mathfrak{g}$ here");
+    assert.equal(readableMath("with $\\overbrace{x}$ here"), "with $\\overbrace{x}$ here");
     assert.equal(readableMath("an $\\sqrt[3]{x}$ root"), "an $\\sqrt[3]{x}$ root");
   });
 
@@ -61,5 +61,29 @@ describe("math compared as math (harness 0.95.0)", () => {
     assert.notEqual(mathMatchKey("p \\geq 7"), mathMatchKey("p > 7"));
     assert.notEqual(mathMatchKey("\\frac{1}{8}"), mathMatchKey("1/4"));
     assert.notEqual(mathMatchKey("A \\cap B"), mathMatchKey("A ∪ B"));
+  });
+});
+
+describe("more of a paper's math read (harness 0.98.0)", () => {
+  it("reads every blackboard and Fraktur letter, and the relations and arrows papers use", () => {
+    assert.equal(readableMath("$\\mathbb{A}^n$ over $\\mathbb{F}_q$"), "𝔸ⁿ over 𝔽_q");
+    assert.equal(readableMath("$\\mathfrak{g} = \\mathfrak{gl}_n$"), "𝔤 = 𝔤𝔩ₙ");
+    assert.equal(readableFormula("H \\hookrightarrow G \\twoheadrightarrow Q"), "H ↪ G ↠ Q");
+    assert.equal(readableFormula("N \\rtimes H"), "N ⋊ H");
+    assert.equal(readableFormula("x \\leqslant y \\nmid z"), "x ≤ y ∤ z");
+  });
+
+  it("writes operators a paper declares upright, and reads \\pmod, \\binom and spacing", () => {
+    assert.equal(readableFormula("\\Irr(G)"), "Irr (G)");
+    assert.equal(readableFormula("\\Hom(V, W)"), "Hom (V, W)");
+    assert.equal(readableFormula("\\tr(A)"), "tr (A)");
+    assert.equal(readableFormula("a \\equiv b \\pmod{p}"), "a ≡ b (mod p)");
+    assert.equal(readableFormula("\\binom{n}{k}"), "C(n, k)");
+    assert.equal(readableFormula("x\\hspace{1em}y"), "x y");
+    assert.equal(readableFormula("\\Q(\\sqrt{2})"), "ℚ(√2)");
+  });
+
+  it("still shows a lowercase macro it does not know as written", () => {
+    assert.equal(readableMath("an $\\wt{x}$ here"), "an $\\wt{x}$ here");
   });
 });

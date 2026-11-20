@@ -38,8 +38,54 @@ const NOTHING = new Set(
   "left right big Big bigg Bigg bigl bigr Bigl Bigr biggl biggr middle limits nolimits displaystyle textstyle scriptstyle scriptscriptstyle tiny scriptsize footnotesize small normalsize large Large rm sf tt bf it sl sc em mathstrut strut".split(" "),
 );
 const SPACES: Record<string, string> = { ",": " ", ";": " ", ":": " ", " ": " ", "!": "", quad: " ", qquad: "  ", enspace: " ", thinspace: " " };
-const BLACKBOARD: Record<string, string> = { R: "ℝ", N: "ℕ", Z: "ℤ", Q: "ℚ", C: "ℂ", E: "𝔼", P: "ℙ", F: "𝔽", H: "ℍ", I: "𝕀", "1": "𝟙" };
-const ACCENTS: Record<string, string> = { hat: "̂", widehat: "̂", bar: "̄", overline: "̅", tilde: "̃", widetilde: "̃", vec: "⃗", dot: "̇", ddot: "̈" };
+/*
+ * More of a paper's math read (harness 0.98.0), from the mathematician's audit (M8): on 48 arXiv mathematics papers,
+ * 9.3% of inline formulas were shown as written, mostly for \mathbb with a letter beyond R, N, Z, Q, C, \mathfrak,
+ * the operators papers declare (\Irr, \GL, \End, \Hom, \Gal), relations such as \leqslant and \hookrightarrow,
+ * and \pmod, \binom and \hspace.
+ */
+/** A letter in an alphabet of Unicode's mathematical letters: the capitals from `capital`, the small letters from `small`, with the exceptions Unicode keeps elsewhere. */
+function alphabet(capital: number, small: number | undefined, exceptions: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (let i = 0; i < 26; i++) {
+    const upper = String.fromCharCode(65 + i);
+    const lower = String.fromCharCode(97 + i);
+    out[upper] = exceptions[upper] ?? String.fromCodePoint(capital + i);
+    if (small !== undefined) out[lower] = exceptions[lower] ?? String.fromCodePoint(small + i);
+  }
+  return out;
+}
+const BLACKBOARD: Record<string, string> = {
+  ...alphabet(0x1d538, 0x1d552, { C: "ℂ", H: "ℍ", N: "ℕ", P: "ℙ", Q: "ℚ", R: "ℝ", Z: "ℤ" }),
+  ...Object.fromEntries([..."0123456789"].map((d, i) => [d, String.fromCodePoint(0x1d7d8 + i)])),
+};
+const FRAKTUR: Record<string, string> = alphabet(0x1d504, 0x1d51e, { C: "ℭ", H: "ℌ", I: "ℑ", R: "ℜ", Z: "ℨ" });
+/** Relations, arrows and symbols beyond SYMBOLS that mathematics papers use. */
+const MORE_SYMBOLS: Record<string, string> = {
+  leqslant: "≤", geqslant: "≥", leqq: "≦", geqq: "≧", lesssim: "≲", gtrsim: "≳", nleq: "≰", ngeq: "≱", asymp: "≍", nmid: "∤", divides: "∣",
+  hookrightarrow: "↪", hookleftarrow: "↩", twoheadrightarrow: "↠", twoheadleftarrow: "↞", longrightarrow: "⟶", longleftarrow: "⟵", longmapsto: "⟼",
+  Longrightarrow: "⟹", Longleftarrow: "⟸", Longleftrightarrow: "⟺", longleftrightarrow: "⟷", rightleftharpoons: "⇌", leftrightarrows: "⇆", rightrightarrows: "⇉",
+  nearrow: "↗", searrow: "↘", nwarrow: "↖", swarrow: "↙", dashrightarrow: "⇢", rightsquigarrow: "⇝", curvearrowright: "↷",
+  rtimes: "⋊", ltimes: "⋉", bowtie: "⋈", wr: "≀", amalg: "⨿", coprod: "∐", sqcup: "⊔", sqcap: "⊓", bigsqcup: "⨆", uplus: "⊎", biguplus: "⨄", ominus: "⊖",
+  subsetneq: "⊊", supsetneq: "⊋", nsubseteq: "⊈", nsupseteq: "⊉", sqsubseteq: "⊑", sqsupseteq: "⊒", Subset: "⋐", Supset: "⋑",
+  lhd: "⊲", rhd: "⊳", unlhd: "⊴", unrhd: "⊵", triangleleft: "◁", triangleright: "▷", vartriangleleft: "⊲", trianglelefteq: "⊴", trianglerighteq: "⊵", ntriangleleft: "⋪",
+  models: "⊨", vdash: "⊢", dashv: "⊣", nexists: "∄", square: "□", Box: "□", blacksquare: "■", diamond: "⋄", lozenge: "◊", angle: "∠", measuredangle: "∡",
+  sharp: "♯", flat: "♭", natural: "♮", Bbbk: "𝕜", wp: "℘", mho: "℧", imath: "ı", jmath: "ȷ", varkappa: "ϰ", digamma: "ϝ", eth: "ð", beth: "ℶ", gimel: "ℷ",
+  dotsc: "…", dotsb: "⋯", dotsm: "⋯", dotso: "…", dotsi: "⋯", prec: "≺", succ: "≻", preccurlyeq: "≼", succcurlyeq: "≽", lll: "⋘", ggg: "⋙", circeq: "≗", doteq: "≐",
+  bigodot: "⨀", bigvee: "⋁", bigwedge: "⋀", iint: "∬", iiint: "∭", complement: "∁", varnothing: "∅", lbrack: "[", rbrack: "]", vert: "|", mid: "∣",
+};
+/** Shorthands papers define for number systems, read where the paper's own definition was not: \Q, \Z, \R, \C, \N. */
+const NUMBER_SETS: Record<string, string> = { Q: "ℚ", Z: "ℤ", R: "ℝ", C: "ℂ", N: "ℕ" };
+/**
+ * Operators a paper declares with \DeclareMathOperator, which the converter does not read, written upright as
+ * their names: a command of two to seven letters starting with a capital ("Irr", "GL", "End", "Hom", "Gal",
+ * "Spec") or one of these lowercase ones. Shown only; a command the paper defines otherwise reads as its name.
+ */
+const LOWER_OPERATORS = new Set("tr ord rank rk im coker codim id sgn lcm supp diam vol dist Res res span ad".split(" "));
+const OPERATOR_NAME = /^[A-Z][A-Za-z]{1,6}$/;
+/** Commands whose argument is layout, not text: \hspace{1em}, \phantom{x}. */
+const DROPPED_WITH_ARGUMENT = new Set(["hspace", "vspace", "phantom", "hphantom", "vphantom", "label", "rule"]);
+const ACCENTS: Record<string, string> = { hat: "̂", widehat: "̂", bar: "̄", overline: "̅", tilde: "̃", widetilde: "̃", vec: "⃗", dot: "̇", ddot: "̈", breve: "̆", check: "̌", acute: "́", grave: "̀", underline: "̲", mathring: "̊" };
 // Every lower-case letter has a superscript but q; few have a subscript.
 const SUPER: Record<string, string> = Object.fromEntries(
   [..."0123456789+-=()abcdefghijklmnoprstuvwxyzT*'"].map((c, i) => [c, [..."⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖʳˢᵗᵘᵛʷˣʸᶻᵀ*′"][i]!]),
@@ -65,7 +111,7 @@ function argument(tex: string, at: number): { body: string; end: number } {
   if (command) {
     // A script that is a command with an argument takes the argument too: "p_\mathrm{T}" is p_T (harness 0.91.0).
     const name = command[1]!;
-    if (KEEP.has(name) || name in ACCENTS || name === "mathbb" || name === "mathbbm") {
+    if (KEEP.has(name) || name in ACCENTS || name === "mathbb" || name === "mathbbm" || name === "mathfrak" || name === "mathds") {
       const arg = argument(tex, i + command[0].length);
       return { body: tex.slice(i, arg.end), end: arg.end };
     }
@@ -94,6 +140,7 @@ function readMath(tex: string): string {
       const name = /^\\([a-zA-Z]+|.)/.exec(tex.slice(i))![1]!;
       i += name.length + 1;
       if (name in SYMBOLS) out += SYMBOLS[name];
+      else if (name in MORE_SYMBOLS) out += MORE_SYMBOLS[name];
       else if (name in SPACES) out += SPACES[name];
       else if (NOTHING.has(name)) continue;
       else if (FUNCTIONS.has(name)) out += name === "argmax" || name === "argmin" ? `arg ${name.slice(3)} ` : `${name} `;
@@ -106,12 +153,29 @@ function readMath(tex: string): string {
         const next = argument(tex, i);
         out += `${readMath(next.body)}\u0338`;
         i = next.end;
-      } else if (name === "mathbb" || name === "mathbbm") {
+      } else if (name === "mathbb" || name === "mathbbm" || name === "mathds" || name === "mathfrak") {
+        // Each letter of the argument in its alphabet: \mathbb{A} is "𝔸", \mathfrak{gl} is "𝔤𝔩".
         const arg = argument(tex, i);
-        const letter = BLACKBOARD[arg.body.trim()];
-        if (!letter) throw new Unknown("mathbb");
-        out += letter;
+        const map = name === "mathfrak" ? FRAKTUR : BLACKBOARD;
+        const letters = [...arg.body.replace(/\s+/g, "")];
+        if (!letters.length || !letters.every((l) => map[l])) throw new Unknown(name);
+        out += letters.map((l) => map[l]).join("");
         i = arg.end;
+      } else if (DROPPED_WITH_ARGUMENT.has(name)) {
+        const arg = argument(tex, i);
+        i = name === "rule" ? argument(tex, arg.end).end : arg.end;
+        if (name === "hspace" || name.endsWith("phantom")) out += " ";
+      } else if (name === "pmod") {
+        const arg = argument(tex, i);
+        out += ` (mod ${readMath(arg.body).trim()})`;
+        i = arg.end;
+      } else if (name === "bmod" || name === "mod") {
+        out += " mod ";
+      } else if (name === "binom" || name === "dbinom" || name === "tbinom") {
+        const top = argument(tex, i);
+        const bottom = argument(tex, top.end);
+        out += `C(${readMath(top.body).trim()}, ${readMath(bottom.body).trim()})`;
+        i = bottom.end;
       } else if (name in ACCENTS) {
         const arg = argument(tex, i);
         const inner = readMath(arg.body);
@@ -127,7 +191,9 @@ function readMath(tex: string): string {
         const arg = argument(tex, i);
         out += `√${operand(readMath(arg.body).trim())}`;
         i = arg.end;
-      } else throw new Unknown(name);
+      } else if (name in NUMBER_SETS) out += NUMBER_SETS[name];
+      else if (OPERATOR_NAME.test(name) || LOWER_OPERATORS.has(name)) out += `${name} `;
+      else throw new Unknown(name);
     } else if (c === "^" || c === "_") {
       const arg = argument(tex, i + 1);
       const inner = readMath(arg.body);
