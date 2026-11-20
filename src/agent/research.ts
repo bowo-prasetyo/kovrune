@@ -14,7 +14,7 @@ import { answerStatus, checkEvidence, type AnswerStatus, type CheckedEvidence } 
 import { checkCompleteness, checksCompleteness } from "./completeness.ts";
 import { crossCheckAnswer, crossChecksAnswers } from "./crosscheck.ts";
 import { reviewAnswer, reviewsShortAnswers } from "./review.ts";
-import { contradictedSupport, crossCheckRejects, inSourceSupport, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
+import { closestPassages, contradictedSupport, crossCheckRejects, inSourceSupport, reviewAsked, sentenceSupport, wordChecksPass, type SentenceSupport } from "./support.ts";
 
 // Search and read actions are short; the budget is for final answers, which carry quotes.
 // Each open source adds a search and a read, since every ticked source is searched.
@@ -155,7 +155,7 @@ export async function runResearch(options: {
   });
   const openedTitle = (id: string) => titleFor(id) ?? session?.citation(id)?.title;
   const support = contradictedSupport(
-    inSourceSupport(sentenceSupport(final.answer, evidence, titleFor, options.question), documents, openedTitle, options.question),
+    closestPassages(inSourceSupport(sentenceSupport(final.answer, evidence, titleFor, options.question), documents, openedTitle, options.question), documents, openedTitle),
     documents,
     evidence.filter((e) => e.verified),
     openedTitle,

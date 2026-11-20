@@ -24,6 +24,12 @@ export interface AnswerSentence {
    * tells the reader where to check it, instead of "it may come from the model's memory".
    */
   inSource?: { docId: string; title?: string; passage: string };
+  /**
+   * For a sentence no quote backs and that is not nearly word for word in a source (inSource): the passages of
+   * the documents the model read that share the most of its words, to check it against (closestPassages,
+   * harness 0.102.0). Only a pointer: the sentence is still not backed, and a passage may say otherwise.
+   */
+  closest?: Array<{ docId: string; title?: string; passage: string }>;
 }
 
 export interface SentenceSupport {
@@ -1130,6 +1136,86 @@ export function inSourceSupport(
         }
       }
       return sentence;
+    }),
+  };
+}
+
+/** Passages shown for a marked sentence: a sentence often makes two claims, each nearest another passage. */
+export const CLOSEST_PASSAGES = 2;
+/** The fewest claim words a closest passage must share with the sentence, and the least share of them. */
+const CLOSEST_MIN_WORDS = 3;
+const CLOSEST_MIN_SHARE = 1 / 4;
+/** The fewest claim words a second passage must add to the first's: a second claim, not the first again. */
+const CLOSEST_MIN_NEW_WORDS = 2;
+
+/**
+ * For each marked sentence that inSourceSupport finds in no source: the sentences of the documents the model
+ * read that share the most of its claim words (closest), so the reader knows where to check it (harness
+ * 0.102.0). A preview user's answer on combining LLMs and genetic programming had 0 of 3 sentences backed:
+ * two said what the paper says in other words, unquoted, and one reversed it ("addresses issues like
+ * hallucination", where the paper says the LLM causes them and GP fixes them). Nothing pointed to where to
+ * look. A passage here is only nearest by words: it may back the sentence, or say otherwise, as the reversed
+ * one's does. Passages that set two claims against each other are kept, unlike for inSource: a sentence that
+ * turns a claim round is often nearest one of those. The labels and counts do not change.
+ */
+export function closestPassages(
+  support: SentenceSupport,
+  documents: Array<{ docId: string; text: string }>,
+  titleFor: (docId: string) => string | undefined = () => undefined,
+): SentenceSupport {
+  if (!support.sentences.some((s) => s.backed === false && !s.inSource) || !documents.length) return support;
+  const passages = documents.flatMap(({ docId, text }) =>
+    splitSentences(text.replace(/\s*\n\s*/g, "\n"))
+      .map((t) => t.trim())
+      .filter((t) => t && t.length <= IN_SOURCE_MAX_CHARS)
+      .map((t) => ({ docId, text: t, words: contentWords(t) })),
+  );
+  // A word's weight is its rarity in what was read: "hallucination", in one passage of a paper, says more about
+  // where a sentence's claim is than "generate", in fifty.
+  const frequency = new Map<string, number>();
+  for (const p of passages) for (const w of new Set(p.words)) frequency.set(w, (frequency.get(w) ?? 0) + 1);
+  const weight = (word: string) => {
+    let n = 0;
+    for (const [w, count] of frequency) if (sameWord(word, w)) n = Math.max(n, count);
+    return Math.log((passages.length + 1) / (n + 1)) + 1;
+  };
+  return {
+    ...support,
+    sentences: support.sentences.map((sentence) => {
+      if (sentence.backed !== false || sentence.inSource) return sentence;
+      const words = [...new Set(contentWords(sentence.text))];
+      const weights = new Map(words.map((w) => [w, weight(w)]));
+      const score = (shared: string[]) => shared.reduce((sum, w) => sum + weights.get(w)!, 0);
+      const ranked = passages
+        .map((p) => {
+          const subject = contentWords(titleFor(p.docId) ?? "");
+          const claim = words.filter((w) => !subject.some((t) => sameWord(w, t)));
+          const shared = claim.filter((w) => p.words.some((q) => sameWord(w, q)));
+          return { ...p, shared, claim: claim.length };
+        })
+        .filter((p) => p.shared.length >= CLOSEST_MIN_WORDS && p.shared.length >= p.claim * CLOSEST_MIN_SHARE)
+        .sort((a, b) => score(b.shared) - score(a.shared) || a.text.length - b.text.length);
+      // The best passage, then the one that adds the most words the passages chosen lack: a sentence's second
+      // claim ("…, which addresses issues like hallucination") is nearest another passage than its first.
+      const chosen: typeof ranked = ranked.slice(0, 1);
+      while (chosen.length < CLOSEST_PASSAGES) {
+        const covered = new Set(chosen.flatMap((c) => c.shared));
+        const next = ranked
+          .filter((p) => !chosen.some((c) => c.text === p.text))
+          .map((p) => ({ p, added: p.shared.filter((w) => !covered.has(w)) }))
+          .filter(({ added }) => added.length >= CLOSEST_MIN_NEW_WORDS)
+          .sort((a, b) => score(b.added) - score(a.added) || score(b.p.shared) - score(a.p.shared))[0];
+        if (!next) break;
+        chosen.push(next.p);
+      }
+      if (!chosen.length) return sentence;
+      return {
+        ...sentence,
+        closest: chosen.map(({ docId, text }) => {
+          const title = titleFor(docId);
+          return { docId, ...(title ? { title } : {}), passage: text };
+        }),
+      };
     }),
   };
 }

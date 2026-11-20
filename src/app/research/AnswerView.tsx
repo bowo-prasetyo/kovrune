@@ -118,6 +118,42 @@ function MathText({ text }: { text: string }) {
   );
 }
 
+/**
+ * Where to check each ⚠ sentence that is in no source word for word: the passages of the documents the model
+ * read that share the most of its words (support.ts closestPassages). Only nearest by words: a passage may
+ * back the sentence or say otherwise, which is why the sentence stays marked.
+ */
+function ClosestPassages({ support }: { support: SentenceSupport }) {
+  const marked = support.sentences.filter((s) => s.backed === false && s.closest?.length);
+  if (!marked.length) return null;
+  return (
+    <details className="closest-passages">
+      <summary>
+        Where to check the ⚠ {marked.length === 1 ? "sentence" : "sentences"}: the closest passages the model read ({marked.length})
+      </summary>
+      <p className="hint">
+        For each marked sentence, the passages of the documents the model read that share the most of its words. They are not quotes and
+        may not back it: one may say something else, or the opposite. Read them before you rely on the sentence.
+      </p>
+      <ol>
+        {marked.map((sentence, i) => (
+          <li key={i}>
+            <span className="unbacked-sentence">
+              ⚠ <MathText text={sentence.text.trim()} />
+            </span>
+            {sentence.closest!.map((c, j) => (
+              <blockquote key={j}>
+                <MathText text={c.passage} />
+                <span className="hint"> ({c.title ?? c.docId})</span>
+              </blockquote>
+            ))}
+          </li>
+        ))}
+      </ol>
+    </details>
+  );
+}
+
 /** A mark for each kind of label, so the labels that ask the most of the reader don't look like the others. */
 const STATUS_ICONS: Record<LabelSeverity, string> = { found: "✓", check: "⚠", danger: "✗", none: "–" };
 
@@ -162,6 +198,7 @@ function Answer({ text, support, explainMarks = true }: { text: string; support?
               <span aria-label="Not backed by a quote">⚠ </span>
               <MathText text={sentence.text} />
               {sentence.inSource && <span className="in-source"> (in the source, not quoted) </span>}
+              {sentence.closest && <span className="in-source"> (see the closest passages below) </span>}
             </mark>
           ) : (
             <span key={i}>
@@ -170,6 +207,7 @@ function Answer({ text, support, explainMarks = true }: { text: string; support?
           ),
         )}
       </p>
+      <ClosestPassages support={support} />
       {explainMarks && (
         <p className="hint">
           ⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month, "not", direction such as "higher", or "significant" that the
