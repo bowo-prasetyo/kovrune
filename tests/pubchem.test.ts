@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { anyOpenSource, openSourceNames, openSourcesFor, parseSourcePrefs } from "../src/app/research/sources.ts";
-import { compoundText, createPubChem, experimentalText, isCasNumber, namesIn, type PubChemProperties, type PugViewRecord } from "../src/sources/pubchem.ts";
+import { closeSpelling, compoundText, createPubChem, experimentalText, isCasNumber, isDatabaseId, namesIn, type PubChemProperties, type PugViewRecord } from "../src/sources/pubchem.ts";
 import { SourceError, type FetchLike } from "../src/sources/types.ts";
 
-// Answers shaped as PubChem's PUG REST and PUG View documentation gives them (not recorded from the live
-// service: this container could not reach it when the source was written).
+// Answers shaped as PubChem's PUG REST and PUG View give them, cut down (checked against the live service on
+// 2026-11-20: THF's properties, SMILES included, and PUG View's experimental properties come in these forms).
 const THF: PubChemProperties = {
   CID: 8028,
   Title: "Tetrahydrofuran",
@@ -103,6 +103,22 @@ describe("PubChem (harness 0.99.0)", () => {
     });
     const hits = await createPubChem(fetchImpl).search("tetrahydrofurane");
     assert.equal(hits[0]?.id, "pubchem:8028");
+  });
+
+  it("takes a suggestion only when it is spelled close to what was typed", async () => {
+    assert.equal(closeSpelling("tetrahydrofuran", "tetrahydrofurane"), true);
+    assert.equal(closeSpelling("Tetrahydrofuran", "tetra-hydrofuran"), true);
+    // Checked live: PubChem's autocomplete suggested "Carcainium" for "unobtainium".
+    assert.equal(closeSpelling("Carcainium", "unobtainium"), false);
+    const { fetchImpl } = pubchemFetch({ "autocomplete/compound/unobtainium/json": { total: 1, dictionary_terms: { compound: ["Carcainium"] } } });
+    assert.deepEqual(await createPubChem(fetchImpl).search("unobtainium"), []);
+  });
+
+  it("leaves other databases' identifiers out of a compound's names", () => {
+    for (const id of ["DTXSID80893977", "EC 241-004-4", "NCI-C60560", "CHEBI:50985", "RefChem:183807", "241-004-4", "87L0B9CPPA", "SCHEMBL12345", "MFCD00005132"]) assert.equal(isDatabaseId(id), true, id);
+    for (const name of ["NaBH4", "Sodium tetrahydridoborate(1-)", "Borate(1-), tetrahydro-, sodium", "THF", "Tetramethylene oxide"]) assert.equal(isDatabaseId(name), false, name);
+    const text = compoundText({ CID: 4311764, Title: "Sodium borohydride" }, { synonyms: ["Sodium borohydride", "16940-66-2", "NaBH4", "DTXSID80893977", "CHEBI:50985", "Sodium tetrahydridoborate(1-)"] });
+    assert.ok(text.includes("Other names: NaBH4; Sodium tetrahydridoborate(1-)\n"));
   });
 
   it("gives no results for a name PubChem does not know", async () => {

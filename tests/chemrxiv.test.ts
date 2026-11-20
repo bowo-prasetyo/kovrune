@@ -4,8 +4,8 @@ import { openSourceNames, openSourcesFor, parseSourcePrefs } from "../src/app/re
 import { abstractText, createChemRxiv, crossrefQuery, preprintText, publishedAs, type CrossrefWork } from "../src/sources/chemrxiv.ts";
 import { SourceError, type FetchLike } from "../src/sources/types.ts";
 
-// Records shaped as Crossref's REST API documentation gives them (not recorded from the live service: this
-// container could not reach it when the source was written).
+// Records shaped as Crossref's REST API gives them (its documentation, checked against the live service on
+// 2026-11-20: ChemRxiv's DOIs, abstracts and "is-preprint-of" relations come in these forms).
 const V2: CrossrefWork = {
   DOI: "10.26434/chemrxiv-2024-abcde-v2",
   title: ["Nickel-Catalysed Defluorinative Coupling of 2-Fluorobenzofurans"],
@@ -13,7 +13,6 @@ const V2: CrossrefWork = {
   abstract: "<jats:title>Abstract</jats:title><jats:p>We report a nickel-catalysed coupling of 2-fluorobenzofurans with arylboronic acids. CO<jats:sub>2</jats:sub> is not needed.</jats:p><jats:p>Yields reach 98%.</jats:p>",
   posted: { "date-parts": [[2024, 3, 2]] },
   relation: { "is-preprint-of": [{ "id-type": "doi", id: "10.1021/JACS.4C01234" }] },
-  subtype: "preprint",
 };
 const V1: CrossrefWork = { ...V2, DOI: "10.26434/chemrxiv-2024-abcde", posted: { "date-parts": [[2024, 1, 15]] }, relation: {} };
 const OTHER: CrossrefWork = { DOI: "10.26434/chemrxiv-2023-zzz99", title: ["Photoredox Arylation of Isonitriles"], posted: { "date-parts": [[2023, 6, 1]] } };
