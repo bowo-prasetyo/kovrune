@@ -1,0 +1,407 @@
+{
+  "harnessVersion": "0.100.0",
+  "createdAt": "2026-11-20T06:55:33.314Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "extraBody": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "cache_prompt": false
+    }
+  },
+  "config": {
+    "suites": [
+      "math",
+      "mathholdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "ma25-step3-constant",
+      "ma26-step3-lemma",
+      "mah11-step2-lemma"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 91.4,
+    "decodeTokensPerSecond": 7.4,
+    "maxResearchTaskMinutes": 11.1,
+    "minutesPerSource": 2.7
+  },
+  "summary": [
+    {
+      "suite": "math",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 1,
+      "successRate": 0.5,
+      "successInterval": [
+        0.095,
+        0.905
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.5,
+      "prefillTokensPerSecond": 36.1,
+      "medianTaskSeconds": 92.3,
+      "maxPromptTokens": 998,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 3432,
+      "promptSeconds": 94.9,
+      "falseReassurance": {
+        "labelled": 2,
+        "wrong": 1
+      }
+    },
+    {
+      "suite": "mathholdout",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 0,
+      "successRate": 0,
+      "successInterval": [
+        0,
+        0.793
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.6,
+      "prefillTokensPerSecond": 39,
+      "medianTaskSeconds": 61.5,
+      "maxPromptTokens": 994,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 1711,
+      "promptSeconds": 43.8,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "math",
+      "taskId": "ma25-step3-constant",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1772,
+      "completionTokens": 125,
+      "estimatedTokens": false,
+      "maxPromptTokens": 998,
+      "cachedTokens": 0,
+      "promptMs": 51351,
+      "modelMs": 68250,
+      "ttftMs": 51378,
+      "wallMs": 83012,
+      "actions": [
+        "search {\"query\":\"Vasquez paper Theorem 4.1 Step 3 constant needed\"}",
+        "read {\"docId\":\"vasquez-colourings#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"The constant 37\",\"evidence\":[{\"docId\":\"vasquez-colourings#3\",\"quote\":\"This is where the constant 37 is needed: with a small"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The constant 37\",\"evidence\":[{\"docId\":\"vasquez-colourings#3\",\"quote\":\"This is where the constant 37 is needed: with a smaller constant, the expected number of bad edges in Step 1 is not below 1/6, and Step 2 fails.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "vasquez-colourings#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "37",
+          "agrees": true,
+          "reply": "{\"answer\":\"37\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "437b52ce",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Vasquez paper Theorem 4.1 Step 3 constant needed\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 254,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 7305.13
+          }
+        },
+        {
+          "input": "9c18457d",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"vasquez-colourings#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 520,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 15494.856
+          }
+        },
+        {
+          "input": "cea4a4e5",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The constant 37\",\"evidence\":[{\"docId\":\"vasquez-colourings#3\",\"quote\":\"This is where the constant 37 is needed: with a smaller constant, the expected number of bad edges in Step 1 is not below 1/6, and Step 2 fails.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 998,
+            "completionTokens": 80,
+            "cachedTokens": 0,
+            "promptMs": 28550.853
+          }
+        },
+        {
+          "input": "1e3ae4d8",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 270,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 7003.287
+          }
+        },
+        {
+          "input": "759aa21c",
+          "output": "{\"answer\":\"37\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 207,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 5729.964
+          }
+        }
+      ]
+    },
+    {
+      "suite": "math",
+      "taskId": "ma26-step3-lemma",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1660,
+      "completionTokens": 227,
+      "estimatedTokens": false,
+      "maxPromptTokens": 943,
+      "cachedTokens": 0,
+      "promptMs": 43575,
+      "modelMs": 73970,
+      "ttftMs": 43705,
+      "wallMs": 101660,
+      "actions": [
+        "search {\"query\":\"Vasquez paper Theorem 3.1 Step 3 lemma\"}",
+        "read {\"docId\":\"vasquez-colourings#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"Lemma 2.3\",\"evidence\":[{\"docId\":\"vasquez-colourings#3\",\"quote\":\"Step 3. Recolour the vertices of each bad edge independentl"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Lemma 2.3\",\"evidence\":[{\"docId\":\"vasquez-colourings#3\",\"quote\":\"Step 3. Recolour the vertices of each bad edge independently. Every vertex lies in at most $t = 1$ bad edge, so by Lemma 2.3 every bad edge is fixed with probability at least $1 - 2^{2-k}$, which is positive for $k \\\\geq 6$, and the recolouring makes no good edge bad because the bad edges are disjoint. This is where the constant $37$ is needed: with a smaller constant, the expected number of bad edges in Step 1 is not below $1/6$, and Step 2 fails. The colouring obtained is a Vasquez colouring of $H$. ∎\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "vasquez-colourings#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "Lemma 2.3",
+          "agrees": true,
+          "reply": "{\"answer\":\"Lemma 2.3\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "c7be4f17",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Vasquez paper Theorem 3.1 Step 3 lemma\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 252,
+            "completionTokens": 25,
+            "cachedTokens": 0,
+            "promptMs": 6704.266
+          }
+        },
+        {
+          "input": "b54aa8ae",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"vasquez-colourings#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 465,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 12177.666
+          }
+        },
+        {
+          "input": "27dfd1e4",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Lemma 2.3\",\"evidence\":[{\"docId\":\"vasquez-colourings#3\",\"quote\":\"Step 3. Recolour the vertices of each bad edge independently. Every vertex lies in at most $t = 1$ bad edge, so by Lemma 2.3 every bad edge is fixed with probability at least $1 - 2^{2-k}$, which is positive for $k \\\\geq 6$, and the recolouring makes no good edge bad because the bad edges are disjoint. This is where the constant $37$ is needed: with a smaller constant, the expected number of bad edges in Step 1 is not below $1/6$, and Step 2 fails. The colouring obtained is a Vasquez colouring of $H$. ∎\"}]}\n\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 943,
+            "completionTokens": 183,
+            "cachedTokens": 0,
+            "promptMs": 24693.095
+          }
+        },
+        {
+          "input": "0a3d3bc4",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 521,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 13827.854
+          }
+        },
+        {
+          "input": "f88b1dc4",
+          "output": "{\"answer\":\"Lemma 2.3\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 458,
+            "completionTokens": 10,
+            "cachedTokens": 0,
+            "promptMs": 11438.257
+          }
+        }
+      ]
+    },
+    {
+      "suite": "mathholdout",
+      "taskId": "mah11-step2-lemma",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1711,
+      "completionTokens": 134,
+      "estimatedTokens": false,
+      "maxPromptTokens": 994,
+      "cachedTokens": 0,
+      "promptMs": 43764,
+      "modelMs": 61450,
+      "ttftMs": 43897,
+      "wallMs": 61463,
+      "actions": [
+        "search {\"query\":\"Vasquez paper Theorem 4.1 Step 2 lemma\"}",
+        "read {\"docId\":\"vasquez-colourings#2\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain the answer. While they mention 'Step 2' in the proof of Theorem 3.1 (not Theorem 4.1"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain the answer. While they mention 'Step 2' in the proof of Theorem 3.1 (not Theorem 4.1) and reference 'Lemma 2.1' in Step 1, they do not specify which lemma is applied in Step 2 of Theorem 4.1.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "825c33c9",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Vasquez paper Theorem 4.1 Step 2 lemma\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 252,
+            "completionTokens": 25,
+            "cachedTokens": 0,
+            "promptMs": 6556.801
+          }
+        },
+        {
+          "input": "d6375ddc",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"vasquez-colourings#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 465,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 11908.064
+          }
+        },
+        {
+          "input": "50b167cb",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain the answer. While they mention 'Step 2' in the proof of Theorem 3.1 (not Theorem 4.1) and reference 'Lemma 2.1' in Step 1, they do not specify which lemma is applied in Step 2 of Theorem 4.1.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 994,
+            "completionTokens": 90,
+            "cachedTokens": 0,
+            "promptMs": 25298.68
+          }
+        }
+      ]
+    }
+  ]
+}
