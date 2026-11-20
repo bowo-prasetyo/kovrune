@@ -166,7 +166,7 @@ const LAB_FLOOR = { documentRecall: 0.976, passageRecall: 0.945, complete: 39 };
 // documents near its topics added (eval/harness/distractors.ts), search still has to find what it
 // finds now. Over seeds 1 to 5 the figures are 90.9–93.5% and 89.9–91%, 67 to 69 tasks, so a change
 // that falls below the floors of seed 1 loses ground to a larger library, not to chance in the seed.
-describe("chemical names in search (harness 0.94.0)", () => {
+describe("chemical names in search (harness 0.97.0)", () => {
   it("finds a chemistry paper by a chemist's other spelling of a reagent, solvent or catalyst", async () => {
     // Measured before the dictionary was written: every spelling the papers use found its paper among the first
     // three results, and 13 of these 30 did not (eval/chem/README.md). The dictionary was written with these in

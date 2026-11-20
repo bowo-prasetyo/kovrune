@@ -15,6 +15,7 @@
 // and the questions over computer science papers as --suites cs,csholdout (eval/cs/tasks.ts),
 // the questions over engineering documents as --suites engineering,engineeringholdout (eval/engineering/tasks.ts),
 // the questions over physics documents as --suites physics,physicsholdout (eval/physics/tasks.ts),
+// and the questions over mathematics documents as --suites math,mathholdout (eval/math/tasks.ts).
 // and the questions over chemistry papers as --suites chem,chemholdout (eval/chem/tasks.ts).
 //
 // The model server's prompt cache is off (cache_prompt: false, eval/harness/request.ts), so a task's

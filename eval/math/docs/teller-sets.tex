@@ -1,0 +1,181 @@
+% A made-up paper for Kovrune's mathematics suite (eval/math/README.md). Its objects, results and
+% references are invented; it is written as an arXiv combinatorics paper is: amsart, amsthm with the
+% paper's own environment names, aliascnt and cleveref, equations numbered within sections, an open
+% question with a counter of its own, and an appendix set with the appendix package.
+\documentclass[11pt]{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{aliascnt}
+\usepackage[toc,page]{appendix}
+\usepackage{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+
+\newtheorem{thm}{Theorem}[section]
+\newaliascnt{lem}{thm}
+\newtheorem{lem}[lem]{Lemma}
+\aliascntresetthe{lem}
+\newaliascnt{prop}{thm}
+\newtheorem{prop}[prop]{Proposition}
+\aliascntresetthe{prop}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{conj}[thm]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{question}{Question}
+\crefname{lem}{Lemma}{Lemmas}
+\crefname{prop}{Proposition}{Propositions}
+
+\numberwithin{equation}{section}
+
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Z}{\mathbb{Z}}
+\DeclareMathOperator{\slr}{slr}
+
+\begin{document}
+
+\title{Teller sets in finite abelian groups}
+\author{Ines Marlow}
+\author{Kwame Odum}
+
+\begin{abstract}
+A subset of an abelian group is a Teller set if it contains no four distinct elements $a, b, c, d$ with $a + b + c = 3d$. We prove that a Teller set in $\Z/p\Z$, for a prime $p \geq 7$, has at most $p/4 + 3$ elements, and that a Teller set in $\F_5^n$ has at most $4.6812^n$ elements for every $n \geq 3$. The second bound improves the bound $4.8100^n$ of Kessler. We conjecture that the first bound is far from sharp: the largest Teller set in $\Z/p\Z$ should have $(1/5 + o(1))p$ elements.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}\label{sec:intro}
+
+Sets without solutions to a linear equation are a central topic of additive combinatorics. Sets without three-term arithmetic progressions, the solutions of $a + b = 2c$, have been studied for almost a century. In this paper we study the equation in four variables
+\begin{equation}\label{eq:teller}
+a + b + c = 3d,
+\end{equation}
+whose solutions with $a, b, c, d$ distinct we call Teller quadruples, after the problem session at which the question was first raised. A set without Teller quadruples is a Teller set (\cref{def:teller}), and $\tau(G)$ is the largest size of a Teller set in a finite abelian group $G$.
+
+Our first result bounds Teller sets in cyclic groups of prime order.
+
+\begin{thm}[Main Theorem]\label{thm:main}
+Let $p \geq 7$ be a prime. Every Teller set $A \subseteq \Z/p\Z$ satisfies $|A| \leq p/4 + 3$.
+\end{thm}
+
+Our second result concerns the vector spaces $\F_5^n$, where the polynomial method applies.
+
+\begin{thm}\label{thm:F5}
+For every $n \geq 3$, every Teller set in $\F_5^n$ has at most $4.6812^n$ elements.
+\end{thm}
+
+The previous best bound was $\tau(\F_5^n) \leq 4.8100^n$, due to Kessler~\cite{Kessler}. The two theorems combine to bound Teller sets in products.
+
+\begin{cor}\label{cor:product}
+For every $n \geq 3$ and every prime $p \geq 7$, we have $\tau(\Z/p\Z \times \F_5^n) \leq (p/4 + 3) \cdot 4.6812^n$.
+\end{cor}
+
+We do not believe that \cref{thm:main} is sharp. Random constructions and computer searches for $p < 200$ suggest the following.
+
+\begin{conj}\label{conj:fifth}
+As $p \to \infty$ over the primes, $\tau(\Z/p\Z) = (1/5 + o(1))\, p$.
+\end{conj}
+
+\Cref{thm:main} is proved in \cref{sec:proof} and \cref{thm:F5} in \cref{sec:slice}. \Cref{sec:prelim} collects the definitions and the Fourier-analytic facts we need, and \cref{app:numeric} proves a numerical estimate used in \cref{sec:slice}.
+
+\section{Preliminaries}\label{sec:prelim}
+
+\begin{defn}\label{def:teller}
+A subset $A$ of a finite abelian group $G$ is a \emph{Teller set} if there are no four distinct elements $a, b, c, d \in A$ with $a + b + c = 3d$. We write $\tau(G)$ for the largest size of a Teller set in $G$.
+\end{defn}
+
+When $3$ does not divide $|G|$, every coset of a subgroup meets a Teller set in a Teller set of that coset, which gives the following.
+
+\begin{lem}\label{lem:super}
+Let $G$ and $H$ be finite abelian groups whose orders are not divisible by $3$. Then $\tau(G \times H) \geq \tau(G)\, \tau(H)$.
+\end{lem}
+
+For a set $A \subseteq G$ we write $\widehat{1_A}(\chi) = \sum_{x \in A} \chi(x)$ for its Fourier coefficient at a character $\chi$. The number $N(A)$ of solutions of \eqref{eq:teller} with $a, b, c, d \in A$, distinct or not, is
+\begin{equation}\label{eq:count}
+N(A) = \frac{1}{|G|} \sum_{\chi} \widehat{1_A}(\chi)^3\, \overline{\widehat{1_A}(\chi^3)}.
+\end{equation}
+The trivial character contributes $|A|^4/|G|$ to \eqref{eq:count}, so a Teller set must have a large nontrivial coefficient.
+
+\begin{prop}\label{prop:fourier}
+Let $p \geq 7$ be a prime and let $A \subseteq \Z/p\Z$ be a Teller set with $|A| = \alpha p$. Then there is a nontrivial character $\chi$ with $|\widehat{1_A}(\chi)| \geq \alpha^2 p / 2$.
+\end{prop}
+
+\begin{proof}
+At most $6|A|^3$ solutions of \eqref{eq:teller} in $A$ have two equal entries, so \eqref{eq:count} and Parseval's identity give the claim.
+\end{proof}
+
+\section{Proof of \texorpdfstring{\cref{thm:main}}{Theorem 1.1}}\label{sec:proof}
+
+Throughout this section $p \geq 7$ is a prime and $A \subseteq \Z/p\Z$.
+
+\begin{lem}\label{lem:density}
+If $|A| > p/4 + 3$, then there is a nonzero $r \in \Z/p\Z$ with $|A \cap (A + r)| \geq |A|^2/(2p)$.
+\end{lem}
+
+\begin{proof}
+Average $|A \cap (A + r)|$ over the nonzero $r$ and apply \cref{prop:fourier}.
+\end{proof}
+
+\begin{lem}[Key Lemma]\label{lem:key}
+If there is a nonzero $r$ with $|A \cap (A + r)| \geq |A|^2/(2p)$ and $|A| > p/4 + 3$, then $A$ contains a Teller quadruple.
+\end{lem}
+
+\begin{proof}
+Let $B = A \cap (A + r)$. For $b \in B$, both $b$ and $b - r$ lie in $A$. Since $p - 1 > 5$, the map $b \mapsto 3b - 2r$ takes at most two values of $B$ outside $A - B$, and a count of the remaining pairs gives distinct $a, b, c, d \in A$ with $a + b + c = 3d$.
+\end{proof}
+
+\begin{prop}\label{prop:increment}
+If $A$ is a Teller set, then $A$ has density at most $1/4 + 3/p$ on some arithmetic progression of length at least $p/8$.
+\end{prop}
+
+\Cref{prop:increment} is not needed for \cref{thm:main}; we include it because it gives the structure of near-extremal sets.
+
+\begin{proof}[Proof of \cref{thm:main}]
+Suppose that $A$ is a Teller set with $|A| > p/4 + 3$. By \cref{lem:density} there is a nonzero $r$ with $|A \cap (A + r)| \geq |A|^2/(2p)$. By \cref{lem:key}, $A$ contains a Teller quadruple, a contradiction.
+\end{proof}
+
+\begin{rem}\label{rem:p5}
+The hypothesis $p \geq 7$ is used only in the proof of \cref{lem:key}, where we need $p - 1 > 5$. We do not know whether \cref{thm:main} holds for $p = 5$.
+\end{rem}
+
+\section{The slice rank bound}\label{sec:slice}
+
+For a Teller set $A \subseteq \F_5^n$ consider the function $T_A \colon A^4 \to \F_5$ that is $1$ on the quadruples $(a, b, c, d)$ with $a + b + c = 3d$ and $0$ elsewhere. On a Teller set, $T_A$ is supported on quadruples with two equal entries.
+
+\begin{prop}\label{prop:slice}
+For every $n \geq 1$, the slice rank of $T_A$ is at most $3 M_n$, where $M_n$ is the number of monomials $x_1^{e_1} \cdots x_n^{e_n}$ with $0 \leq e_i \leq 4$ and $e_1 + \cdots + e_n \leq 4n/5$.
+\end{prop}
+
+The number of monomials is estimated in \cref{app:numeric}:
+\begin{equation}\label{eq:monomials}
+M_n \leq \frac{4.6812^n}{3} \qquad (n \geq 3).
+\end{equation}
+
+\begin{proof}[Proof of \cref{thm:F5}]
+A function supported on quadruples with two equal entries has slice rank at least $|A|$, so $|A| \leq \slr(T_A) \leq 3 M_n$ by \cref{prop:slice}. By \eqref{eq:monomials}, which is \cref{lem:numeric}, $|A| \leq 4.6812^n$.
+\end{proof}
+
+The constant $4.6812$ is the best the slice rank method gives for \eqref{eq:teller}; going below it needs another idea. We end with a question we could not answer.
+
+\begin{question}\label{q:mono}
+Is the sequence $\tau(\F_5^n)^{1/n}$ increasing in $n$?
+\end{question}
+
+We expect a positive answer to \cref{q:mono}, but we have no proof.
+
+\begin{appendix}
+\section{A numerical estimate}\label{app:numeric}
+
+\begin{lem}\label{lem:numeric}
+For every $n \geq 3$, the number $M_n$ of \cref{prop:slice} satisfies $M_n \leq 4.6812^n / 3$.
+\end{lem}
+
+\begin{proof}
+For $3 \leq n \leq 40$ we computed $M_n$ exactly by computer. For $n > 40$, a saddle-point estimate of the coefficients of $(1 + x + x^2 + x^3 + x^4)^n$ bounds $M_n$ by $4.6811^n$, which is less than $4.6812^n/3$ for $n > 40$.
+\end{proof}
+\end{appendix}
+
+\begin{thebibliography}{1}
+\bibitem{Kessler} R.~Kessler, \emph{Four-term equations in vector spaces over small fields}, J. Comb. Algebra \textbf{12} (2019), 211--240.
+\end{thebibliography}
+
+\end{document}

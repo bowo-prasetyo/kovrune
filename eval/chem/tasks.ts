@@ -1,4 +1,4 @@
-// Questions over chemistry papers (harness 0.94.0): the kind of document a chemistry researcher brings, which no
+// Questions over chemistry papers (harness 0.97.0): the kind of document a chemistry researcher brings, which no
 // other suite holds. The field suite's documents are Wikipedia leads, a licence and the app's own documentation;
 // the clinical suite's are trial reports; the CS suite's are machine learning papers; the lab suite's are bench
 // biology papers; the engineering and physics suites' are made-up datasheets, reports and papers. None has a

@@ -1230,11 +1230,128 @@ What changed:
 - Only the solvents and substituents listed are known, and only metals are compared by element: a non-metal swapped in a name ("chloro" for "bromo") is left to the share of shared words.
 - Structures drawn with `\chemfig` and in images, and structures given as SMILES or InChI, are not read.
 
-### Chemistry suite and chemical names in search (0.94.0)
+### Mathematics: theorem-like statements, numbered as amsthm numbers them (0.94.0, defect fix)
+
+An audit from a mathematician's point of view ([`docs/math-audit.md`](../../docs/math-audit.md)) ran the LaTeX converter (`src/documents/latex.ts`) on the sources of 48 recent arXiv mathematics papers, six each from math.AG, AP, CO, DG, GT, NT, PR and RT. It found two defects in how it read theorems, lemmas and the other statements a paper numbers (M1 and M2), and the 0.94.0 converter fixes both.
+
+**Statements under the paper's own names lost their heading.** The converter wrote a heading for ten fixed environment names (`theorem`, `lemma`, …, `claim`) and dropped `\newtheorem`. Most papers declare their own: `\newtheorem{thm}{Theorem}[section]`, `\newtheorem{conj}[thm]{Conjecture}`. In 37 of the 48 papers, 507 statements read as plain paragraphs, among them 23 conjectures, which then read as facts. arXiv 2611.24215 states a conjecture that read "For χ = 1 (the trivial character), there is an isomorphism …".
+
+**No statement was numbered, and a reference to one gave its section's number.** A `\label` in a statement fell through to the section around it, so `Lemma~\ref{lem:key}` read "Lemma 3" for the PDF's "Lemma 3.2", and `\cref{thm:main}` read "Section 2". In arXiv 2611.23874, "we prove Theorem 1.2 … we prove Theorem 1.4" read "we prove Theorem 1 … we prove Theorem 1".
+
+| The source says | Read before | Read now |
+| --- | --- | --- |
+| `\newtheorem{lem}[thm]{Lemma}` … `\begin{lem}[Key Lemma]\label{lem:key}` in Section 3 | (no heading) | Lemma 3.2 (Key Lemma). |
+| `\newtheorem{conj}[thm]{Conjecture}` … `\begin{conj}` | (no heading) | Conjecture 1.4. |
+| `\begin{proof}[Proof of Theorem~\ref{thm:main}]` | Proof (Proof of Theorem 1). | Proof of Theorem 1.1. |
+| `By \cref{lem:density} and Lemma~\ref{lem:key}` | By Section 3 and Lemma 3 | By Lemma 3.1 and Lemma 3.2 |
+| `\newaliascnt{lem}{thm}\newtheorem{lem}[lem]{Lemma}` (aliascnt, for cleveref) | (no heading) | lemmas numbered with theorems |
+| `\declaretheorem[sibling=theorem]{lemma}`, `[numbered=no]` (thmtools) | Lemma. | Lemma 3.3., Remark. |
+| `\declaretheorem{main}` with `\renewcommand{\themain}{\Alph{main}}` | (no heading) | Theorem A. |
+| `\numberwithin{equation}{section}`, `\eqref{eq:count}` | (2) | (2.1) |
+| `\begin{equation}\tag{H2}\label{H2}`, `\eqref{H2}` | … (3), and (3) | … (H2), and (H2) |
+| `\begin{appendix}\section{…}` (the appendix package) | ## 4 …, Lemma 4 | ## A …, Lemma A.1 |
+| `\section{Proof of \texorpdfstring{\cref{thm:main}}{Theorem 1.1}}` | Proof of Section 3Theorem 1.1 | Proof of Theorem 1.1 |
+| an `amsbook` with `\numberwithin{thm}{section}` | (no heading), "Theorem 4" | Theorem 4.4.19, chapter, section, number |
+
+What changed (`statementSetup`, `numberStatements`):
+- **Declarations are read before they are dropped**, from the paper and its style files, in order: `\newtheorem{env}{Name}[within]`, `\newtheorem{env}[shared]{Name}`, `\newtheorem*`, llncs's `\spnewtheorem` in the same forms, thmtools's `\declaretheorem` (`name`, `numberwithin`, `sibling`, `numbered=no`), aliascnt's `\newaliascnt`, and `\numberwithin` for statements and equations. A counter's `\the…` macro, when it is only counters and text (`\Alph{main}`, a fixed "A"), says how it prints.
+- **One pass numbers statements and equations in document order**, with the sections, as amsthm and LaTeX do: a counter declared `[section]` restarts at each section, a shared counter runs on across the environments that share it, equations included, a starred section does not count, the appendix letters sections (chapters in a book), and a book's sections print with their chapter. A `\tag` is an equation's number without stepping the counter.
+- **A statement reads "Theorem 2.3 (Title).", a proof given a title reads as its title ("Proof of Theorem 2.3."), and a reference to a statement gives its number, with its printed name for `\cref` and `\autoref`.** A standard name no declaration covers, from the document class, keeps its heading unnumbered as before, and `conjecture`, `problem`, `question`, `hypothesis`, `notation`, `fact` and `observation` join the standard names.
+- Two fixes found on the way: `\begin{appendix}`, `appendices` and `subappendices` are read as `\appendix`, and `\texorpdfstring{TeX}{bookmark}` keeps its TeX only.
+
+**Measured against the PDFs.** For each of the 48 papers, every statement heading and every reference to a statement ("by Lemma 3.2") the converted text writes was looked for, with its number, in the paper's own PDF as pdf.js reads it:
+
+| | Before | After |
+| --- | --- | --- |
+| Statement headings written | 1,165 | 1,671 |
+| …with a number that the PDF has | 0 | 1,514 of 1,518 |
+| Conjectures with their heading | 0 | 18, in 12 papers |
+| References to statements whose number the PDF has | 2,171 of 3,239 (67%) | 3,385 of 3,403 (99.5%) |
+| Time to convert the 48 sources | 1.43 s | 1.53 s |
+
+The four headings still wrong are in one paper that declares an environment named `algorithm`, which the converter takes for a float, so its counter misses a step. The 18 references still missing have several causes, none common: that paper's three references to its Theorem 4.13, citation notes naming another paper's statement ("[10, Remark 3.2]"), which the check counts though they are not references, and a few references printed with another name than the PDF gives them.
+
+**Effect on recorded runs: none.** No committed document declares a theorem-like statement, tags an equation, numbers equations within sections or sets an appendix environment: the three physics papers, the only LaTeX in any suite before this one, convert to exactly the same text. So no recorded answer can change, and none was re-scored. The effect on answers is measured by the new mathematics suite ([eval/math](../math/README.md)), which needs the fix: 10 of its 31 answerable questions name a numbered statement of one of its LaTeX papers or ask for one's number, and 3 more ask whether a statement there is proved.
+
+`tests/latex.test.ts` ("theorem-like statements, numbered as amsthm numbers them") fails on all seven of its tests before the change and passes after.
+
+**Limits:**
+- Statements built from other environments (`\newenvironment{mythm}{\begin{thm}}{\end{thm}}`), thmtools's `restatable`, numbers set by hand (`\setcounter`), and a counter's `\the…` macro that does more than print counters, keep the default number, which may differ from the PDF's.
+- An environment named like a float (`algorithm`, `figure`) is read as the float.
+- A section's own heading in a book is still numbered without its chapter ("## 2 B" for the PDF's "1.2 B"), as before; statements in it print the chapter.
+- Labels inside a statement's list items get the statement's number, not the item's.
+
+### Quotes of math in any common form (0.95.0, defect fix)
+
+The mathematics suite's first runs ([eval/math](../math/README.md#results)) failed six right answers on the quote check (ma02, ma03, ma04, ma05, ma07, ma15), the audit's M4 ([`docs/math-audit.md`](../../docs/math-audit.md)). The converter keeps a paper's inline math as LaTeX, and the model quoted it in another form, seldom inside dollar signs, mixing LaTeX it copied with ASCII and Unicode it typed:
+
+| The source says | The model quoted | Before | After |
+| --- | --- | --- | --- |
+| `Let $p \geq 7$ be a prime. Every Teller set $A \subseteq \mathbb{Z}/p\mathbb{Z}$ …` | Let p >= 7 be a prime. Every Teller set A \subseteq \mathbb{Z}/p\mathbb{Z} … | not found | found |
+| `$|A \cap (A + r)| \geq |A|^2/(2p)$` | \|A ∩ (A + r)\| ≥ \|A\|^2/(2p) | not found | found |
+| `V \geq 0 \quad \text{and} \quad V \in L^{d/(2s)}(\mathbb{R}^d), (H1)` | V >= 0 and V in L^{d/(2s)}(R^d), (H1) | not found | found |
+| `\|V\|_{L^{d/(2s)}} < \frac{1}{8}. (H2)` | ‖V‖_{L^{d/(2s)}} < 1/8. (H2) | not found | found |
+| `… answer.` (blank line) `Question 1. Is the sequence $\tau(\mathbb{F}_5^n)^{1/n}$ …` | … answer.\\n\\nQuestion 1. Is the sequence τ(ℱ_5^n)^{1/n} … | not found | found |
+| `Let $p \geq 7$ be a prime` | Let p >= 5 / p > 7 / p ≤ 7 be a prime | not found | not found |
+| `$|A \cap (A + r)|`, `$\Re(s) > 1$`, `\frac{1}{8}` | \|A ∪ (A + r)\|, Im(s) > 1, Re(s) ≥ 1, 1/4 | not found | not found |
+
+The 0.91.0 and 0.92.0 comparisons did not reach these: the first reads math only inside dollar signs, and only when the quote has LaTeX or a Greek letter; the second drops "$" and "\\" but keeps the commands' names, so "geq" is not "≥".
+
+**What changed.** `mathMatchKey` (`src/documents/math.ts`) writes a text so that the common forms of a formula are one, and the quote check (`src/agent/evidence.ts`) tries it last, on both the quote and the source, when either has math in it (LaTeX, a script mark, ">=", or a Unicode math symbol, arrow or script). In it:
+- LaTeX commands are read as their symbols wherever they are, in or out of "$" (`\geq` is "≥", `\cap` "∩"), a wrapper as its argument (`\mathbb{Z}` is "Z", `\operatorname{Re}` "Re"), `\frac{a}{b}` as "a/b" and `\sqrt{x}` as "√x";
+- "$", braces, "^" and "_" are dropped, and NFKC then makes "²" "2" and "ℤ" "Z", so `$|A|^2$`, "|A|^2" and "|A|²" are one;
+- ASCII relations are their symbols (">=" is "≥", "->" "→"), "∈" reads as the word "in", "ℜ" and "ℑ" as "Re" and "Im", and the variant Greek letters (ϕ, ϵ, ϑ) as the usual ones;
+- spaces around relations, operators, brackets and punctuation are ignored, so "p/4 + 3" is "p/4+3";
+- a line break written out as "\\n" by the model's JSON is a break, not a command `\nQuestion`.
+
+Every number, relation, operator and letter is kept, so a quote with other math still fails. What the key loses: "x^2" and "x_2" are one, as are "x2"; a set's braces; and spacing. A quote that differs only in those is found.
+
+**Effect on recorded runs.** `bench:rescore`, run on each report on its own with the code of `main` and of this change, re-scores 9,632 answers in 142 reports (the other 39 files are side reports it cannot read, the same on both), 4,402 of them labelled **Quotes found** before and 4,411 after:
+- **No label is lost, and no answer stops passing.**
+- **Mathematics suite** (the 0.94.0 run on the 0.94.0 converter): six answers pass that failed (ma02, ma03, ma04, ma05, ma07, and held-out mah09); four of them gain **Quotes found**, all right. Two answers the scorer counts wrong gain it too: ma15, which gives assumption (H1)'s content, "V ≥ 0 and V ∈ L^{d/(2s)}", without naming it, and is right in substance; and held-out mah01, which is asked for the bound in Z/pZ × F₅ⁿ and quotes the bound in F₅ⁿ word for word, a real error. Re-scoring does not ask the model's own check again, which the app asks once a quote verifies. A model run of the suite on this change asked it: the model gave the same 24 open answers as at 0.94.0, the suite went from 11/24 and 5/10 to 16/24 and 6/10, and the model's check passed mah01, so held-out false reassurance on this suite rises from 0 of 4 to 1 of 5 ([suite](../math/README.md#quotes-of-math-in-any-common-form-0950)). The answer is off the question, which no quote check can see, but it is a rise, so adopting the change is the project owner's decision under the [rule for label changes](#rule-for-prompt-and-guard-changes). The 0.94.0 base run, recorded on the old converter's text, gains the same kinds of labels (ma05, held-out mah08, right; held-out mah01, wrong).
+- **Everywhere else, one task changes:** field f11 on Qwen3.5-2B, in 19 reports, now passes. Its quote of the design document, "… re-planned for the actual team (issue #36). ### M0 — Benchmark gate (2–3 weeks)", is real, and failed because the source has a line break inside the Markdown link "[issue\\n#36](…)", which the normalizer's link rule does not span; with spaces dropped around brackets, it does. The answer, "2–3 weeks", is right; it is too short to take the label, and does not.
+
+`tests/latex.test.ts` ("quotes of math in any common form") fails on its first two tests before the change and passes after; the third guards wrong quotes, which fail both before and after.
+
+**Limits:**
+- Most right mathematical answers whose quote verifies still do not take **Quotes found**: the sentence check finds few of their words in the quote, because the answer restates the question ("the smallness condition … on the potential V") around a formula the quote gives alone. That is the share of words the label rule asks for, not the reading of math, and is left as it is.
+- Commands the key does not know keep their names, so a quote writing `\Hom` as "Hom" matches, but one writing a paper's own macro by its meaning does not.
+
+### The question's formula, quoted "no" answers, and formulas, quantifiers and status (0.96.0)
+
+Three changes from the mathematics suite's 0.95.0 run ([eval/math](../math/README.md#results)) and the audit ([`docs/math-audit.md`](../../docs/math-audit.md), M3).
+
+**1. An answer about another formula than the question's is not labelled** (`formulaOffQuestion` in `src/agent/mathematics.ts`, `offQuestion` in `support.ts`). Held-out mah01 asks for the bound on Teller sets in Z/pZ × F₅ⁿ. The answer gives Theorem 1.2's bound in F₅ⁿ, quoted word for word; the model's check said yes and the cross-check agreed, so 0.95.0 labelled it **Quotes found**. Now, when a question names a formula that relates or combines things ("Z/pZ × F₅ⁿ", "s ≤ 1/2", "k = 3"), the answer or a verified quote must have it, compared as math (0.95.0's `mathMatchKey`, so "$\mathbb{Z}/p\mathbb{Z} \times \mathbb{F}_5^n$" counts). Otherwise the label is **Quotes found, answer not confirmed**, naming the formula, and the model's check is not asked. A formula naming one object ("F₅ⁿ") sets the scene and is not required: held-out mah08 asks whose bound "for Teller sets in F₅ⁿ" the paper improves, and its right answer's quote does not repeat it. Greek letters, underscores and slashes between longer words do not make a formula ("PPARα", "Q4_K_M", "CRISPR/Cas9"). Of the 420 questions in the suites, 21 name a formula (mathematics, physics and one CS question); 9 relate things, eight of them mathematics and cs04's "(α=0.1)".
+
+The completeness check (`completeness.ts`) asks the model the same, but it is limited to Qwen3.5-2B: on Qwen3.5-4B's recorded answers it took the label from 23 right answers to catch 1 wrong one. This check is code, needs no model call, and can be re-scored.
+
+**2. A "not found" answer that comes with quotes is asked about once** (`src/tools/research.ts`). The system prompt says a not-found answer gives no evidence, yet the model reported "not found" with the quote that answers the question when the answer is "no", "not proved" or "not known": ma01 ("No, the paper does not prove that …; it conjectures it"), ma11 and ma20 ("I(8) is not known; a search ruled out every N < 60"), in every math run. Across the recorded runs, 60 answers came this way: 23 to answerable questions and 37 right refusals. So the model is asked, not overruled: "If the passages you quoted answer the question, also when the answer is "no", "not proved" or "not known", set "found" to true and keep the quotes. If they do not answer it, keep "found" false and give no evidence."
+
+**3. Formulas, quantifiers and status the quotes state otherwise** (`mathBacked` in `mathematics.ts`), as the physics and chemistry opposites are read:
+- a formula no quote has, when a quote has one of the same shape, with relations, set operations, real and imaginary parts, extremes and numbers each standing for their kind: "φ(n) ≥ φ(m)" is not backed by "φ(n) ≤ φ(m)", "Re(s) ≥ 1" by "Re(s) > 1", "Im(s) > 1" by "Re(s) > 1", nor "O(n^{1/2} log n)" by "O(n^{3/2} log n)". Relations in words ("at least", "less than") are read as symbols first;
+- "every" or "for all" when the quotes say only "there exists", and the reverse;
+- "proves" when the quotes say only "conjectured", "open", "not known" or "no proof", and the reverse. A proof denied ("we have no proof") is not a proof.
+
+Of the audit's nine wrong sentences, five are now marked (the changed bound, as before, and the flipped inequality, the changed exponent, strict for non-strict, Im for Re), against one; the right paraphrase stays backed. Still passed: a dropped hypothesis; a conjecture called proved when the quote leaves out its "Conjecture" heading; "O(n³ log n)" for "O(n^{3/2} log n)", another shape whose "3" the quote has; and a quantifier swapped where the quote states both "there exists" and "every".
+
+**Effect on recorded runs.** `bench:rescore`, each report on its own, with the code of `main` and of this change: 9,666 answers in 143 reports. **The only change is mah01, which loses its wrong label in the three reports that had it.** No right answer loses its label, and no recorded sentence is marked by the formula, quantifier or status rules. A first version also took the label from two right answers, mah08 (a question formula naming only the setting) and ma07 (a quote's "we have no proof" read as "proved"); both were fixed before these figures.
+
+**Model runs** (Qwen3.5-4B, the suite's setup):
+- **The nine tasks** whose recorded 4B answers were "not found" with quotes (five unanswerable, four answerable, three of those held out), on `main` and on this change: the same tasks pass on both, and every refusal stays a refusal. The question was asked once, in held-out h03, where the model kept "not found" and dropped its quote. In the other tasks the model did not answer "not found" with quotes this time. Reports: `eval/results/quoted-notfound-0.95-base-qwen3.5-4b-q4km.json`, `quoted-notfound-0.96-qwen3.5-4b-q4km.json`.
+- **The mathematics suite:** 19/24 and 6/10, from 16/24 and 6/10 at 0.95.0. ma01, ma11 and ma20 pass: in each the question was asked, and the model reported its quoted "no" or "not known" as found. Labelled and wrong: 1 of 10 open (ma15, right in substance, which names (H1) only by its content) and **0 of 4 held out**, against 1 of 5 at 0.95.0: mah01 is no longer labelled. Report: `eval/results/math-0.96-qwen3.5-4b-q4km.json`, re-scored with the final code (the run started before the two fixes above, which change only labels).
+
+`tests/support.test.ts` ("mathematics: the question's formula, formulas, quantifiers and status") and `tests/guards.test.ts` ("a not-found answer with quotes") fail before the change and pass after.
+
+**Limits:**
+- Change 2 is a prompt the model reads only in that case, so it costs one model call there, and was measured on 34 + 9 tasks, not on every suite. The 37 recorded right refusals with quotes did not recur on these runs except once, so how often a refusal turns into an answer is not measured beyond that.
+- Change 1 looks only for formulas, so an answer about another *thing* named in words ("the second bound" for "the first") is still left to the model's checks.
+- The status rule needs the words in the quote or the title: a quote of a conjecture without its heading says nothing of its status.
+
+### Chemistry suite and chemical names in search (0.97.0)
 
 Recommendations 3 and 4 of the chemistry researcher's audit (0.93.0, above). **A chemistry suite**, `chem` (40 questions) and `chemholdout` (12), over eight CC BY 4.0 papers from Europe PMC: two nickel-catalysed couplings, an enantioselective propargylation, two photoredox papers and a photocatalyst study, a copper CO₂ electrocatalyst, iron porphyrins and a computational frustrated Lewis pair. The questions ask for units (mol% and equiv, ppm and Hz, ns and µs, a potential and its reference electrode), one entry of a screening table, names a character apart, stereochemistry, directions, negatives and aliases ([chemistry suite](../chem/README.md)).
 
-**Chemical names in search** (`src/tools/chemical-names.ts`): a built-in list of 161 solvents, bases, acids, reagents, catalysts, small molecules, techniques and metals, each with its spellings. A query naming one also searches the others, on the query side only, as the gene-name forms of 0.87.0. Before it, 13 of 30 spellings a chemist might type found their paper among the first three results ("dichloromethane" for CH2Cl2, "Hünig's base", "tricyclohexylphosphine" for PCy3); with it, 30 of 30, though the list was written with these in view. `bench:retrieval` is unchanged on every other suite, the chemistry suite gains one complete task (45 to 46 of 49), and `bench:replay` finds no task of the protected suites that would make a different request; With Qwen3.5-4B the suite scores 33/40 and 12/12 held out, with 2B 22/40 and 10/12. On the tasks whose requests differ, the list gains 2 and loses none on 4B and gains 1 and loses 2 on 2B: no measurable effect on answers either way, so its case rests on search ([results](../chem/README.md#results-with-models-0940)).
+**Chemical names in search** (`src/tools/chemical-names.ts`): a built-in list of 161 solvents, bases, acids, reagents, catalysts, small molecules, techniques and metals, each with its spellings. A query naming one also searches the others, on the query side only, as the gene-name forms of 0.87.0. Before it, 13 of 30 spellings a chemist might type found their paper among the first three results ("dichloromethane" for CH2Cl2, "Hünig's base", "tricyclohexylphosphine" for PCy3); with it, 30 of 30, though the list was written with these in view. `bench:retrieval` is unchanged on every other suite, the chemistry suite gains one complete task (45 to 46 of 49), and `bench:replay` finds no task of the protected suites that would make a different request; With Qwen3.5-4B the suite scores 33/40 and 12/12 held out, with 2B 22/40 and 10/12. On the tasks whose requests differ, the list gains 2 and loses none on 4B and gains 1 and loses 2 on 2B: no measurable effect on answers either way, so its case rests on search ([results](../chem/README.md#results-with-models)).
 
 ## Results
 

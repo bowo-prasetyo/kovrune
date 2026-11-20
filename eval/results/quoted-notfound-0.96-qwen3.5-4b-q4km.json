@@ -1,0 +1,1332 @@
+{
+  "harnessVersion": "0.96.0",
+  "createdAt": "2026-11-20T01:46:26.480Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "extraBody": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "cache_prompt": false
+    }
+  },
+  "config": {
+    "suites": [
+      "field",
+      "holdout",
+      "multi",
+      "multiholdout",
+      "clinical",
+      "labholdout",
+      "unanswerable"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "f07-stop-shortcut",
+      "f42-fuji-last-eruption-en",
+      "c23-veg-hba1c",
+      "u01-tessel-employees",
+      "u07-advisory-cve",
+      "m04-stop-server",
+      "h03-4b-test-speed",
+      "lh04-ppara-mtdna-female",
+      "x08-tower-fuji-height"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 220.9,
+    "decodeTokensPerSecond": 0.7,
+    "maxResearchTaskMinutes": 104.6,
+    "minutesPerSource": 25.5
+  },
+  "field": {
+    "committedTasks": 89,
+    "localTasks": 0,
+    "localDocuments": 0
+  },
+  "summary": [
+    {
+      "suite": "unanswerable",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 2,
+      "successRate": 1,
+      "successInterval": [
+        0.342,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 2.2,
+      "prefillTokensPerSecond": 31.3,
+      "medianTaskSeconds": 118.5,
+      "maxPromptTokens": 689,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 3176,
+      "promptSeconds": 101.1,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "field",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 1,
+      "successRate": 0.5,
+      "successInterval": [
+        0.095,
+        0.905
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 3.4,
+      "prefillTokensPerSecond": 36.9,
+      "medianTaskSeconds": 268.2,
+      "maxPromptTokens": 2167,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 12819,
+      "promptSeconds": 346.7,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "holdout",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 0,
+      "successRate": 0,
+      "successInterval": [
+        0,
+        0.793
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.9,
+      "prefillTokensPerSecond": 43.9,
+      "medianTaskSeconds": 147.1,
+      "maxPromptTokens": 1388,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 4092,
+      "promptSeconds": 93,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "multi",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 0,
+      "successRate": 0,
+      "successInterval": [
+        0,
+        0.793
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 8,
+      "prefillTokensPerSecond": 43.5,
+      "medianTaskSeconds": 112.6,
+      "maxPromptTokens": 1270,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 2859,
+      "promptSeconds": 65.3,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "multiholdout",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.6,
+      "prefillTokensPerSecond": 43.7,
+      "medianTaskSeconds": 163,
+      "maxPromptTokens": 1800,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 5147,
+      "promptSeconds": 117.2,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "clinical",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.3,
+      "prefillTokensPerSecond": 44,
+      "medianTaskSeconds": 313.9,
+      "maxPromptTokens": 2847,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 12370,
+      "promptSeconds": 280.8,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "labholdout",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 0,
+      "successRate": 0,
+      "successInterval": [
+        0,
+        0.793
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 7.8,
+      "prefillTokensPerSecond": 42.7,
+      "medianTaskSeconds": 64.9,
+      "maxPromptTokens": 1076,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 2025,
+      "promptSeconds": 47.2,
+      "falseReassurance": {
+        "labelled": 0,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "unanswerable",
+      "taskId": "u01-tessel-employees",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 1779,
+      "completionTokens": 178,
+      "estimatedTokens": false,
+      "maxPromptTokens": 665,
+      "cachedTokens": 0,
+      "promptMs": 47149,
+      "objections": [
+        "About to conclude that the sources don't answer this; reading what the search found first"
+      ],
+      "modelMs": 69900,
+      "ttftMs": 47185,
+      "wallMs": 69975,
+      "actions": [
+        "search {\"query\":\"Tessel Foundation employees number staff\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The provided documents do not contain information about the number of employees at the Tessel Foundation. They ",
+        "read {\"docId\":\"tessel-governance\"}",
+        "final_answer {\"found\":false,\"answer\":\"The document 'tessel-governance' does not state the number of employees at the Tessel Foundation. It mentions a steering c"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The document 'tessel-governance' does not state the number of employees at the Tessel Foundation. It mentions a steering committee of five members and a private security team, but does not provide a total employee count.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "19b986d9",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Tessel Foundation employees number staff\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 239,
+            "completionTokens": 17,
+            "cachedTokens": 0,
+            "promptMs": 5744.072
+          }
+        },
+        {
+          "input": "863e595a",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain information about the number of employees at the Tessel Foundation. They mention Harrow Labs has 40 employees and that Ana Lindqvist joined the Tessel Foundation in 2023, but no employee count for the Tessel Foundation itself is given.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 376,
+            "completionTokens": 79,
+            "cachedTokens": 0,
+            "promptMs": 8819.961
+          }
+        },
+        {
+          "input": "6edbf3cc",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"tessel-governance\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 499,
+            "completionTokens": 17,
+            "cachedTokens": 0,
+            "promptMs": 11846.648
+          }
+        },
+        {
+          "input": "f4f442b7",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The document 'tessel-governance' does not state the number of employees at the Tessel Foundation. It mentions a steering committee of five members and a private security team, but does not provide a total employee count.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 665,
+            "completionTokens": 65,
+            "cachedTokens": 0,
+            "promptMs": 20737.809
+          }
+        }
+      ]
+    },
+    {
+      "suite": "unanswerable",
+      "taskId": "u07-advisory-cve",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1397,
+      "completionTokens": 123,
+      "estimatedTokens": false,
+      "maxPromptTokens": 689,
+      "cachedTokens": 0,
+      "promptMs": 53912,
+      "modelMs": 167100,
+      "ttftMs": 54155,
+      "wallMs": 167109,
+      "actions": [
+        "search {\"query\":\"LumenDB advisory LSA-2024-07 CVE\"}",
+        "read {\"docId\":\"lumen-advisory-2024-07\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain a CVE identifier for LumenDB advisory LSA-2024-07. The advisory document lists the a"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain a CVE identifier for LumenDB advisory LSA-2024-07. The advisory document lists the advisory ID as LSA-2024-07 but does not mention a corresponding CVE number.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "f42e842d",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"LumenDB advisory LSA-2024-07 CVE\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 250,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 6115.758
+          }
+        },
+        {
+          "input": "6f30f35f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"lumen-advisory-2024-07\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 458,
+            "completionTokens": 25,
+            "cachedTokens": 0,
+            "promptMs": 14926.331
+          }
+        },
+        {
+          "input": "09a167da",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain a CVE identifier for LumenDB advisory LSA-2024-07. The advisory document lists the advisory ID as LSA-2024-07 but does not mention a corresponding CVE number.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 689,
+            "completionTokens": 72,
+            "cachedTokens": 0,
+            "promptMs": 32870.071
+          }
+        }
+      ]
+    },
+    {
+      "suite": "field",
+      "taskId": "f07-stop-shortcut",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2032,
+      "completionTokens": 103,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1138,
+      "cachedTokens": 0,
+      "promptMs": 103561,
+      "modelMs": 177763,
+      "ttftMs": 103868,
+      "wallMs": 222255,
+      "actions": [
+        "search {\"query\":\"Kovrune keyboard shortcut stop running question\"}",
+        "read {\"docId\":\"kovrune-user-guide#6\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about a specific keyboard shortcut to stop a running question in Kovrune"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about a specific keyboard shortcut to stop a running question in Kovrune. They only mention that 'Stop' ends the run at any time, but do not specify the key combination.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "8a32ac96",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Kovrune keyboard shortcut stop running question\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 241,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 15397.911
+          }
+        },
+        {
+          "input": "b2129927",
+          "output": "Kovrune 键盘快捷键停止运行问题",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 48,
+            "completionTokens": 11,
+            "cachedTokens": 0,
+            "promptMs": 7575.889
+          }
+        },
+        {
+          "input": "7b0907ad",
+          "output": "Kovrune キーボードショートカット停止実行質問",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 48,
+            "completionTokens": 13,
+            "cachedTokens": 0,
+            "promptMs": 8429.043
+          }
+        },
+        {
+          "input": "c65b017e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kovrune-user-guide#6\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 653,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 35608.626
+          }
+        },
+        {
+          "input": "c8278287",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain information about a specific keyboard shortcut to stop a running question in Kovrune. They only mention that 'Stop' ends the run at any time, but do not specify the key combination.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1138,
+            "completionTokens": 64,
+            "cachedTokens": 0,
+            "promptMs": 52554.205
+          }
+        }
+      ]
+    },
+    {
+      "suite": "field",
+      "taskId": "f42-fuji-last-eruption-en",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 10787,
+      "completionTokens": 263,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2167,
+      "cachedTokens": 0,
+      "promptMs": 243172,
+      "modelMs": 278651,
+      "ttftMs": 243854,
+      "wallMs": 314088,
+      "actions": [
+        "search {\"query\":\"Mount Fuji last erupt year\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "search {\"query\":\"Mount Fuji last eruption year 1952\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "search {\"query\":\"Mount Fuji last eruption year 1952 1970\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"1952\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"その後、1952年（昭和27年）に特別名勝、2011年（平成23年）に史跡、さらに2013年（平成25年）6月22日には関連する"
+      ],
+      "final": "{\"found\":true,\"answer\":\"1952\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"その後、1952年（昭和27年）に特別名勝、2011年（平成23年）に史跡、さらに2013年（平成25年）6月22日には関連する文化財群とともに「富士山-信仰の対象と芸術の源泉」の名で世界文化遺産に登録された。\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "mount-fuji-ja-lead#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "",
+          "agrees": false,
+          "reply": "{\"answer\":\"\"}"
+        }
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "6b31a5fd",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Mount Fuji last erupt year\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 238,
+            "completionTokens": 16,
+            "cachedTokens": 0,
+            "promptMs": 5567.196
+          }
+        },
+        {
+          "input": "86e51735",
+          "output": "富士山最近一次喷发年份",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 44,
+            "completionTokens": 8,
+            "cachedTokens": 0,
+            "promptMs": 1446.516
+          }
+        },
+        {
+          "input": "1a3420a7",
+          "output": "富士山 最後の噴火年",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 44,
+            "completionTokens": 8,
+            "cachedTokens": 0,
+            "promptMs": 1568.274
+          }
+        },
+        {
+          "input": "c17d93ab",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 629,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 14588.709
+          }
+        },
+        {
+          "input": "3dc6184d",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Mount Fuji last eruption year 1952\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 823,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 18815.244
+          }
+        },
+        {
+          "input": "beccd5e6",
+          "output": "富士山 1952 年 最后一次喷发",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 49,
+            "completionTokens": 14,
+            "cachedTokens": 0,
+            "promptMs": 1574.278
+          }
+        },
+        {
+          "input": "2c1ea79c",
+          "output": "富士山 最後の噴火年 1952",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 49,
+            "completionTokens": 13,
+            "cachedTokens": 0,
+            "promptMs": 1497.492
+          }
+        },
+        {
+          "input": "e82de805",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1215,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 26989.436
+          }
+        },
+        {
+          "input": "71b7e81f",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Mount Fuji last eruption year 1952 1970\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1603,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 35923.29
+          }
+        },
+        {
+          "input": "93d4a435",
+          "output": "富士山最近一次喷发年份 1952 年 1970 年",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 54,
+            "completionTokens": 22,
+            "cachedTokens": 0,
+            "promptMs": 1681.147
+          }
+        },
+        {
+          "input": "a5fddffb",
+          "output": "富士山 最後の噴火年 1952 1970",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 54,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 1695.642
+          }
+        },
+        {
+          "input": "ca14e49a",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2013,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 44436.045
+          }
+        },
+        {
+          "input": "62afa58c",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2099,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 46966.584
+          }
+        },
+        {
+          "input": "6cb2fffb",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"1952\",\"evidence\":[{\"docId\":\"mount-fuji-ja-lead#2\",\"quote\":\"その後、1952年（昭和27年）に特別名勝、2011年（平成23年）に史跡、さらに2013年（平成25年）6月22日には関連する文化財群とともに「富士山-信仰の対象と芸術の源泉」の名で世界文化遺産に登録された。\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2167,
+            "completionTokens": 116,
+            "cachedTokens": 0,
+            "promptMs": 49886.247
+          }
+        },
+        {
+          "input": "75f0365d",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 333,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 7649.662
+          }
+        },
+        {
+          "input": "1ea2e129",
+          "output": "{\"answer\":\"\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 270,
+            "completionTokens": 5,
+            "cachedTokens": 0,
+            "promptMs": 6267.491
+          }
+        }
+      ]
+    },
+    {
+      "suite": "holdout",
+      "taskId": "h03-4b-test-speed",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4092,
+      "completionTokens": 353,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1388,
+      "cachedTokens": 0,
+      "promptMs": 92976,
+      "objections": [
+        "About to conclude that the sources don't answer this; reading what the search found first",
+        "Concluded that the sources don't answer this, but quoted them; asking whether the quotes answer it"
+      ],
+      "modelMs": 137926,
+      "ttftMs": 93263,
+      "wallMs": 147136,
+      "actions": [
+        "search {\"query\":\"Qwen3.5-4B model test speed 8 GB memory Intel graphics\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The provided documents do not contain information about the model test speed of Qwen3.5-4B on a laptop with 8 G",
+        "read {\"docId\":\"kovrune-user-guide#2\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The provided documents do not contain information about the specific model test speed of Qwen3.5-4B on a laptop",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about the specific model test speed of Qwen3.5-4B on a laptop with 8 GB "
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about the specific model test speed of Qwen3.5-4B on a laptop with 8 GB of memory and integrated Intel graphics. The document mentions that the model test generally takes about a minute on suitable hardware, but it does not provide specific performance metrics for this exact configuration or model version.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "fa59b0ec",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Qwen3.5-4B model test speed 8 GB memory Intel graphics\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 259,
+            "completionTokens": 28,
+            "cachedTokens": 0,
+            "promptMs": 6262.809
+          }
+        },
+        {
+          "input": "f5998868",
+          "output": "Qwen3.5-4B 模型测试速度 8GB 内存 Intel 显卡",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 56,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 1708.176
+          }
+        },
+        {
+          "input": "9c26dfea",
+          "output": "Qwen3.5-4B モデルのテスト速度 8GB メモリ Intel グラフィックス",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 56,
+            "completionTokens": 25,
+            "cachedTokens": 0,
+            "promptMs": 1698.756
+          }
+        },
+        {
+          "input": "54099e2d",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain information about the model test speed of Qwen3.5-4B on a laptop with 8 GB of memory and integrated Intel graphics. The search results mention Qwen3.5-4B in the context of browser compatibility and a quality pass, but no performance metrics or test speeds are available.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 564,
+            "completionTokens": 88,
+            "cachedTokens": 0,
+            "promptMs": 12724.886
+          }
+        },
+        {
+          "input": "8b638107",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kovrune-user-guide#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 696,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 16227.52
+          }
+        },
+        {
+          "input": "3fc8c027",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain information about the specific model test speed of Qwen3.5-4B on a laptop with 8 GB of memory and integrated Intel graphics. The document mentions that the model test generally takes about a minute on suitable hardware, but it does not provide specific performance metrics for this exact configuration or model version.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#2\",\"quote\":\"Either way, the next step tests the model, which takes about a minute on suitable hardware, and your choice is saved in the browser.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1185,
+            "completionTokens": 130,
+            "cachedTokens": 0,
+            "promptMs": 26337.576
+          }
+        },
+        {
+          "input": "df92be5c",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain information about the specific model test speed of Qwen3.5-4B on a laptop with 8 GB of memory and integrated Intel graphics. The document mentions that the model test generally takes about a minute on suitable hardware, but it does not provide specific performance metrics for this exact configuration or model version.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1388,
+            "completionTokens": 88,
+            "cachedTokens": 0,
+            "promptMs": 31422.369
+          }
+        }
+      ]
+    },
+    {
+      "suite": "multi",
+      "taskId": "m04-stop-server",
+      "kind": "multi-hop",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": false,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2859,
+      "completionTokens": 313,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1270,
+      "cachedTokens": 0,
+      "promptMs": 65305,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 104967,
+      "ttftMs": 65653,
+      "wallMs": 112575,
+      "actions": [
+        "search {\"query\":\"llama-server blocking port 8080 stop keys terminal\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. To stop llama-serv",
+        "read {\"docId\":\"kovrune-user-guide#10\"}",
+        "final_answer {\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. The provided document does no"
+      ],
+      "final": "{\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. The provided document does not contain information about which keys stop llama-server in its own terminal when switching models.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#10\",\"quote\":\"`ss -ltnp \\\\| grep 8080` shows it; stop it with `pkill -x llama-server`, or start on another port (`--port 8081`) and use that address in the app\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kovrune-user-guide#10",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "1774f6d7",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"llama-server blocking port 8080 stop keys terminal\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 267,
+            "completionTokens": 24,
+            "cachedTokens": 0,
+            "promptMs": 6317.532
+          }
+        },
+        {
+          "input": "630e785a",
+          "output": "llama-server 阻塞端口 8080 停止键终端",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 52,
+            "completionTokens": 16,
+            "cachedTokens": 0,
+            "promptMs": 1580.441
+          }
+        },
+        {
+          "input": "98aa89d0",
+          "output": "llama-server 8080 ポートブロック停止 キーターミナル",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 52,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 1709.733
+          }
+        },
+        {
+          "input": "09047e37",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. To stop llama-server in its own terminal when switching models, the keys are `Ctrl+C` and `Ctrl+D`.\", \"evidence\":[{\"docId\":\"kovrune-user-guide#10\",\"quote\":\"`ss -ltnp \\\\| grep 8080` shows it; stop it with `pkill -x llama-server`, or start on another port (`--port 8081`) and use that address in the app […]\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 564,
+            "completionTokens": 138,
+            "cachedTokens": 0,
+            "promptMs": 13178.022
+          }
+        },
+        {
+          "input": "7b02b844",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kovrune-user-guide#10\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 758,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 17425.261
+          }
+        },
+        {
+          "input": "7258e049",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"To stop the earlier llama-server blocking port 8080, use the command `pkill -x llama-server`. The provided document does not contain information about which keys stop llama-server in its own terminal when switching models.\",\"evidence\":[{\"docId\":\"kovrune-user-guide#10\",\"quote\":\"`ss -ltnp \\\\| grep 8080` shows it; stop it with `pkill -x llama-server`, or start on another port (`--port 8081`) and use that address in the app\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1270,
+            "completionTokens": 131,
+            "cachedTokens": 0,
+            "promptMs": 28383.964
+          }
+        }
+      ]
+    },
+    {
+      "suite": "multiholdout",
+      "taskId": "x08-tower-fuji-height",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5147,
+      "completionTokens": 247,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1800,
+      "cachedTokens": 0,
+      "promptMs": 117229,
+      "modelMs": 150222,
+      "ttftMs": 117725,
+      "wallMs": 163031,
+      "actions": [
+        "search {\"query\":\"Eiffel Tower antennas height metres Mount Fuji highest point metres\"}",
+        "read {\"docId\":\"mount-fuji-ja-lead#1\"}",
+        "search {\"query\":\"Eiffel Tower antennas height metres\"}",
+        "read {\"docId\":\"eiffel-tower-fr-lead\"}",
+        "final_answer {\"found\":true,\"answer\":\"The Eiffel Tower with its antennas is higher at 330 metres, compared to the highest point of Mount Fuji at 3776.12 metres. "
+      ],
+      "final": "{\"found\":true,\"answer\":\"The Eiffel Tower with its antennas is higher at 330 metres, compared to the highest point of Mount Fuji at 3776.12 metres. Therefore, Mount Fuji's highest point is higher.\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl] est une tour autoportante de fer puddlé de 330 m de hauteur (avec antennes) située à Paris...\"},{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"標高は3775.56 m、山体の最高地点は3776.12 mで\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "eiffel-tower-fr-lead",
+          "verified": true
+        },
+        {
+          "docId": "mount-fuji-ja-lead#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "d34553cc",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Eiffel Tower antennas height metres Mount Fuji highest point metres\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 255,
+            "completionTokens": 23,
+            "cachedTokens": 0,
+            "promptMs": 5781.643
+          }
+        },
+        {
+          "input": "a55e7573",
+          "output": "埃菲尔铁塔天线高度米 富士山最高点米",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 51,
+            "completionTokens": 12,
+            "cachedTokens": 0,
+            "promptMs": 1612.283
+          }
+        },
+        {
+          "input": "98109e6d",
+          "output": "エッフェル塔アンテナの高さメートル 富士山最高点の高度メートル",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 51,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 1730.074
+          }
+        },
+        {
+          "input": "d8a706cf",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"mount-fuji-ja-lead#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 686,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 16116.456
+          }
+        },
+        {
+          "input": "74b589d9",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Eiffel Tower antennas height metres\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1074,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 24731.125
+          }
+        },
+        {
+          "input": "db163286",
+          "output": "埃菲尔铁塔天线高度米",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 46,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 1549.338
+          }
+        },
+        {
+          "input": "90f0ac68",
+          "output": "エッフェル塔アンテナの高さメートル",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 46,
+            "completionTokens": 11,
+            "cachedTokens": 0,
+            "promptMs": 1524.867
+          }
+        },
+        {
+          "input": "93c146e9",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"eiffel-tower-fr-lead\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1332,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 30860.026
+          }
+        },
+        {
+          "input": "d5e21320",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The Eiffel Tower with its antennas is higher at 330 metres, compared to the highest point of Mount Fuji at 3776.12 metres. Therefore, Mount Fuji's highest point is higher.\",\"evidence\":[{\"docId\":\"eiffel-tower-fr-lead\",\"quote\":\"La tour Eiffel [tuʁɛfɛl] est une tour autoportante de fer puddlé de 330 m de hauteur (avec antennes) située à Paris...\"},{\"docId\":\"mount-fuji-ja-lead#1\",\"quote\":\"標高は3775.56 m、山体の最高地点は3776.12 mで\"}]}\n\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1800,
+            "completionTokens": 165,
+            "cachedTokens": 0,
+            "promptMs": 39739.781
+          }
+        }
+      ]
+    },
+    {
+      "suite": "clinical",
+      "taskId": "c23-veg-hba1c",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 12370,
+      "completionTokens": 239,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2847,
+      "cachedTokens": 0,
+      "promptMs": 280831,
+      "modelMs": 313712,
+      "ttftMs": 281156,
+      "wallMs": 313869,
+      "actions": [
+        "search {\"query\":\"VESSEL trial cruciferous vegetable diet HbA1c\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#36\"}",
+        "search {\"query\":\"VESSEL trial HbA1c glucose\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#31\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#29\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#29\"}",
+        "read {\"docId\":\"cruciferous-blood-pressure#37\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain information about how HbA1c changed after the cruciferous vegetable diet in the VESS"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain information about how HbA1c changed after the cruciferous vegetable diet in the VESSEL trial. The documents state that there were no significant differences in biomarkers of total cholesterol, LDL, HDL, and glucose between interventions, but they do not report specific HbA1c results or changes.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "cfab74ca",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"VESSEL trial cruciferous vegetable diet HbA1c\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 251,
+            "completionTokens": 24,
+            "cachedTokens": 0,
+            "promptMs": 5598.122
+          }
+        },
+        {
+          "input": "03005a9e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"cruciferous-blood-pressure#36\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 609,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 13713.443
+          }
+        },
+        {
+          "input": "c837d1ed",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"VESSEL trial HbA1c glucose\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 977,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 22115.376
+          }
+        },
+        {
+          "input": "fb7d5d8f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"cruciferous-blood-pressure#31\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1282,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 29078.352
+          }
+        },
+        {
+          "input": "b96766ab",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"cruciferous-blood-pressure#29\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1749,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 39707.355
+          }
+        },
+        {
+          "input": "381d17d9",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"cruciferous-blood-pressure#29\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2096,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 47661.798
+          }
+        },
+        {
+          "input": "e959d55f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"cruciferous-blood-pressure#37\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2559,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 57722.972
+          }
+        },
+        {
+          "input": "5fc172f5",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain information about how HbA1c changed after the cruciferous vegetable diet in the VESSEL trial. The documents state that there were no significant differences in biomarkers of total cholesterol, LDL, HDL, and glucose between interventions, but they do not report specific HbA1c results or changes.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2847,
+            "completionTokens": 90,
+            "cachedTokens": 0,
+            "promptMs": 65234.883
+          }
+        }
+      ]
+    },
+    {
+      "suite": "labholdout",
+      "taskId": "lh04-ppara-mtdna-female",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": false,
+      "checks": {
+        "finished": true,
+        "found": false,
+        "citationsExist": true,
+        "facts": false,
+        "citations": false,
+        "evidence": false
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2025,
+      "completionTokens": 136,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1076,
+      "cachedTokens": 0,
+      "promptMs": 47165,
+      "modelMs": 64776,
+      "ttftMs": 47434,
+      "wallMs": 64909,
+      "actions": [
+        "search {\"query\":\"PPARα BATKO mice mitochondrial DNA content brown adipose tissue beta3-adrenergic agonist treatment\"}",
+        "read {\"docId\":\"ppara-brown-adipocytes#33\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain the specific quantitative value (by how much) of the decrease in mitochondrial DNA c"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain the specific quantitative value (by how much) of the decrease in mitochondrial DNA content in brown adipose tissue of female PPARαBATKO mice after β3-adrenergic agonist treatment. They only state that the content was 'lower' compared to control mice.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "f9e6a0c7",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"PPARα BATKO mice mitochondrial DNA content brown adipose tissue beta3-adrenergic agonist treatment\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 268,
+            "completionTokens": 33,
+            "cachedTokens": 0,
+            "promptMs": 6119.057
+          }
+        },
+        {
+          "input": "0e11a316",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"ppara-brown-adipocytes#33\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 681,
+            "completionTokens": 22,
+            "cachedTokens": 0,
+            "promptMs": 16265.728
+          }
+        },
+        {
+          "input": "de345a38",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain the specific quantitative value (by how much) of the decrease in mitochondrial DNA content in brown adipose tissue of female PPARαBATKO mice after β3-adrenergic agonist treatment. They only state that the content was 'lower' compared to control mice.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1076,
+            "completionTokens": 81,
+            "cachedTokens": 0,
+            "promptMs": 24780.077
+          }
+        }
+      ]
+    }
+  ]
+}

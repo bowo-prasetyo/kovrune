@@ -17,6 +17,7 @@ import { engineeringDocuments } from "../engineering/tasks.ts";
 import { csDocuments } from "../cs/tasks.ts";
 import { labDocuments } from "../lab/tasks.ts";
 import { physicsDocuments } from "../physics/tasks.ts";
+import { mathDocuments } from "../math/tasks.ts";
 import { officeDocuments } from "../field/office.ts";
 import { fieldDocuments, fieldTasks, type FieldDocument } from "../field/tasks.ts";
 import type { ResearchTask } from "../tasks/research.ts";
@@ -27,6 +28,7 @@ export const ENGINEERING_DIR = fileURLToPath(new URL("../engineering/docs/", imp
 export const CS_DIR = fileURLToPath(new URL("../cs/docs/", import.meta.url));
 export const LAB_DIR = fileURLToPath(new URL("../lab/docs/", import.meta.url));
 export const PHYSICS_DIR = fileURLToPath(new URL("../physics/docs/", import.meta.url));
+export const MATH_DIR = fileURLToPath(new URL("../math/docs/", import.meta.url));
 export const CHEM_DIR = fileURLToPath(new URL("../chem/docs/", import.meta.url));
 
 export interface FieldSuite {
@@ -42,6 +44,8 @@ export interface FieldSuite {
   labLibrary: ResearchLibrary;
   /** The physics documents (eval/physics/tasks.ts), on their own: the library of the physics and physicsholdout suites. */
   physicsLibrary: ResearchLibrary;
+  /** The mathematics documents (eval/math/tasks.ts), on their own: the library of the math and mathholdout suites. */
+  mathLibrary: ResearchLibrary;
   /** The chemistry papers (eval/chem/tasks.ts), on their own: the library of the chem and chemholdout suites. */
   chemLibrary: ResearchLibrary;
   tasks: ResearchTask[];
@@ -92,6 +96,7 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   const cs = await Promise.all(csDocuments.map((doc) => readDocument(doc, CS_DIR, loadPdfJs)));
   const lab = await Promise.all(labDocuments.map((doc) => readDocument(doc, LAB_DIR, loadPdfJs)));
   const physics = await Promise.all(physicsDocuments.map((doc) => readDocument(doc, PHYSICS_DIR, loadPdfJs)));
+  const math = await Promise.all(mathDocuments.map((doc) => readDocument(doc, MATH_DIR, loadPdfJs)));
   const chem = await Promise.all(chemDocuments.map((doc) => readDocument(doc, CHEM_DIR, loadPdfJs)));
   const tasks = [...fieldTasks];
 
@@ -111,5 +116,5 @@ export async function loadFieldSuite(root = FIELD_DIR): Promise<FieldSuite> {
   }
   // The office suites' library holds the committed field documents, not local ones, so their runs stay comparable.
   const committed = documents.slice(0, fieldDocuments.length);
-  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), labLibrary: new ResearchLibrary(lab), engineeringLibrary: new ResearchLibrary(engineering), physicsLibrary: new ResearchLibrary(physics), chemLibrary: new ResearchLibrary(chem), tasks, local };
+  return { library: new ResearchLibrary(documents), officeLibrary: new ResearchLibrary([...committed, ...office]), clinicalLibrary: new ResearchLibrary(clinical), csLibrary: new ResearchLibrary(cs), labLibrary: new ResearchLibrary(lab), engineeringLibrary: new ResearchLibrary(engineering), physicsLibrary: new ResearchLibrary(physics), mathLibrary: new ResearchLibrary(math), chemLibrary: new ResearchLibrary(chem), tasks, local };
 }

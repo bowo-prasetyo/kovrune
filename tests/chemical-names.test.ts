@@ -1,4 +1,4 @@
-// Chemical names a search treats as one (harness 0.94.0): the query side only (src/tools/chemical-names.ts).
+// Chemical names a search treats as one (harness 0.97.0): the query side only (src/tools/chemical-names.ts).
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { words } from "../src/documents/scripts.ts";

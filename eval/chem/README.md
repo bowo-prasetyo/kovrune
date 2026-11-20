@@ -1,6 +1,6 @@
 # Chemistry suite
 
-Questions over chemistry papers (harness 0.94.0). The field suite's documents are Wikipedia leads, a software licence, Kovrune's own documentation and made-up Office files; the clinical suite's are trial reports; the CS suite's are machine learning papers; the lab suite's are bench biology papers; the engineering and physics suites' are made-up datasheets, reports and papers. None has a screening table of catalysts and solvents, a yield next to an enantiomeric ratio, a reduction potential against a reference electrode, a chemical shift next to its coupling constants, or a reagent written as a formula in one paper and spelled out in another. Those are where reading a chemistry paper goes wrong. An audit of Kovrune from a chemistry researcher's point of view found the sentence check marking 38 of 51 wrong chemistry sentences backed, and fixed them at 0.93.0 ([chemistry checks](../field/README.md#chemistry-mhchem-formulas-chemistry-units-opposites-and-names-0930-defect-fix)), but no suite could show how often that matters. This suite is what can (recommendation 3 of the audit). Its search measurement also bridges recommendation 4, chemical names written another way ([below](#chemical-names-in-search-0940)).
+Questions over chemistry papers (harness 0.97.0). The field suite's documents are Wikipedia leads, a software licence, Kovrune's own documentation and made-up Office files; the clinical suite's are trial reports; the CS suite's are machine learning papers; the lab suite's are bench biology papers; the engineering and physics suites' are made-up datasheets, reports and papers. None has a screening table of catalysts and solvents, a yield next to an enantiomeric ratio, a reduction potential against a reference electrode, a chemical shift next to its coupling constants, or a reagent written as a formula in one paper and spelled out in another. Those are where reading a chemistry paper goes wrong. An audit of Kovrune from a chemistry researcher's point of view found the sentence check marking 38 of 51 wrong chemistry sentences backed, and fixed them at 0.93.0 ([chemistry checks](../field/README.md#chemistry-mhchem-formulas-chemistry-units-opposites-and-names-0930-defect-fix)), but no suite could show how often that matters. This suite is what can (recommendation 3 of the audit). Its search measurement also bridges recommendation 4, chemical names written another way ([below](#chemical-names-in-search-0940)).
 
 ```bash
 npm run bench:endpoint -- --model <model> --suites chem,chemholdout --modes constrained --out eval/results/<name>.json
@@ -62,7 +62,7 @@ Each task's comment names its kind, counted here by its first kind:
 
 **Search alone** (`npm run bench:retrieval`, no model, BM25 over the eight papers), on the 49 answerable questions:
 
-| | Before the chemical names (0.94.0 suite, `c77500d`) | With them |
+| | Before the chemical names (the suite alone, `c77500d`) | With them |
 | --- | --- | --- |
 | Cited documents found | 98% | 98% |
 | Answer passages found | 92.5% | 94% |
@@ -70,7 +70,7 @@ Each task's comment names its kind, counted here by its first kind:
 
 The gain is `c35`, the asymmetric FLP's enantiomer: the question writes "enantiomeric excess", and the passage that gives the 96% writes "%ee". The misses: `c24` (the singlet and triplet lifetimes are in two passages, and search finds one), `c31` (the inverse dependence is said in many places, none of which search ranks first), and `c38`, the comparison, which finds one of its two papers.
 
-## Results with models (0.94.0)
+## Results with models
 
 Qwen3.5-4B and 2B (Q4_K_M, llama.cpp fae9ac5, CPU, 4096-token context, thinking off, constrained mode), with the chemical-name list. The 2B run was cut short twice by container restarts and was run again in batches of eight questions, merged with `bench:replay --merge`; nothing else differs.
 
@@ -80,6 +80,8 @@ Qwen3.5-4B and 2B (Q4_K_M, llama.cpp fae9ac5, CPU, 4096-token context, thinking 
 | Qwen3.5-2B | 22/40 | 10/12 | 4 of 21 |
 
 Reports: `eval/results/chem-0.94-qwen3.5-4b-q4km.json`, `eval/results/chem-0.94-qwen3.5-2b-q4km.json`.
+
+The runs were recorded on this branch before it merged `main`'s 0.94.0 to 0.96.0 (the mathematics suite and its checks), so the reports say harness 0.94.0; the change is 0.97.0. `bench:rescore` with the merged code changes no label and no pass in any of the four chemistry reports. The one 0.96.0 change it cannot replay, the question asked when a "not found" answer comes with quotes, would not have been asked: no "not found" answer in the four reports came with a quote.
 
 The 4B's seven misses are of two kinds. In `c05` and `c21` the answer is right but the quote fails the quote check: `c05` joins two sentences with the ³¹P sentence between them left out and no "…", and `c21` leaves out more than the 200 characters "…" may stand for. In `c07` (PCy₃ asked for by its full name), `c30` (a binding-energy difference on Cu(311)), `c37` (273.0 K) and `c38` (the two-paper comparison) it answers that the documents do not say. `c24` gives one of the two lifetimes. The 2B misses most questions that need a number read from a table, and answers two unanswerable questions from a neighbouring result (`c39` with the 98% yield, `ch12` with "21").
 
@@ -94,7 +96,7 @@ The 4B's seven misses are of two kinds. In `c05` and `c21` the answer is right b
 
 The 4B gains `c31` and `c33` (both on the porphyrin paper); the 2B gains `c07`, the PCy₃ alias question, and loses `c30` (it now reads the passage after the one with the answer, and gives 0.485 eV from it) and `c31` (it reads the same passage as without the list and states the dependence the wrong way round). **This is no measurable effect on answers either way**: 3 gained and 2 lost over two models, where search alone went from 13 to 30 of 30 alias probes. The list's case rests on the search measurement, and on no protected suite making a different request.
 
-## Chemical names in search (0.94.0)
+## Chemical names in search (0.97.0)
 
 **The gap, measured before anything was built.** For each paper, the spellings it uses for its reagents, solvents and catalysts were searched alone (the first three results, as the lab suite's name test does), and so were the spellings a chemist might type instead. Every one of the papers' own 23 spellings found its paper; **13 of 30** other spellings did. The misses: "tricyclohexylphosphine" (the paper writes PCy3), "dibromomethane" (CH2Br2), "DMA" (DMAc), "HEH" (Hantzsch ester), "iPr2NEt" and "Hünig's base" in its other forms (N,N-diisopropylethylamine), "dichloromethane" and "DCM" (CH2Cl2), "isocyanide" (isonitrile), "cesium carbonate" (Cs2CO3), "paraquat" (methyl viologen), "potassium bicarbonate" (KHCO3), "formic acid" (formate), "FeTPP" (iron tetraphenylporphyrin), "ferrocenium" (Fc/Fc+), "Bu4NPF6" (TBAPF6), "methyloxirane" and "1,2-epoxypropane" (propylene oxide). Chemists rarely define these, so the library's own abbreviations (`src/tools/abbreviations.ts`, which reads "zero-voltage switching (ZVS)") bridge none of them.
 
@@ -104,7 +106,7 @@ The 4B gains `c31` and `c33` (both on the porphyrin paper); the 2B gains `c07`, 
 
 **30 of 30** of the other spellings now find their paper, and all 23 own spellings still do (`tests/retrieval.test.ts`, "chemical names in search"). That is not a measure of how general the list is: it was written with these 30 in view. What it does show is that nothing else moves. **`bench:retrieval` gives every other suite exactly the figures it gave before** (research, pdf, field, office, clinical, engineering, physics, cs, lab), and the chemistry suite gains one task (above).
 
-**Replaying the recorded runs.** `bench:replay --base c77500d` runs each recorded task of the latest reports with replies (field and held out at 0.75.0, clinical, CS and lab at 0.84.0, the CS and lab held-out suites at 0.78.0, physics at 0.91.0, both models) on the code without the list and with it. **No task of research, unanswerable, pdf, field, holdout, csholdout, labholdout, clinical, cs or physics makes a different request.** The ones it cannot decide (two research, one unanswerable, one clinical, three physics) cannot be decided on `main` against itself either. One lab task differs on both models, `l21-mdh-act-mechanism`, whose question names "methanol dehydrogenase": its paper writes "CH3OH" once, and the list's "methanol" now finds it. It was run with both models at both versions (below).
+**Replaying the recorded runs.** `bench:replay --base c77500d` runs each recorded task of the latest reports with replies (field and held out at 0.75.0, clinical, CS and lab at 0.84.0, the CS and lab held-out suites at 0.78.0, physics at 0.91.0, both models) on the code without the list and with it. **No task of research, unanswerable, pdf, field, holdout, csholdout, labholdout, clinical, cs or physics makes a different request.** The ones it cannot decide (two research, one unanswerable, one clinical, three physics) cannot be decided on `main` against itself either. One lab task differs on both models, `l21-mdh-act-mechanism`, whose question names "methanol dehydrogenase": its paper writes "CH3OH" once, and the list's "methanol" now finds it. It was run with both models at both versions (below). After merging `main`, the mathematics suite (0.94.0 to 0.96.0) was checked the same way: `bench:retrieval` gives it the same figures with and without the list (31 of 31), and its 0.96.0 run replays with no task making a different request (the one undecidable task is undecidable on `main` against itself).
 
 | `l21-mdh-act-mechanism` | without the list (c77500d) | with it |
 | --- | --- | --- |

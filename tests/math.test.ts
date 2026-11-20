@@ -45,3 +45,21 @@ describe("a script that is a command with an argument (harness 0.91.0)", () => {
     assert.equal(readableFormula("x^{\\mathrm{2}}"), "x²");
   });
 });
+
+describe("math compared as math (harness 0.95.0)", () => {
+  it("writes LaTeX, ASCII and Unicode forms of a formula alike", async () => {
+    const { mathMatchKey } = await import("../src/documents/math.ts");
+    const same = (a: string, b: string) => assert.equal(mathMatchKey(a).normalize("NFKC"), mathMatchKey(b).normalize("NFKC"), `${a} | ${b}`);
+    same("$p \\geq 7$", "p >= 7");
+    same("$p \\geq 7$", "p ≥ 7");
+    same("$|A \\cap (A + r)| \\geq |A|^2/(2p)$", "|A ∩ (A + r)| ≥ |A|²/(2p)");
+    same("$\\frac{1}{8}$", "1/8");
+    same("$\\frac{4s}{d+2}$", "4s/(d+2)");
+    same("$\\mathbb{Z}/p\\mathbb{Z}$", "Z/pZ");
+    same("$\\Re(s) > 1$", "Re(s) > 1");
+    same("$V \\in L^p$", "V in L^p");
+    assert.notEqual(mathMatchKey("p \\geq 7"), mathMatchKey("p > 7"));
+    assert.notEqual(mathMatchKey("\\frac{1}{8}"), mathMatchKey("1/4"));
+    assert.notEqual(mathMatchKey("A \\cap B"), mathMatchKey("A ∪ B"));
+  });
+});
