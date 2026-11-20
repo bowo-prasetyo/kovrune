@@ -1,17 +1,18 @@
-// Turns user files into plain text documents: text, Markdown, HTML, PDF, CSV and TSV, and Word,
-// PowerPoint, Excel and OpenDocument files. PDF extraction uses pdf.js; scanned PDFs without a text layer yield no
+// Turns user files into plain text documents: text, Markdown, HTML, PDF, CSV and TSV, Word,
+// PowerPoint, Excel and OpenDocument files, and chemistry files (CIF, molfiles, JCAMP-DX; chemfiles.ts). PDF extraction uses pdf.js; scanned PDFs without a text layer yield no
 // text (there is no OCR, docs/m1-plan.md decision D3). Office files are read by office.ts.
 
+import { readCif, readJcamp, readMolfile } from "./chemfiles.ts";
 import { describePageNumbers, pagesWithoutText } from "./pages.ts";
 import { decodeText, parseDelimited, sniffDelimiter } from "./delimited.ts";
 import { extractOfficeText, joinPages, OFFICE_READER_VERSION, PAGE_UNITS, type OfficeKind } from "./office.ts";
 import { MAX_SHEET_ROWS, readRows } from "./sheets.ts";
 import { pageLines, pageText, withoutRunningLines, type PdfTextItem } from "./pdf-layout.ts";
 
-export type DocumentKind = "text" | "markdown" | "html" | "pdf" | "csv" | "tsv" | OfficeKind;
+export type DocumentKind = "text" | "markdown" | "html" | "pdf" | "csv" | "tsv" | OfficeKind | "cif" | "molfile" | "jcamp";
 
 /** Every kind, for checking saved records (records.ts). */
-export const DOCUMENT_KINDS = ["text", "markdown", "html", "pdf", "csv", "tsv", "docx", "pptx", "xlsx", "odt", "odp", "ods"] as const satisfies readonly DocumentKind[];
+export const DOCUMENT_KINDS = ["text", "markdown", "html", "pdf", "csv", "tsv", "docx", "pptx", "xlsx", "odt", "odp", "ods", "cif", "molfile", "jcamp"] as const satisfies readonly DocumentKind[];
 
 const OFFICE_KINDS: ReadonlySet<string> = new Set<OfficeKind>(["docx", "pptx", "xlsx", "odt", "odp", "ods"]);
 
@@ -33,10 +34,13 @@ export const KIND_LABELS: Record<DocumentKind, string> = {
   odt: "OpenDocument text",
   odp: "OpenDocument presentation",
   ods: "OpenDocument spreadsheet",
+  cif: "CIF",
+  molfile: "Molfile",
+  jcamp: "JCAMP-DX",
 };
 
 /** File extensions the app reads, for the file picker and error messages. */
-export const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".xlsx", ".odt", ".odp", ".ods", ".csv", ".tsv", ".tab", ".txt", ".text", ".md", ".markdown", ".html", ".htm"];
+export const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".xlsx", ".odt", ".odp", ".ods", ".csv", ".tsv", ".tab", ".txt", ".text", ".md", ".markdown", ".html", ".htm", ".cif", ".mol", ".sdf", ".sd", ".jdx", ".dx", ".jcamp"];
 
 /** What a document's pages are: slides in presentations, sheets in spreadsheets, pages otherwise. */
 export function pageUnit(kind: DocumentKind | undefined): "page" | "slide" | "sheet" {
@@ -78,6 +82,13 @@ const EXTENSION_KINDS: Record<string, DocumentKind> = {
   csv: "csv",
   tsv: "tsv",
   tab: "tsv",
+  cif: "cif",
+  mol: "molfile",
+  sdf: "molfile",
+  sd: "molfile",
+  jdx: "jcamp",
+  dx: "jcamp",
+  jcamp: "jcamp",
 };
 
 /** Kinds by media type, for a file whose name has no known extension. */
@@ -116,7 +127,7 @@ function unsupportedMessage(fileName: string): string {
     const alternative = ext === "xls" ? "" : " or PDF";
     return `Kovrune cannot read ${legacy.name} files. Open ${fileName} in ${app} or LibreOffice, save it as ${legacy.saveAs}${alternative}, and add it again.`;
   }
-  return `Unsupported file type: ${fileName}. Use PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument (.odt, .odp, .ods), CSV, text, Markdown or HTML files.`;
+  return `Unsupported file type: ${fileName}. Use PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), OpenDocument (.odt, .odp, .ods), CSV, text, Markdown or HTML files, or chemistry files (.cif, .mol, .sdf, .jdx).`;
 }
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", shy: "\u00ad", nbsp: " " };
@@ -235,6 +246,11 @@ export async function extractText(
     const { rows, cut } = parseDelimited(raw, delimiter, MAX_SHEET_ROWS);
     const name = file.name.replace(/\.[^.]+$/, "") || file.name;
     const { text, warning } = readRows(name, rows, cut);
+    return { kind, text, ...(warning ? { warning } : {}) };
+  }
+  if (kind === "cif" || kind === "molfile" || kind === "jcamp") {
+    const { text: raw } = decodeText(bytes);
+    const { text, warning } = (kind === "cif" ? readCif : kind === "molfile" ? readMolfile : readJcamp)(raw);
     return { kind, text, ...(warning ? { warning } : {}) };
   }
   const raw = new TextDecoder().decode(bytes);
