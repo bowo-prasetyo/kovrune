@@ -71,6 +71,23 @@ export function researchSystem(options: { documents: boolean; sources: string[] 
  */
 export const READ_FIRST_RESERVE = 2;
 
+/**
+ * A document of at least this many parts, read part after part, gets its outline again (harness 0.103.0): at
+ * the third read in a row of the next part, the part asked for and then where the sections are. A preview
+ * user's report read parts 1 to 8 of a 119-part paper after its best match, part 62, and never reached the
+ * sections that answered. Giving another part in place of the one asked for, measured before, cost a right
+ * answer: the model asked again each time (eval/cs/README.md). So this only points; the reads stay the model's.
+ */
+export const PAGING_MIN_PARTS = 20;
+
+/** The note after the third part read in a row (pagingNote). */
+export const PAGING_NOTE_LINE = /\n*\[You have read parts \d+ to \d+[^\n]*\]/;
+
+/** The note after the third part of a long document read in a row: the outline, to go to the section that fits. */
+export function pagingNote(docId: string, from: number, to: number, outline: string): string {
+  return `\n\n[You have read parts ${from} to ${to} of ${docId} in order, which takes many steps. Its sections are at: ${outline}. Read the part whose section fits the question, or search for it.]`;
+}
+
 /** Documents longer than this are truncated when read, to fit small context windows. */
 export const MAX_DOC_CHARS = 2400;
 
@@ -140,6 +157,9 @@ export function createResearchTools(
   const answeredSources = new Set<string>();
   // Documents and parts the model has read, and whether final_answer has sent it back to read what it quotes.
   const readIds = new Set<string>();
+  // The IDs asked for in the last reads, and the documents whose outline was given again (PAGING_MIN_PARTS).
+  const lastReads: string[] = [];
+  const pagingNoted = new Set<string>();
   let askedToReadCited = false;
   // Whether final_answer has asked, once, about a "not found" answer that came with quotes.
   let askedAboutQuotedNotFound = false;
@@ -253,7 +273,19 @@ export function createResearchTools(
           quotedFrom.delete(parentId(docId));
           // A part the model names is given whole; the document it was sent to read, only around the quotes.
           const short = options.forcedReadPassage && docId === parentId(docId) ? await session.passage(docId, quotes) : undefined;
-          const text = short ?? (await session.read(docId, undefined, quotes));
+          let text = short ?? (await session.read(docId, undefined, quotes));
+          // The third part in a row of a long document: where its sections are, once (PAGING_MIN_PARTS).
+          const number = Number(/#(\d+)$/.exec(docId)?.[1] ?? NaN);
+          const doc = parentId(docId);
+          const [twoBack, oneBack] = lastReads.slice(-2);
+          lastReads.push(docId);
+          if (Number.isInteger(number) && !pagingNoted.has(doc) && twoBack === `${doc}#${number - 2}` && oneBack === `${doc}#${number - 1}` && session.partsOf(docId).length >= PAGING_MIN_PARTS) {
+            const outline = session.outlineFor(docId);
+            if (outline) {
+              pagingNoted.add(doc);
+              text += pagingNote(doc, number - 2, number, outline);
+            }
+          }
           // Which part was given, for the trace: a read that names no part gets the one that best matches the question.
           const part = /^\[[^\]\n]*\][^\n]*\((part \d+ of \d+|the passages? your answer quoted)\)\n/.exec(text)?.[1];
           return { text: nextSources(text), ...(part ? { shown: part.replace("your answer quoted", "quoted") } : {}) };
@@ -279,7 +311,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").replace(PROOF_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(PAGING_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").replace(PROOF_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },

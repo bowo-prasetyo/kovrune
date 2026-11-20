@@ -203,6 +203,12 @@ export class SourceSession {
     return this.fetched.get(parentId(id))?.parts.map((p) => p.id) ?? [];
   }
 
+  /** A fetched document's outline: which parts hold which sections and tables (outlineOf). */
+  outlineFor(id: string): string | undefined {
+    const parts = this.fetched.get(parentId(id))?.parts;
+    return parts ? outlineOf(parts) : undefined;
+  }
+
   /** Fetches documents the model cited without reading, so their quotes can be checked too. */
   async ensure(ids: string[], signal = this.signal): Promise<void> {
     for (const id of new Set(ids.map(parentId))) {
