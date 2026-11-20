@@ -23,7 +23,7 @@ const PREFIX = "arxiv:";
 export const DATACITE_API = "https://api.datacite.org/dois";
 export const DATACITE_ARXIV_CLIENT = "arxiv.content";
 /** Only what a search result and a reference need: about half the reply. */
-const DATACITE_FIELDS = "titles,descriptions,url,doi,creators,publicationYear";
+const DATACITE_FIELDS = "titles,descriptions,url,doi,creators,publicationYear,subjects";
 
 /** A PDF download can be several megabytes on a slow connection. */
 export const ARXIV_PDF_TIMEOUT_MS = 90_000;
@@ -51,6 +51,8 @@ export interface DataCiteRecord {
     descriptions?: Array<{ description?: string; descriptionType?: string }>;
     creators?: Array<{ name?: string; givenName?: string; familyName?: string }>;
     publicationYear?: number | string;
+    /** arXiv's categories ("Combinatorics (math.CO)", scheme "arXiv"), and MSC or ACM codes when the authors gave them. */
+    subjects?: Array<{ subject?: string; subjectScheme?: string }>;
   };
 }
 
@@ -90,6 +92,45 @@ export function dataCiteQuery(query: string): string {
     .split(/\s+/)
     .filter((w) => w && !/^(and|or|not|to)$/i.test(w));
   return [...new Set(words)].slice(0, 16).join(" OR ");
+}
+
+/*
+ * arXiv subjects (harness 0.97.0), from the mathematician's audit (docs/math-audit.md, M5). zbMATH Open, the
+ * natural source for mathematics, cannot be offered: its API (api.zbmath.org) sends no
+ * Access-Control-Allow-Origin header, to any origin, so a web page cannot read it, as NASA ADS cannot be
+ * read (0.92.0). DataCite's arXiv records carry what it would have given most: each paper's arXiv categories,
+ * and for many the MSC codes the authors chose. A search can be limited to subjects the user names, and each
+ * result shows its categories and codes. A search for "sum-free sets" found network metamaterials and
+ * prophet inequalities first; limited to math.CO, it finds papers on sum-free sets.
+ */
+
+/** An arXiv archive or category as written: "math", "math.CO", "hep-ex", "astro-ph.GA", "cond-mat.str-el". */
+const SUBJECT = /^[a-z]+(?:-[a-z]+)?(?:\.[A-Za-z]+(?:-[a-z]+)?)?$/;
+
+/** The arXiv archives and categories in a setting ("math.CO, math.NT", "math hep-th"), the valid ones only, at most eight. */
+export function parseArxivSubjects(text: string | undefined): string[] {
+  return [...new Set((text ?? "").split(/[\s,;]+/).map((s) => s.trim()).filter((s) => SUBJECT.test(s)))].slice(0, 8);
+}
+
+/**
+ * The DataCite clause for papers in any of these subjects. DataCite stores a category as its name and code,
+ * "Combinatorics (math.CO)", and matches a code as a phrase, in any case. A bare archive without a hyphen
+ * ("math", "cs") is matched by its codes' prefix instead, since the phrase "math" would also match
+ * "Mathematical Physics (math-ph)"; one with a hyphen ("astro-ph") as a phrase, which a wildcard with a
+ * hyphen does not match.
+ */
+export function arxivSubjectClause(subjects: string[]): string | undefined {
+  if (!subjects.length) return undefined;
+  const one = (s: string) => (!s.includes(".") && !s.includes("-") ? `subjects.subject:*${s.toLowerCase()}.*` : `subjects.subject:"${s}"`);
+  return subjects.map(one).join(" OR ");
+}
+
+/** A record's arXiv categories by code ("math.CO") and its MSC codes, for a search result: "math.CO, math.NT; MSC 11B75, 20K01". */
+export function subjectsOf(record: DataCiteRecord): string {
+  const subjects = record.attributes.subjects ?? [];
+  const categories = subjects.filter((s) => s.subjectScheme === "arXiv" && s.subject).map((s) => /\(([^()]+)\)\s*$/.exec(s.subject!)?.[1] ?? s.subject!);
+  const msc = subjects.filter((s) => s.subjectScheme === "MSC" && s.subject).map((s) => s.subject!.replace(/\s*\((?:Primary|Secondary)\)/gi, "").replace(/\b(?:Primary|Secondary)\b:?\s*/gi, "").trim());
+  return [categories.join(", "), msc.length ? `MSC ${msc.join("; ")}` : ""].filter(Boolean).join("; ");
 }
 
 /** A title as compared: letters and digits only, lower case ("Self-RAG: Learning…" → "selfraglearning…"). */
@@ -141,7 +182,10 @@ export function createArxiv(options: {
   fetchImpl?: FetchLike;
   /** Read papers from their LaTeX source when arXiv has it (default); false reads the PDF only. */
   readSource?: boolean;
+  /** arXiv archives and categories searches are limited to (parseArxivSubjects); none for all. */
+  subjects?: string[];
 }): OpenSource {
+  const subjectClause = arxivSubjectClause(options.subjects ?? []);
   const fetchImpl = options.fetchImpl ?? fetch;
   // The records the searches found, by arXiv ID, so a paper read keeps its title, authors and year.
   const found = new Map<string, DataCiteRecord>();
@@ -152,7 +196,7 @@ export function createArxiv(options: {
       const terms = dataCiteQuery(query);
       if (!terms) return [];
       const params = new URLSearchParams({
-        query: terms,
+        query: subjectClause ? `(${terms}) AND (${subjectClause})` : terms,
         "client-id": DATACITE_ARXIV_CLIENT,
         sort: "relevance",
         "page[size]": "5",
@@ -166,7 +210,10 @@ export function createArxiv(options: {
         found.set(id, record);
         const abstract = abstractOf(record);
         const year = record.attributes.publicationYear ? ` (${record.attributes.publicationYear})` : "";
-        return [{ id: arxivDocId(id), title: `${record.attributes.titles?.[0]?.title ?? "Untitled"}${year}`, snippet: abstract ? snippetOf(abstract) : "No abstract." }];
+        // The categories and MSC codes say what field a paper is in, which a title alone often does not.
+        const subjects = subjectsOf(record);
+        const snippet = abstract ? snippetOf(abstract) : "No abstract.";
+        return [{ id: arxivDocId(id), title: `${record.attributes.titles?.[0]?.title ?? "Untitled"}${year}`, snippet: subjects ? `[${subjects}] ${snippet}` : snippet }];
       });
     },
     async fetch(id, signal) {

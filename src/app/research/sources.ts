@@ -5,7 +5,7 @@
 
 import { extractPdfText } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
-import { createArxiv, findArxivByTitle } from "../../sources/arxiv.ts";
+import { createArxiv, findArxivByTitle, parseArxivSubjects } from "../../sources/arxiv.ts";
 import { createDataCite } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
 import { createInspire } from "../../sources/inspire.ts";
@@ -21,6 +21,8 @@ export interface SourcePrefs {
   openalex: boolean;
   /** arXiv preprints, found through DataCite and read whole from their PDFs. */
   arxiv: boolean;
+  /** arXiv searches find only papers in these archives or categories ("math", "math.CO, math.NT"); empty for all. */
+  arxivSubjects?: string;
   /** Other repositories' works registered with DataCite; read whole from Zenodo's PDFs, else as abstracts. */
   datacite: boolean;
   /** The biomedical literature: PubMed, PubMed Central and preprints; open-access works read whole, others as abstracts. */
@@ -82,6 +84,7 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       language: typeof value.language === "string" && isWikipediaLanguage(value.language) ? value.language : defaults.language,
       openalex: value.openalex === true,
       arxiv: value.arxiv === true,
+      ...(parseArxivSubjects(typeof value.arxivSubjects === "string" ? value.arxivSubjects : "").length ? { arxivSubjects: parseArxivSubjects(value.arxivSubjects).join(", ") } : {}),
       datacite: value.datacite === true,
       europepmc: value.europepmc === true,
       openalexKey: typeof value.openalexKey === "string" ? value.openalexKey.trim() : "",
@@ -124,7 +127,7 @@ const extractPdf = async (bytes: Uint8Array) => extractPdfText(bytes, await load
  * arXiv, only when that source is ticked too, so no site is asked that the user did not choose (openalex.ts).
  */
 export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
-  const arxiv = prefs.arxiv ? createArxiv({ extractPdf }) : undefined;
+  const arxiv = prefs.arxiv ? createArxiv({ extractPdf, subjects: parseArxivSubjects(prefs.arxivSubjects) }) : undefined;
   const europepmc = prefs.europepmc ? createEuropePmc() : undefined;
   const filters = { fromYear: prefs.openalexFromYear, openAccess: prefs.openalexOpenAccess, field: prefs.openalexField, venue: prefs.openalexVenue };
   // A conference paper's arXiv version is looked up by its title on DataCite, which the arXiv source searches already.

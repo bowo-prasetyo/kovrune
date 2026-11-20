@@ -139,3 +139,53 @@ describe("arXiv source", () => {
     assert.doesNotMatch(bib, /journal/);
   });
 });
+
+describe("arXiv subjects (harness 0.97.0)", async () => {
+  const { arxivSubjectClause, parseArxivSubjects, subjectsOf } = await import("../src/sources/arxiv.ts");
+  const { parseSourcePrefs } = await import("../src/app/research/sources.ts");
+  /** A DataCite record of a mathematics paper with arXiv categories and MSC codes, in the shape its API returns (checked live, 2026-11-20). */
+  const SUMFREE: DataCiteRecord = {
+    id: "10.48550/arxiv.2104.00001",
+    attributes: {
+      doi: "10.48550/arxiv.2104.00001",
+      url: "https://arxiv.org/abs/2104.00001",
+      titles: [{ title: "Sum-full sets are not zero-sum-free" }],
+      descriptions: [{ description: "Let A be a finite, nonempty subset of an abelian group.", descriptionType: "Abstract" }],
+      publicationYear: 2021,
+      subjects: [
+        { subject: "Number Theory (math.NT)", subjectScheme: "arXiv" },
+        { subject: "Combinatorics (math.CO)", subjectScheme: "arXiv" },
+        { subject: "FOS: Mathematics", subjectScheme: "Fields of Science and Technology (FOS)" },
+        { subject: "11B30 (Primary), 15A06 (Secondary)", subjectScheme: "MSC" },
+      ],
+    },
+  };
+
+  it("reads archives and categories from a setting, and leaves out what is not one", () => {
+    assert.deepEqual(parseArxivSubjects("math.CO, math.NT"), ["math.CO", "math.NT"]);
+    assert.deepEqual(parseArxivSubjects("math hep-th astro-ph.GA cond-mat.str-el"), ["math", "hep-th", "astro-ph.GA", "cond-mat.str-el"]);
+    assert.deepEqual(parseArxivSubjects("math; OR *; (x) math"), ["math"]);
+    assert.deepEqual(parseArxivSubjects(""), []);
+  });
+
+  it("limits a search to the subjects, a bare archive by its codes' prefix and a category or hyphenated archive as a phrase", async () => {
+    assert.equal(arxivSubjectClause(["math"]), "subjects.subject:*math.*");
+    assert.equal(arxivSubjectClause(["math.CO", "hep-ex"]), 'subjects.subject:"math.CO" OR subjects.subject:"hep-ex"');
+    assert.equal(arxivSubjectClause([]), undefined);
+    const fetchImpl = fakeFetch([SUMFREE]);
+    const hits = await createArxiv({ fetchImpl, extractPdf: async () => PAGES, subjects: ["math.CO"] }).search("sum-free sets");
+    const query = new URL(fetchImpl.urls[0]!).searchParams.get("query");
+    assert.equal(query, '(sum OR free OR sets) AND (subjects.subject:"math.CO")');
+    assert.match(hits[0]!.snippet, /^\[math\.NT, math\.CO; MSC 11B30, 15A06\] Let A be a finite/);
+    // Without subjects, the query is the words alone, as before.
+    const plain = fakeFetch([RAG]);
+    await createArxiv({ fetchImpl: plain, extractPdf: async () => PAGES }).search("sum-free sets");
+    assert.equal(new URL(plain.urls[0]!).searchParams.get("query"), "sum OR free OR sets");
+  });
+
+  it("shows nothing for a record without categories, and keeps the setting only when it names a subject", () => {
+    assert.equal(subjectsOf(RAG), "");
+    assert.equal(parseSourcePrefs(JSON.stringify({ arxiv: true, arxivSubjects: " math.CO ,math.NT " })).arxivSubjects, "math.CO, math.NT");
+    assert.equal(parseSourcePrefs(JSON.stringify({ arxiv: true, arxivSubjects: "!!" })).arxivSubjects, undefined);
+  });
+});

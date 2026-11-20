@@ -371,8 +371,8 @@ describe("theorem-like statements, numbered as amsthm numbers them (harness 0.94
 \begin{proof} Trivial. \end{proof}
 Conjecture~\ref{c} is open; see \cref{t}, \Cref{l} and \autoref{t}.
 \begin{conj}\label{c}C.\end{conj}`);
-    assert.match(text, /^Proof of Theorem 2\.2\. By Lemma 2\.1\.$/m, "a proof's title replaces 'Proof'");
-    assert.match(text, /^Proof\. Trivial\.$/m);
+    assert.match(text, /^Proof of Theorem 2\.2\. By Lemma 2\.1\. ∎$/m, "a proof's title replaces 'Proof', and it ends with the box amsthm prints (harness 0.97.0)");
+    assert.match(text, /^Proof\. Trivial\. ∎$/m);
     assert.match(text, /Conjecture 2\.3 is open; see Theorem 2\.2, Lemma 2\.1 and Theorem 2\.2\./);
     assert.doesNotMatch(text, /Section 2\b/, "no reference to a statement gives its section");
   });

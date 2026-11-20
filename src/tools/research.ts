@@ -3,7 +3,7 @@
 import { z } from "zod";
 import type { AgentTool } from "../agent/agent.ts";
 import type { EvidenceItem } from "../agent/evidence.ts";
-import { parentId } from "../documents/chunk.ts";
+import { parentId, PROOF_NOTE_LINE, proofNote, proofsContinued } from "../documents/chunk.ts";
 import { OUTLINE_LINE, type SourceSession } from "../sources/session.ts";
 import { CITATION_NOTE_LINE } from "../sources/openalex.ts";
 import { SourceError } from "../sources/types.ts";
@@ -267,7 +267,10 @@ export function createResearchTools(
         readDocument = true;
         readIds.add(doc.id);
         unread.clear();
-        return nextSources(`[${doc.id}] ${doc.title}\n${doc.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(doc.id))}${figureNote(index.figuresDiscussedElsewhere(doc.id))}`);
+        // A part that starts inside a proof says whose (chunk.ts proofsContinued).
+        const siblings = doc.id.includes("#") ? index.partsOf(parentId(doc.id)).map((id) => index.get(id)!) : [];
+        const proof = proofNote(proofsContinued(siblings)[siblings.findIndex((p) => p.id === doc.id)]);
+        return nextSources(`[${doc.id}] ${doc.title}\n${proof}${doc.text.slice(0, MAX_DOC_CHARS)}${tableNote(index.tablesCitedElsewhere(doc.id))}${figureNote(index.figuresDiscussedElsewhere(doc.id))}`);
       },
       // A document read earlier keeps, when it has to leave the context, its ID, its title and the two
       // sentences that best match the question: at small contexts Qwen3.5-2B lost what it had read
@@ -275,7 +278,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").replace(PROOF_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },
