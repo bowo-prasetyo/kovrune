@@ -23,6 +23,13 @@ export interface CheckedEvidence extends EvidenceItem {
   elidedWords?: number;
   /** For a verified quote inside a proof: the statement it proves ("Theorem 4.1", chunk.ts proofAt). */
   proof?: string;
+  /**
+   * For a quote refused because its "…" joins passages further apart than MAX_ELIDED_CHARS, each of whose
+   * parts is in the document: each part where it is (harness 0.103.0), so the reader sees what was joined.
+   * The quote is still not found and backs nothing: split, such quotes would have labelled 10 recorded wrong
+   * answers "Quotes found" and no right one (eval/field/README.md).
+   */
+  parts?: Array<{ quote: string; context: QuoteContext }>;
 }
 
 /** A verified quote in its source: the source's own text before, of, and after the quote. */
@@ -239,10 +246,12 @@ export function checkEvidence(
     // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a
     // quote; but "not found" misleads: a preview user's arXiv quote joined two sentences of the same
     // abstract and introduction, about 600 characters apart.
-    const reason = piecesTooFarApart(normalized, quote)
+    const tooFar = piecesTooFarApart(normalized, quote);
+    const reason = tooFar
       ? `its parts are in the document, but too far apart to be one quote ("…" may leave out at most ${MAX_ELIDED_CHARS} characters)`
       : "quote not found in the document";
-    return { ...item, verified: false, reason, ...(closest ? { closest } : {}) };
+    const parts = tooFar ? partsInContext(item.quote, text, resolvePageStarts(item.docId)) : undefined;
+    return { ...item, verified: false, reason, ...(closest ? { closest } : {}), ...(parts ? { parts } : {}) };
   }
 }
 
@@ -302,6 +311,20 @@ function containsWords(text: string, quote: string): boolean {
 export function quoteHas(quote: string, part: string): boolean {
   const wanted = stripEdgePunctuation(normalizeForMatch(part));
   return wanted.length > 0 && containsWords(normalizeForMatch(quote), wanted);
+}
+
+/**
+ * Each part of a quote whose "…" joins far-apart passages, where it is in the document: the parts of
+ * MIN_QUOTE_WORDS words or more, or undefined when one of them is not found word for word (CheckedEvidence.parts).
+ */
+function partsInContext(quote: string, text: string, pageStarts?: number[]): Array<{ quote: string; context: QuoteContext }> | undefined {
+  const pieces = quote
+    .split(ELISION)
+    .map((piece) => piece.replace(/^[\s"'.,;:…\[\]-]+|[\s"'.,;:…\[\]-]+$/g, ""))
+    .filter((piece) => wordCount(stripEdgePunctuation(normalizeForMatch(piece))) >= MIN_QUOTE_WORDS);
+  if (pieces.length < 2) return undefined;
+  const parts = pieces.map((piece) => ({ quote: piece, context: quoteContext(piece, text, pageStarts) }));
+  return parts.every((p) => p.context) ? (parts as Array<{ quote: string; context: QuoteContext }>) : undefined;
 }
 
 /** Whether a normalized quote that leaves words out has every piece in `text`, in order, however far apart. */
