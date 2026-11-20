@@ -1,0 +1,81 @@
+% A made-up paper for Kovrune's mathematics suite (eval/math/README.md). Its colourings, results and constants
+% are invented. It is written so that its two main proofs each run over several parts of the text the agent
+% reads, and both have a "Step 3": a part that starts inside a proof says whose proof it is only through the
+% note of chunk.ts (harness 0.97.0), which the suite's questions on this paper measure.
+\documentclass[11pt]{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+
+\begin{document}
+
+\title{Vasquez colourings of hypergraphs}
+\author{Rafael Vasquez}
+
+\begin{abstract}
+A Vasquez colouring of a $k$-uniform hypergraph is a colouring of its vertices with two colours in which every edge meets each colour in at least two vertices. We bound the number of edges a hypergraph without a Vasquez colouring must have, for uniform and for linear hypergraphs.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+A $k$-uniform hypergraph $H$ is Vasquez-colourable if its vertices can be coloured red and blue so that every edge has at least two red and at least two blue vertices. We write $m_V(k)$ for the least number of edges of a $k$-uniform hypergraph that is not Vasquez-colourable, and $m_V^{\mathrm{lin}}(k)$ for the same number among linear hypergraphs, in which two edges share at most one vertex. Our two results bound these numbers from below. Both proofs are probabilistic and run in three steps: a random colouring, a count of the bad edges, and a recolouring that removes them.
+
+\section{Preliminaries}
+
+\begin{lem}\label{lem:chernoff}
+Let $X$ be a sum of $k$ independent indicator variables, each with mean $1/2$. Then $\Pr[X \leq 1] \leq (k+1) 2^{-k}$.
+\end{lem}
+
+\begin{lem}\label{lem:local}
+Let $A_1, \dots, A_n$ be events, each of probability at most $p$ and each independent of all but at most $d$ of the others. If $e p (d+1) \leq 1$, then with positive probability none of the events occurs.
+\end{lem}
+
+\begin{lem}\label{lem:recolour}
+In a hypergraph in which every vertex lies in at most $t$ bad edges, recolouring each vertex of a bad edge independently fixes every bad edge with probability at least $1 - t 2^{2-k}$.
+\end{lem}
+
+\section{Uniform hypergraphs}
+
+\begin{thm}\label{thm:uniform}
+For every $k \geq 6$, we have $m_V(k) \geq 2^{k}/(37 k)$.
+\end{thm}
+
+\begin{proof}
+Let $H$ be a $k$-uniform hypergraph with fewer than $2^{k}/(37 k)$ edges. We show that $H$ has a Vasquez colouring. The argument has three steps, which we set out in turn, because the same steps, with other constants, prove the result for linear hypergraphs in the next section.
+
+Step 1. Colour each vertex red or blue independently, with probability $1/2$ each. An edge is bad if it has at most one red vertex or at most one blue vertex. The number of red vertices of a fixed edge is a sum of $k$ independent indicators of mean $1/2$, so a fixed edge has at most one red vertex with probability at most $(k+1) 2^{-k}$ by Lemma~\ref{lem:chernoff}, and the same bound holds for blue. A fixed edge is therefore bad with probability at most $2(k+1) 2^{-k}$, and since $H$ has fewer than $2^{k}/(37 k)$ edges, the expected number of bad edges is less than $2(k+1)/(37 k)$, which is below $1/6$ for $k \geq 6$.
+
+Step 2. We now bound how bad edges can cluster. Two bad edges interact if they share a vertex, and a vertex lies in at most as many edges as $H$ has. Because the expected number of bad edges is below $1/6$, Markov's inequality shows that with probability at least $5/6$ there is no bad edge at all, and that with probability at least $2/3$ every vertex lies in at most one bad edge. We fix a colouring with this last property; it exists because $2/3 > 0$. Each bad edge then shares no vertex with another bad edge, so the bad edges can be repaired one at a time without the repairs interfering with one another.
+
+Step 3. Recolour the vertices of each bad edge independently. Every vertex lies in at most $t = 1$ bad edge, so by Lemma~\ref{lem:recolour} every bad edge is fixed with probability at least $1 - 2^{2-k}$, which is positive for $k \geq 6$, and the recolouring makes no good edge bad because the bad edges are disjoint. This is where the constant $37$ is needed: with a smaller constant, the expected number of bad edges in Step 1 is not below $1/6$, and Step 2 fails. The colouring obtained is a Vasquez colouring of $H$.
+\end{proof}
+
+\section{Linear hypergraphs}
+
+\begin{thm}\label{thm:linear}
+For every $k \geq 8$, every linear $k$-uniform hypergraph with fewer than $4^{k}/(12 k^2)$ edges is Vasquez-colourable; that is, $m_V^{\mathrm{lin}}(k) \geq 4^{k}/(12 k^2)$.
+\end{thm}
+
+\begin{proof}
+Let $H$ be a linear $k$-uniform hypergraph with fewer than $4^{k}/(12 k^2)$ edges. We follow the three steps of the uniform case, and point out where linearity lets us take a larger bound with a smaller constant in front.
+
+Step 1. Colour each vertex red or blue independently, with probability $1/2$ each, and call an edge bad as before. A fixed edge is bad with probability at most $2(k+1) 2^{-k}$ by Lemma~\ref{lem:chernoff}. In a linear hypergraph two edges share at most one vertex, so the events that two edges are bad are much less correlated than in the uniform case, and each edge meets at most $k \cdot 4^{k}/(12 k^2)$ other edges.
+
+Step 2. Instead of counting bad edges, we use the dependency structure. The event that an edge is bad depends only on the colours of its own vertices, so it is independent of the events for all edges that do not meet it. By Step 1 each such event has probability at most $p = 2(k+1) 2^{-k}$ and depends on at most $d = 4^{k}/(12 k)$ others. Lemma~\ref{lem:local} needs $e p (d+1) \leq 1$, which does not hold for this $d$, so we first restrict the colouring to vertices of degree at most $2^{k}$ and handle the others in Step 3.
+
+Step 3. The vertices of degree above $2^{k}$ are few: since $H$ has fewer than $4^{k}/(12 k^2)$ edges, there are fewer than $2^{k}/(12 k)$ of them. Colouring them last, by Lemma~\ref{lem:local} applied to the edges through them, with $p$ as before and $d \leq 2^{k}$, the condition $e p (d+1) \leq 1$ holds for $k \geq 8$. This is where the constant $12$ is needed: it is the largest constant in front of $k^2$ for which the number of high-degree vertices stays below $2^{k}/(12 k)$. With positive probability no edge is bad, so $H$ has a Vasquez colouring.
+\end{proof}
+
+\begin{prop}\label{prop:sharp}
+For infinitely many $k$, there is a $k$-uniform hypergraph with $4^{k}$ edges that is not Vasquez-colourable, so the exponent $4^k$ in the bound for linear hypergraphs cannot be raised.
+\end{prop}
+
+\begin{thebibliography}{1}
+\bibitem{Erdos} P.~Erd\H{o}s and L.~Lov\'asz, \emph{Problems and results on 3-chromatic hypergraphs}, Infinite and Finite Sets (1975), 609--627.
+\end{thebibliography}
+
+\end{document}

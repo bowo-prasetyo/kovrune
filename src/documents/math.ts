@@ -39,7 +39,7 @@ const NOTHING = new Set(
 );
 const SPACES: Record<string, string> = { ",": " ", ";": " ", ":": " ", " ": " ", "!": "", quad: " ", qquad: "  ", enspace: " ", thinspace: " " };
 /*
- * More of a paper's math read (harness 0.98.0), from the mathematician's audit (M8): on 48 arXiv mathematics papers,
+ * More of a paper's math read (harness 0.100.0), from the mathematician's audit (M8): on 48 arXiv mathematics papers,
  * 9.3% of inline formulas were shown as written, mostly for \mathbb with a letter beyond R, N, Z, Q, C, \mathfrak,
  * the operators papers declare (\Irr, \GL, \End, \Hom, \Gal), relations such as \leqslant and \hookrightarrow,
  * and \pmod, \binom and \hspace.

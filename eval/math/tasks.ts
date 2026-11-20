@@ -36,12 +36,15 @@ export const mathDocuments: FieldDocument[] = [
   { id: "odum-flow", title: "Decay and blow-up for the fractional Odum flow (Ferreira-Hahn, made up)", file: "odum-flow.tex" },
   { id: "additive-combinatorics-lecture-7", title: "Additive Combinatorics, Lecture 7: Teller sets (lecture notes, 2023, made up)", file: "additive-combinatorics-lecture-7.md" },
   { id: "ishikawa-note", title: "A note on Ishikawa numbers (J. Combin. Notes, made up)", file: "ishikawa-note.pdf" },
+  // Harness 0.100.0: two long proofs, each over several parts, both with a "Step 3", for the proof notes of chunk.ts.
+  { id: "vasquez-colourings", title: "Vasquez colourings of hypergraphs (Vasquez, made up)", file: "vasquez-colourings.tex" },
 ];
 
 const TELLER = ["teller-sets"];
 const ODUM = ["odum-flow"];
 const NOTES = ["additive-combinatorics-lecture-7"];
 const ISHIKAWA = ["ishikawa-note"];
+const VASQUEZ = ["vasquez-colourings"];
 
 /** "At least k" as answers write it: "≥ 7", "\geq 7", ">= 7", "at least 7", "7 or more". */
 const atLeast = (k: number) => [`≥ ${k}`, `≥${k}`, `\\geq ${k}`, `\\ge ${k}`, `>= ${k}`, `least ${k}`, `than or equal to ${k}`, `${k} or more`, `${k} or larger`, `${k} or greater`, `${k} and above`, `${k} and larger`];
@@ -251,6 +254,26 @@ export const mathTasks: ResearchTask[] = [
     facts: [["9"], ["7"]],
     citations: [ISHIKAWA],
   },
+  // The Vasquez paper (LaTeX, harness 0.100.0): two proofs that each run over several parts, both with a "Step 3".
+  // A part that starts inside a proof says whose only through chunk.ts's note, so these measure it.
+  {
+    // proof across parts: Step 3 of Theorem 4.1's proof needs the constant 12; Step 3 of Theorem 3.1's needs 37.
+    id: "ma25-step3-constant",
+    kind: "lookup",
+    question: "Which constant does Step 3 of the proof of Theorem 4.1 in the Vasquez paper say is needed?",
+    answerable: true,
+    facts: [["12"]],
+    citations: [VASQUEZ],
+  },
+  {
+    // proof across parts: Step 3 of Theorem 3.1's proof applies Lemma 2.3; Theorem 4.1's applies Lemma 2.2.
+    id: "ma26-step3-lemma",
+    kind: "lookup",
+    question: "Which lemma does Step 3 of the proof of Theorem 3.1 in the Vasquez paper apply?",
+    answerable: true,
+    facts: [["Lemma 2.3"]],
+    citations: [VASQUEZ],
+  },
   {
     // unanswerable: no document gives τ(Z/13Z).
     id: "ma23-tau-z13",
@@ -343,6 +366,14 @@ export const mathHoldoutTasks: ResearchTask[] = [
     answerable: true,
     facts: [["40"]],
     citations: [TELLER],
+  },
+  {
+    id: "mah11-step2-lemma",
+    kind: "lookup",
+    question: "Which lemma does Step 2 of the proof of Theorem 4.1 in the Vasquez paper apply?",
+    answerable: true,
+    facts: [["Lemma 2.2"]],
+    citations: [VASQUEZ],
   },
   {
     id: "mah10-numerics-year",

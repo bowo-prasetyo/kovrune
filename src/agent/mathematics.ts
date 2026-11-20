@@ -195,7 +195,7 @@ export interface MathBacking {
 }
 
 /*
- * Three more readings (harness 0.98.0), the audit's M3 sentences the 0.96.0 rules passed:
+ * Three more readings (harness 0.100.0), the audit's M3 sentences the 0.96.0 rules passed:
  * - a quantifier is read with the noun it binds, so "For every constant c > 0, every planar graph …" is not backed by
  *   "There exists a constant c > 0 such that every planar graph …", which says both "every" and "there exists";
  * - a conclusion stated without its hypothesis: "φ(n) ≤ φ(m) holds for all n and m" is not backed by "If n ∣ m then

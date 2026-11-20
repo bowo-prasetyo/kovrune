@@ -64,7 +64,7 @@ describe("math compared as math (harness 0.95.0)", () => {
   });
 });
 
-describe("more of a paper's math read (harness 0.98.0)", () => {
+describe("more of a paper's math read (harness 0.100.0)", () => {
   it("reads every blackboard and Fraktur letter, and the relations and arrows papers use", () => {
     assert.equal(readableMath("$\\mathbb{A}^n$ over $\\mathbb{F}_q$"), "𝔸ⁿ over 𝔽_q");
     assert.equal(readableMath("$\\mathfrak{g} = \\mathfrak{gl}_n$"), "𝔤 = 𝔤𝔩ₙ");

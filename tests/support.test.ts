@@ -942,7 +942,7 @@ describe("locants in chemical names (harness 0.99.0)", () => {
   });
 });
 
-describe("mathematics: hypotheses, bound quantifiers and a statement's heading (harness 0.98.0)", async () => {
+describe("mathematics: hypotheses, bound quantifiers and a statement's heading (harness 0.100.0)", async () => {
   const { checkEvidence } = await import("../src/agent/evidence.ts");
   const { sentenceSupport } = await import("../src/agent/support.ts");
   const doc = [
