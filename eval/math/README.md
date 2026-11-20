@@ -80,3 +80,18 @@ The 0.95.0 quote check compares quotes and sources with math written alike, howe
 **Against the rule for label changes** (no right answer loses its label, and false reassurance does not rise): no right answer loses its label anywhere, but held-out false reassurance on this suite goes from 0 of 4 to 1 of 5. The new label is wrong because the answer is off the question, which a quote check cannot see; the same answer with a quote typed in LaTeX would have taken the label before. Whether to adopt the change with this, or first make the label ask whether the answer gives what the question asks for (the completeness check, which runs for Qwen3.5-2B only), is the project owner's decision. The run is recorded either way.
 
 Still failing on the open set, all as before: three right "No" answers reported as not found (ma01, ma11, ma20), ma06, ma18, ma22 and ma23 wrong, and ma15's fact.
+
+### The question's formula, quoted "no" answers, and formulas, quantifiers and status (0.96.0)
+
+Three changes ([field README](../field/README.md#the-questions-formula-quoted-no-answers-and-formulas-quantifiers-and-status-0960)): an answer is labelled only if it or its quotes have the formula the question asks about; a "not found" answer that comes with quotes is asked once whether they answer the question; and the sentence check reads formulas, quantifiers and status. Report: `eval/results/math-0.96-qwen3.5-4b-q4km.json`, re-scored with the final code.
+
+| Code | `math` | `mathholdout` | Labelled "Quotes found", wrong |
+| --- | --- | --- | --- |
+| 0.95.0 | 16/24 | 6/10 | 1 of 9 open, 1 of 5 held out |
+| **0.96.0** | **19/24** | **6/10** | 1 of 10 open, **0 of 4 held out** |
+
+- **ma01, ma11 and ma20 pass.** In each, the model answered "no", "not proved" or "not known" with the quote that says so and set `found` to false; asked once, it set it to true.
+- **mah01 is no longer labelled**: its question asks about Z/pZ × F₅ⁿ, and neither the answer nor its quote has it. Held-out false reassurance on this suite is back to 0.
+- The labelled wrong answer left, **ma15**, is right in substance: it gives assumption (H1)'s content without naming it.
+
+Still failing on the open set: ma06 (says the documents do not say whether p = 5 is covered), ma15's fact, ma18 (works out a bound instead of reading the notes), ma22 (says the bound holds for k = 3) and ma23 (answers the unanswerable τ(Z/13Z)). None is labelled.
