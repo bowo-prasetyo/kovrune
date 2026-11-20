@@ -2,7 +2,7 @@
 // uses it so results depend on the model and not on a retrieval model; the
 // app uses the same search over the user's documents.
 
-import { withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
+import { parentId, proofNote, proofsContinued, withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
 import { definitions } from "./abbreviations.ts";
 import { chemicalNameTerms } from "./chemical-names.ts";
@@ -130,16 +130,21 @@ export class DocumentIndex {
   private readonly lengths: number[];
   private readonly docFreq = new Map<string, number>();
   private readonly avgLength: number;
+  /** For each document, the note of the proof it continues ("[This part continues the proof of Theorem 4.1, …]"), or "". */
+  private readonly proofNotes: string[];
   /** The library's abbreviations (abbreviations.ts): a short form's search term, and the search terms of each long form it stands for. */
   private readonly abbreviations = new Map<string, string[][]>();
 
   constructor(docs: SourceDocument[]) {
     this.docs = docs;
-    this.termFreqs = docs.map((doc) => {
+    this.proofNotes = proofNotesOf(docs);
+    this.termFreqs = docs.map((doc, i) => {
       const freqs = new Map<string, number>();
       // A chunk's part label is not indexed: its "part", "4" and "12" would match any question with a small number.
       const title = withoutPartLabel(doc.title);
-      for (const token of tokenize(`${title} ${title} ${withoutRepeatedLead(doc.text)}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
+      // A part inside a proof is found by what the proof proves, which it may not name ("Theorem 4.1", harness 0.100.0).
+      const proof = /proof of (.*), which begins/.exec(this.proofNotes[i]!)?.[1] ?? "";
+      for (const token of tokenize(`${title} ${title} ${proof} ${withoutRepeatedLead(doc.text)}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
       for (const token of freqs.keys()) this.docFreq.set(token, (this.docFreq.get(token) ?? 0) + 1);
       return freqs;
     });
@@ -315,8 +320,25 @@ export class DocumentIndex {
     const top = ranked.slice(0, limit);
     // 0.73.0 gave a passage that uses only an abbreviation the last place when the query spelled the term
     // out; under the rule it gained three tasks and lost two, and 0.77.0 takes it out (eval/cs/README.md).
-    return top.map(({ doc }) => ({ docId: doc.id, title: doc.title, snippet: bestSnippet(doc.text, terms, (t) => this.idf(t)) }));
+    // A snippet says whose proof its part continues, as reading the part does: Qwen3.5-4B read the part
+    // that ranked first, in another theorem's proof, and answered from its "Step 3" (eval/math/README.md).
+    return top.map(({ doc, i }) => ({ docId: doc.id, title: doc.title, snippet: `${this.proofNotes[i]}${bestSnippet(doc.text, terms, (t) => this.idf(t))}` }));
   }
+}
+
+/** The proof note (chunk.ts) of each document, worked out over the parts of each chunked document in order. */
+function proofNotesOf(docs: SourceDocument[]): string[] {
+  const notes = docs.map(() => "");
+  const byParent = new Map<string, number[]>();
+  docs.forEach((doc, i) => {
+    if (!doc.id.includes("#")) return;
+    const parent = parentId(doc.id);
+    byParent.set(parent, [...(byParent.get(parent) ?? []), i]);
+  });
+  for (const indices of byParent.values()) {
+    proofsContinued(indices.map((i) => docs[i]!)).forEach((continued, k) => (notes[indices[k]!] = proofNote(continued)));
+  }
+  return notes;
 }
 
 /**

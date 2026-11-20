@@ -5,7 +5,7 @@
 
 import { words } from "../documents/scripts.ts";
 import { chemistryBacked, chemistryBacking } from "./chemistry.ts";
-import { formulaOffQuestion, mathBacked, mathBacking } from "./mathematics.ts";
+import { formulaOffQuestion, mathBacked, mathBacking, proofOffQuestion } from "./mathematics.ts";
 import { readableMath } from "../documents/math.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
@@ -47,6 +47,11 @@ export interface SentenceSupport {
    * Absent when the question names none, or each is there.
    */
   offQuestion?: string;
+  /**
+   * When the question asks about the proof of a statement and every verified quote stands inside the
+   * proof of another (mathematics.ts proofOffQuestion, harness 0.100.0): the two statements. Absent otherwise.
+   */
+  otherProof?: { asked: string; quoted: string };
   /**
    * The model's own check (review.ts), asked of answers the word checks would label "Quotes found"
    * and of answers too short for them to judge (reviewAsked): whether the quoted passages state what
@@ -986,7 +991,15 @@ export function sentenceSupport(
   const quotedChanges = changes(quoteText);
   const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
   const chemistry = chemistryBacking(context, backing);
-  const math = mathBacking(backing);
+  // The starts of the paragraphs the quotes stand in, for a statement's heading the quote left out (mathematics.ts).
+  // Only a start the context holds: a context cut off before the paragraph begins does not show its heading.
+  const leads = verified.flatMap((e) => {
+    const before = e.context?.before;
+    if (before === undefined || (e.context!.more.before && !/\n\s*\n/.test(before))) return [];
+    const lead = before.split(/\n\s*\n/).at(-1)!.trimStart();
+    return lead ? [lead] : [];
+  });
+  const math = mathBacking(backing, leads);
   const ids = evidence.map((e) => e.docId.replace(/#\d+$/, ""));
   const scopeWords = scope ? contentWords(scope) : [];
   let judged = 0;
@@ -1030,12 +1043,13 @@ export function sentenceSupport(
     if (isBacked) backed++;
     return { text: written, backed: isBacked };
   });
+  const otherProof = question ? proofOffQuestion(question, verified.map((e) => e.proof)) : undefined;
   if (!judged && question && answerInQuote(answer, question, verified, titleFor)) {
     const offQuestion = formulaOffQuestion(question, answer, verified.map((e) => e.quote));
-    return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true, ...(offQuestion ? { offQuestion } : {}) };
+    return { sentences: [{ text: answer, backed: true }], judged: 1, backed: 1, answerInQuote: true, ...(offQuestion ? { offQuestion } : {}), ...(otherProof ? { otherProof } : {}) };
   }
   const offQuestion = question ? formulaOffQuestion(question, answer, verified.map((e) => e.quote)) : undefined;
-  return { sentences, judged, backed, ...(offQuestion ? { offQuestion } : {}) };
+  return { sentences, judged, backed, ...(offQuestion ? { offQuestion } : {}), ...(otherProof ? { otherProof } : {}) };
 }
 
 /** Passages of a document tried for each sentence no quote backs: those sharing the most of its claim words. */
@@ -1395,9 +1409,9 @@ export function crossCheckIncomplete(check: CrossCheck | undefined): boolean {
 export function labelledQuotesFound(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness; contradicted?: { passage: string }; offQuestion?: string },
+  support?: { judged: number; backed: number; review?: ReviewVerdict; crossCheck?: CrossCheck; completeness?: Completeness; contradicted?: { passage: string }; offQuestion?: string; otherProof?: { asked: string; quoted: string } },
 ): boolean {
-  if (support?.contradicted || support?.offQuestion) return false;
+  if (support?.contradicted || support?.offQuestion || support?.otherProof) return false;
   if (support?.review) {
     return support.review === "yes" && !crossCheckRejects(support.crossCheck) && support.completeness?.complete !== false && reviewAsked(status, evidence, support);
   }
@@ -1408,9 +1422,9 @@ export function labelledQuotesFound(
 export function wordChecksPass(
   status: AnswerStatus | "no-answer",
   evidence: Array<{ verified: boolean }>,
-  support?: { judged: number; backed: number; contradicted?: { passage: string }; offQuestion?: string },
+  support?: { judged: number; backed: number; contradicted?: { passage: string }; offQuestion?: string; otherProof?: { asked: string; quoted: string } },
 ): boolean {
-  if (support?.contradicted || support?.offQuestion) return false;
+  if (support?.contradicted || support?.offQuestion || support?.otherProof) return false;
   return status === "verified" && evidence.every((e) => e.verified) && (!support || (support.judged > 0 && support.backed === support.judged));
 }
 

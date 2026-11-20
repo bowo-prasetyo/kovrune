@@ -137,6 +137,7 @@ export function describeStatus(
     answerInQuote?: boolean;
     contradicted?: { docId: string; title?: string; passage: string };
     offQuestion?: string;
+    otherProof?: { asked: string; quoted: string };
     review?: ReviewVerdict;
     crossCheck?: CrossCheck;
     completeness?: Completeness;
@@ -183,6 +184,16 @@ export function describeStatus(
         return {
           label: "Quotes found, answer not confirmed",
           detail: `Every quote below is word for word in the source it cites, but your question asks about "${support.offQuestion}", and neither the answer nor its quotes mention it. The answer may be about something else, such as a related result: check that it answers what you asked.`,
+          tone: "unverified",
+          severity: "check",
+        };
+      }
+      // Every quote is found, but the question asks about one proof and every quote stands in another's
+      // (mathematics.ts proofOffQuestion): the answer may come from the same step of another proof.
+      if (support?.otherProof && found === evidence.length && status === "verified") {
+        return {
+          label: "Quotes found, answer not confirmed",
+          detail: `Every quote below is word for word in the source it cites, but your question asks about the proof of ${support.otherProof.asked}, and the quotes stand in the proof of ${support.otherProof.quoted}. The answer may come from the same step of another proof: check that it answers what you asked.`,
           tone: "unverified",
           severity: "check",
         };

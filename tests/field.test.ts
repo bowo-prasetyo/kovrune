@@ -701,9 +701,16 @@ describe("physics suite", () => {
 });
 
 describe("mathematics suite", () => {
-  it("reads four made-up mathematics documents, two of them LaTeX sources, in a library of their own", async () => {
+  it("reads five made-up mathematics documents, three of them LaTeX sources, in a library of their own", async () => {
     const suite = await loadFieldSuite();
-    assert.equal(mathDocuments.length, 4);
+    assert.equal(mathDocuments.length, 5);
+    // The Vasquez paper's two proofs run over parts, and its last part says whose proof it is only in its note (harness 0.100.0).
+    const { chunkDocument } = await import("../src/documents/chunk.ts");
+    const vasquez = chunkDocument(suite.mathLibrary.documentFor("vasquez-colourings")!);
+    assert.ok(vasquez.length >= 4, "split into parts");
+    const last = vasquez.at(-1)!.text;
+    assert.match(last, /Step 3\./);
+    assert.doesNotMatch(last, /Theorem 4\.1/, "only the note names the proof");
     assert.equal(suite.mathLibrary.documents.filter((d) => !d.id.includes("#")).length, mathDocuments.length, "only the mathematics documents");
     assert.equal(suite.library.documentFor("teller-sets"), undefined, "the field suite's library is unchanged");
     const teller = suite.mathLibrary.documentFor("teller-sets")!.text;

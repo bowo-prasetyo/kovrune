@@ -469,6 +469,26 @@ describe("statements and proofs across parts (harness 0.97.0)", async () => {
     assert.equal(notes[0], "");
   });
 
+  it("finds a part inside a proof by what the proof proves, and its snippet says so (harness 0.100.0)", async () => {
+    const { DocumentIndex } = await import("../src/tools/search.ts");
+    const prose = (n: number) => Array.from({ length: n }, () => "We colour every vertex at random and count the edges that go wrong.").join(" ");
+    const text = [
+      "Theorem 3.1. Every graph is red.",
+      `Proof. ${prose(6)}`,
+      `Step 3. The constant 37 is needed here. ${prose(2)} ∎`,
+      "Theorem 4.1. Every linear graph is blue.",
+      `Proof. ${prose(8)}`,
+      prose(8),
+      `Step 3. The constant 12 is needed here. ${prose(2)} ∎`,
+    ].join("\n\n");
+    const parts = chunkDocument({ id: "v", title: "V", text }, 600);
+    const inside = parts.find((p) => p.text.includes("constant 12"))!;
+    assert.ok(!inside.text.includes("Theorem 4.1"), "the part with Theorem 4.1's Step 3 does not name the theorem");
+    const [hit] = new DocumentIndex(parts).search("Step 3 of the proof of Theorem 4.1 constant", 1);
+    assert.equal(hit!.docId, inside.id);
+    assert.match(hit!.snippet, /^\[This part continues the proof of Theorem 4\.1, which begins in v#\d+\.\]\n/);
+  });
+
   it("reads statement headings as the converter and PDFs write them, and not other sentences", () => {
     for (const s of ["Lemma 3.2 (Key Lemma). If", "Theorem A. Let", "Conjecture 1.4. As", "Question 1. Is", "Main Theorem. For", "Proposition 4.2. Assume"]) assert.ok(STATEMENT_START.test(s), s);
     for (const s of ["Theorem 1.1 is proved in Section 3.", "Lemmas are useful. We", "Table 2. Results"]) assert.ok(!STATEMENT_START.test(s), s);

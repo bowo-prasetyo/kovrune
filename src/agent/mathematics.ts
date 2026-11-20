@@ -136,6 +136,23 @@ export function formulaOffQuestion(question: string, answer: string, quotes: str
   });
 }
 
+/**
+ * When a question asks about the proof of a statement ("Step 3 of the proof of Theorem 4.1") and every
+ * verified quote stands inside the proof of another one (CheckedEvidence.proof): the statement asked about and
+ * the one quoted. A paper's proofs often run in the same steps, and Qwen3.5-4B, asked for Step 3 of
+ * Theorem 4.1's proof, quoted Step 3 of Theorem 3.1's (eval/math/README.md). A quote outside any proof, as
+ * the statement itself, may answer the question, and leaves the answer alone.
+ */
+export function proofOffQuestion(question: string, proofs: Array<string | undefined>): { asked: string; quoted: string } | undefined {
+  const asked = PROOF_ASKED.exec(question)?.[1];
+  if (!asked || !proofs.length || proofs.some((p) => p === undefined)) return undefined;
+  const key = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  if (proofs.some((p) => key(p!) === key(asked))) return undefined;
+  return { asked, quoted: proofs[0]! };
+}
+
+const PROOF_ASKED = /\bproof of (?:the )?((?:Main )?(?:Theorem|Lemma|Proposition|Corollary|Claim)(?: [0-9A-Z][0-9A-Za-z]*(?:\.[0-9A-Za-z]+)*)?)/i;
+
 /** Relations, set relations and operators that state opposite or different things, by class, for the shape of a formula. */
 const SHAPE_CLASSES: Array<[RegExp, string]> = [
   [/[≤≥<>=≠]/g, "R"],
@@ -150,10 +167,12 @@ const SHAPE_CLASSES: Array<[RegExp, string]> = [
 
 /** The formula tokens of a text as written for comparing: tokens with a relation, set or operator symbol, edges trimmed. */
 function formulaTokens(text: string): string[] {
+  // A bracket next to a word of three letters or more is where a formula meets the prose around it, which the
+  // spacing formulaText drops had joined: "φ(n)≤φ(m)for", "decay(1+t)".
   return formulaText(text)
-    .split(" ")
+    .split(/ |(?<=[)\]])(?=\p{L}{3,})|(?<=\p{L}{3,})(?=[([])/u)
     .map((t) => t.replace(/^[.,;:?!'"]+|[.,;:?!'"]+$/g, ""))
-    .filter((t) => /[≤≥<>=≠⊂⊃⊆⊇∩∪∈∉∀∃^/×·√∑∏∫]/u.test(t) && /[\p{L}\p{N}]/u.test(t));
+    .filter((t) => /[≤≥<>=≠⊂⊃⊆⊇∩∪∈∉∀∃^/×·√∑∏∫|]/u.test(t) && /[\p{L}\p{N}]/u.test(t));
 }
 
 /** A formula's shape: its relations, set operations, real and imaginary parts, extremes and numbers each by class. */
@@ -185,10 +204,43 @@ export interface MathBacking {
   existential: boolean;
   proved: boolean;
   conjectured: boolean;
+  /** The nouns the quotes bind "every" to ("every planar graph" gives "planar"…), and those they bind "there exists" to. */
+  universalNouns: Set<string>;
+  existentialNouns: Set<string>;
+  /** The quotes' conditional statements: the formulas of "If H" and those of what follows ("then C"). */
+  conditionals: Array<{ hypothesis: string[]; conclusion: string[] }>;
 }
 
-/** What the quotes (and titles) say, for mathBacked. */
-export function mathBacking(backing: string): MathBacking {
+/*
+ * Three more readings (harness 0.100.0), the audit's M3 sentences the 0.96.0 rules passed:
+ * - a quantifier is read with the noun it binds, so "For every constant c > 0, every planar graph …" is not backed by
+ *   "There exists a constant c > 0 such that every planar graph …", which says both "every" and "there exists";
+ * - a conclusion stated without its hypothesis: "φ(n) ≤ φ(m) holds for all n and m" is not backed by "If n ∣ m then
+ *   φ(n) ≤ φ(m)";
+ * - a statement's status is read from where its quote stands, too: a quote from "Conjecture 1.4. Every toy ring … is
+ *   finite" that leaves out the heading still says a conjecture (mathBacking's `leads`).
+ */
+
+/** The word a quantifier binds: the one after "every", "each", "for all" or "for any", or after "there exists" and an article ("there exists a constant"). */
+const BOUND_UNIVERSAL = /\b(?:for (?:every|each|all|any)|every|each)\s+(?:(?:a|an|the)\s+)?([a-z][a-z-]+)/gi;
+const BOUND_EXISTENTIAL = /\b(?:there (?:exists?|is|are)|exists?)\s+(?:(?:a|an|some|at least one)\s+)?([a-z][a-z-]+)/gi;
+const nouns = (text: string, pattern: RegExp) => new Set([...text.matchAll(pattern)].map((m) => m[1]!.toLowerCase()));
+
+/** A conditional sentence: "If H then C", "If H, C", "Whenever H, C", "Provided that H, C". */
+const CONDITIONAL = /\b(?:if|whenever|provided(?: that)?|assuming(?: that)?|suppose(?: that)?)\b([^.;]+?)(?:,|\bthen\b)([^.;]+)/gi;
+/** Words with which a sentence states a condition of its own. */
+const CONDITION_WORD = /\b(?:if|when|whenever|provided|assum\w*|suppos\w*|given|unless|under)\b/i;
+
+/** The heading a statement's paragraph starts with, which says its status: "Conjecture 1.4." or "Theorem 1.1 (Main Theorem).". */
+const CONJECTURE_LEAD = /^(?:Conjecture|Question|Problem|Open (?:problem|question))\b/;
+const THEOREM_LEAD = /^(?:Main )?(?:Theorem|Lemma|Proposition|Corollary)\b/;
+
+/**
+ * What the quotes (and titles) say, for mathBacked. `leads` are the starts of the paragraphs the quotes stand in,
+ * as the source has them before each quote (CheckedEvidence.context), so a quote's heading counts though it was
+ * not quoted.
+ */
+export function mathBacking(backing: string, leads: string[] = []): MathBacking {
   const formulas = new Set(formulaTokens(backing));
   const shapes = new Map<string, Set<string>>();
   for (const token of formulas) shapes.set(shape(token), new Set([...(shapes.get(shape(token)) ?? []), token]));
@@ -198,8 +250,13 @@ export function mathBacking(backing: string): MathBacking {
     shapes,
     universal: UNIVERSAL.test(backing),
     existential: EXISTENTIAL.test(backing),
-    proved: saysProved(backing),
-    conjectured: CONJECTURED.test(backing),
+    proved: saysProved(backing) || leads.some((l) => THEOREM_LEAD.test(l)),
+    conjectured: CONJECTURED.test(backing) || leads.some((l) => CONJECTURE_LEAD.test(l)),
+    universalNouns: nouns(backing, BOUND_UNIVERSAL),
+    existentialNouns: nouns(backing, BOUND_EXISTENTIAL),
+    conditionals: [...backing.matchAll(CONDITIONAL)]
+      .map((m) => ({ hypothesis: formulaTokens(m[1]!), conclusion: formulaTokens(m[2]!) }))
+      .filter((c) => c.hypothesis.length && c.conclusion.length),
   };
 }
 
@@ -223,6 +280,17 @@ export function mathBacked(text: string, backing: MathBacking): boolean {
   if (universal !== existential) {
     if (universal && backing.existential && !backing.universal) return false;
     if (existential && backing.universal && !backing.existential) return false;
+  }
+  // A quantifier read with the noun it binds: "every constant" against the quotes' "there exists a constant".
+  const own = { universal: nouns(text, BOUND_UNIVERSAL), existential: nouns(text, BOUND_EXISTENTIAL) };
+  for (const noun of own.universal) if (!own.existential.has(noun) && backing.existentialNouns.has(noun) && !backing.universalNouns.has(noun)) return false;
+  for (const noun of own.existential) if (!own.universal.has(noun) && backing.universalNouns.has(noun) && !backing.existentialNouns.has(noun)) return false;
+  // A conclusion without its hypothesis: the quote's "If n ∣ m then φ(n) ≤ φ(m)" stated as "φ(n) ≤ φ(m)" alone.
+  if (!CONDITION_WORD.test(text)) {
+    const said = formulaText(text);
+    for (const { hypothesis, conclusion } of backing.conditionals) {
+      if (conclusion.some((c) => containsWhole(said, c)) && !hypothesis.some((h) => containsWhole(said, h))) return false;
+    }
   }
   const proved = saysProved(text);
   const conjectured = CONJECTURED.test(text);
