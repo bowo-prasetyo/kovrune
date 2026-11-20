@@ -136,6 +136,23 @@ export function formulaOffQuestion(question: string, answer: string, quotes: str
   });
 }
 
+/**
+ * When a question asks about the proof of a statement ("Step 3 of the proof of Theorem 4.1") and every
+ * verified quote stands inside the proof of another one (CheckedEvidence.proof): the statement asked about and
+ * the one quoted. A paper's proofs often run in the same steps, and Qwen3.5-4B, asked for Step 3 of
+ * Theorem 4.1's proof, quoted Step 3 of Theorem 3.1's (eval/math/README.md). A quote outside any proof, as
+ * the statement itself, may answer the question, and leaves the answer alone.
+ */
+export function proofOffQuestion(question: string, proofs: Array<string | undefined>): { asked: string; quoted: string } | undefined {
+  const asked = PROOF_ASKED.exec(question)?.[1];
+  if (!asked || !proofs.length || proofs.some((p) => p === undefined)) return undefined;
+  const key = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  if (proofs.some((p) => key(p!) === key(asked))) return undefined;
+  return { asked, quoted: proofs[0]! };
+}
+
+const PROOF_ASKED = /\bproof of (?:the )?((?:Main )?(?:Theorem|Lemma|Proposition|Corollary|Claim)(?: [0-9A-Z][0-9A-Za-z]*(?:\.[0-9A-Za-z]+)*)?)/i;
+
 /** Relations, set relations and operators that state opposite or different things, by class, for the shape of a formula. */
 const SHAPE_CLASSES: Array<[RegExp, string]> = [
   [/[≤≥<>=≠]/g, "R"],

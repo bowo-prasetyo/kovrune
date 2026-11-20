@@ -976,3 +976,41 @@ describe("mathematics: hypotheses, bound quantifiers and a statement's heading (
     assert.equal(backed("Every planar toy ring is countable", "The paper proves that every planar toy ring is countable."), true);
   });
 });
+
+describe("mathematics: a quote from another theorem's proof (harness 0.100.0)", async () => {
+  const { checkEvidence } = await import("../src/agent/evidence.ts");
+  const { sentenceSupport, labelledQuotesFound } = await import("../src/agent/support.ts");
+  const doc = [
+    "Theorem 3.1. Every graph with few edges is red.",
+    "Proof. We colour at random, in three steps.",
+    String.raw`Step 3. This is where the constant 37 is needed: with a smaller constant, the expected number is not below $1/6$. ∎`,
+    "Theorem 4.1. Every linear graph with few edges is blue.",
+    "Proof. We follow the same three steps.",
+    "Step 3. This is where the constant 12 is needed: it is the largest constant that works.",
+    "∎",
+  ].join("\n\n");
+  const label = (question: string, quote: string, answer: string) => {
+    const evidence = checkEvidence([{ docId: "v", quote }], () => doc);
+    const support = sentenceSupport(answer, evidence, () => "Vasquez colourings", question);
+    return { proof: evidence[0]!.proof, otherProof: support.otherProof, labelled: labelledQuotesFound("verified", evidence, support) };
+  };
+
+  it("records the proof a quote stands in, also for a quote of math in another form", () => {
+    assert.equal(label("Which constant?", "This is where the constant 12 is needed", "The constant 12.").proof, "Theorem 4.1");
+    assert.equal(label("Which constant?", "the expected number is not below 1/6", "The constant 37.").proof, "Theorem 3.1");
+    assert.equal(label("Which constant?", "This is where the constant 37 is needed: with a smaller constant, the expected number is not below 1/6", "37.").proof, "Theorem 3.1");
+    assert.equal(label("Which constant?", "Every linear graph with few edges is blue", "Blue.").proof, undefined, "a statement is in no proof");
+  });
+
+  it("does not label an answer about one proof whose quotes stand in another's", () => {
+    const question = "Which constant does Step 3 of the proof of Theorem 4.1 say is needed?";
+    const wrong = label(question, "This is where the constant 37 is needed: with a smaller constant, the expected number is not below 1/6", "The constant 37 is needed: with a smaller constant, the expected number is not below 1/6.");
+    assert.deepEqual(wrong.otherProof, { asked: "Theorem 4.1", quoted: "Theorem 3.1" });
+    assert.equal(wrong.labelled, false);
+    const right = label(question, "This is where the constant 12 is needed: it is the largest constant that works", "The constant 12 is needed: it is the largest constant that works.");
+    assert.equal(right.otherProof, undefined);
+    assert.equal(right.labelled, true);
+    // A question about a statement, not a proof, is left alone.
+    assert.equal(label("Which constant does Theorem 4.1 need?", "This is where the constant 37 is needed", "The constant 37").otherProof, undefined);
+  });
+});

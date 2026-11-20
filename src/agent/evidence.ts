@@ -2,6 +2,7 @@
 // quote is verified against the cited document. Small models invent answers, so
 // the app shows whether an answer is backed by text that is really there.
 
+import { proofAt } from "../documents/chunk.ts";
 import { mathMatchKey, readableMath } from "../documents/math.ts";
 import { dropUnspacedGaps, isUnspaced, unspacedCount } from "../documents/scripts.ts";
 
@@ -20,6 +21,8 @@ export interface CheckedEvidence extends EvidenceItem {
   context?: QuoteContext;
   /** For a verified quote that leaves words out ("..."): the most words it leaves out in one place. */
   elidedWords?: number;
+  /** For a verified quote inside a proof: the statement it proves ("Theorem 4.1", chunk.ts proofAt). */
+  proof?: string;
 }
 
 /** A verified quote in its source: the source's own text before, of, and after the quote. */
@@ -167,6 +170,13 @@ export function checkEvidence(
   resolvePageStarts: (docId: string) => number[] | undefined = () => undefined,
 ): CheckedEvidence[] {
   return items.map((item) => {
+    const checked = checkOne(item);
+    const text = checked.verified ? resolveText(item.docId) : undefined;
+    const proof = text === undefined ? undefined : proofOfQuote(item.quote, text);
+    return proof ? { ...checked, proof } : checked;
+  });
+
+  function checkOne(item: EvidenceItem): CheckedEvidence {
     const text = resolveText(item.docId);
     if (text === undefined) return { ...item, verified: false, reason: "the model cited a document ID it never found" };
     const quote = stripEdgePunctuation(normalizeForMatch(item.quote));
@@ -215,7 +225,21 @@ export function checkEvidence(
       ? `its parts are in the document, but too far apart to be one quote ("…" may leave out at most ${MAX_ELIDED_CHARS} characters)`
       : "quote not found in the document";
     return { ...item, verified: false, reason, ...(closest ? { closest } : {}) };
-  });
+  }
+}
+
+/**
+ * The statement whose proof a verified quote stands in (chunk.ts proofAt), found where the quote is, or,
+ * for a quote of math in another form than the source's, where its words before the first formula are.
+ */
+function proofOfQuote(quote: string, text: string): string | undefined {
+  let at = locateQuote(quote, text)?.start;
+  if (at === undefined) {
+    const lead = quote.split(/\s+/).findIndex((word) => /[$\\^_{}=<>≤≥∈⊂|]/.test(word));
+    const words = quote.split(/\s+/).slice(0, lead < 0 ? undefined : lead);
+    if (words.length >= MIN_QUOTE_WORDS) at = locateQuote(words.join(" "), text)?.start;
+  }
+  return at === undefined ? undefined : proofAt(text, at);
 }
 
 const isWordChar = (ch: string | undefined) => ch !== undefined && /[\p{L}\p{M}\p{N}]/u.test(ch);

@@ -109,6 +109,29 @@ function statementBefore(units: string[]): string[] {
   return [];
 }
 
+/**
+ * The statement whose proof a place in a document stands in ("Theorem 4.1"), worked out as proofsContinued
+ * does, over the paragraphs before it; undefined outside any proof. A proof titled only "Proof" proves the
+ * statement before it.
+ */
+export function proofAt(text: string, offset: number): string | undefined {
+  let statement: string | undefined;
+  let open: string | undefined;
+  const paragraphs = text.slice(0, offset).split(/\n\s*\n/);
+  paragraphs.forEach((raw, k) => {
+    const paragraph = raw.trim();
+    if (!paragraph) return;
+    const head = STATEMENT_START.exec(paragraph);
+    const proof = PROOF_START.exec(paragraph);
+    if (head || /^#{1,6}\s/.test(paragraph)) open = undefined;
+    if (head) statement = [head[1], head[2]].filter(Boolean).join(" ");
+    if (proof) open = proof[1]?.trim() || statement || "the statement before it";
+    // The paragraph the place is in has not ended there, so its box, if any, comes after it.
+    if (open && k < paragraphs.length - 1 && PROOF_END.test(paragraph)) open = undefined;
+  });
+  return open;
+}
+
 /** The note on a part that starts inside a proof: "[This part continues the proof of Theorem 1.1, which begins in teller-sets#3.]". */
 export function proofNote(continued: { proof: string; partId: string } | undefined): string {
   return continued ? `[This part continues the proof of ${continued.proof}, which begins in ${continued.partId}.]\n` : "";
