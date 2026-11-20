@@ -1425,6 +1425,60 @@ The tests (`tests/pubchem.test.ts`, `tests/chemrxiv.test.ts`) answer from record
 - Hydrogens counted from usual valences can be wrong for metals, hypervalent atoms written without their charges, and radicals the file does not mark.
 - A CIF's long loops are cut at 2,000 rows.
 
+### More formulas as text, hypotheses and bound quantifiers, and proofs found by search (0.100.0)
+
+The audit's last open items ([`docs/math-audit.md`](../../docs/math-audit.md)): M8, what was left of M3, and measuring what M7's proof notes gain.
+
+**More of a paper's math read as text (M8)** (`readableFormula` in `src/documents/math.ts`). The answer view and the quote check read a formula with a command they did not know as raw LaTeX. Now also read:
+- every letter of `\mathbb`, `\mathbbm`, `\mathds` and `\mathfrak` (𝔸ⁿ, 𝔽_q, 𝔤𝔩ₙ, 𝟙), not only the number sets;
+- operators a paper declares (`\Irr`, `\Hom`, `\GL`, `\Gal`, `\End`: a command of a capital and one to six more letters) and `\tr`, `\ord`, `\rank` as upright names: "Irr (G)", "Hom (V, W)";
+- relations and arrows (`\leqslant`, `\hookrightarrow`, `\twoheadrightarrow`, `\rtimes`, `\nmid`, `\asymp`), `\pmod{p}` as " (mod p)", `\binom{n}{k}` as "C(n, k)", the accents `\breve`, `\check`, `\acute`, `\grave`, `\mathring`, `\underline`;
+- spacing and invisible commands dropped with their argument (`\hspace{…}`, `\phantom{…}`, `\label{…}`).
+
+On the audit's 48 arXiv papers, inline formulas shown as raw LaTeX go from **5,838 to 1,165 of 62,667** (9.3% to 1.9%). Most of the rest use a paper's own macros (`\wt`, `\ol`, `\mf`), which a paper defines with `\newcommand` in ways a reader would have to expand.
+
+**What M3 still let through** (`mathBacked` in `src/agent/mathematics.ts`, `sentenceSupport` in `support.ts`). Of the audit's nine wrong sentences, 0.96.0 marked five. Three more now:
+- **A dropped hypothesis.** "φ(n) ≤ φ(m) holds for all n and m" against "If n ∣ m then φ(n) ≤ φ(m)": when a quote states a conclusion under a condition ("if", "whenever", "provided", "assuming", "suppose") and the sentence has the conclusion's formula but no condition word, the sentence is not backed. "If n ∣ m, then …" and "When n divides m, …" stay backed.
+- **A quantifier swapped when the quote says both kinds.** "For every constant c > 0, every planar graph …" against "There exists a constant c > 0 such that every planar graph …": each quantifier is read with the word it binds ("every *constant*", "exists a *constant*"), so a noun bound one way in the quote and the other in the sentence is marked, whatever else the quote says.
+- **A conjecture quoted without its heading.** A quote from inside "Conjecture 1.4. Every toy ring …" that leaves out "Conjecture 1.4" now counts as a conjecture: the sentence check reads the start of the paragraph the quote stands in, as the quote check found it, so "the paper proves that every toy ring …" is not backed, and a quote from inside "Theorem 2.1. …" backs "proves".
+
+Eight of the nine are now caught. The one left is "O(n³ log n)" for "O(n^{3/2} log n)", whose "3" the quote has in another place. The right sentence for each stays backed.
+
+**Effect on recorded answers: none.** `bench:rescore` with the code of `main` and of this change, each report on its own: 9,928 labels in 187 reports, all the same. No recorded sentence states a conclusion without its condition, swaps a bound quantifier, or quotes a conjecture without its heading, so the rules took no label, right or wrong. (Six early reports, from before the current report format, can't be re-scored, on either.)
+
+**Measuring the proof notes (M7).** 0.97.0 notes, on a part that starts inside a proof, whose proof it is, but no suite needed it. A made-up paper is added to the mathematics suite, `eval/math/docs/vasquez-colourings.tex`: two theorems whose proofs both run in three steps over several parts, with a "Step 3" each and a different constant and lemma in each. The part with Theorem 4.1's Steps 2 and 3 does not name the theorem; only its note does. Three questions: ma25 (which constant Step 3 of Theorem 4.1's proof needs: 12, not Theorem 3.1's 37), ma26 (which lemma Step 3 of Theorem 3.1's proof uses: Lemma 2.3) and held-out mah11 (which lemma Step 2 of Theorem 4.1's proof uses: Lemma 2.2). Search alone finds the answering part for all three among its first three results.
+
+Qwen3.5-4B, the suite's setup, on the three, with the notes off and on: **the same answers, 1 of 3 both times.** ma26 passes. For ma25 and mah11 the model read only the first result, which for "Theorem 4.1 Step 3" is the part with Theorem 3.1's Step 3 (it also has Theorem 4.1's statement), and answered 37, with **Quotes found** (a real quote, of the wrong proof), or that the documents do not say. With the notes on, the part it read said "[This part continues the proof of Theorem 3.1 …]" and the model answered 37 all the same. The note was shown only when a part was read, and the part that answers was second in the search results, with nothing in its snippet to say which proof it is in.
+
+Two changes follow from this:
+- **Search carries the note** (`DocumentIndex` in `src/tools/search.ts`): a part inside a proof is indexed by what the proof proves ("Theorem 4.1"), as titles are, and its snippet starts with its note. Only the mathematics library has such parts (two, both in the Vasquez paper), and `bench:retrieval` gives the same results on every suite. On a first run with it, cut short by a restart of the machine, the model still read the part with Theorem 3.1's Step 3 for ma25 and answered 37: the note in front of it did not stop it.
+- **An answer about one proof whose quotes all stand in another's is not labelled** (`proofOffQuestion` in `src/agent/mathematics.ts`). The quote check now records, for each verified quote, the statement whose proof it stands in (`CheckedEvidence.proof`, from `proofAt` in `chunk.ts`, which reads a proof's start, box and the next statement as the notes do; for a quote of math in another form than the source's, from where its words before the first formula are). When a question asks about "the proof of Theorem 4.1" and every verified quote stands in another statement's proof, the answer is shown as **Quotes found, answer not confirmed**: "your question asks about the proof of Theorem 4.1, and the quotes stand in the proof of Theorem 3.1. The answer may come from the same step of another proof". A quote outside any proof, as the statement itself, leaves the answer alone. Like 0.96.0's check of the question's formula, it is code, needs no model call, and can be re-scored.
+
+**Effect on recorded answers.** Re-scoring the 187 reports with this change gives the same 9,928 labels as `main`: no recorded question asked about a proof except the mathematics suite's ma03, whose right answer quotes the proof it asks about and keeps its label. On this change's own runs, **ma25's 37 loses its wrong label** (in both); ma26's right answer keeps its label.
+
+| Code | `math` | `mathholdout` | Labelled "Quotes found", wrong |
+| --- | --- | --- | --- |
+| 0.96.0 (24 and 10 tasks) | 19/24 | 6/10 | 1 of 10 open, 0 of 4 held out |
+| 0.100.0, note on reading only, as run | 20/26 | 7/11 | 3 of 12 open, 0 of 5 held out |
+| the same answers, re-scored with 0.100.0 | 20/26 | 7/11 | 2 of 11 open, 0 of 5 held out |
+| **0.100.0** | **20/26** | **9/11** | 2 of 11 open, **0 of 5 held out** |
+
+- **The three proof questions:** 1 of 3 with the notes off, 1 of 3 with the note on reading only, **2 of 3** with 0.100.0. Held-out mah11 passes: its search's snippets said which part continues which proof, and the model read the parts in turn, as far as Theorem 4.1's Step 2, and answered Lemma 2.2, the first time it read that part in any run. ma25 still answers 37 from Theorem 3.1's Step 3, but **is no longer labelled**: it is shown as an answer from another proof. One run each, so whether the snippet's note is what made the model read on is not shown; what the label does is code and holds on any run.
+- **The other tasks** pass and fail as at 0.96.0, except held-out mah03, which passes, with the same answer as before and, this time, a quote that verifies: within the run's noise.
+- **Labelled and wrong:** ma15 (assumption (H1) given by its content, not its name, as at 0.96.0) and ma18 ("3", the right number, which the scorer's phrasings "is 3", "= 3" do not match). Both are right in substance. **None held out.**
+
+Still failing on the open set: ma06, ma15's fact, ma18's phrasing, ma22, ma23 (as at 0.96.0) and ma25.
+
+Reports: `eval/results/math-0.100-nonote-qwen3.5-4b-q4km.json` (the three questions, notes off), `math-0.100-readnote-qwen3.5-4b-q4km.json` (the suite, note on reading only) and `math-0.100-qwen3.5-4b-q4km.json` (the suite, 0.100.0).
+
+`tests/math.test.ts` ("more of a paper's math read"), `tests/support.test.ts` ("mathematics: hypotheses, bound quantifiers and a statement's heading") and `tests/documents.test.ts` ("finds a part inside a proof by what the proof proves") and `tests/support.test.ts` ("mathematics: a quote from another theorem's proof") fail before the change and pass after; `tests/field.test.ts` checks that the Vasquez paper's last part names its theorem only in its note.
+
+**Limits:**
+- The hypothesis rule needs a condition word in the quote and the conclusion's formula in the sentence. A hypothesis stated as a separate sentence ("Let n divide m. Then …") or a conclusion given in words is not read.
+- A bound quantifier is read for a noun right after it ("every constant"); "for every c > 0" binds a symbol, and the rule falls back to 0.96.0's, which needs the quote to state one kind only.
+- The proof check needs the question to say "proof of" a numbered or named statement, and the document to mark where proofs start ("Proof.", as the converter and most PDFs write it); a question about "the second step of the main argument" is left to the model's checks.
+- A paper's own macros are still shown raw; expanding `\newcommand` is the converter's job and would need its definitions kept with the text.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
