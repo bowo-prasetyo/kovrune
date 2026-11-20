@@ -44,9 +44,10 @@ Qwen3.5-4B (Q4_K_M) in constrained mode, llama.cpp `fae9ac5` built portably (`-D
 | Run | Code | `math` | `mathholdout` | Labelled "Quotes found", wrong |
 | --- | --- | --- | --- | --- |
 | Before | 0.93.0 converter, the suite only | 9/24 | 4/10 | 0 of 7 |
-| After | 0.94.0 converter | **11/24** | **5/10** | 0 of 8 |
+| After | 0.94.0 converter | 11/24 | 5/10 | 0 of 8 |
+| Quotes of math | 0.95.0 quote check | **16/24** | **6/10** | 2 of 14 (see below) |
 
-Reports: `eval/results/math-0.94-base-qwen3.5-4b-q4km.json` (before) and `math-0.94-qwen3.5-4b-q4km.json` (after).
+Reports: `eval/results/math-0.94-base-qwen3.5-4b-q4km.json` (before) and `math-0.94-qwen3.5-4b-q4km.json` (after). The 0.95.0 run: `math-0.95-qwen3.5-4b-q4km.json`.
 
 **What the fix changed.** Four open tasks differ in a way the converter explains:
 - **ma08** (which equation counts the solutions): before, "Equation (2)", the old global number; after, "(2.1)", which passes.
@@ -65,3 +66,17 @@ ma10 and ma17 passed after and failed before, and ma02 and ma15 the other way, w
 What the runs say to do next, in order: compare quotes and sentences with math normalised on both sides (LaTeX commands, ASCII and Unicode relations, scripts outside `$`), which six right answers wait for; and tell the model that a "No" or "not known" it can quote is an answer it found.
 
 Search alone (`npm run bench:retrieval`) finds every cited document and every answering passage for the 31 answerable tasks. ma06's failure is the model's: it read one part and stopped, though search finds Remark 3.4's part.
+
+### Quotes of math in any common form (0.95.0)
+
+The 0.95.0 quote check compares quotes and sources with math written alike, however the model writes it ([field README](../field/README.md#quotes-of-math-in-any-common-form-0950-defect-fix)). On the same machine and build, the model gave the same answers as in the 0.94.0 run on all 24 open tasks; only how they were checked changed.
+
+- **Five open tasks pass that failed:** ma02, ma03, ma04, ma05 and ma07, five of the six right answers held back by the quote check. Four take **Quotes found**. The sixth, ma15, verifies its quote but still fails its fact: it gives (H1)'s content without naming it.
+- **The held-out set** passes 6 of 10, from 5.
+- **Two answers the scorer counts wrong take Quotes found:**
+  - **ma15** (open): "Theorem B … assumes that the potential V satisfies V ≥ 0 and V ∈ L^{d/(2s)}(R^d)". That is assumption (H1), which the task's fact asks for by name; right in substance.
+  - **mah01** (held out): asked for the bound in Z/pZ × F₅ⁿ, the answer gives Theorem 1.2's bound in F₅ⁿ, quoted word for word. The quote is real and the sentence true, but it answers another question. The model's own check said "yes" and its cross-check agreed, so nothing after the quote check caught it. Before 0.95.0 its quote failed ("n >= 3" for `$n \geq 3$`), which kept the label off by accident.
+
+**Against the rule for label changes** (no right answer loses its label, and false reassurance does not rise): no right answer loses its label anywhere, but held-out false reassurance on this suite goes from 0 of 4 to 1 of 5. The new label is wrong because the answer is off the question, which a quote check cannot see; the same answer with a quote typed in LaTeX would have taken the label before. Whether to adopt the change with this, or first make the label ask whether the answer gives what the question asks for (the completeness check, which runs for Qwen3.5-2B only), is the project owner's decision. The run is recorded either way.
+
+Still failing on the open set, all as before: three right "No" answers reported as not found (ma01, ma11, ma20), ma06, ma18, ma22 and ma23 wrong, and ma15's fact.
