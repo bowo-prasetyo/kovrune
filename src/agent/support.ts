@@ -986,7 +986,15 @@ export function sentenceSupport(
   const quotedChanges = changes(quoteText);
   const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
   const chemistry = chemistryBacking(context, backing);
-  const math = mathBacking(backing);
+  // The starts of the paragraphs the quotes stand in, for a statement's heading the quote left out (mathematics.ts).
+  // Only a start the context holds: a context cut off before the paragraph begins does not show its heading.
+  const leads = verified.flatMap((e) => {
+    const before = e.context?.before;
+    if (before === undefined || (e.context!.more.before && !/\n\s*\n/.test(before))) return [];
+    const lead = before.split(/\n\s*\n/).at(-1)!.trimStart();
+    return lead ? [lead] : [];
+  });
+  const math = mathBacking(backing, leads);
   const ids = evidence.map((e) => e.docId.replace(/#\d+$/, ""));
   const scopeWords = scope ? contentWords(scope) : [];
   let judged = 0;

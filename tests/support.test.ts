@@ -941,3 +941,38 @@ describe("locants in chemical names (harness 0.99.0)", () => {
     assert.equal(marks("The 2,4,6-trimethylphenyl group (mesityl) protects the boron.", [mesityl]), "+");
   });
 });
+
+describe("mathematics: hypotheses, bound quantifiers and a statement's heading (harness 0.98.0)", async () => {
+  const { checkEvidence } = await import("../src/agent/evidence.ts");
+  const { sentenceSupport } = await import("../src/agent/support.ts");
+  const doc = [
+    String.raw`Lemma 2.2. If $n \mid m$ then $\varphi(n) \leq \varphi(m)$ for all positive integers.`,
+    String.raw`Theorem 2.3. There exists a constant $c > 0$ such that every planar graph has a vertex of degree at most $5$.`,
+    "Conjecture 1.4. Every toy ring of characteristic zero is finite.",
+    "Theorem 2.1. Every planar toy ring is countable.",
+  ].join("\n\n");
+  const backed = (quote: string, answer: string) => {
+    const support = sentenceSupport(answer, checkEvidence([{ docId: "d", quote }], () => doc), () => "Toy paper", "What does the paper show?");
+    return support.judged > 0 && support.backed === support.judged;
+  };
+
+  it("marks a conclusion stated without its hypothesis, and passes it with one (audit M3)", () => {
+    const quote = String.raw`If $n \mid m$ then $\varphi(n) \leq \varphi(m)$ for all positive integers`;
+    assert.equal(backed(quote, "φ(n) ≤ φ(m) holds for all positive integers n and m."), false);
+    assert.equal(backed(quote, "If n ∣ m, then φ(n) ≤ φ(m) holds for all positive integers n and m."), true);
+    assert.equal(backed(quote, "When n divides m, φ(n) ≤ φ(m) for all positive integers."), true);
+  });
+
+  it("reads a quantifier with the word it binds, when the quote says both kinds", () => {
+    const quote = String.raw`There exists a constant $c > 0$ such that every planar graph has a vertex of degree at most $5$`;
+    assert.equal(backed(quote, "For every constant c > 0, every planar graph has a vertex of degree at most 5."), false);
+    assert.equal(backed(quote, "There is a constant c > 0 such that every planar graph has a vertex of degree at most 5."), true);
+  });
+
+  it("reads a statement's status from the heading of the paragraph its quote stands in", () => {
+    assert.equal(backed("Every toy ring of characteristic zero is finite", "The paper proves that every toy ring of characteristic zero is finite."), false);
+    assert.equal(backed("Every toy ring of characteristic zero is finite", "The paper conjectures that every toy ring of characteristic zero is finite."), true);
+    assert.equal(backed("Every planar toy ring is countable", "It is only conjectured that every planar toy ring is countable."), false);
+    assert.equal(backed("Every planar toy ring is countable", "The paper proves that every planar toy ring is countable."), true);
+  });
+});
