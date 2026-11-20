@@ -95,6 +95,71 @@ export function recordText(record: DataCiteWork, why: string): string {
  * records. Versions of one work have their own DOIs and the same title (a third of the results in the
  * check), so a search keeps the first of each title.
  */
+/** The text of a Zenodo record's first PDF, or why it can't be read. */
+async function zenodoText(
+  fetchImpl: FetchLike,
+  extractPdf: (bytes: Uint8Array) => Promise<ExtractedPdf>,
+  recordId: string,
+  signal?: AbortSignal,
+): Promise<ExtractedPdf | string> {
+  let zenodo: ZenodoRecord;
+  try {
+    // A concept DOI's record redirects to its latest version.
+    zenodo = await getJson(fetchImpl, "Zenodo", `${ZENODO_API}/${recordId}`, signal);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return "Zenodo did not give this work's files, so only its record was read.";
+  }
+  const pdf = (zenodo.files ?? []).find((f) => f.key?.toLowerCase().endsWith(".pdf") && f.links?.self);
+  if (!pdf) return "This work has no PDF on Zenodo, so only its record was read.";
+  if ((pdf.size ?? 0) > MAX_PDF_BYTES) return "This work's PDF is too large to read here, so only its record was read.";
+  let bytes: Uint8Array;
+  try {
+    bytes = await getBytes(fetchImpl, "Zenodo", pdf.links!.self!, signal, { timeoutMs: ZENODO_PDF_TIMEOUT_MS });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return "This work's PDF could not be downloaded from Zenodo, so only its record was read.";
+  }
+  try {
+    const text = await extractPdf(bytes);
+    return text.text.trim() ? text : "This work's PDF has no text that can be read, so only its record was read.";
+  } catch {
+    return "This work's PDF could not be read, so only its record was read.";
+  }
+}
+
+/**
+ * Reads a Zenodo record's PDF, as "zenodo:<record ID>", for OpenAlex works that have a copy on Zenodo
+ * (harness 0.101.0), given to OpenAlex when the user ticks DataCite, whose works are read from Zenodo
+ * already. It fails when the record has no PDF that can be read, so the work is read as its abstract
+ * instead of as a bare record. Zenodo holds a copy of 34,171 Social Sciences articles of 2023 in OpenAlex,
+ * which no other ticked source reads in full (docs/social-sciences-audit.md, S5). It searches nothing.
+ */
+export function createZenodoReader(options: { extractPdf: (bytes: Uint8Array) => Promise<ExtractedPdf>; fetchImpl?: FetchLike }): OpenSource {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  return {
+    name: "datacite",
+    label: "Zenodo",
+    async search() {
+      return [];
+    },
+    async fetch(id, signal) {
+      const recordId = /^zenodo:(\d+)$/.exec(id)?.[1];
+      if (!recordId) throw new SourceError(`"${id}" is not a Zenodo record.`);
+      const pdf = await zenodoText(fetchImpl, options.extractPdf, recordId, signal);
+      if (typeof pdf === "string") throw new SourceError(pdf);
+      return {
+        id,
+        title: `Zenodo record ${recordId}`,
+        text: pdf.text,
+        url: `https://zenodo.org/records/${recordId}`,
+        retrievedAt: new Date().toISOString(),
+        ...(pdf.pageStarts ? { pageStarts: pdf.pageStarts } : {}),
+      };
+    },
+  };
+}
+
 export function createDataCite(options: {
   /** Extracts a PDF's text with pdf.js (extractPdfText). */
   extractPdf: (bytes: Uint8Array) => Promise<ExtractedPdf>;
@@ -112,34 +177,6 @@ export function createDataCite(options: {
     if (!record) throw new SourceError(`DataCite has no work with DOI ${doi}.`);
     found.set(doi, record);
     return record;
-  }
-
-  /** The text of a Zenodo work's first PDF, or why it can't be read. */
-  async function zenodoText(recordId: string, signal?: AbortSignal): Promise<ExtractedPdf | string> {
-    let zenodo: ZenodoRecord;
-    try {
-      // A concept DOI's record redirects to its latest version.
-      zenodo = await getJson(fetchImpl, "Zenodo", `${ZENODO_API}/${recordId}`, signal);
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return "Zenodo did not give this work's files, so only its record was read.";
-    }
-    const pdf = (zenodo.files ?? []).find((f) => f.key?.toLowerCase().endsWith(".pdf") && f.links?.self);
-    if (!pdf) return "This work has no PDF on Zenodo, so only its record was read.";
-    if ((pdf.size ?? 0) > MAX_PDF_BYTES) return "This work's PDF is too large to read here, so only its record was read.";
-    let bytes: Uint8Array;
-    try {
-      bytes = await getBytes(fetchImpl, "Zenodo", pdf.links!.self!, signal, { timeoutMs: ZENODO_PDF_TIMEOUT_MS });
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return "This work's PDF could not be downloaded from Zenodo, so only its record was read.";
-    }
-    try {
-      const text = await options.extractPdf(bytes);
-      return text.text.trim() ? text : "This work's PDF has no text that can be read, so only its record was read.";
-    } catch {
-      return "This work's PDF could not be read, so only its record was read.";
-    }
   }
 
   return {
@@ -178,7 +215,7 @@ export function createDataCite(options: {
       if (!DOI.test(doi)) throw new SourceError(`"${id}" is not a DataCite DOI.`);
       const record = await recordFor(doi, signal);
       const zenodoId = ZENODO_DOI.exec(doi)?.[1];
-      const pdf = zenodoId ? await zenodoText(zenodoId, signal) : "Its full text is on the repository's own site, so only its record was read.";
+      const pdf = zenodoId ? await zenodoText(fetchImpl, options.extractPdf, zenodoId, signal) : "Its full text is on the repository's own site, so only its record was read.";
       const base: Omit<FetchedDocument, "text"> = {
         id: dataciteDocId(doi),
         title: titleOf(record),

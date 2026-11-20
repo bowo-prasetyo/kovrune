@@ -217,6 +217,24 @@ export function checkEvidence(
       const keyElided = containsWords(keyText, keyQuote) ? undefined : containsElided(keyText, keyQuote);
       if (keyElided === undefined || keyElided >= 0) return { ...item, verified: true, ...(keyElided !== undefined ? { elidedWords: keyElided } : {}) };
     }
+    // A quote that leaves out the source's footnote or citation markers (harness 0.101.0): "with panel data"
+    // for a PDF's "with¹ panel data", "weak. Yet" for "weak.12 Yet", "argued. Bureaucracy" for "argued.[14]
+    // Bureaucracy". Models leave them out, and in fields that write in footnotes a right answer lost its label
+    // (docs/social-sciences-audit.md, S3). Only the source's markers are blanked: a quote that has one the
+    // source lacks is still not found.
+    const unmarked = withoutNoteMarkers(text);
+    if (unmarked !== text) {
+      // A marker blanked between a word and its punctuation ("argued[14].") leaves a space before the point.
+      const tight = (s: string) => s.replace(/ (?=[.,;:!?)])/g, "");
+      const plain = tight(normalizeForMatch(unmarked));
+      const plainQuote = tight(quote);
+      const plainElided = containsWords(plain, plainQuote) ? undefined : containsElided(plain, plainQuote);
+      if (plainElided === undefined || plainElided >= 0) {
+        const at = locateQuote(item.quote, unmarked);
+        const context = at ? contextAt(at, text, resolvePageStarts(item.docId)) : undefined;
+        return { ...item, verified: true, ...(context ? { context } : {}), ...(plainElided !== undefined ? { elidedWords: plainElided } : {}) };
+      }
+    }
     const closest = closestPassage(item.quote, text);
     // A quote whose pieces are all in the document, but further apart than "…" may stand for, is not a
     // quote; but "not found" misleads: a preview user's arXiv quote joined two sentences of the same
@@ -373,6 +391,35 @@ export function locateQuote(quote: string, text: string): { start: number; end: 
   return at >= 0 ? { start: at, end: at + exact.length } : undefined;
 }
 
+/** Superscript digits, as the PDF reader writes a raised footnote number (pdf-layout.ts). */
+const SUPERSCRIPT_DIGITS = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+/**
+ * Footnote and citation markers (harness 0.101.0), each blanked by noteMarkerBlank:
+ * - superscript digits ("¹", "¹²", "¹,³", "¹⁻³") after a word of three letters or more, or after closing
+ *   punctuation, and before a space, punctuation or the end. Not after a shorter word, so a unit's or a
+ *   variable's power stays: "km²", "cm³", "R²"; nor before a letter or a sign: "⁸⁷Rb", "Fe³⁺";
+ * - one to three digits set right after a word's closing punctuation and before a space, as a PDF without
+ *   raised text gives a footnote number ("weak.12 Yet", "weak,3 yet"). Not after an abbreviation that
+ *   numbers something ("Fig.3", "pp.12", "No.5");
+ * - numbers in square brackets, as Vancouver-style citations write them ("[14]", "[3, 5]", "[3–5]").
+ */
+const NOTE_MARKERS = new RegExp(
+  [
+    String.raw`(?<=\p{L}{3}|[.,;:!?)\]'"’”])[${SUPERSCRIPT_DIGITS}]+(?:[,⁻–-][${SUPERSCRIPT_DIGITS}]+)*(?=[\s.,;:!?)]|$)`,
+    String.raw`(?<=(?<![\p{L}])(?!(?:figs?|tab|table|eqs?|nos?|vol|pp|ch|sec|art|refs?)[.,;:])\p{L}{2,}[.,;:!?)'"’”])\p{Nd}{1,3}(?:[,–-]\p{Nd}{1,3})*(?=\s|$)`,
+    String.raw`\[\p{Nd}{1,3}(?:\s*[,–-]\s*\p{Nd}{1,3})*\]`,
+  ].join("|"),
+  "giu",
+);
+
+/**
+ * A text with its footnote and citation markers (NOTE_MARKERS) blanked to spaces, one for each character,
+ * so offsets in it are offsets in the text: a quote found in it is shown in the text as it is.
+ */
+export function withoutNoteMarkers(text: string): string {
+  return text.replace(NOTE_MARKERS, (marker) => " ".repeat(marker.length));
+}
+
 /** The page an offset is on: the last page starting at or before it. */
 function pageAt(offset: number, pageStarts: number[]): number {
   let page = 1;
@@ -383,7 +430,11 @@ function pageAt(offset: number, pageStarts: number[]): number {
 /** A verified quote with the source text around it, cut at word boundaries, and its pages in a PDF. */
 export function quoteContext(quote: string, text: string, pageStarts?: number[], around = CONTEXT_CHARS): QuoteContext | undefined {
   const at = locateQuote(quote, text);
-  if (!at) return undefined;
+  return at ? contextAt(at, text, pageStarts, around) : undefined;
+}
+
+/** The context of a passage of `text` found from `at.start` to `at.end` (quoteContext). */
+function contextAt(at: { start: number; end: number }, text: string, pageStarts?: number[], around = CONTEXT_CHARS): QuoteContext {
   let from = Math.max(0, at.start - around);
   let to = Math.min(text.length, at.end + around);
   // Cut at whitespace, so no word is shown in part.

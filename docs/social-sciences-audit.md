@@ -36,6 +36,8 @@ What gets in the way (details in [Findings](#findings)):
 
 The first and third are deterministic defects in code that every field shares. They can be fixed and measured without a model, and should come first.
 
+**Status (harness 0.101.0):** recommendations 1–5 are done. S1: ".05" and "−.34" are read as 0.05 and −0.34, so six of the seven cases in S1's table now come out as they should; the seventh, "p > .05" for "p < .05", is a direction (S2). S3: a quote may leave out the source's footnote and citation markers, and a PDF's footnotes are read after the paragraph that finishes a sentence they would cut. S4: Europe PMC tables in `<floats-group>` are read, after the paragraph that cites them, and merged cells and bold cells are kept. S5 and S6: OpenAlex marks retracted works, offers the social-science fields, and reads a work's Zenodo copy when DataCite is ticked. OSF Preprints, RePEc/EconStor and HAL are not yet checked. Re-scoring 10,005 recorded answers changes no label ([field README](../eval/field/README.md#social-sciences-numbers-without-a-leading-zero-note-markers-tables-and-openalex-01010)). S2, S7 and S8 remain.
+
 ## Findings
 
 ### S1. High: numbers without a leading zero are read wrong

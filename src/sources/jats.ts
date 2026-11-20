@@ -135,18 +135,105 @@ const SPACES = new RegExp(`${SPACE}+`, "g");
 const ENDS = new RegExp(`^${SPACE}+|${SPACE}+$`, "g");
 const clean = (s: string) => s.replace(SPACES, " ").replace(ENDS, "");
 
+/** The most columns or rows one cell is taken to span: more is a typo, or "0" for "to the end". */
+const MAX_SPAN = 50;
+const spanOf = (value: string | undefined) => {
+  const n = Number(value ?? 1);
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, MAX_SPAN) : n === 0 ? MAX_SPAN : 1;
+};
+
+/** The text of an element outside its <bold> elements. */
+function outsideBold(el: XmlElement): string {
+  return el.children.map((c) => (typeof c === "string" ? c : c.tag === "bold" ? "" : outsideBold(c))).join("");
+}
+
+/**
+ * A data cell's text, written bold when all of it is (harness 0.101.0): tables of regressions mark the
+ * estimates significant at p < 0.05 in bold, and say so only in their note ("Bold = p < 0.05").
+ */
+function cellText(cell: XmlElement): string {
+  const written = clean(text(cell));
+  const bold = cell.tag === "td" && written !== "" && clean(outsideBold(cell)) === "" && [...all(cell)].some((e) => e.tag === "bold");
+  return bold ? `**${written}**` : written;
+}
+
+/**
+ * A table, one Markdown row per row of the table, with every cell in its column (harness 0.101.0). A cell
+ * spanning columns fills each of them, with its text in a header row and empty below it, and a cell spanning
+ * rows repeats its text in each, as the Word reader does (documents/tables.ts). Read cell by cell, a
+ * regression table's "Model D" spanning three columns stood over the first only, and each row of standard
+ * errors, under a variable's name spanning two rows, had one cell fewer than its estimates: every error
+ * stood one column left, under the wrong estimate (docs/social-sciences-audit.md, S4).
+ */
 function table(wrap: XmlElement): string[] {
-  const lines = [`**${clean(text(child(wrap, "label")))}** ${clean(text(child(wrap, "caption")))}`.trim(), ""];
+  const label = clean(text(child(wrap, "label")));
+  const caption = clean(text(child(wrap, "caption")));
+  const lines = [label ? `**${label}** ${caption}`.trim() : caption, ""];
+  if (!lines[0]) lines.splice(0, 2);
+  // Cells spanning down from rows above, by column: their text and the rows they still cover.
+  const down: Array<{ text: string; rows: number } | undefined> = [];
+  const inHead = new Set([...all(wrap)].filter((e) => e.tag === "thead").flatMap((head) => [...all(head)].filter((e) => e.tag === "tr")));
   for (const row of all(wrap)) {
     if (row.tag !== "tr") continue;
-    const cells = elements(row)
-      .filter((c) => c.tag === "td" || c.tag === "th")
-      .map((c) => clean(text(c)));
-    if (cells.some(Boolean)) lines.push(`| ${cells.join(" | ")} |`);
+    const cells = elements(row).filter((c) => c.tag === "td" || c.tag === "th");
+    const header = inHead.has(row) || (cells.length > 0 && cells.every((c) => c.tag === "th"));
+    const line: string[] = [];
+    const fillDown = () => {
+      for (let above = down[line.length]; above && above.rows > 0; above = down[line.length]) {
+        line.push(above.text);
+        above.rows--;
+      }
+    };
+    for (const cell of cells) {
+      fillDown();
+      const written = cellText(cell);
+      const across = spanOf(cell.attrs.colspan);
+      const rows = spanOf(cell.attrs.rowspan);
+      for (let n = 0; n < across; n++) {
+        const shown = n === 0 || header ? written : "";
+        if (rows > 1) down[line.length] = { text: shown, rows: rows - 1 };
+        line.push(shown);
+      }
+    }
+    // Columns after the row's last cell that a cell above still spans.
+    for (let column = line.length; column < down.length; column++) {
+      if (!down[column]?.rows) continue;
+      while (line.length < column) line.push("");
+      fillDown();
+    }
+    if (line.some(Boolean)) lines.push(`| ${line.join(" | ")} |`);
   }
   const foot = child(wrap, "table-wrap-foot");
   if (foot) lines.push("", clean(text(foot)));
   return [...lines, ""];
+}
+
+/**
+ * Tables and figures a journal puts after the article, in <floats-group>, by ID (harness 0.101.0), as MDPI
+ * does: each is written after the paragraph that first refers to it, where a reader of the printed page
+ * meets it, and any no paragraph refers to at the end, as the clinical suite's converter places them
+ * (eval/clinical/source/jats2md.py). Before, they were left out: an IJERPH survey paper lost all four of its
+ * tables, the regression its abstract reports among them (docs/social-sciences-audit.md, S4).
+ */
+let floats = new Map<string, XmlElement>();
+
+function floatLines(float: XmlElement): string[] {
+  return float.tag === "table-wrap" ? table(float) : blocks({ tag: "x", attrs: {}, children: [float] }, 1);
+}
+
+/** The floats a paragraph refers to first, taken from those still to be placed. */
+function placedFloats(paragraph: XmlElement): string[] {
+  const out: string[] = [];
+  for (const ref of all(paragraph)) {
+    if (ref.tag !== "xref") continue;
+    for (const rid of (ref.attrs.rid ?? "").split(/\s+/)) {
+      const float = floats.get(rid);
+      if (!float) continue;
+      floats.delete(rid);
+      out.push(...floatLines(float));
+    }
+  }
+  return out;
 }
 
 const listLines = (el: XmlElement) => [...[...all(el)].filter((e) => e.tag === "list-item").map((item) => `- ${clean(text(item))}`), ""];
@@ -163,6 +250,7 @@ function blocks(el: XmlElement, depth: number): string[] {
         if (nested.tag === "table-wrap") out.push(...table(nested));
         else if (nested.tag === "list") out.push(...listLines(nested));
       }
+      out.push(...placedFloats(c));
     } else if (c.tag === "list") out.push(...listLines(c));
     else if (c.tag === "table-wrap") out.push(...table(c));
     else if (c.tag === "fig") out.push(`*${clean(text(child(c, "label")))}: ${clean(text(child(c, "caption")))}*`, "");
@@ -226,6 +314,10 @@ export function jatsToMarkdown(root: XmlElement, otherId?: string): string {
     lines.push(`## ${clean(text(child(abstract, "title"))) || "Abstract"}`, "");
     lines.push(...blocks({ tag: "x", attrs: {}, children: elements(abstract).filter((e) => e.tag !== "title") }, 2));
   }
+  const floatsGroup = child(root, "floats-group");
+  floats = new Map(
+    (floatsGroup ? elements(floatsGroup) : []).filter((f) => (f.tag === "table-wrap" || f.tag === "fig") && f.attrs.id).map((f) => [f.attrs.id!, f]),
+  );
   const body = child(root, "body");
   if (body) lines.push(...blocks(body, 1));
   const back = child(root, "back");
@@ -242,5 +334,7 @@ export function jatsToMarkdown(root: XmlElement, otherId?: string): string {
       lines.push("");
     } else if (["ack", "sec", "notes", "fn-group"].includes(part.tag)) lines.push(...blocks(part, 1));
   }
+  for (const float of floats.values()) lines.push(...floatLines(float));
+  floats = new Map();
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`;
 }

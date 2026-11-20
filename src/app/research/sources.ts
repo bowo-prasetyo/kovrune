@@ -6,7 +6,7 @@
 import { extractPdfText } from "../../documents/extract.ts";
 import { loadBrowserPdfJs } from "../../documents/pdf-browser.ts";
 import { createArxiv, findArxivByTitle, parseArxivSubjects } from "../../sources/arxiv.ts";
-import { createDataCite } from "../../sources/datacite.ts";
+import { createDataCite, createZenodoReader } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
 import { createInspire } from "../../sources/inspire.ts";
 import { createPubChem } from "../../sources/pubchem.ts";
@@ -131,18 +131,20 @@ export function saveSourcePrefs(prefs: SourcePrefs): void {
 const extractPdf = async (bytes: Uint8Array) => extractPdfText(bytes, await loadBrowserPdfJs());
 
 /**
- * The ticked sources. OpenAlex reads a work in full from arXiv or Europe PMC, and INSPIRE a record from
- * arXiv, only when that source is ticked too, so no site is asked that the user did not choose (openalex.ts).
+ * The ticked sources. OpenAlex reads a work in full from arXiv or Europe PMC, or from a copy on Zenodo
+ * with DataCite, whose works are read from Zenodo already, and INSPIRE a record from arXiv, only when that
+ * source is ticked too, so no site is asked that the user did not choose (openalex.ts).
  */
 export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
   const arxiv = prefs.arxiv ? createArxiv({ extractPdf, subjects: parseArxivSubjects(prefs.arxivSubjects) }) : undefined;
   const europepmc = prefs.europepmc ? createEuropePmc() : undefined;
+  const zenodo = prefs.datacite ? createZenodoReader({ extractPdf }) : undefined;
   const filters = { fromYear: prefs.openalexFromYear, openAccess: prefs.openalexOpenAccess, field: prefs.openalexField, venue: prefs.openalexVenue };
   // A conference paper's arXiv version is looked up by its title on DataCite, which the arXiv source searches already.
   const findArxiv = arxiv ? (title: string, signal?: AbortSignal) => findArxivByTitle(fetch, title, signal) : undefined;
   return [
     ...(prefs.wikipedia ? [createWikipedia(prefs.language)] : []),
-    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc, findArxiv }, { followCitations: prefs.openalexFollowCitations === true })] : []),
+    ...(prefs.openalex ? [createOpenAlex(fetch, prefs.openalexKey, filters, { arxiv, europepmc, zenodo, findArxiv }, { followCitations: prefs.openalexFollowCitations === true })] : []),
     ...(arxiv ? [arxiv] : []),
     ...(prefs.datacite ? [createDataCite({ extractPdf })] : []),
     ...(europepmc ? [europepmc] : []),
