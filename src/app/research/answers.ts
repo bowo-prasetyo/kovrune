@@ -142,6 +142,7 @@ export function answerToMarkdown(answer: SavedAnswer): string {
       const unbacked = support?.sentences.some((s) => s.backed === false);
       lines.push(markedAnswer(answer), "");
       if (unbacked) lines.push("⚠ marks sentences that share few words with the quotes that were found, or have a number, unit, month, \"not\", direction such as \"higher\", or \"significant\" that the quotes don't back.", "");
+      lines.push(...closestLines(answer));
     }
     if (answer.evidence.length) {
       lines.push("## Evidence", "");
@@ -171,6 +172,18 @@ function markedAnswer(answer: SavedAnswer): string {
   return support.sentences
     .map((s) => (s.backed === false ? (s.inSource ? `⚠ ${s.text.trimEnd()} (in the source, not quoted)${s.text.slice(s.text.trimEnd().length)}` : `⚠ ${s.text}`) : s.text))
     .join("");
+}
+
+/** The closest passages the model read for each ⚠ sentence (support.ts closestPassages), as a Markdown list. */
+function closestLines(answer: SavedAnswer): string[] {
+  const marked = (shownSupport(answer)?.sentences ?? []).filter((s) => s.backed === false && s.closest?.length);
+  if (!marked.length) return [];
+  return [
+    "Where to check the ⚠ sentences: the closest passages the model read, not quotes, which may not back them.",
+    "",
+    ...marked.flatMap((s, i) => [`${i + 1}. ⚠ ${s.text.trim()}`, ...s.closest!.map((c) => `   > ${c.passage} (${c.title ?? c.docId})`)]),
+    "",
+  ];
 }
 
 /** An introduction or conclusion, with ⚠ before the sentences no section's quote backs. */
@@ -250,7 +263,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
       return;
     }
     lines.push(`**${sectionLabel(section)}.**`, "");
-    if (section.answer) lines.push(markedAnswer(section), "");
+    if (section.answer) lines.push(markedAnswer(section), "", ...closestLines(section));
     for (const item of section.evidence) {
       const where = reference(section, item.docId, quotePages(section, item));
       lines.push(`- ${item.verified ? "✓" : "✗"} ${where}: > ${oneLine(item.quote)}${!item.verified && item.reason ? ` (problem: ${item.reason})` : ""}`);

@@ -474,6 +474,20 @@ textarea {
   font-size: 1.1em;
 }
 
+/* The closest passages the model read, for each ⚠ sentence (support.ts closestPassages). */
+.closest-passages {
+  margin: 0.5rem 0;
+}
+.closest-passages ol {
+  padding-left: 1.25rem;
+}
+.closest-passages li {
+  margin-bottom: 0.75rem;
+}
+.closest-passages .unbacked-sentence {
+  background: var(--warning);
+}
+
 /* LaTeX math shown as text (math.ts): a math font where there is one; pointing at it shows the LaTeX. */
 .math {
   font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Noto Sans Math", serif;

@@ -35,9 +35,12 @@ export function crossCheckFinding(check: CrossCheck): string {
  * Where the ⚠ sentences may come from: a source the model read, for those nearly word for word in one
  * though not quoted (support.ts inSourceSupport), else perhaps the model's memory.
  */
-export function unquotedNote(support: { sentences?: Array<{ backed?: boolean; inSource?: unknown }> }): string {
+export function unquotedNote(support: { sentences?: Array<{ backed?: boolean; inSource?: unknown; closest?: unknown[] }> }): string {
   const marked = (support.sentences ?? []).filter((s) => s.backed === false);
   const inSource = marked.filter((s) => s.inSource).length;
+  // Where to check the others: the closest passages the model read, listed under the answer (closestPassages).
+  if (!inSource && marked.some((s) => s.closest?.length))
+    return "They may come from the model's memory, or say in other words what a source says: the closest passages the model read are listed under the answer, to check them against.";
   if (!inSource) return "They may come from the model's memory; check them against the sources.";
   if (inSource === marked.length)
     return `${marked.length === 1 ? "It is" : "They are"} nearly word for word in a source the model read, marked "in the source, not quoted", but not in a quote: check ${marked.length === 1 ? "it" : "them"} there.`;
