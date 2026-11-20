@@ -17,7 +17,8 @@ const PREFIX = "chemrxiv:";
 /** Records asked for, so that five remain once a preprint's versions are kept once. */
 const ROWS = 20;
 const HITS = 5;
-const SELECT = "DOI,title,author,abstract,posted,issued,created,relation,license,group-title,subtype";
+/** The fields a search asks for. Crossref refuses a search naming a field it cannot select (checked live, 2026-11-20: "subtype" gave HTTP 400). */
+const SELECT = "DOI,title,author,abstract,posted,issued,created,relation";
 
 /** A ChemRxiv DOI as the model can write it: "10.26434/chemrxiv-2023-k3l5x-v2". */
 const DOI = /^10\.26434\/[^\s#]+$/i;
@@ -31,9 +32,6 @@ export interface CrossrefWork {
   issued?: { "date-parts"?: number[][] };
   created?: { "date-parts"?: number[][] };
   relation?: Record<string, Array<{ "id-type"?: string; id?: string }>>;
-  license?: Array<{ URL?: string }>;
-  "group-title"?: string;
-  subtype?: string;
 }
 
 /** The ID the model sees for a preprint, "chemrxiv:10.26434/chemrxiv-2023-k3l5x-v2". */

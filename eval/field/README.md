@@ -1396,11 +1396,13 @@ A part PubChem does not give is left out, and the text says so. The search tool'
 
 **ChemRxiv through Crossref** (`src/sources/chemrxiv.ts`). ChemRxiv registers its DOIs (prefix 10.26434) with Crossref, so the DataCite source never finds them. A search uses Crossref's `prefix:10.26434,type:posted-content` filter and keeps the first of each title, since every version of a preprint has a DOI of its own. A DOI in the query is looked up directly. A preprint is read as its title, authors, year, DOI and abstract (Crossref's JATS, as text), with its journal version's DOI when Crossref records one. Its full text, on chemrxiv.org, is not read. A reference gives "ChemRxiv" as the venue.
 
-**Not checked against the live services.** This container's network refused both hosts when the sources were written, and once they were allowed, the session's permission check refused the requests. Two things are therefore unconfirmed:
-- that both services let a web page call them (`Access-Control-Allow-Origin`), which the app needs;
-- that their answers have the fields the code reads.
+**Checked against the live services** (a follow-up, 2026-11-20). When the sources were written, this container's network refused both hosts. They were checked once it could reach them:
+- **Both let a web page call them**: PubChem's PUG REST and Crossref's REST API answer with `Access-Control-Allow-Origin: *`.
+- **PubChem works as written.** Searches by name ("sodium borohydride"), CAS number ("109-99-9"), formula-like name ("Pd(OAc)2" finds palladium(II) acetate), the name in a question, and a name with a locant ("2,4-dichlorophenoxyacetic acid") each found the compound. The properties request with `SMILES` is accepted, and synonyms, descriptions and PUG View's experimental properties have the fields the code reads (THF reads as 9,146 characters, with six boiling points and their sources).
+- **Two PubChem fixes.** PubChem's autocomplete suggested "Carcainium" for "unobtainium", so a suggestion is now used only when it is at most one edit in five characters from what was typed (`closeSpelling`). Other databases' identifiers listed among the synonyms ("DTXSID80893977", "CHEBI:50985", "EC 241-004-4", "87L0B9CPPA") are left out of a compound's other names (`isDatabaseId`).
+- **One ChemRxiv fix.** Crossref refused every search (HTTP 400): it cannot select `subtype`, one of the fields the search named. It is no longer asked for. Searches then return ChemRxiv preprints with their abstracts. Crossref's `is-preprint-of` relation has the form the code reads; 33,427 ChemRxiv preprints carry one. ChemRxiv's DOIs come in three forms ("chemrxiv-2025-x7nv1", "chemrxiv.15009496/v1", "chemrxiv.14393762.v1"), all of which the code takes.
 
-Both sources are built from PUG REST, PUG View's and Crossref's documentation. Their tests (`tests/pubchem.test.ts`, `tests/chemrxiv.test.ts`) answer from records shaped as those documents give them, not recorded from the services. PubChem renamed its SMILES properties in 2025, so if PubChem refuses the property list (HTTP 400), the read asks again without SMILES. A run with a model on either source is still to be done.
+The tests (`tests/pubchem.test.ts`, `tests/chemrxiv.test.ts`) answer from records in these forms, cut down. A run with a model on either source is still to be done.
 
 **Chemistry files** (`src/documents/chemfiles.ts`). Three kinds of file are now read when added:
 - **CIF:** each item as "cell length a: 3.7155(4)", and each loop as a table whose rows are labelled with their columns, as spreadsheets are. Unknown values ("?" and ".") are left out, and a loop is read up to 2,000 rows.
@@ -1417,7 +1419,7 @@ Both sources are built from PUG REST, PUG View's and Crossref's documentation. T
 `tests/support.test.ts` ("locants in chemical names") fails on `main` and passes with the change. `tests/chemfiles.test.ts` covers the three readers and the file picker's new kinds.
 
 **Limits:**
-- The live checks above.
+- No model has been run on PubChem or ChemRxiv yet.
 - PubChem's safety and hazard data (GHS) are not read.
 - A spectrum without a peak table can't answer where a band or peak is.
 - Hydrogens counted from usual valences can be wrong for metals, hypervalent atoms written without their charges, and radicals the file does not mark.

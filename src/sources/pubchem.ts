@@ -97,6 +97,39 @@ export function namesIn(query: string): string[] {
   return [...new Set([written, kept, ...ids].filter((n) => n.length > 1))];
 }
 
+/**
+ * Whether a suggested name is the typed one written another way: at most one edit in five characters (at
+ * least one), ignoring case, spaces and punctuation. "tetrahydrofurane" is "tetrahydrofuran"; "Carcainium"
+ * is not "unobtainium".
+ */
+export function closeSpelling(suggested: string, typed: string): boolean {
+  const a = suggested.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const b = typed.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const allowed = Math.max(1, Math.floor(Math.min(a.length, b.length) / 5));
+  if (Math.abs(a.length - b.length) > allowed) return false;
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    for (let j = 1; j <= b.length; j++) row.push(Math.min(previous[j]! + 1, row[j - 1]! + 1, previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1)));
+    previous = row;
+  }
+  return previous[b.length]! <= allowed;
+}
+
+/**
+ * A synonym that is another database's identifier, not a name: PubChem lists them with the names (checked
+ * live, 2026-11-20: sodium borohydride's first fifteen held "DTXSID80893977", "CHEBI:50985", "RefChem:183807",
+ * the EC number "241-004-4" and the UNII "87L0B9CPPA").
+ */
+export function isDatabaseId(synonym: string): boolean {
+  return (
+    /^(?:DTXSID|DTXCID|SCHEMBL|ZINC|AKOS|MFCD|NSC|CHEMBL|BDBM|HMS|SR-|NCGC|CAS-|EINECS|UNII-|BRN |HSDB |RCRA waste|EC \d|NCI-C\d)/i.test(synonym) ||
+    /^[A-Za-z]+:[\w.-]+$/.test(synonym) ||
+    /^\d{3}-\d{3}-\d$/.test(synonym) ||
+    (/^[A-Z0-9]{10}$/.test(synonym) && /\d/.test(synonym) && /[A-Z]/.test(synonym))
+  );
+}
+
 /** A number PubChem gives as a string ("72.11") or a number, as written. */
 const asText = (value: string | number | undefined) => (value === undefined ? undefined : String(value));
 
@@ -162,7 +195,7 @@ export function compoundText(
   const title = p.Title ?? `CID ${p.CID}`;
   const smiles = p.SMILES ?? p.IsomericSMILES ?? p.CanonicalSMILES;
   const cas = [...new Set((extra.synonyms ?? []).filter(isCasNumber))];
-  const names = (extra.synonyms ?? []).filter((s) => !isCasNumber(s) && s !== title).slice(0, SYNONYMS);
+  const names = (extra.synonyms ?? []).filter((s) => !isCasNumber(s) && !isDatabaseId(s) && s.toLowerCase() !== title.toLowerCase()).slice(0, SYNONYMS);
   const lines = [
     `# ${title} (PubChem CID ${p.CID})`,
     ...(p.IUPACName ? [`IUPAC name: ${p.IUPACName}`] : []),
@@ -215,11 +248,14 @@ export function createPubChem(fetchImpl: FetchLike = fetch): OpenSource {
     return (data?.PropertyTable?.Properties ?? []) as PubChemProperties[];
   }
 
-  /** Names PubChem's autocomplete suggests for what was typed, for a name written another way. */
+  /**
+   * Names PubChem's autocomplete suggests for what was typed, for a name written another way, kept only
+   * when spelled close to it (closeSpelling): checked live, it suggested "Carcainium" for "unobtainium".
+   */
   async function suggestions(text: string, signal?: AbortSignal): Promise<string[]> {
     try {
       const data = await getJson(fetchImpl, label, `${PUBCHEM_AUTOCOMPLETE}/${encodeURIComponent(text)}/json?limit=3`, signal);
-      return (data?.dictionary_terms?.compound ?? []) as string[];
+      return ((data?.dictionary_terms?.compound ?? []) as string[]).filter((name) => closeSpelling(name, text));
     } catch (error) {
       if (signal?.aborted) throw error;
       return [];
