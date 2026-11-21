@@ -86,7 +86,21 @@ The two spellings still missed are ranking alone: "titanium diboride" adds "tib2
 
 ## Results
 
-RESULTS_PLACEHOLDER
+Qwen3.5-4B (Q4_K_M, llama.cpp `fae9ac5`, 4,096 tokens of context, thinking off, constrained mode), harness 0.108.0, run on a 4-core CPU at about 8 tokens a second ([`eval/results/materials-0.108-qwen3.5-4b-q4km.json`](../results/materials-0.108-qwen3.5-4b-q4km.json), merged from six runs of ten tasks):
+
+| Suite | Passed | Labelled "Quotes found" | Of them wrong |
+| --- | --- | --- | --- |
+| materials | 40 of 47 | 26 | 4 |
+| materialsholdout | 12 of 13 | 11 | 0 |
+| both | 52 of 60 | 37 | 4 |
+
+Every failure was read, and none is a defect of its task (the value asked for is in its document, in the words the facts accept):
+
+- **Search missed the passage** (m08): the TC25 composition table was not retrieved; the model said so instead of guessing.
+- **The model stopped short** (m01, m04, m19): it gave the other alloy's yield-strength loss (65 MPa for B4N), left out the 15–20% grain refining it was asked for, and said the 1.5 mg/mL fill factor was not given although the table row was in its passage.
+- **Unanswerable questions answered** (m44, m46, m47, mh13): no unanswerable question was declined. Three were answered with a quote of a near neighbour, and labelled "Quotes found": the conductivity at 1100 °C for 1150 °C (m46), the creep life at 550 °C for 600 °C (m47), and, in m44, the MS5 probe, 5.9 GPa as the hardness of ZTA-20. 5.9 is its fracture toughness: the PDF's empty hardness cell is dropped, so the row reads "ZTA-20 20 98.6 5.9 610" and the quote is found word for word. This is the failure the audit predicted (MS5); recommendation 7 is its fix. mh13 gave the 200-cycle retention for 500 cycles, but said it was not the value asked for, and was not labelled.
+
+The four wrong answers labelled "Quotes found" all quote a real value of a neighbouring condition; the label says the quotes are in the documents, which they are, not that they answer the question. `bench:rescore` gives the same labels.
 
 ## Limits
 
