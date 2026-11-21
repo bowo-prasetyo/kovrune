@@ -69,3 +69,41 @@ describe("the closest passages for a marked sentence", () => {
     assert.match(markdown, /   > Due to the phenomenon of hallucination, LLMs may generate varying BTs differently when given the same input prompt multiple times\. \(Automatic Robot Task Planning/);
   });
 });
+
+// Why a passage setting two claims against each other is kept out of inSource, measured on a preview
+// user's "Is it true that blood never leaves the circulation system? Why?" (harness 0.105.0). Its answer's
+// third sentence gave the open-circulation contrast that the quoted sentence's own second half makes, and
+// was marked, since the "While …" sentence is no inSource candidate. Allowing such a passage for a
+// sentence that is itself a contrast was tried and is not adopted: the word checks cannot tell the
+// faithful contrast from one that swaps the two sides over, so the same passage would credit all three
+// sentences below as being in the source. The closest-passages panel shows it either way (above), which
+// is where the reader checks a sentence like this.
+describe("a passage that sets two claims against each other", () => {
+  const PASSAGE =
+    "While humans, as well as other vertebrates, have a closed blood circulatory system, some invertebrate groups have an open circulatory system in which the blood, called hemolymph, leaves the vessels and bathes the organs in body cavities.";
+  const credited = (sentence: string) => {
+    const support = sentenceSupport(sentence, [{ docId: "w", quote: PASSAGE, verified: true }], () => "Circulatory system");
+    return support.judged > 0 && support.backed === support.judged;
+  };
+
+  it("would back a sentence that reverses it as readily as one that follows it", () => {
+    assert.equal(credited("This contrasts with open circulatory systems found in some invertebrates, where the blood, called hemolymph, leaves the vessels and bathes the organs in body cavities."), true);
+    assert.equal(credited("Unlike invertebrates, humans have an open circulatory system in which the blood, called hemolymph, leaves the vessels and bathes the organs in body cavities."), true, "the reverse, on the same words");
+    assert.equal(credited("While invertebrate groups have a closed blood circulatory system, humans and other vertebrates have an open circulatory system."), true, "the two sides swapped over");
+  });
+
+  it("is no inSource candidate, whether or not the sentence is itself a contrast", () => {
+    const answer =
+      "In this system, blood remains within a continuous network of arteries, veins, and capillaries, never exiting the vessels to bathe tissues directly. " +
+      "This contrasts with open circulatory systems found in some invertebrates, where the blood, called hemolymph, leaves the vessels and bathes the organs in body cavities.";
+    const quote = "While humans, as well as other vertebrates, have a closed blood circulatory system (meaning that the blood never leaves the network of arteries, veins and capillaries)";
+    const titleFor = () => "Circulatory system";
+    const documents = [{ docId: "w", text: `Circulatory system\n\n${PASSAGE}\n\nThe blood is pumped by the heart around the body.` }];
+    const support = inSourceSupport(sentenceSupport(answer, [{ docId: "w", quote, verified: true }], titleFor), documents, titleFor);
+    assert.deepEqual(support.sentences.map((x) => Boolean(x.inSource)), [false, false]);
+    // The reader is not left without it: the panel keeps contrast passages, and gives this one for the
+    // contrast sentence. (The first sentence shares too few of its words with this shortened article.)
+    const shown = closestPassages(support, documents, titleFor);
+    assert.match(shown.sentences[1]!.closest![0]!.passage, /^While humans/);
+  });
+});
