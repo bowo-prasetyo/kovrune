@@ -3,6 +3,7 @@
 // the app shows whether an answer is backed by text that is really there.
 
 import { proofAt } from "../documents/chunk.ts";
+import { barsAsMinus, spacedSymbolsJoined } from "../documents/crystallography.ts";
 import { mathMatchKey, readableMath } from "../documents/math.ts";
 import { dropUnspacedGaps, isUnspaced, unspacedCount } from "../documents/scripts.ts";
 
@@ -93,8 +94,9 @@ export const LITERAL_BREAKS = /\\[nrt]/g;
  * are a milliwatt and a megawatt (support.ts).
  */
 export function normalizeForMatch(text: string, { keepCase = false }: { keepCase?: boolean } = {}): string {
-  const compatible = text
+  const compatible = barsAsMinus(text)
     .replace(LITERAL_BREAKS, " ")
+    // A digit under a bar is a minus and the digit, as crystallographers type it: "Fm3̄m" is "Fm-3m" (harness 0.107.0).
     // Compatibility forms are the same text: ligatures ("ﬁ" is "fi"), full-width letters, "…" as "...".
     .normalize("NFKC")
     // A PDF can set a minus sign, a unit prefix or an exponent apart from what it belongs to, as a symbol
@@ -382,7 +384,8 @@ const hasWordChar = (key: string) => /[\p{L}\p{N}]/u.test(key);
  */
 export function locateQuote(quote: string, text: string): { start: number; end: number } | undefined {
   // Two spaces for the two characters of a written-out line break, so offsets in the text stay as they are.
-  [quote, text] = [quote.replace(LITERAL_BREAKS, "  "), text.replace(LITERAL_BREAKS, "  ")];
+  // A space group written with spaces, as a CIF writes it ("F m -3 m"), is one word, as papers write it (crystallography.ts).
+  [quote, text] = [spacedSymbolsJoined(quote.replace(LITERAL_BREAKS, "  "), "\u200b"), spacedSymbolsJoined(text.replace(LITERAL_BREAKS, "  "), "\u200b")];
   const pieces = quote
     .split(ELISION)
     .map((piece) => piece.split(/\s+/).map(wordKey).filter(hasWordChar))

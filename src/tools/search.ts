@@ -3,6 +3,7 @@
 // app uses the same search over the user's documents.
 
 import { parentId, partNotes, withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
+import { crystallographic } from "../documents/crystallography.ts";
 import { words } from "../documents/scripts.ts";
 import { definitions } from "./abbreviations.ts";
 import { chemicalNameTerms } from "./chemical-names.ts";
@@ -85,7 +86,8 @@ function nameForms(word: string): string[] {
 
 function tokenize(text: string): string[] {
   const terms: string[] = [];
-  for (const word of words(text)) {
+  // Space groups and barred indices in one form (crystallography.ts): "F m -3 m", "Fm3̄m" and "Fm-3m" are one term.
+  for (const word of words(crystallographic(text))) {
     if (STOP_WORDS.has(word)) continue;
     terms.push(stem(word));
     if (!/[-.]/.test(word)) continue;

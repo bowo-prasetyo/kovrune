@@ -263,7 +263,7 @@ Summary statistics (Table 2 in the Appendix) and robustness checks (Tables 3, 4,
 | Voter turnout in 2017 in % | (4.87) | (1.21) |
 | Household income in | -0.000165** | -0.000041** |
 | Household income in | (0.000082) | (0.00002) |
-| GDP per capita in | –6.47*10−6 | –1.61*10−6 |
+| GDP per capita in | –6.47*10⁻⁶ | –1.61*10⁻⁶ |
 | GDP per capita in | (0.000015) | (0.00000) |
 | Unemployment rate in % | 0.0366 | 0.00911 |
 | Unemployment rate in % | (0.116) | (0.0288) |
@@ -299,15 +299,15 @@ Summary statistics (Table 2 in the Appendix) and robustness checks (Tables 3, 4,
 | Dummy cand. incumbent | (0.518) | (0.0125) |
 | Share of women in % | -7.56 | -0.227 |
 | Share of women in % | (28.16) | (0.855) |
-| Inhabitants per square km | 0.00022 | 6.60*10−6 |
+| Inhabitants per square km | 0.00022 | 6.60*10⁻⁶ |
 | Inhabitants per square km | (0.00029) | (0.00001) |
 | Share of foreigners in % | –10.68* | –0.321* |
 | Share of foreigners in % | (5.62) | (0.180) |
 | Voter turnout in 2017 in % | -0.701 | -0.0211 |
 | Voter turnout in 2017 in % | (5.83) | (0.175) |
-| Household income in | -0.000133 | –4.00*10−6 |
+| Household income in | -0.000133 | –4.00*10⁻⁶ |
 | Household income in | (0.000118) | (0.00000) |
-| GDP per capita in | 0.000022* | 6.66*10−7 |
+| GDP per capita in | 0.000022* | 6.66*10⁻⁷ |
 | GDP per capita in | (0.000013) | (0.00000) |
 | Unemployment rate in % | -0.116 | 0.00350 |
 | Unemployment rate in % | (0.161) | (0.00481) |

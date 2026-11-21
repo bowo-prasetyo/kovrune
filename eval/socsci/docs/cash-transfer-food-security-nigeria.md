@@ -200,8 +200,8 @@ The result of the effect of conditional cash transfer on households’ food secu
 
 **Table 5** Propensity Score post-estimation result.
 
-| Variables | Unmatched | Mean | Mean | %bias | %Reductbias | t-test | t-test |
-| Variables | Matched | Treated | Control | %bias | %Reductbias | T | P > |t| |
+| Variables | Unmatched | Mean | Mean | %bias | %Reduct bias | t-test | t-test |
+| Variables | Matched | Treated | Control | %bias | %Reduct bias | T | P > |t| |
 | **Household Size** | U | 7.087 | 7.509 | −10.1 | −54.5.5 | −0.55 | 0.581 |
 | **Household Size** | M | 7.087 | 6.434 | 15.6 | −54.5.5 | 1.07 | 0.288 |
 | **Age** | U | 49.435 | 50.418 | −8.2 | −62.1 | −0.45 | 0.653 |
