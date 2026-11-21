@@ -1,0 +1,9 @@
+specimen,build_orientation,condition,yield_strength_MPa,UTS_MPa,elongation_pct,notes
+T01,vertical,as-built,1105,1220,6.8,
+T02,horizontal,as-built,1140,1265,5.9,
+T03,vertical,stress-relieved 650 C 3 h,1010,1105,9.4,
+T04,horizontal,stress-relieved 650 C 3 h,1035,1130,8.7,
+T05,vertical,HIP 920 C 100 MPa 2 h,905,995,14.2,
+T06,horizontal,HIP 920 C 100 MPa 2 h,915,1010,13.6,
+T07,vertical,HIP 920 C 100 MPa 2 h,898,989,15.1,
+T08,horizontal,HIP 920 C 100 MPa 2 h,912,1002,,fractured outside the gauge length; elongation not valid

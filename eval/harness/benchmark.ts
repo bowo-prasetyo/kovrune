@@ -14,6 +14,7 @@ import { physicsHoldoutTasks, physicsTasks } from "../physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "../math/tasks.ts";
 import { chemHoldoutTasks, chemTasks } from "../chem/tasks.ts";
 import { socsciHoldoutTasks, socsciTasks } from "../socsci/tasks.ts";
+import { materialsHoldoutTasks, materialsTasks } from "../materials/tasks.ts";
 import { csHoldoutTasks, csTasks } from "../cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
@@ -26,7 +27,7 @@ import { ReplayingModel, type RecordedCall } from "../../src/agent/replay.ts";
 import { wilson } from "./stats.ts";
 import { ALL_SUITES, baseLibrary, FIELD_SUITES, runCodingTask, runResearchTask, type SuiteName, type TaskRun } from "./suites.ts";
 
-export const HARNESS_VERSION = "0.107.0";
+export const HARNESS_VERSION = "0.108.0";
 
 /**
  * How much of each final answer a report keeps, as JSON. Before harness 0.47.0 it kept 600 characters,
@@ -398,7 +399,7 @@ export async function runBenchmark(options: {
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
   /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
-  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; physicsLibrary?: ResearchLibrary; mathLibrary?: ResearchLibrary; chemLibrary?: ResearchLibrary; socsciLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
+  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; physicsLibrary?: ResearchLibrary; mathLibrary?: ResearchLibrary; chemLibrary?: ResearchLibrary; socsciLibrary?: ResearchLibrary; materialsLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -409,7 +410,7 @@ export async function runBenchmark(options: {
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
   if (FIELD_SUITES.some((suite) => config.suites.includes(suite)) && !options.field) {
-    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, cs, csholdout, lab, labholdout, engineering, engineeringholdout, physics, physicsholdout, math, mathholdout, chem, chemholdout, socsci and socsciholdout suites need field (loadFieldSuite).");
+    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, cs, csholdout, lab, labholdout, engineering, engineeringholdout, physics, physicsholdout, math, mathholdout, chem, chemholdout, socsci, socsciholdout, materials and materialsholdout suites need field (loadFieldSuite).");
   }
   const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
@@ -438,6 +439,8 @@ export async function runBenchmark(options: {
     { suite: "chemholdout" as const, tasks: pick("chemholdout", chemHoldoutTasks), library: options.field?.chemLibrary ?? baseLibrary },
     { suite: "socsci" as const, tasks: pick("socsci", socsciTasks), library: options.field?.socsciLibrary ?? baseLibrary },
     { suite: "socsciholdout" as const, tasks: pick("socsciholdout", socsciHoldoutTasks), library: options.field?.socsciLibrary ?? baseLibrary },
+    { suite: "materials" as const, tasks: pick("materials", materialsTasks), library: options.field?.materialsLibrary ?? baseLibrary },
+    { suite: "materialsholdout" as const, tasks: pick("materialsholdout", materialsHoldoutTasks), library: options.field?.materialsLibrary ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;

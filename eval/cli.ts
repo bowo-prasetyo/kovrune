@@ -17,7 +17,8 @@
 // the questions over physics documents as --suites physics,physicsholdout (eval/physics/tasks.ts),
 // and the questions over mathematics documents as --suites math,mathholdout (eval/math/tasks.ts).
 // the questions over chemistry papers as --suites chem,chemholdout (eval/chem/tasks.ts),
-// and the questions over social-science papers and interview transcripts as --suites socsci,socsciholdout (eval/socsci/tasks.ts).
+// the questions over social-science papers and interview transcripts as --suites socsci,socsciholdout (eval/socsci/tasks.ts),
+// and the questions over materials science papers and test data as --suites materials,materialsholdout (eval/materials/tasks.ts).
 //
 // The model server's prompt cache is off (cache_prompt: false, eval/harness/request.ts), so a task's
 // reply does not depend on the tasks before it; --prompt-cache keeps it on, faster but noisier to compare.

@@ -6,7 +6,7 @@ import { parentId, partNotes, withoutPartLabel, withoutRepeatedLead } from "../d
 import { crystallographic } from "../documents/crystallography.ts";
 import { words } from "../documents/scripts.ts";
 import { definitions } from "./abbreviations.ts";
-import { chemicalNameTerms } from "./chemical-names.ts";
+import { chemicalNameTerms, materialsNameAlternatives } from "./chemical-names.ts";
 
 export interface SourceDocument {
   id: string;
@@ -309,13 +309,20 @@ export class DocumentIndex {
 
   search(query: string, limit = 3): SearchHit[] {
     const terms = this.expandedTerms(query);
+    // A material's other spellings count only where none of the query's own spellings of it is (chemical-names.ts, materialsNameAlternatives).
+    // A part has a spelling when it has every term of it: "carbide" alone, of "boron carbide", is not "silicon carbide".
+    const alternatives = new Map<string, string[][]>();
+    for (const { own, added } of materialsNameAlternatives(query, tokenize)) {
+      for (const term of added) if (!terms.includes(term)) alternatives.set(term, [...(alternatives.get(term) ?? []), ...own]);
+    }
     const k1 = 1.2;
     const b = 0.75;
     const scored = this.docs.map((doc, i) => {
       let score = 0;
-      for (const term of terms) {
+      for (const term of [...terms, ...alternatives.keys()]) {
         const tf = this.termFreqs[i]!.get(term) ?? 0;
         if (!tf) continue;
+        if (alternatives.get(term)?.some((spelling) => spelling.length > 0 && spelling.every((t) => this.termFreqs[i]!.has(t)))) continue;
         score += (this.idf(term) * tf * (k1 + 1)) / (tf + k1 * (1 - b + (b * this.lengths[i]!) / this.avgLength));
       }
       return { doc, i, score };
@@ -326,7 +333,8 @@ export class DocumentIndex {
     // out; under the rule it gained three tasks and lost two, and 0.77.0 takes it out (eval/cs/README.md).
     // A snippet says whose proof its part continues, as reading the part does: Qwen3.5-4B read the part
     // that ranked first, in another theorem's proof, and answered from its "Step 3" (eval/math/README.md).
-    return top.map(({ doc, i }) => ({ docId: doc.id, title: doc.title, snippet: `${this.proofNotes[i]}${bestSnippet(doc.text, terms, (t) => this.idf(t))}` }));
+    const snippetTerms = [...terms, ...alternatives.keys()];
+    return top.map(({ doc, i }) => ({ docId: doc.id, title: doc.title, snippet: `${this.proofNotes[i]}${bestSnippet(doc.text, snippetTerms, (t) => this.idf(t))}` }));
   }
 }
 

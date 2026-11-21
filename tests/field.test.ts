@@ -19,6 +19,7 @@ import { physicsDocuments, physicsHoldoutTasks, physicsTasks } from "../eval/phy
 import { mathDocuments, mathHoldoutTasks, mathTasks } from "../eval/math/tasks.ts";
 import { chemDocuments, chemHoldoutTasks, chemTasks, NO_EFFECT as CHEM_NO_EFFECT } from "../eval/chem/tasks.ts";
 import { socsciDocuments, socsciHoldoutTasks, socsciTasks } from "../eval/socsci/tasks.ts";
+import { materialsDocuments, materialsHoldoutTasks, materialsTasks } from "../eval/materials/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -212,7 +213,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks, ...chemTasks, ...chemHoldoutTasks, ...socsciTasks, ...socsciHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks, ...chemTasks, ...chemHoldoutTasks, ...socsciTasks, ...socsciHoldoutTasks, ...materialsTasks, ...materialsHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -815,5 +816,68 @@ describe("social-science suite (harness 0.105.0)", () => {
     for (const tasks of [socsciTasks, socsciHoldoutTasks]) assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
     assert.ok(socsciTasks.some((t) => t.kind === "comparison"), "a question over two documents");
     assert.ok(socsciHoldoutTasks.length >= socsciTasks.length / 4, "a held-out set at least a quarter the size of the open one");
+  });
+});
+
+describe("materials suite (harness 0.108.0)", () => {
+  it("reads eight CC BY papers as the app reads them from Europe PMC, and a CIF, a CSV and a PDF, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(materialsDocuments.length, 11);
+    const text = (id: string) => suite.materialsLibrary.documentFor(id)?.text ?? "";
+    for (const doc of materialsDocuments.filter((d) => d.file.endsWith(".md"))) {
+      assert.ok(text(doc.id).length > 20_000, `${doc.id}: ${text(doc.id).length} characters`);
+      assert.match(text(doc.id), /creativecommons\.org\/licenses\/by\/4\.0/, `${doc.id}: keeps its licence statement`);
+    }
+    assert.equal(suite.materialsLibrary.documents.filter((d) => !d.id.includes("#")).length, materialsDocuments.length, "only the suite's documents");
+    assert.equal(suite.library.documentFor("llzo-al-cubic"), undefined, "the field suite's library is unchanged");
+    // What these documents are read for survives: powers of ten as superscripts (0.107.0), a table's empty cell kept
+    // under its column, a CIF's space group as the file writes it, a CSV row's columns by name.
+    assert.match(text("medium-manganese-steel-heating-rate"), /at 1\.2855 × 10¹² cm−2/);
+    assert.match(text("tc25-titanium-creep"), /\(3\.6 × 10⁻⁸ s−1, 7\.2 × 10⁻⁸ s−1, 1\.5 × 10⁻⁷ s−1\)/);
+    assert.match(text("llzo-hot-pressing-sps"), /\| Ionic conductivity \[mS cm−1\] \(SPS\) \| 0\.0015 \| 0\.24 \| 0\.45 \| {2}\|/);
+    assert.match(text("llzo-al-cubic"), /symmetry space group name H-M: I a -3 d/);
+    assert.match(text("ti64-slm-tensile-log"), /specimen: T05 \| build_orientation: vertical \| condition: HIP 920 C 100 MPa 2 h \| yield_strength_MPa: 905 \| UTS_MPa: 995/);
+    // The PDF's blank cells are lost, as docs/materials-science-audit.md (MS5) found: ZTA-20's toughness stands under its hardness.
+    assert.match(text("zta-test-report"), /^ZTA-20 20 98\.6 5\.9 610$/m);
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with some held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...materialsTasks, ...materialsHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.materialsLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    const ids = [...materialsTasks, ...materialsHoldoutTasks].map((t) => t.id);
+    assert.equal(new Set(ids).size, ids.length, "task IDs are unique");
+    const cited = new Set(materialsTasks.flatMap((t) => t.citations.flat()));
+    assert.deepEqual([...cited].sort(), materialsDocuments.map((d) => d.id).sort(), "every document is asked about in the open set");
+    for (const tasks of [materialsTasks, materialsHoldoutTasks]) assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
+    assert.ok(materialsTasks.some((t) => t.kind === "comparison"), "a question over two documents");
+    assert.ok(materialsHoldoutTasks.length >= materialsTasks.length / 4, "a held-out set at least a quarter the size of the open one");
+  });
+
+  it("fails the answers that read the wrong property, unit, power or phase, and passes the right ones", async () => {
+    const suite = await loadFieldSuite();
+    const library = suite.materialsLibrary;
+    const result = (answer: string, docId: string): ResearchResult =>
+      ({ status: "verified", final: { found: true, answer, evidence: [{ docId, quote: "q" }] }, evidence: [], citations: {}, sourceErrors: [] }) as unknown as ResearchResult;
+    const task = (id: string) => [...materialsTasks, ...materialsHoldoutTasks].find((t) => t.id === id)!;
+    const passes = (id: string, answer: string, docId: string) => scoreResearch(task(id), result(answer, docId), library).passed;
+    // A neighbouring property in the same row: the Coulombic efficiency, not the capacity retention.
+    assert.equal(passes("m14-lfp-coulombic-efficiency", "Its initial Coulombic efficiency was 98.8%.", "lifepo4-combustion-synthesis"), true);
+    assert.equal(passes("m14-lfp-coulombic-efficiency", "Its initial Coulombic efficiency was 95.8%.", "lifepo4-combustion-synthesis"), false);
+    // A conductivity in mS cm−1, not S cm−1.
+    assert.equal(passes("m24-llzo-sps-conductivity-1000", "The SPS pellet reached 0.24 mS cm−1 at 1000 °C.", "llzo-hot-pressing-sps"), true);
+    assert.equal(passes("m24-llzo-sps-conductivity-1000", "The SPS pellet reached 0.24 S cm−1 at 1000 °C.", "llzo-hot-pressing-sps"), false);
+    // A power of ten: 10¹², however it is written, not the flattened "1012".
+    for (const answer of ["1.2855 × 10^12 cm−2, at 1 °C/s", "1.2855 × 10¹² cm⁻² at 1 °C/s"]) assert.equal(passes("m09-steel-dislocation-density", answer, "medium-manganese-steel-heating-rate"), true, answer);
+    assert.equal(passes("m09-steel-dislocation-density", "1.2855 × 1012 cm−2 at 1 °C/s", "medium-manganese-steel-heating-rate"), false);
+    // A mechanism the wrong way round passes the substring scorer; the reports are read for that, as for the social-science suite's groups.
+    assert.equal(passes("m32-b4c-fracture-modes", "TiB2 gave intergranular fracture and SiC transgranular fracture.", "boron-carbide-sic-tib2"), true);
+    assert.equal(passes("m32-b4c-fracture-modes", "Both gave intergranular fracture.", "boron-carbide-sic-tib2"), false);
   });
 });

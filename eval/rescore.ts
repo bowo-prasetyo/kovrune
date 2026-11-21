@@ -29,6 +29,7 @@ import { physicsHoldoutTasks, physicsTasks } from "./physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "./math/tasks.ts";
 import { chemHoldoutTasks, chemTasks } from "./chem/tasks.ts";
 import { socsciHoldoutTasks, socsciTasks } from "./socsci/tasks.ts";
+import { materialsHoldoutTasks, materialsTasks } from "./materials/tasks.ts";
 import { csHoldoutTasks, csTasks } from "./cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "./lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "./field/office.ts";
@@ -66,6 +67,8 @@ const suites: Record<string, { library: ResearchLibrary; tasks: ResearchTask[] }
     chemholdout: { library: field.chemLibrary, tasks: chemHoldoutTasks },
     socsci: { library: field.socsciLibrary, tasks: socsciTasks },
     socsciholdout: { library: field.socsciLibrary, tasks: socsciHoldoutTasks },
+    materials: { library: field.materialsLibrary, tasks: materialsTasks },
+    materialsholdout: { library: field.materialsLibrary, tasks: materialsHoldoutTasks },
     cs: { library: field.csLibrary, tasks: csTasks },
     csholdout: { library: field.csLibrary, tasks: csHoldoutTasks },
     lab: { library: field.labLibrary, tasks: labTasks },
