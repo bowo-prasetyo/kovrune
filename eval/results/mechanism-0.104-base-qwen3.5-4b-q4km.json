@@ -1,0 +1,139 @@
+{
+  "model": "qwen3.5-4b-q4km",
+  "date": "2026-11-21T08:13:14.345Z",
+  "outcomes": [
+    {
+      "taskId": "m1-blood-circulation",
+      "status": "verified",
+      "found": true,
+      "backed": "2 of 2",
+      "steps": "2 of 3",
+      "reads": 1,
+      "repeatedParts": 0,
+      "noted": 0,
+      "documents": 1,
+      "sources": 1,
+      "cited": [
+        "datacite:10.5281/zenodo.20170524"
+      ],
+      "answer": "Blood circulates through the cardiovascular system, which consists of the heart, blood vessels, and blood. The heart functions as a central muscular pump, while arteries, veins, and capillaries form an extensive vascular network that delivers blood throughout the body.",
+      "actions": [
+        "search_europepmc {\"query\":\"blood circulation mechanism\"}",
+        "search_datacite {\"query\":\"blood circulation mechanism heart pump\"}",
+        "read {\"docId\":\"datacite:10.5281/zenodo.20170524\"}",
+        "final_answer {\"found\":true,\"answer\":\"Blood circulates through the cardiovascular system, which consists of the heart, blood vessels, and blood. The heart functions as a central muscular pump, while arteries, veins, and capillaries form an extensive vascular network that delivers blood throughout the body.\",\"evidence\":[{\"docId\":\"datacite:10.5281/zenodo.20170524\",\"quote\":\"The cardiovascular system is one of the most essential organ systems in the human body, responsible for maintaining blood circulation, transporting oxygen and nutrients, and removing metabolic waste products.\"},{\"docId\":\"datacite:10.5281/zenodo.20170524\",\"quote\":\"It consists primarily of the heart, blood vessels, and blood, all of which work together to ensure homeostasis and support vital physiological processes.\"},{\"docId\":\"datacite:10.5281/zenodo.20170524\",\"quote\":\"The heart functions as a central muscular pump, while arteries, veins, and capillaries form an extensive vascular network that delivers blood throughout the body.\"}]}"
+      ],
+      "seconds": 271
+    },
+    {
+      "taskId": "m2-neuron-signal",
+      "status": "verified",
+      "found": true,
+      "backed": "0 of 4",
+      "steps": "3 of 3",
+      "reads": 4,
+      "repeatedParts": 0,
+      "noted": 3,
+      "documents": 3,
+      "sources": 2,
+      "cited": [
+        "europepmc:MED/1675264"
+      ],
+      "answer": "A neuron passes a signal to the next neuron through a process involving calcium influx and neurotransmitter release. When an action potential reaches the presynaptic terminal, it causes calcium channels to open, allowing calcium to enter the terminal. This calcium influx triggers synaptic vesicles to fuse with the presynaptic membrane, releasing neurotransmitters into the synaptic cleft. These neurotransmitters then bind to receptors on the postsynaptic neuron, initiating a new electrical signal.",
+      "actions": [
+        "search_europepmc {\"query\":\"neuron signal next neuron synaptic transmission\"}",
+        "search_datacite {\"query\":\"neuron signal next neuron synaptic transmission\"}",
+        "read {\"docId\":\"datacite:10.17590/asr.0000370\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain a detailed explanation of the specific mechanism by which a neuron passes a signal to the next neuron. One document mentions that 'Synapses mediate the transmission of signals between nerve cells' but does not describe the process (e.g., action potentials, neurotransmitter release, receptor binding).\",\"evidence\":[]}",
+        "search_europepmc {\"query\":\"synapse neurotransmitter release\"}",
+        "search_datacite {\"query\":\"synapse neurotransmitter release\"}",
+        "read {\"docId\":\"europepmc:MED/12743108\"} (part 5 of 53)",
+        "read {\"docId\":\"europepmc:MED/1675264\"} (part 1 of 2)",
+        "read {\"docId\":\"europepmc:MED/1675264#2\"} (part 2 of 2)",
+        "final_answer {\"found\":true,\"answer\":\"A neuron passes a signal to the next neuron through a process involving calcium influx and neurotransmitter release. When an action potential reaches the presynaptic terminal, it causes calcium channels to open, allowing calcium to enter the terminal. This calcium influx triggers synaptic vesicles to fuse with the presynaptic membrane, releasing neurotransmitters into the synaptic cleft. These neurotransmitters then bind to receptors on the postsynaptic neuron, initiating a new electrical signal.\",\"evidence\":[{\"docId\":\"europepmc:MED/1675264#2\",\"quote\":\"The superior potency of BAPTA compared to EGTA apparently results from the faster calcium-binding kinetics of BAPTA and suggests that the calcium-binding molecule that triggers release binds calcium in considerably less than 200 microsec and is located very close to calcium channels.\"}]}"
+      ],
+      "seconds": 749
+    },
+    {
+      "taskId": "m3-insulin-glucose",
+      "status": "verified",
+      "found": true,
+      "backed": "1 of 2",
+      "steps": "2 of 3",
+      "reads": 5,
+      "repeatedParts": 0,
+      "noted": 5,
+      "documents": 4,
+      "sources": 1,
+      "cited": [
+        "datacite:10.5525/gla.thesis.82077",
+        "datacite:10.5525/gla.thesis.81304",
+        "datacite:10.17863/cam.56857"
+      ],
+      "answer": "Insulin lowers blood glucose by binding to insulin receptors on cells, triggering a signaling cascade that causes glucose transporter 4 (GLUT4) to translocate from intracellular storage sites (GLUT4 storage vesicles) to the plasma membrane. This increases the number of GLUT4 transporters on the cell surface, facilitating the uptake of glucose from the bloodstream into the cells, thereby reducing blood glucose levels.",
+      "actions": [
+        "search_europepmc {\"query\":\"insulin lower blood glucose mechanism\"}",
+        "search_datacite {\"query\":\"insulin mechanism lower blood glucose\"}",
+        "read {\"docId\":\"datacite:10.5281/zenodo.19397718\"} (part 1 of 2)",
+        "read {\"docId\":\"datacite:10.5281/zenodo.19397718#2\"} (part 2 of 2)",
+        "search_europepmc {\"query\":\"insulin mechanism glucose uptake cells\"}",
+        "search_datacite {\"query\":\"insulin receptor glucose transporter GLUT4\"}",
+        "final_answer {\"found\":true,\"answer\":\"Insulin lowers blood glucose by binding to insulin receptors on the surface of cells (particularly in muscle and fat tissues), which triggers a signaling cascade that causes glucose transporter 4 (GLUT4) to translocate from intracellular storage sites to the plasma membrane. This increases the number of GLUT4 transporters on the cell surface, facilitating the uptake of glucose from the bloodstream into the cells, thereby reducing blood glucose levels.\",\"evidence\":[{\"docId\":\"datacite:10.5525/gla.thesis.82077\",\"quote\":\"Insulin regulates glucose homeostasis by stimulation of glucose transport into adipose and muscle tissues through the regulated trafficking of glucose transporter 4 (GLUT4). In response to insulin GLUT4 rapidly translocates from intracellular storage sites to the plasma membrane where it facilitates glucose uptake.\"},{\"docId\":\"datacite:10.5525/gla.thesis.81304\",\"quote\":\"Insulin is secreted when blood glucose levels are high and triggers a signalling cascade that results in glucose uptake via the glucose transporter GLUT4 in peripheral tissues.\"},{\"docId\":\"datacite:10.17863/cam.56857\",\"quote\":\"Insulin signaling augments glucose transport by regulating glucose transporter 4 (GLUT4) trafficking from specialized intracellular compartments, termed GLUT4 storage vesicles (GSVs), to the plasma membrane.\"}]}",
+        "read {\"docId\":\"datacite:10.5525/gla.thesis.82077\"} (part 1 of 3)",
+        "read {\"docId\":\"datacite:10.5525/gla.thesis.81304\"} (part 1 of 2)",
+        "read {\"docId\":\"datacite:10.17863/cam.56857\"} (part 1 of 2)",
+        "final_answer {\"found\":true,\"answer\":\"Insulin lowers blood glucose by binding to insulin receptors on cells, triggering a signaling cascade that causes glucose transporter 4 (GLUT4) to translocate from intracellular storage sites (GLUT4 storage vesicles) to the plasma membrane. This increases the number of GLUT4 transporters on the cell surface, facilitating the uptake of glucose from the bloodstream into the cells, thereby reducing blood glucose levels.\",\"evidence\":[{\"docId\":\"datacite:10.5525/gla.thesis.82077\",\"quote\":\"In response to insulin GLUT4 rapidly translocates from intracellular storage sites to the plasma membrane where it facilitates glucose uptake.\"},{\"docId\":\"datacite:10.5525/gla.thesis.81304\",\"quote\":\"Insulin is secreted when blood glucose levels are high and triggers a signalling cascade that results in glucose uptake via the glucose transporter GLUT4 in peripheral tissues.\"},{\"docId\":\"datacite:10.17863/cam.56857\",\"quote\":\"Insulin signaling augments glucose transport by regulating glucose transporter 4 (GLUT4) trafficking from specialized intracellular compartments, termed GLUT4 storage vesicles (GSVs), to the plasma membrane.\"}]}"
+      ],
+      "seconds": 936
+    },
+    {
+      "taskId": "m4-antibiotic-resistance",
+      "status": "verified",
+      "found": true,
+      "backed": "1 of 1",
+      "steps": "3 of 3",
+      "reads": 2,
+      "repeatedParts": 0,
+      "noted": 1,
+      "documents": 2,
+      "sources": 2,
+      "cited": [
+        "datacite:10.5281/zenodo.20355175"
+      ],
+      "answer": "Bacteria become resistant to antibiotics through several mechanisms: genetic mutation, horizontal gene transfer, enzyme production, target modification, and efflux pumps.",
+      "actions": [
+        "search_europepmc {\"query\":\"bacteria antibiotic resistance mechanisms\"}",
+        "read {\"docId\":\"europepmc:MED/30555448\"} (part 26 of 93)",
+        "search_datacite {\"query\":\"bacteria antibiotic resistance mechanisms\"}",
+        "read {\"docId\":\"datacite:10.5281/zenodo.20355175\"}",
+        "final_answer {\"found\":true,\"answer\":\"Bacteria become resistant to antibiotics through several mechanisms: genetic mutation, horizontal gene transfer, enzyme production, target modification, and efflux pumps.\",\"evidence\":[{\"docId\":\"datacite:10.5281/zenodo.20355175\",\"quote\":\"This research paper explores the causes and mechanisms of antibiotic resistance, including genetic mutation, horizontal gene transfer, enzyme production, target modification, and efflux pumps.\"}]}"
+      ],
+      "seconds": 281
+    },
+    {
+      "taskId": "m5-mrna-vaccine",
+      "status": "verified",
+      "found": true,
+      "backed": "3 of 3",
+      "steps": "2 of 3",
+      "reads": 3,
+      "repeatedParts": 0,
+      "noted": 2,
+      "documents": 2,
+      "sources": 2,
+      "cited": [
+        "europepmc:MED/40075519"
+      ],
+      "answer": "mRNA vaccines produce immunity by being transported into cells where the mRNA is translated into an antigenic protein. This antigen is then presented to B-lymphocytes, which differentiate into plasma cells that produce antibodies against the antigen. Additionally, some antigen is secreted and taken up by other antigen-presenting cells, where it is degraded and presented via MHC class II molecules to activate further immune responses.",
+      "actions": [
+        "search_europepmc {\"query\":\"mRNA vaccine immunity mechanism\"}",
+        "read {\"docId\":\"europepmc:MED/40075519\"} (part 5 of 55)",
+        "search_datacite {\"query\":\"mRNA vaccine immunity mechanism\"}",
+        "read {\"docId\":\"datacite:10.5281/zenodo.4527675\"}",
+        "read {\"docId\":\"europepmc:MED/40075519#25\"} (part 25 of 55)",
+        "final_answer {\"found\":true,\"answer\":\"mRNA vaccines produce immunity by being transported into cells where the mRNA is translated into an antigenic protein. This antigen is then presented to B-lymphocytes, which differentiate into plasma cells that produce antibodies against the antigen. Additionally, some antigen is secreted and taken up by other antigen-presenting cells, where it is degraded and presented via MHC class II molecules to activate further immune responses.\",\"evidence\":[{\"docId\":\"europepmc:MED/40075519#25\",\"quote\":\"Once in the cytoplasm, the mRNA is translated by ribosomes into the target antigen.\"},{\"docId\":\"europepmc:MED/40075519#25\",\"quote\":\"When a portion of the synthesized antigen is transported on the surface of the antigen-presenting cells (APCs) and presented to B-lymphocytes, they differentiate into plasma cells that produce antibodies against the antigen.\"},{\"docId\":\"europepmc:MED/40075519#25\",\"quote\":\"Another fraction of the antigen is secreted into the extracellular space, which can be taken up by other APCs and degraded in the phagolysosome. These degraded antigens are then presented on the APC surface via MHC class II molecules [15].\"}]}"
+      ],
+      "seconds": 418
+    }
+  ]
+}
