@@ -247,44 +247,44 @@ The datasets used and/or analysed during the current study are available from th
 
 ## References
 
-1.. 
-2.. 
-3.. 
-4.. 
-5.. 
-6.. 
-7.. 
-8.. 
-9.. 
-10.. 
-11.. 
-12.. 
-13.. 
-14.. 
-15.. 
-16.. 
-17.. 
-18.. 
-19.. VERBI Software. MAXQDA: Software für Qualitative Datenanalyse. (Sozialforschung GmbH, 1989).
-20.. Grohmann, M. WhisperSpeaker. (2024).
-21.. Kuckartz, U. Qualitative Inhaltsanalyse. Methoden, Praxis, Computerunterstützung (Beltz, 2018).
-22.. 
-23.. 
-24.. 
-25.. 
-26.. 
-27.. 
-28.. 
-29.. 
-30.. 
-31.. 
-32.. 
-33.. 
-34.. 
-35.. 
-36.. 
-37.. Sinnathamby, A. et al. Towards a theory of compassion fatigue in palliative care and oncology: A systematic scoping review. Am. J. Hosp. Palliat. Med.1049909125131518310.1177/10499091251315183 (2025).10.1177/10499091251315183PMC1270587639825792
-38.. 
-39.. 
-40.. 
-41..
+1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+11. 
+12. 
+13. 
+14. 
+15. 
+16. 
+17. 
+18. 
+19. VERBI Software. MAXQDA: Software für Qualitative Datenanalyse. (Sozialforschung GmbH, 1989).
+20. Grohmann, M. WhisperSpeaker. (2024).
+21. Kuckartz, U. Qualitative Inhaltsanalyse. Methoden, Praxis, Computerunterstützung (Beltz, 2018).
+22. 
+23. 
+24. 
+25. 
+26. 
+27. 
+28. 
+29. 
+30. 
+31. 
+32. 
+33. 
+34. 
+35. 
+36. 
+37. Sinnathamby, A. et al. Towards a theory of compassion fatigue in palliative care and oncology: A systematic scoping review. Am. J. Hosp. Palliat. Med.1049909125131518310.1177/10499091251315183 (2025).10.1177/10499091251315183PMC1270587639825792
+38. 
+39. 
+40. 
+41.
