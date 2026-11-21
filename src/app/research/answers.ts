@@ -106,6 +106,37 @@ export function sourceTitle(answer: SavedAnswer, docId: string): string {
 }
 
 /**
+ * Labels of sources that hold the same documents, so a failure of one is not a failure of the other's
+ * quotes: a DataCite work's full text is read from Zenodo, and both labels stand for the one source.
+ */
+const SAME_SOURCE = [["DataCite", "Zenodo"]];
+
+/** True when `message`, which opens with a source's label, is about the source `label` names. */
+function aboutSource(message: string, label: string | undefined): boolean {
+  if (!label) return false;
+  const names = SAME_SOURCE.find((group) => group.includes(label)) ?? [label];
+  return names.some((name) => message.startsWith(`${name} `));
+}
+
+/**
+ * A source failure as it is shown to the user: the message, and then what it means for the answer. A
+ * request that failed does not mean the source gave nothing, because a source can be searched and read
+ * before it stops answering: a preview user's answer to "How does brain think?" quoted two OpenAlex works
+ * it had read, and was shown under "OpenAlex could not be reached … The answer is based on the other
+ * sources only", which its own evidence contradicted. The claim is made only when no verified quote comes
+ * from the source that failed; when one does, what failed cost the answer results, not the source.
+ */
+export function sourceErrorNote(
+  message: string,
+  answer: Pick<SavedAnswer, "evidence" | "citations">,
+  /** "The answer", or "This section" in a report. */
+  subject: string,
+): string {
+  const quoted = answer.evidence.some((e) => e.verified && aboutSource(message, answer.citations[e.docId]?.source));
+  return quoted ? `${message} Some of its results may be missing.` : `${message} ${subject} is based on the other sources only.`;
+}
+
+/**
  * Where a quote is in its document, "p. 4" or "slide 4", or undefined when its document has no pages.
  * The user's documents are titled with their file names, which tell a presentation's slides from pages,
  * in answers saved before presentations could be read too.
@@ -131,7 +162,7 @@ const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
 export function answerToMarkdown(answer: SavedAnswer): string {
   if (answer.report) return reportToMarkdown(answer, answer.report);
   const lines = [`# ${oneLine(answer.question)}`, "", `Asked ${formatTime(answer.askedAt)} with ${answer.model}.`, ""];
-  for (const error of answer.sourceErrors) lines.push(`> ${error} The answer is based on the other sources only.`, "");
+  for (const error of answer.sourceErrors) lines.push(`> ${sourceErrorNote(error, answer, "The answer")}`, "");
   if (answer.status === "no-answer") {
     lines.push(answer.noAnswer ?? "The model did not give an answer.", "");
   } else {
@@ -257,7 +288,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
   if (report.synthesis) lines.push("## Introduction", "", markedPart(report.synthesis.introduction), "");
   report.sections.forEach((section, i) => {
     lines.push(`## ${i + 1}. ${oneLine(section.question)}`, "");
-    for (const error of section.sourceErrors) lines.push(`> ${error} This section is based on the other sources only.`, "");
+    for (const error of section.sourceErrors) lines.push(`> ${sourceErrorNote(error, section, "This section")}`, "");
     if (section.status === "no-answer") {
       lines.push(section.noAnswer ?? "The model did not give an answer.", "");
       return;

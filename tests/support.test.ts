@@ -32,6 +32,18 @@ describe("sentence splitting", () => {
     ]);
   });
 
+  it("ends a sentence at a straight apostrophe closing a quotation", () => {
+    // A preview user's answer to "How does brain think?" quoted with '…' twice; its last three
+    // sentences were checked as one, and the label read "0 of 2 sentences backed by a quote".
+    const answer =
+      "One document states that 'the thinking brain thinks and reasons.' Another document notes that 'the brain is active.' A philosophical perspective suggests otherwise.";
+    assert.deepEqual(splitSentences(answer), [
+      "One document states that 'the thinking brain thinks and reasons.' ",
+      "Another document notes that 'the brain is active.' ",
+      "A philosophical perspective suggests otherwise.",
+    ]);
+  });
+
   it("joins back into the answer exactly", () => {
     const answer = "First sentence here.  Second one?\n\n“Quoted” third. (Fourth.)";
     assert.equal(splitSentences(answer).join(""), answer);
@@ -1012,5 +1024,39 @@ describe("mathematics: a quote from another theorem's proof (harness 0.100.0)", 
     assert.equal(right.labelled, true);
     // A question about a statement, not a proof, is left alone.
     assert.equal(label("Which constant does Theorem 4.1 need?", "This is where the constant 37 is needed", "The constant 37").otherProof, undefined);
+  });
+});
+
+describe("a sentence after a quotation that a straight apostrophe closes", () => {
+  const QUOTE =
+    "The ability to see which parts of the brain are active during different kinds of thinking processes may be a wonderful tool for exploring learning of all kinds.";
+  const quotes = [{ docId: "watching", quote: QUOTE }];
+  const titleFor = () => "Watching the Brain Think";
+
+  it("is judged on its own, so one the quotes do not back is marked", () => {
+    // Joined to the sentence giving the quote, the invented one passed the check: the answer was
+    // "1 of 1 sentence backed by a quote", with no mark on the sentence from the model's memory.
+    const invented = "Brain scans show that memory is stored in the hippocampus of mice.";
+    assert.equal(marks(`The document notes that '${QUOTE}' ${invented}`, quotes, titleFor), "+-");
+    // The same answer with a double quote in that place was two sentences before this fix too.
+    assert.equal(marks(`The document notes that "${QUOTE}" ${invented}`, quotes, titleFor), "+-");
+  });
+
+  it("counts each sentence of the preview user's answer", () => {
+    const answer = [
+      "According to the documents, the brain thinks through different mechanisms and structures.",
+      "One document states that 'the thinking brain thinks and reasons' and that 'the brain considers things in the following order of importance.'",
+      `Another document notes that '${QUOTE}'`,
+      "A philosophical perspective suggests that when we say 'the brain thinks,' it may be a figurative way of referring to the human being thinking.",
+    ].join(" ");
+    const support = sentenceSupport(
+      answer,
+      quotes.map((q) => ({ ...q, verified: true })),
+      titleFor,
+      "How does brain think?",
+    );
+    // "0 of 2" before: the last three sentences were one, and the quoted one could not be credited.
+    assert.deepEqual([support.judged, support.backed], [4, 1]);
+    assert.equal(support.sentences.filter((sentence) => sentence.backed === false).length, 3);
   });
 });

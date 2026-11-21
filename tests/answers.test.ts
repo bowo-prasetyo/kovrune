@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { ResearchLibrary, runResearch } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 import type { DocumentWork } from "../src/documents/references.ts";
-import { answerToBibtex, answerToMarkdown, exportFileName, toSavedAnswer, type SavedAnswer } from "../src/app/research/answers.ts";
+import { answerToBibtex, answerToMarkdown, exportFileName, sourceErrorNote, toSavedAnswer, type SavedAnswer } from "../src/app/research/answers.ts";
 import { createOpenAlex } from "../src/sources/openalex.ts";
 import type { FetchLike } from "../src/sources/types.ts";
 
@@ -237,5 +237,44 @@ describe("saved answers", () => {
       exportFileName({ ...answer, question: "What was the income in 2024, and the budget for 2025?" }, "md"),
       "kovrune-what-was-the-income-in-2024-and-the-budget-for-2026-10-25.md",
     );
+  });
+});
+
+describe("what a source failure is said to have cost the answer", () => {
+  const UNREACHED = "OpenAlex could not be reached. Check your internet connection.";
+  const quote = (docId: string, source: string, verified = true) => ({
+    evidence: [{ docId, quote: "the thinking brain thinks and reasons", verified }],
+    citations: { [docId]: { title: "The Teen Brain Thinks and Feels", url: "https://openalex.org/W1", retrievedAt: "2026-11-21T15:40:00.000Z", source } },
+  });
+
+  it("does not claim the answer leaves out a source its quotes come from", () => {
+    // A preview user's answer quoted two OpenAlex works it had read before a later request failed, and
+    // said "The answer is based on the other sources only" above evidence citing OpenAlex twice.
+    assert.equal(sourceErrorNote(UNREACHED, quote("openalex:W1", "OpenAlex"), "The answer"), `${UNREACHED} Some of its results may be missing.`);
+  });
+
+  it("makes the claim when nothing verified comes from the source that failed", () => {
+    const timedOut = "Europe PMC did not answer within 20 seconds. Try again later.";
+    assert.equal(sourceErrorNote(timedOut, quote("openalex:W1", "OpenAlex"), "The answer"), `${timedOut} The answer is based on the other sources only.`);
+    // A quote that is not in the document backs nothing, so the source gave the answer nothing.
+    assert.equal(sourceErrorNote(UNREACHED, quote("openalex:W1", "OpenAlex", false), "The answer"), `${UNREACHED} The answer is based on the other sources only.`);
+    assert.equal(sourceErrorNote(UNREACHED, { evidence: [], citations: {} }, "The answer"), `${UNREACHED} The answer is based on the other sources only.`);
+  });
+
+  it("takes a DataCite failure to be about the Zenodo copy it reads", () => {
+    const failed = "DataCite could not be reached. Check your internet connection.";
+    assert.equal(sourceErrorNote(failed, quote("datacite:10.5281/zenodo.1", "Zenodo"), "The answer"), `${failed} Some of its results may be missing.`);
+  });
+
+  it("says it of the section in a report", () => {
+    assert.equal(sourceErrorNote(UNREACHED, { evidence: [], citations: {} }, "This section"), `${UNREACHED} This section is based on the other sources only.`);
+  });
+
+  it("says in the Markdown export which it was", async () => {
+    const answer = await savedAnswer();
+    const cited: SavedAnswer = { ...answer, sourceErrors: [UNREACHED] };
+    assert.match(answerToMarkdown(cited), /> OpenAlex could not be reached\. Check your internet connection\. Some of its results may be missing\./);
+    const other: SavedAnswer = { ...answer, sourceErrors: ["Wikipedia could not be reached. Check your internet connection."] };
+    assert.match(answerToMarkdown(other), /> Wikipedia could not be reached\. Check your internet connection\. The answer is based on the other sources only\./);
   });
 });
