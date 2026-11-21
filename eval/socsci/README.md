@@ -8,7 +8,7 @@ npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b
   --suites socsci,socsciholdout --out eval/results/socsci-qwen3.5-4b-q4km.json
 ```
 
-`socsci` (33 questions) may be looked at task by task while a change is developed; `socsciholdout` (12) is read only as totals, like the other held-out suites. The questions and their facts were written from the documents before any model ran on them, and are not changed to fit a run. Scoring is the research suite's (`eval/harness/scoring.ts`): every fact group in the answer, every cited document cited, a verified quote, and `found` right. The scorer matches lower-cased substrings, so it can't tell "Black participants were less likely than White participants" from the reverse; a group question asks for what only the right reading gives (the odds ratio, the group the question doesn't name), and the reports are read for the rest.
+`socsci` (34 questions) may be looked at task by task while a change is developed; `socsciholdout` (12) is read only as totals, like the other held-out suites. The questions and their facts were written from the documents before any model ran on them, and are not changed to fit a run. Scoring is the research suite's (`eval/harness/scoring.ts`): every fact group in the answer, every cited document cited, a verified quote, and `found` right. The scorer matches lower-cased substrings, so it can't tell "Black participants were less likely than White participants" from the reverse; a group question asks for what only the right reading gives (the odds ratio, the group the question doesn't name), and the reports are read for the rest.
 
 ## The documents
 
@@ -44,10 +44,24 @@ node --experimental-strip-types eval/socsci/source/build.ts
 
 ## The questions
 
-Kinds of the 33 open questions, tagged in each task's comment in `tasks.ts`: **group** (8), **direction** (4), **significance** (4), **table** (4), **subgroup** (2), **negative** (3), **who** (5), **turn** (2), **number** (2), **comparison** (1), and one the documents do not answer, with a nearby fact (the cash transfer paper's literature review mentions school enrolment in other programmes). Some questions are of two kinds. The held-out set has 11 answerable questions of the same kinds and one unanswerable.
+Kinds of the 34 open questions, tagged in each task's comment in `tasks.ts`: **group** (8), **direction** (4), **significance** (4), **table** (4), **subgroup** (2), **negative** (3), **who** (5), **turn** (2), **number** (2), **lookup** of what a paper reports among its benefits (1, s32), **comparison** (1), and one the documents do not answer, with nearby facts (how long Daniel has lived on his street: Rosa has lived on hers for eleven years, and Daniel has been on nights for five). Some questions are of two kinds. The held-out set has 11 answerable questions of the same kinds and one unanswerable.
 
 ## Results
 
-See [the field README](../field/README.md#social-sciences-a-suite-group-comparisons-and-claim-strength-transcripts-and-every-passage-01040) for the first run and what the 0.104.0 checks change on it.
+Qwen3.5-4B (Q4_K_M) in constrained mode, llama.cpp `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), 4,096-token context, thinking off, on a 4-core cloud CPU (Intel Xeon @ 2.10GHz). Run in three parts on one machine (a background job there may run two hours) and merged into one report, then s34 on its own. One run, so a task that passes or fails once may not do so again.
+
+| Suite | Passed | Labelled Quotes found | Of those, wrong |
+| --- | --- | --- | --- |
+| `socsci`, as run (33) | 26/33 | 12 | 1 (s24, a task defect: right) |
+| `socsci`, two task defects fixed, with s34 (34) | **29/34** | 12 | **0** |
+| `socsciholdout` (12) | **10/12** | 8 | **0** |
+
+What the 0.104.0 checks change on these answers, the failures, and the speaker notes measured with and without: [field README](../field/README.md#social-sciences-a-suite-group-comparisons-and-claim-strength-transcripts-and-every-passage-01040).
+
+### Task defects
+
+Fixed after the first run, as each was plainly wrong; the scores above give both.
+- **s24** asked how many patient deaths a month the psycho-oncologists saw, with the abstract's "two" as its fact. The results say "an average of 2.2", and the model answered 2.2 with that quote: right, and failed. "2.2" was added.
+- **s32** was written as unanswerable (the cash transfer study measured food security and investment, not school enrolment). The paper reports, among the benefits beneficiaries named, that "some beneficiaries who could not send their children to school can now do so", and the model found it. It is now answerable from that passage. The model's answer overstates it ("a positive effect on children's school enrolment"), which the fact can't tell; the sentence check marks that sentence. **s34** was added as the open set's unanswerable question, and run on its own: it passes.
 
 **Limits:** one author chose the papers, wrote the questions and the transcripts, and wrote the checks they test; the transcripts are short and made up. Social science that is not in PubMed Central (most of sociology, political science and economics) is represented only by the papers here that happen to be. The scorer reads substrings, so a reversed group comparison passes it when it names the right numbers; the reports are read for such answers.

@@ -1,6 +1,6 @@
 {
   "harnessVersion": "0.104.0",
-  "createdAt": "2026-11-21T09:31:32.717Z",
+  "createdAt": "2026-11-21T09:39:43.908Z",
   "complete": true,
   "environment": {
     "runtime": "local-endpoint",
@@ -33,7 +33,7 @@
       "constrained"
     ],
     "preset": "full",
-    "notes": "Social-science suite, first run (harness 0.104.0), in three parts on one machine, build and model: socsci s01–s16, socsci s17–s33, socsciholdout; merged into one report"
+    "notes": "Social-science suite, first run (harness 0.104.0), in three parts on one machine, build and model: socsci s01–s16, socsci s17–s33, socsciholdout, then s34 added after the run; merged into one report"
   },
   "selfCheck": {
     "passed": true,
@@ -48,21 +48,21 @@
     {
       "suite": "socsci",
       "mode": "constrained",
-      "tasks": 33,
-      "passed": 26,
-      "successRate": 0.788,
+      "tasks": 34,
+      "passed": 27,
+      "successRate": 0.794,
       "successInterval": [
-        0.622,
-        0.893
+        0.632,
+        0.897
       ],
       "validActionRate": 1,
       "decodeTokensPerSecond": 6.9,
-      "prefillTokensPerSecond": 40.5,
-      "medianTaskSeconds": 113.1,
+      "prefillTokensPerSecond": 40.2,
+      "medianTaskSeconds": 113.9,
       "maxPromptTokens": 4055,
       "tasksWithDroppedResults": 3,
-      "processedPromptTokens": 136488,
-      "promptSeconds": 3359.4,
+      "processedPromptTokens": 147937,
+      "promptSeconds": 3670.3,
       "falseReassurance": {
         "labelled": 12,
         "wrong": 1
@@ -3659,6 +3659,138 @@
             "completionTokens": 155,
             "cachedTokens": 0,
             "promptMs": 36538.922
+          }
+        }
+      ]
+    },
+    {
+      "suite": "socsci",
+      "taskId": "s34-daniel-no-years-on-street",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 8,
+      "validCalls": 8,
+      "promptTokens": 11449,
+      "completionTokens": 228,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2675,
+      "cachedTokens": 0,
+      "promptMs": 310939,
+      "modelMs": 343666,
+      "ttftMs": 311047,
+      "wallMs": 343936,
+      "actions": [
+        "search {\"query\":\"Daniel T02 street years lived\"}",
+        "read {\"docId\":\"interview-t02-daniel#3\"}",
+        "search {\"query\":\"Daniel T02 street years lived interview\"}",
+        "read {\"docId\":\"interview-t02-daniel#1\"}",
+        "search {\"query\":\"Daniel T02 street years lived interview T02\"}",
+        "read {\"docId\":\"interview-t02-daniel#2\"}",
+        "search {\"query\":\"Daniel T02 lived on street years\"}",
+        "final_answer {\"found\":false,\"answer\":\"The documents do not contain information about how many years Daniel has lived on his street. They mention he has been on "
+      ],
+      "final": "{\"found\":false,\"answer\":\"The documents do not contain information about how many years Daniel has lived on his street. They mention he has been on night shifts for about five years and that he stopped coaching football in September after the bus route was cut in March 2023, but they do not state how long he has resided on the street itself.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 2,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "bfcb6a12",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Daniel T02 street years lived\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 245,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 6650.394
+          }
+        },
+        {
+          "input": "6b372e8d",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"interview-t02-daniel#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 494,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 12900.149
+          }
+        },
+        {
+          "input": "1df1536d",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Daniel T02 street years lived interview\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 902,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 23396.421
+          }
+        },
+        {
+          "input": "3ecb0323",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"interview-t02-daniel#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1152,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 29672.203
+          }
+        },
+        {
+          "input": "3e656432",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Daniel T02 street years lived interview T02\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1662,
+            "completionTokens": 22,
+            "cachedTokens": 0,
+            "promptMs": 44085.361
+          }
+        },
+        {
+          "input": "e3e43ec2",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"interview-t02-daniel#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1915,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 54873.49
+          }
+        },
+        {
+          "input": "14133f26",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Daniel T02 lived on street years\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2404,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 66958.56
+          }
+        },
+        {
+          "input": "536b2dfb",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The documents do not contain information about how many years Daniel has lived on his street. They mention he has been on night shifts for about five years and that he stopped coaching football in September after the bus route was cut in March 2023, but they do not state how long he has resided on the street itself.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2675,
+            "completionTokens": 87,
+            "cachedTokens": 0,
+            "promptMs": 72403.902
           }
         }
       ]
