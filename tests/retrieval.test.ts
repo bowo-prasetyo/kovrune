@@ -9,6 +9,7 @@ import { baseLibrary } from "../eval/harness/suites.ts";
 import { csHoldoutTasks, csTasks } from "../eval/cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../eval/lab/tasks.ts";
 import { chemHoldoutTasks, chemTasks } from "../eval/chem/tasks.ts";
+import { materialsHoldoutTasks, materialsTasks } from "../eval/materials/tasks.ts";
 import { pdfTasks } from "../eval/tasks/pdf.ts";
 import { researchTasks, type ResearchTask } from "../eval/tasks/research.ts";
 
@@ -217,6 +218,40 @@ describe("chemical names in search (harness 0.98.0)", () => {
     const field = await loadFieldSuite();
     const summary = summarizeRetrieval(measureRetrieval(field.chemLibrary, [...chemTasks, ...chemHoldoutTasks]));
     assert.ok(summary.complete >= 46, `${summary.complete} of ${summary.tasks} complete`);
+  });
+});
+
+describe("materials names in search (harness 0.108.0)", () => {
+  // Measured before the entries were written (eval/materials/README.md): 20 of these 31 found their document among the
+  // first three results. The entries were written with them in view, so this records the gap closed, not how general the
+  // list is. Two still miss on ranking alone: their entry adds the right term ("tib2", "hip"), and the parts of a
+  // longer paper that write "titanium" or "hot pressing" fill the first three places.
+  it("finds a materials document by a materials scientist's other spelling", async () => {
+    const field = await loadFieldSuite();
+    const found = (query: string) => new Set(appSearch(3)(field.materialsLibrary, query).map((id) => id.replace(/#\d+$/, "")));
+    const aliases: Array<[string, string]> = [
+      ["LFP", "lifepo4-combustion-synthesis"], ["lithium iron phosphate", "lifepo4-combustion-synthesis"],
+      ["lithium lanthanum zirconium oxide", "llzo-hot-pressing-sps"], ["lithium lanthanum zirconate", "llzo-hot-pressing-sps"], ["LLZTO", "llzo-hot-pressing-sps"], ["Al-doped LLZO garnet", "llzo-al-cubic"],
+      ["FAST", "llzo-hot-pressing-sps"], ["field assisted sintering", "llzo-hot-pressing-sps"], ["silicon carbide", "boron-carbide-sic-tib2"],
+      ["polylactide", "pla-starch-hydrothermal-ageing"], ["polylactic acid", "pla-starch-hydrothermal-ageing"],
+      ["propylammonium iodide", "perovskite-pai-passivation"], ["formamidinium", "perovskite-pai-passivation"], ["methylammonium", "perovskite-pai-passivation"], ["tin oxide", "perovskite-pai-passivation"], ["PSC", "perovskite-pai-passivation"],
+      ["BT25", "tc25-titanium-creep"], ["L-PBF", "ti64-slm-tensile-log"], ["LPBF", "ti64-slm-tensile-log"], ["laser powder bed fusion", "ti64-slm-tensile-log"], ["Ti64", "ti64-slm-tensile-log"], ["TC4", "ti64-slm-tensile-log"],
+      ["Al2O3-ZrO2", "zta-test-report"], ["YSZ", "zta-test-report"], ["yttria stabilised zirconia", "zta-test-report"],
+      ["medium-Mn steel", "medium-manganese-steel-heating-rate"], ["TRIP steel", "medium-manganese-steel-heating-rate"],
+      ["aluminium silicon alloy", "al-si-cu-mg-nickel-alloys"], ["A354", "al-si-cu-mg-nickel-alloys"],
+    ];
+    const missed = aliases.filter(([alias, doc]) => !found(alias).has(doc)).map(([alias]) => alias);
+    assert.deepEqual(missed, []);
+    for (const [own, doc] of [["LiFePO4", "lifepo4-combustion-synthesis"], ["LLZO", "llzo-hot-pressing-sps"], ["B4C", "boron-carbide-sic-tib2"], ["SLM", "ti64-slm-tensile-log"], ["ZTA", "zta-test-report"], ["TC25", "tc25-titanium-creep"]] as const) {
+      assert.ok(found(own).has(doc), `"${own}" finds its document`);
+    }
+  });
+
+  it("keeps the materials suite's retrieval where it is without the names", async () => {
+    // 52 of 56 without the materials names; 49 when every spelling was added to every passage (chemical-names.ts).
+    const field = await loadFieldSuite();
+    const summary = summarizeRetrieval(measureRetrieval(field.materialsLibrary, [...materialsTasks, ...materialsHoldoutTasks]));
+    assert.ok(summary.complete >= 52, `${summary.complete} of ${summary.tasks} complete`);
   });
 });
 
