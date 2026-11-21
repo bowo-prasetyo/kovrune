@@ -88,6 +88,21 @@ export function pagingNote(docId: string, from: number, to: number, outline: str
   return `\n\n[You have read parts ${from} to ${to} of ${docId} in order, which takes many steps. Its sections are at: ${outline}. Read the part whose section fits the question, or search for it.]`;
 }
 
+/**
+ * A read that gives a part already given gets the outline again (harness 0.104.0), once per document. The
+ * agent's repeat guard compares the call, not what came back, so two different calls that give the same
+ * part pass it: a preview user's answer to "How does blood circulate?" read Wikipedia's "Circulatory
+ * system" (21 parts), part 1 both times, and the second read could not have returned anything new. The
+ * outline is shown at the first read only, so by then the model no longer has it. As pagingNote, this
+ * only points: giving another part in place of the one asked for cost a right answer (eval/cs/README.md).
+ */
+export function repeatPartNote(docId: string, part: string, outline: string): string {
+  return `\n\n[You have read ${part} of ${docId} already, and this is it again. Its sections are at: ${outline}. Read the part whose section fits the question, or search for it.]`;
+}
+
+/** The note after a part given a second time (repeatPartNote). */
+export const REPEAT_PART_NOTE_LINE = /\n*\[You have read part \d+ of [^\n]*\]/;
+
 /** Documents longer than this are truncated when read, to fit small context windows. */
 export const MAX_DOC_CHARS = 2400;
 
@@ -160,6 +175,9 @@ export function createResearchTools(
   // The IDs asked for in the last reads, and the documents whose outline was given again (PAGING_MIN_PARTS).
   const lastReads: string[] = [];
   const pagingNoted = new Set<string>();
+  // The parts an open source has given, and the documents told once that a part came again (repeatPartNote).
+  const shownParts = new Set<string>();
+  const repeatNoted = new Set<string>();
   let askedToReadCited = false;
   // Whether final_answer has asked, once, about a "not found" answer that came with quotes.
   let askedAboutQuotedNotFound = false;
@@ -288,6 +306,18 @@ export function createResearchTools(
           }
           // Which part was given, for the trace: a read that names no part gets the one that best matches the question.
           const part = /^\[[^\]\n]*\][^\n]*\((part \d+ of \d+|the passages? your answer quoted)\)\n/.exec(text)?.[1];
+          // The same part a second time: the outline again, once per document, when the paging note has not just given it.
+          const shown = /^\[([^\]\n]*)\]/.exec(text)?.[1];
+          if (shown && part?.startsWith("part ")) {
+            if (shownParts.has(shown) && !repeatNoted.has(doc) && !PAGING_NOTE_LINE.test(text)) {
+              const outline = session.outlineFor(doc);
+              if (outline) {
+                repeatNoted.add(doc);
+                text += repeatPartNote(doc, part, outline);
+              }
+            }
+            shownParts.add(shown);
+          }
           return { text: nextSources(text), ...(part ? { shown: part.replace("your answer quoted", "quoted") } : {}) };
         }
         const doc = index.get(docId);
@@ -311,7 +341,7 @@ export function createResearchTools(
       shorten: (_args: { docId: string }, observation: string) => {
         if (!question || !observation.startsWith("[")) return undefined;
         // An open-source document's outline is left out: it says where the parts are, not what they say.
-        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(PAGING_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").replace(PROOF_NOTE_LINE, "").split("\n");
+        const [header, ...rest] = observation.replace(CITATION_NOTE_LINE, "").replace(PAGING_NOTE_LINE, "").replace(REPEAT_PART_NOTE_LINE, "").replace(OUTLINE_LINE, "").replace(TABLE_NOTE_LINE, "").replace(FIGURE_NOTE_LINE, "").replace(PROOF_NOTE_LINE, "").split("\n");
         const sentences = index.bestSentences(rest.join("\n"), question, 2);
         return sentences.length ? `${header}\n${sentences.join(" … ")}` : undefined;
       },
