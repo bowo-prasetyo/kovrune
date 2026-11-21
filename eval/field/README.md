@@ -1521,7 +1521,7 @@ The social-sciences audit's open items ([`docs/social-sciences-audit.md`](../../
 **S2: the sentence check reads social-science results** (`src/agent/socialscience.ts`, and the opposites in `support.ts`):
 - **Which group a comparison puts first.** A sentence's comparison ("A … more likely than B", or "compared with", "relative to", "versus") is not backed by a quote making it the other way round, with the same comparative: "White participants were 50% less likely than Black participants" against "Black participants were approximately 50% less likely … than White participants". The same finding said from the other side ("White participants were more likely than Black participants") stays backed, and the comparative opposites below are not judged for it. Each side is read from its own words, leaving out those both sides share ("participants", "two times").
 - **Social-science opposites:** more and less (or fewer); rose, grew, declined and fell, with increase and decrease; widened and narrowed; majority and minority; supported and opposed; trust and distrust; agree and disagree; aligned and unaligned; employed and unemployed; approve and disapprove; rural and urban; richest and poorest; liberal and conservative; left- and right-wing.
-- **Claim strength.** A sentence saying one thing causes another, or that a result is demonstrated or proved, is not backed by quotes that say only "associated", "correlated", "suggests" or "may" and nothing causal.
+- **Claim strength**, two rules. A sentence saying one thing *caused* another is not backed by quotes that say only that the two are associated, correlated or linked; and one saying a result is *demonstrated*, *proved*, *established* or *confirmed* is not backed by quotes that say only that it suggests, may or might. Only these explicit words count, not "led to" or "resulted in", and not a hyphenated name ("X-linked", "disease-associated"): re-scoring the recorded reports showed a first, broader version taking the label from right lab answers ([below](#what-re-scoring-the-recorded-answers-found)).
 - **Percent and percentage points** are told apart: "rose by 7 percent" is not backed by "rose by 7 percentage points".
 - **The interviewer's words.** When every verified quote is an interviewer's turn in a transcript (by its label, or the label of the line the quote stands in), a sentence that does not say what was asked is not backed: "the participant felt excluded" against "Interviewer: So would you say you felt excluded?".
 
@@ -1529,7 +1529,11 @@ On the audit's 24 wrong sentences, **22 are now marked, against 7**; all 24 righ
 
 **What S2 changes on answers a model wrote.** Qwen3.5-4B on the suite, re-scored with the S2 checks on and off (a copy of the code with them removed): **no label changes**. 20 answers are labelled **Quotes found** either way, none of them wrong. One more sentence is marked, in s32's answer, which was not labelled already. The model turned no group comparison round and stated no association as a cause in its 46 answers: the checks guard against what the audit found a model can write, and this run did not write it. The run was made with the checks on, so where they marked a sentence the model's own check was not asked, and the re-score without them lacks that check's result; it changes nothing here, since only s32 differs.
 
-**Effect on recorded answers.** `bench:rescore --labels` on every report, with the code of `main` and of this change: RESCORE_RESULT
+#### What re-scoring the recorded answers found
+
+`bench:rescore --labels` on every report, with the code of `main` and of a first version of this change, changed 9 of 10,005 answers, all right ones, 5 of them losing **Quotes found**: a lab answer saying "reduced IL10 expression led to increased pathogen clearance" (l03, from a knockout, whose quote says clearance "was associated with" inflammation), recorded in four reports, and a held-out lab answer recorded in five. The claim-strength rule took them all. It was narrowed three ways, each found by switching one part off and re-scoring (the held-out answer by its label count only, without reading it): only explicit words of cause ("caused") and certainty ("demonstrated"), not "led to" or "resulted in", which restored l03; cause checked only against association words and certainty only against hedges, not one against the other; and no association word after a hyphen, since the held-out answer's only one was a gene's "X-linked". The audit's 22 of 24 still hold.
+
+**Effect on recorded answers**, with the change as merged: RESCORE_RESULT
 
 **S7: interview transcripts.**
 - **Caption files** (`src/documents/transcripts.ts`): WebVTT (`.vtt`, from Zoom, Teams, Otter) and SubRip (`.srt`) are read as transcripts, each speaker's consecutive cues joined into one turn, "Daniel [00:00:08]: …", with its start time; a speaker named in a voice tag or before a colon; a file naming no speaker read as paragraphs split at pauses of two seconds; WebVTT notes kept first. A quote of a sentence that ran over several cues is found in one piece.
@@ -1554,7 +1558,7 @@ Reports: `eval/results/socsci-0.104-qwen3.5-4b-q4km.json` (the suite) and `socsc
 **Limits:**
 - The comparison rule reads a comparison within one clause, its second group from the three words after "than"; a comparison stated across sentences, or with its groups named far apart, is left to the model's checks.
 - "more" and "less" are read as opposites in any sense; a sentence saying both is not judged.
-- The claim-strength rule reads wording, not design: a quote from a randomised experiment that says "suggests" does not back "caused", though the design would.
+- The claim-strength rules read wording, not design: a quote from a randomised experiment that says "associated" does not back "caused", though the design would.
 - Country and group names one word apart, and a finding stated without its subgroup, are not checked.
 
 ## Results
