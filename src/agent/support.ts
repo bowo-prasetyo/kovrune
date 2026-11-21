@@ -575,7 +575,7 @@ export function significance(text: string): { asserted: boolean; negated: boolea
  */
 const OPPOSITES: Array<[string[], string[]]> = [
   [["higher", "highest"], ["lower", "lowest"]],
-  // Since harness 0.104.0 with the verbs social-science papers use for a change: "rose", "grew", "declined", "fell".
+  // Since harness 0.105.0 with the verbs social-science papers use for a change: "rose", "grew", "declined", "fell".
   [
     ["increase", "increased", "increases", "increasing", "rise", "rises", "rose", "risen", "rising", "grew", "grow", "grows", "growing"],
     ["decrease", "decreased", "decreases", "decreasing", "reduce", "reduced", "reduces", "reducing", "reduction", "reductions", "decline", "declined", "declines", "declining", "fell", "fall", "falls", "fallen", "falling", "dropped"],
@@ -624,7 +624,7 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["hypermethylated", "hypermethylation"], ["hypomethylated", "hypomethylation"]],
   [["phosphorylated", "phosphorylation", "phosphorylates"], ["dephosphorylated", "dephosphorylation", "dephosphorylates"]],
   [["gain-of-function"], ["loss-of-function"]],
-  // Social-science opposites (harness 0.104.0, docs/social-sciences-audit.md, S2): which group, which way a share or a
+  // Social-science opposites (harness 0.105.0, docs/social-sciences-audit.md, S2): which group, which way a share or a
   // gap went, which side people took. "more" and "less" compare groups ("50% less likely", "spend 26% less"), as
   // "higher" and "lower" compare values; a sentence saying both ("more educated, less likely") is not judged.
   [["more"], ["less", "fewer"]],
@@ -876,11 +876,16 @@ export function sameWord(a: string, b: string): boolean {
  * Splits an answer into sentences: at line breaks, and after ".", "!" or "?" followed by a
  * capital letter or an opening quote or bracket, so "No. 62" and "2.0" stay whole. The "."
  * of a numbered list item ("1. Open the perspective") does not end a sentence.
+ *
+ * The straight apostrophe closes a quotation as the curly one does: without it, a preview user's
+ * answer quoting with '…' ran three sentences together ("… order of importance.' Another document
+ * notes …"), so the label read "0 of 2 sentences backed by a quote" for four sentences, and a
+ * sentence from the model's memory went unmarked behind the quoted one it was joined to.
  */
 export function splitSentences(answer: string): string[] {
   const sentences: string[] = [];
   // "。", "！", "？" and the Devanagari danda "।" end a sentence with or without a space after them.
-  const boundary = /(?<!(?:^|\n)\s*\p{N}+)[.!?]+["”’)\]]*\s+(?=[\p{Lu}"“‘(\[])|[。！？।]+[」』）"”’)\]]*\s*|\n\s*/gu;
+  const boundary = /(?<!(?:^|\n)\s*\p{N}+)[.!?]+["”’')\]]*\s+(?=[\p{Lu}"“‘'(\[])|[。！？।]+[」』）"”’)\]]*\s*|\n\s*/gu;
   let start = 0;
   for (const match of answer.matchAll(boundary)) {
     const end = match.index + match[0].length;

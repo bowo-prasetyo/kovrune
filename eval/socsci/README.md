@@ -1,6 +1,6 @@
 # Social-science suite
 
-Questions over social-science papers and interview transcripts (harness 0.104.0), recommendation 6 of the social-sciences audit ([`docs/social-sciences-audit.md`](../../docs/social-sciences-audit.md), S8). No other suite has a survey's adjusted odds ratios for one group against another, a panel regression with its standard errors in a row under its estimates, a field experiment's response rates by treatment, interviewees quoted by code, or a transcript in which the interviewer suggests one thing and the participant says another. Those are where reading the field goes wrong: which group was more likely, which way an association went, whether an estimate was significant, and who said it. The audit found the sentence check marking 17 of 24 wrong social-science sentences backed; this suite measures how often that matters on answers a model writes, and what the S2 checks of 0.104.0 change ([below](#results)).
+Questions over social-science papers and interview transcripts (harness 0.105.0), recommendation 6 of the social-sciences audit ([`docs/social-sciences-audit.md`](../../docs/social-sciences-audit.md), S8). No other suite has a survey's adjusted odds ratios for one group against another, a panel regression with its standard errors in a row under its estimates, a field experiment's response rates by treatment, interviewees quoted by code, or a transcript in which the interviewer suggests one thing and the participant says another. Those are where reading the field goes wrong: which group was more likely, which way an association went, whether an estimate was significant, and who said it. The audit found the sentence check marking 17 of 24 wrong social-science sentences backed; this suite measures how often that matters on answers a model writes, and what the S2 checks of 0.105.0 change ([below](#results)).
 
 ```bash
 npm run bench:endpoint -- --base-url http://127.0.0.1:8080/v1 --model qwen3.5-4b-q4km --context 4096 \
@@ -32,7 +32,7 @@ Eight open-access journal papers, all [CC BY 4.0](https://creativecommons.org/li
 
 Each paper names its authors in full, as published.
 
-**How they were made.** `source/build.ts` downloads each article's full-text XML from Europe PMC and writes it as Markdown with the app's own converter (`src/sources/jats.ts`), so each reads as Kovrune reads it from Europe PMC: its merged table cells spread over their columns and rows, its bold cells kept, its tables from `<floats-group>` placed after the paragraph that cites them (0.101.0), and its references written with their parts apart (0.104.0). The other suites' papers were made with `eval/clinical/source/jats2md.py`, which predates those fixes. It refuses an article whose XML licence is not CC BY 4.0. The article's own text is kept; as the licence asks to be told, figures are kept as their captions only, supplementary material is left out, and tables given only as images in the source (the email experiment's Tables 2–10) have only their captions.
+**How they were made.** `source/build.ts` downloads each article's full-text XML from Europe PMC and writes it as Markdown with the app's own converter (`src/sources/jats.ts`), so each reads as Kovrune reads it from Europe PMC: its merged table cells spread over their columns and rows, its bold cells kept, its tables from `<floats-group>` placed after the paragraph that cites them (0.101.0), and its references written with their parts apart (0.105.0). The other suites' papers were made with `eval/clinical/source/jats2md.py`, which predates those fixes. It refuses an article whose XML licence is not CC BY 4.0. The article's own text is kept; as the licence asks to be told, figures are kept as their captions only, supplementary material is left out, and tables given only as images in the source (the email experiment's Tables 2–10) have only their captions.
 
 ```bash
 node --experimental-strip-types eval/socsci/source/build.ts
@@ -48,7 +48,7 @@ Kinds of the 34 open questions, tagged in each task's comment in `tasks.ts`: **g
 
 ## Results
 
-Qwen3.5-4B (Q4_K_M) in constrained mode, llama.cpp `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), 4,096-token context, thinking off, on a 4-core cloud CPU (Intel Xeon @ 2.10GHz). Run in three parts on one machine (a background job there may run two hours) and merged into one report, then s34 on its own. One run, so a task that passes or fails once may not do so again.
+Qwen3.5-4B (Q4_K_M) in constrained mode, llama.cpp `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), 4,096-token context, thinking off, on a 4-core cloud CPU (Intel Xeon @ 2.10GHz). Run in three parts on one machine (a background job there may run two hours) and merged into one report, then s34 on its own. The report says harness 0.104.0: it was made on 0.105.0's code before the main branch's own 0.104.0 change (a note on a part given a second time) was merged, and without that change. One run, so a task that passes or fails once may not do so again.
 
 | Suite | Passed | Labelled Quotes found | Of those, wrong |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@ Qwen3.5-4B (Q4_K_M) in constrained mode, llama.cpp `fae9ac5` built portably (`-D
 | `socsci`, two task defects fixed, with s34 (34) | **29/34** | 12 | **0** |
 | `socsciholdout` (12) | **10/12** | 8 | **0** |
 
-What the 0.104.0 checks change on these answers, the failures, and the speaker notes measured with and without: [field README](../field/README.md#social-sciences-a-suite-group-comparisons-and-claim-strength-transcripts-and-every-passage-01040).
+What the 0.105.0 checks change on these answers, the failures, and the speaker notes measured with and without: [field README](../field/README.md#social-sciences-a-suite-group-comparisons-and-claim-strength-transcripts-and-every-passage-01050).
 
 ### Task defects
 

@@ -1,4 +1,4 @@
-// The social-sciences audit's open items (docs/social-sciences-audit.md, harness 0.104.0): S2's checks of which group a
+// The social-sciences audit's open items (docs/social-sciences-audit.md, harness 0.105.0): S2's checks of which group a
 // comparison puts first, how strong a claim is, percent and percentage points, and an interviewer's words; S7's
 // transcripts (caption files, speaker notes, every passage found); S9's references from element citations.
 import assert from "node:assert/strict";

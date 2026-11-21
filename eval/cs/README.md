@@ -353,6 +353,10 @@ The guard above replaced the part asked for and cost a right answer. This one on
 
 **Measured:** the benchmark suites read local libraries, which have no outline here, so no task's requests change. On the user's three questions live (`npm run bench:paging`, Qwen3.5-4B, OpenAlex and arXiv, cache off, same day; [before](../results/paging-note-base-live-qwen3.5-4b-q4km.json), [after](../results/paging-note-live-qwen3.5-4b-q4km.json)) both sides read and answered the same: no run asked for three parts in a row this time (the 20-part paper was asked for whole, given part 7, then 8 and 9), so the note never showed. It changes nothing measured, and the reports' run that it is for could not be made to happen again; what it does when it shows is tested (`tests/paging-note.test.ts`) but not measured.
 
+## A part given a second time (0.104.0)
+
+The third of this family, from a preview user's "How does blood circulate?", which read one part of one Wikipedia article twice: a read that gives a part already given now points at the sections, as the note above does for parts read in order. Its measurement is in [`eval/field/README.md`](../field/README.md#a-part-given-a-second-time-and-broad-how-questions-01040), with the broad "how" questions written for the same two searches.
+
 ## Limits
 
 - **Journal papers, not arXiv preprints.** Europe PMC holds the full text of CS papers published in open-access journals (here MDPI *Sensors*, *Frontiers*, *PLOS One*, *Scientific Reports*), not the conference papers and arXiv preprints most CS researchers read. Their tables and acronyms are of the same kind; their typesetting is not.

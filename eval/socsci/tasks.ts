@@ -1,4 +1,4 @@
-// Questions over social-science papers and interview transcripts (harness 0.104.0): recommendation 6 of the
+// Questions over social-science papers and interview transcripts (harness 0.105.0): recommendation 6 of the
 // social-sciences audit (docs/social-sciences-audit.md, S8), the documents a sociologist, political scientist,
 // economist or qualitative researcher brings, which no other suite holds. None of the other suites has a survey's
 // adjusted odds ratios for one group against another, a panel regression with its standard errors in a row

@@ -144,7 +144,7 @@ export class DocumentIndex {
       const title = withoutPartLabel(doc.title);
       // A part inside a proof is found by what the proof proves, which it may not name ("Theorem 4.1", harness 0.100.0).
       const proof = /proof of (.*), which begins/.exec(this.proofNotes[i]!)?.[1] ?? "";
-      // And a part inside a speaker's turn by the speaker, which only the turn's first part names (harness 0.104.0).
+      // And a part inside a speaker's turn by the speaker, which only the turn's first part names (harness 0.105.0).
       const speaker = /continues what (.*) says, in a turn/.exec(this.proofNotes[i]!)?.[1] ?? "";
       for (const token of tokenize(`${title} ${title} ${proof} ${speaker} ${withoutRepeatedLead(doc.text)}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
       for (const token of freqs.keys()) this.docFreq.set(token, (this.docFreq.get(token) ?? 0) + 1);

@@ -140,7 +140,7 @@ export function proofNote(continued: { proof: string; partId: string } | undefin
 export const PROOF_NOTE_LINE = /\[This part continues the proof of [^\n]*\]\n?/;
 
 /**
- * Speakers' turns in an interview transcript (harness 0.104.0). A transcript gives each turn after its speaker's
+ * Speakers' turns in an interview transcript (harness 0.105.0). A transcript gives each turn after its speaker's
  * label, "P07: …", "IV: …", or "Daniel [00:00:08]: …" as the caption reader writes it (transcripts.ts), and a
  * long answer runs over several parts: on a made-up two-person transcript, 7 of 13 parts started inside a turn,
  * with nothing to say whether the interviewer or the participant was speaking (docs/social-sciences-audit.md,

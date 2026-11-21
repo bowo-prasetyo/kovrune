@@ -768,7 +768,7 @@ describe("facts scored in their case (harness 0.91.0)", () => {
   });
 });
 
-describe("social-science suite (harness 0.104.0)", () => {
+describe("social-science suite (harness 0.105.0)", () => {
   it("reads eight CC BY papers as the app reads them from Europe PMC, and two transcripts, in a library of their own", async () => {
     const suite = await loadFieldSuite();
     assert.equal(socsciDocuments.length, 10);

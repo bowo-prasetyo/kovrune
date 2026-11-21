@@ -1,4 +1,4 @@
-// Backups protected by a password (harness 0.104.0). A backup holds the text of every document, which for a
+// Backups protected by a password (harness 0.105.0). A backup holds the text of every document, which for a
 // researcher may be interview transcripts covered by an ethics protocol or data-protection law; written as plain
 // JSON, anyone who finds the file can read them (docs/social-sciences-audit.md, S9). With a password, the backup's
 // JSON is encrypted in the browser with WebCrypto, AES-GCM with a 256-bit key derived from the password by PBKDF2

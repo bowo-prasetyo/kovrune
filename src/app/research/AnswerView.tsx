@@ -13,6 +13,7 @@ import {
   quotePages,
   sectionLabel,
   shownSupport,
+  sourceErrorNote,
   sourceTitle,
   SYNTHESIS_NOTE,
   type SavedAnswer,
@@ -45,7 +46,7 @@ export function ResultView({ answer, live = false }: { answer: SavedAnswer; live
   if (answer.report) return <ReportView report={answer.report} live={live} />;
   const sourceErrors = answer.sourceErrors.map((message) => (
     <p key={message} className="warning">
-      {message} The answer is based on the other sources only.
+      {sourceErrorNote(message, answer, "The answer")}
     </p>
   ));
   if (answer.status === "no-answer") {

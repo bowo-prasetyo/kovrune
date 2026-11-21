@@ -1,4 +1,4 @@
-// Every passage of the user's documents that has the words asked for (harness 0.104.0), found without a model, for
+// Every passage of the user's documents that has the words asked for (harness 0.105.0), found without a model, for
 // qualitative coding: "what did my participants say about the rota?" across fifteen transcripts. A question to the
 // model reads at most a few passages (three per search, about four parts in a 4,096-token context), so its answer
 // quotes some places and misses others; a researcher coding interviews needs all of them, with who said each

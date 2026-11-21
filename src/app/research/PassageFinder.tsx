@@ -8,7 +8,7 @@ import type { LibraryDocument } from "./library.ts";
 const SHOWN = 100;
 
 /**
- * Find every passage (harness 0.104.0): every paragraph of the user's documents with the words asked for, found without
+ * Find every passage (harness 0.105.0): every paragraph of the user's documents with the words asked for, found without
  * the model, with each one's document, page and, in an interview transcript, speaker, and a CSV of them for coding
  * (documents/concordance.ts). A question to the model reads only a few passages; this lists all of them.
  */

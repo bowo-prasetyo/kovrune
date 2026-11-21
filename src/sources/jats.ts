@@ -260,7 +260,7 @@ function blocks(el: XmlElement, depth: number): string[] {
 }
 
 /**
- * A reference given as an <element-citation> (harness 0.104.0): its parts as fields with no punctuation between them,
+ * A reference given as an <element-citation> (harness 0.105.0): its parts as fields with no punctuation between them,
  * which read run together, "MMWR Morb. Mortal. Wkly Rep.20247379379810.15585/mmwr.mm7336a3" for journal, year,
  * volume, pages and DOI (docs/social-sciences-audit.md, S9). Its parts are written in their order, apart: authors as
  * "Surname G." joined with commas, then each field, pages as "793–798", identifiers named ("DOI: …").

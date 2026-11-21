@@ -1,4 +1,4 @@
-// Interview transcripts exported as captions (harness 0.104.0): WebVTT (.vtt), as Zoom, Microsoft Teams and Otter
+// Interview transcripts exported as captions (harness 0.105.0): WebVTT (.vtt), as Zoom, Microsoft Teams and Otter
 // export a recorded call, and SubRip (.srt). A caption file splits speech into cues of a few seconds each, so a
 // speaker's answer is a dozen cues; read cue by cue, a quote of one sentence would run across cue numbers and
 // timings, and nothing would say who spoke. So consecutive cues of one speaker are joined into a turn, a

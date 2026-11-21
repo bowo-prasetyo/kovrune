@@ -1,4 +1,4 @@
-// What the sentence check reads in a social-science result (harness 0.104.0): which group a comparison puts
+// What the sentence check reads in a social-science result (harness 0.105.0): which group a comparison puts
 // first, how strong a claim is, and whether a change is in percent or percentage points. The social-sciences
 // audit (docs/social-sciences-audit.md, S2) ran the sentence check on 24 wrong sentences, each with a real
 // quote, and 17 were marked backed, among them "men were more likely than women" for "women were more likely
@@ -88,7 +88,7 @@ function turnedRound(said: Comparison, quoted: Comparison): boolean {
  * Wording that says one thing causes another, and wording that says two things only go together: a sentence may not
  * say "caused" from quotes that say only "associated", "correlated" or "linked". Only the explicit words: "led to",
  * "resulted in" and "as a result of" are how answers paraphrase an experiment, and a lab suite's right answer,
- * "reduced IL10 expression led to increased pathogen clearance", from a knockout, lost its label to them (0.104.0).
+ * "reduced IL10 expression led to increased pathogen clearance", from a knockout, lost its label to them (0.105.0).
  */
 const CAUSAL = /\b(?:caus(?:e|es|ed|ing|al|ally))\b/i;
 // Not after a hyphen: "X-linked" is a gene's place, "disease-associated" a name, not a finding that two things go together.
