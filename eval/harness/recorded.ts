@@ -16,6 +16,7 @@ import { engineeringHoldoutTasks, engineeringTasks } from "../engineering/tasks.
 import { physicsHoldoutTasks, physicsTasks } from "../physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "../math/tasks.ts";
 import { chemHoldoutTasks, chemTasks } from "../chem/tasks.ts";
+import { socsciHoldoutTasks, socsciTasks } from "../socsci/tasks.ts";
 import { csHoldoutTasks, csTasks } from "../cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
@@ -46,6 +47,8 @@ export async function loadSuites(): Promise<Record<string, { library: ResearchLi
     mathholdout: { library: field.mathLibrary, tasks: mathHoldoutTasks },
     chem: { library: field.chemLibrary, tasks: chemTasks },
     chemholdout: { library: field.chemLibrary, tasks: chemHoldoutTasks },
+    socsci: { library: field.socsciLibrary, tasks: socsciTasks },
+    socsciholdout: { library: field.socsciLibrary, tasks: socsciHoldoutTasks },
     cs: { library: field.csLibrary, tasks: csTasks },
     csholdout: { library: field.csLibrary, tasks: csHoldoutTasks },
     lab: { library: field.labLibrary, tasks: labTasks },

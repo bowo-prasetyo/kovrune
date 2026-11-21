@@ -688,6 +688,42 @@ footer.build {
   cursor: pointer;
 }
 
+details.passage-finder {
+  margin-top: 16px;
+}
+
+details.passage-finder > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.passage-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.passage-form input {
+  flex: 1 1 16em;
+  min-width: 0;
+}
+
+.passages ol {
+  padding-left: 1.5em;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.passages li {
+  margin-bottom: 10px;
+}
+
+.passages blockquote {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 details.storage {
   margin-top: 24px;
   border-top: 1px solid var(--line);
@@ -697,6 +733,15 @@ details.storage {
 details.storage > summary {
   cursor: pointer;
   font-weight: 600;
+}
+
+.backup-password {
+  display: block;
+  margin: 8px 0;
+}
+
+.backup-password input {
+  margin-left: 4px;
 }
 
 details.storage h3 {
