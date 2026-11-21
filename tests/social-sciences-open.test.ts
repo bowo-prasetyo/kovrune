@@ -54,6 +54,10 @@ describe("S2: social-science sentences read the way the quote does", () => {
     const suggests = "These results suggest that remote work may reduce commuting-related stress among parents.";
     assert.equal(marks(suggests, "The results demonstrate that remote work reduces commuting-related stress among parents."), "⚠");
     assert.equal(marks("The randomised transfer caused a rise in school attendance among girls.", "The transfer caused a rise in school attendance among girls."), "✓", "a quote that states the cause backs it");
+    // Only the explicit words, and not a hyphenated name: "led to" paraphrases an experiment, "X-linked" is a gene's place.
+    assert.equal(marks("Enhanced clearance of the pathogens was associated with elevated transcription of pro-inflammatory genes.", "Reduced IL10 expression led to enhanced clearance of the pathogens with elevated transcription of pro-inflammatory genes."), "✓");
+    assert.equal(marks("Loss of the X-linked gene FMR1 in neurons reduced dendritic branching.", "Loss of FMR1 in neurons caused reduced dendritic branching."), "✓");
+    assert.equal(marks("These results suggest that remote work may reduce stress.", "The results suggest remote work caused less stress."), "✓", "a hedge alone does not deny a cause; certainty is checked apart");
   });
 
   it("tells percentage points from percent", () => {

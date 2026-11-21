@@ -85,12 +85,21 @@ function turnedRound(said: Comparison, quoted: Comparison): boolean {
 }
 
 /**
- * Wording that says one thing causes another, or that a finding is certain: what a sentence may not add to quotes
- * that only say two things go together, or that a result suggests.
+ * Wording that says one thing causes another, and wording that says two things only go together: a sentence may not
+ * say "caused" from quotes that say only "associated", "correlated" or "linked". Only the explicit words: "led to",
+ * "resulted in" and "as a result of" are how answers paraphrase an experiment, and a lab suite's right answer,
+ * "reduced IL10 expression led to increased pathogen clearance", from a knockout, lost its label to them (0.104.0).
  */
-const CAUSAL = /\b(?:caus(?:e|es|ed|ing|al|ally)|leads? to|led to|results? in|resulted in|as a result of|brings? about|produc(?:e|es|ed) (?:a|an)|demonstrat\w*|proves?|proved|proven|establish(?:es|ed)? that|confirm(?:s|ed)? that)\b/i;
-/** Wording that says two things go together, or that a finding is tentative. */
-const TENTATIVE = /\b(?:associat\w*|correlat\w*|linked|relationship|suggest\w*|may|might|could|possibly|potentially|appears? to|tend(?:s|ed)? to|indicat\w*)\b/i;
+const CAUSAL = /\b(?:caus(?:e|es|ed|ing|al|ally))\b/i;
+// Not after a hyphen: "X-linked" is a gene's place, "disease-associated" a name, not a finding that two things go together.
+const ASSOCIATIONAL = /(?<![-\w])(?:associat\w*|correlat\w*|linked)\b/i;
+/**
+ * Wording that says a finding is certain, and wording that says it is tentative: a sentence may not say "demonstrates"
+ * or "proves" from quotes that say only "suggests", "may" or "might". Kept apart from cause and association since a
+ * held-out lab answer saying "caused", from quotes hedged with one of these, lost its label when the two were one rule.
+ */
+const CERTAIN = /\b(?:demonstrat\w*|proves?|proved|proven|establish(?:es|ed)? that|confirm(?:s|ed)? that)\b/i;
+const TENTATIVE = /\b(?:suggest(?:s|ed|ing)?|may|might)\b/i;
 
 /** Numbers a text gives in percentage points ("7 percentage points", "7 pp"), and those it gives in percent ("7%", "7 percent"). */
 function shares100(text: string): { points: Set<string>; percent: Set<string> } {
@@ -121,6 +130,8 @@ export function interviewerQuote(quote: string, line?: string): boolean {
 export interface SocialBacking {
   comparisons: Comparison[];
   causal: boolean;
+  associational: boolean;
+  certain: boolean;
   tentative: boolean;
   shares: { points: Set<string>; percent: Set<string> };
   /** Every verified quote is an interviewer's turn (interviewerQuote). */
@@ -129,14 +140,14 @@ export interface SocialBacking {
 
 /** The social-science backing of verified quotes and their titles; `interviewerOnly` when every quote is an interviewer's. */
 export function socialBacking(backing: string, interviewerOnly = false): SocialBacking {
-  return { comparisons: comparisons(backing), causal: CAUSAL.test(backing), tentative: TENTATIVE.test(backing), shares: shares100(backing), interviewerOnly };
+  return { comparisons: comparisons(backing), causal: CAUSAL.test(backing), associational: ASSOCIATIONAL.test(backing), certain: CERTAIN.test(backing), tentative: TENTATIVE.test(backing), shares: shares100(backing), interviewerOnly };
 }
 
 /**
  * Whether a sentence's social-science claims are backed:
  * - no comparison of the sentence turns a quoted one round;
- * - a sentence saying one thing causes another, or that a result is demonstrated or proved, is backed only when the
- *   quotes say so too, or say nothing tentative: "caused" is not backed by quotes that only say "associated";
+ * - a sentence saying one thing causes another is not backed by quotes that say only that the two are associated, and
+ *   one saying a result is demonstrated or proved is not backed by quotes that say only that it suggests or may;
  * - a number the sentence gives in percent is not one the quotes give only in percentage points, and the reverse;
  * - quotes that are all an interviewer's turns back only a sentence that says what was asked: "the participant felt
  *   excluded" is not backed by "Interviewer: So would you say you felt excluded?".
@@ -145,7 +156,8 @@ export function socialBacked(text: string, backing: SocialBacking): boolean {
   if (backing.interviewerOnly && !ASKED.test(text)) return false;
   const said = comparisons(text);
   if (said.some((s) => backing.comparisons.some((q) => turnedRound(s, q)))) return false;
-  if (CAUSAL.test(text) && !backing.causal && backing.tentative) return false;
+  if (CAUSAL.test(text) && !backing.causal && backing.associational) return false;
+  if (CERTAIN.test(text) && !backing.certain && backing.tentative) return false;
   const own = shares100(text);
   if ([...own.percent].some((n) => backing.shares.points.has(n) && !backing.shares.percent.has(n))) return false;
   if ([...own.points].some((n) => backing.shares.percent.has(n) && !backing.shares.points.has(n))) return false;
