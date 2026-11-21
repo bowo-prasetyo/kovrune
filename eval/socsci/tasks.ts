@@ -366,10 +366,22 @@ export const socsciTasks: ResearchTask[] = [
     citations: [ROSA, DANIEL],
   },
   {
-    // not in the documents: the HUP study measured food security and investment, not school enrolment; its literature review mentions enrolment in other programmes.
+    // Task defect fixed after the first run: written as unanswerable (the study measured food security and investment,
+    // not enrolment), but the paper reports, among the benefits beneficiaries named, that some who could not send their
+    // children to school can now do so; the model found it. Now answerable, from that passage (eval/socsci/README.md).
     id: "s32-cash-no-enrolment",
-    kind: "unanswerable",
+    kind: "lookup",
     question: "What effect did the Household Upliftment Programme's conditional cash transfer in Akwa Ibom have on children's school enrolment?",
+    answerable: true,
+    facts: [["send their children to school", "school accessories", "exercise books"]],
+    citations: [CASH],
+  },
+  {
+    // not in the documents: Daniel never says how long he has lived on his street; Rosa has lived on her estate for eleven
+    // years, and Daniel has been on nights for about five. Added after the first run, with s32's defect fix, and run on its own.
+    id: "s34-daniel-no-years-on-street",
+    kind: "unanswerable",
+    question: "In interview T02, how many years has Daniel lived on his street?",
     answerable: false,
     facts: [],
     citations: [],
