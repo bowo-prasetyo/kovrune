@@ -856,11 +856,16 @@ export function sameWord(a: string, b: string): boolean {
  * Splits an answer into sentences: at line breaks, and after ".", "!" or "?" followed by a
  * capital letter or an opening quote or bracket, so "No. 62" and "2.0" stay whole. The "."
  * of a numbered list item ("1. Open the perspective") does not end a sentence.
+ *
+ * The straight apostrophe closes a quotation as the curly one does: without it, a preview user's
+ * answer quoting with '…' ran three sentences together ("… order of importance.' Another document
+ * notes …"), so the label read "0 of 2 sentences backed by a quote" for four sentences, and a
+ * sentence from the model's memory went unmarked behind the quoted one it was joined to.
  */
 export function splitSentences(answer: string): string[] {
   const sentences: string[] = [];
   // "。", "！", "？" and the Devanagari danda "।" end a sentence with or without a space after them.
-  const boundary = /(?<!(?:^|\n)\s*\p{N}+)[.!?]+["”’)\]]*\s+(?=[\p{Lu}"“‘(\[])|[。！？।]+[」』）"”’)\]]*\s*|\n\s*/gu;
+  const boundary = /(?<!(?:^|\n)\s*\p{N}+)[.!?]+["”’')\]]*\s+(?=[\p{Lu}"“‘'(\[])|[。！？।]+[」』）"”’)\]]*\s*|\n\s*/gu;
   let start = 0;
   for (const match of answer.matchAll(boundary)) {
     const end = match.index + match[0].length;
