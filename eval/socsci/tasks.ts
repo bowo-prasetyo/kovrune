@@ -282,12 +282,13 @@ export const socsciTasks: ResearchTask[] = [
   },
   // Psycho-oncologists and patient deaths in Germany (Sci Rep 2025).
   {
-    // number: an average of two patient deaths per month.
+    // number: an average of two patient deaths per month (the abstract), 2.2 (the results). Task defect fixed after the
+    // first run: the fact had only the abstract's "two", and the model's right "2.2" failed (eval/socsci/README.md).
     id: "s24-onco-deaths",
     kind: "lookup",
     question: "On average, how many patient deaths per month did the psycho-oncologists in the German interview study experience?",
     answerable: true,
-    facts: [["two", "2 patient deaths", "2 deaths", "2 per month", "2 a month"]],
+    facts: [["two", "2.2", "2 patient deaths", "2 deaths", "2 per month", "2 a month"]],
     citations: [ONCO],
   },
   {
