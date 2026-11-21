@@ -19,6 +19,7 @@ import { engineeringHoldoutTasks, engineeringTasks } from "./engineering/tasks.t
 import { physicsHoldoutTasks, physicsTasks } from "./physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "./math/tasks.ts";
 import { chemHoldoutTasks, chemTasks } from "./chem/tasks.ts";
+import { socsciHoldoutTasks, socsciTasks } from "./socsci/tasks.ts";
 import { csHoldoutTasks, csTasks } from "./cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "./lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "./field/office.ts";
@@ -51,6 +52,7 @@ const suites = [
   { name: "cs (and csholdout)", library: field.csLibrary, tasks: [...csTasks, ...csHoldoutTasks] },
   { name: "lab (and labholdout)", library: field.labLibrary, tasks: [...labTasks, ...labHoldoutTasks] },
   { name: "chem (and chemholdout)", library: field.chemLibrary, tasks: [...chemTasks, ...chemHoldoutTasks] },
+  { name: "socsci (and socsciholdout)", library: field.socsciLibrary, tasks: [...socsciTasks, ...socsciHoldoutTasks] },
   ...(distractors
     ? [
         {

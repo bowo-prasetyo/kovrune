@@ -11,6 +11,7 @@ import type { SavedDocuments } from "./useSavedDocuments.ts";
 import { reinsert } from "./undo.ts";
 import { useUndo } from "./UndoNotice.tsx";
 import { DamagedNotice } from "./DamagedNotice.tsx";
+import { PassageFinder } from "./PassageFinder.tsx";
 
 
 export function DocumentLibrary({ library }: { library: SavedDocuments }) {
@@ -270,6 +271,7 @@ export function DocumentLibrary({ library }: { library: SavedDocuments }) {
           ))}
         </ul>
       )}
+      {documents.length > 0 && <PassageFinder documents={documents} />}
       {removal.notice}
     </section>
   );

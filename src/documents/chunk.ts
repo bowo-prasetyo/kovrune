@@ -139,6 +139,73 @@ export function proofNote(continued: { proof: string; partId: string } | undefin
 
 export const PROOF_NOTE_LINE = /\[This part continues the proof of [^\n]*\]\n?/;
 
+/**
+ * Speakers' turns in an interview transcript (harness 0.104.0). A transcript gives each turn after its speaker's
+ * label, "P07: …", "IV: …", or "Daniel [00:00:08]: …" as the caption reader writes it (transcripts.ts), and a
+ * long answer runs over several parts: on a made-up two-person transcript, 7 of 13 parts started inside a turn,
+ * with nothing to say whether the interviewer or the participant was speaking (docs/social-sciences-audit.md,
+ * S7). A part that starts inside a turn says whose, as a part inside a proof does.
+ *
+ * A label is a name of up to four words, the first capitalised, or a code such as "P07", at the start of a line,
+ * before a colon, with an optional start time in brackets. Lines like "Note: …" or "Methods: …" start that way
+ * too, so a document counts as a transcript only when at least two labels each start MIN_TURNS lines.
+ */
+export const SPEAKER_LABEL = /^((?:\p{Lu}|\p{Lt})[\p{L}\p{N}'’.\-]*(?: [\p{L}\p{N}'’.\-]+){0,3})(?: \[\d{1,2}:\d{2}(?::\d{2})?\])?:\s/u;
+/** Lines a label must start, for two labels, for a document to count as a transcript. */
+const MIN_TURNS = 3;
+
+/**
+ * For each part of a document, in order, the turn it starts inside, if the document is a transcript: the speaker
+ * and the part where the turn begins. A part whose first line starts with a label starts a turn of its own.
+ */
+export function speakersContinued(parts: SourceDocument[]): Array<{ speaker: string; partId: string } | undefined> {
+  const speakers = transcriptSpeakers(parts.map((part) => part.text).join("\n"));
+  if (!speakers.size) return parts.map(() => undefined);
+  const speaking = (label: string | undefined) => label !== undefined && speakers.has(label);
+  let turn: { speaker: string; partId: string } | undefined;
+  return parts.map((part) => {
+    const lines = part.text.split("\n").map((line) => line.trim()).filter(Boolean);
+    const first = SPEAKER_LABEL.exec(lines[0] ?? "")?.[1];
+    const atStart = turn && !speaking(first) ? turn : undefined;
+    for (const line of lines) {
+      const label = SPEAKER_LABEL.exec(line)?.[1];
+      if (speaking(label)) turn = { speaker: label!, partId: part.id };
+    }
+    return atStart;
+  });
+}
+
+/**
+ * The speakers of a transcript: the labels (SPEAKER_LABEL) that start MIN_TURNS lines or more, when at least two do;
+ * none for a document that is not a transcript.
+ */
+export function transcriptSpeakers(text: string): Set<string> {
+  const counts = new Map<string, number>();
+  for (const line of text.split("\n")) {
+    const label = SPEAKER_LABEL.exec(line.trim())?.[1];
+    if (label) counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  const speakers = [...counts].filter(([, n]) => n >= MIN_TURNS).map(([label]) => label);
+  return new Set(speakers.length >= 2 ? speakers : []);
+}
+
+/** The note on a part that starts inside a speaker's turn: "[This part continues what P07 says, in a turn that begins in interview-t01#2.]". */
+export function speakerNote(continued: { speaker: string; partId: string } | undefined): string {
+  return continued ? `[This part continues what ${continued.speaker} says, in a turn that begins in ${continued.partId}.]\n` : "";
+}
+
+export const SPEAKER_NOTE_LINE = /\[This part continues what [^\n]*\]\n?/;
+
+/**
+ * The notes on each part of a document: whose proof it continues (proofsContinued) and whose turn (speakersContinued).
+ * Where a part is read, searched or listed, these say what a part that starts mid-way is inside of.
+ */
+export function partNotes(parts: SourceDocument[]): string[] {
+  const proofs = proofsContinued(parts);
+  const speakers = speakersContinued(parts);
+  return parts.map((_, i) => proofNote(proofs[i]) + speakerNote(speakers[i]));
+}
+
 /** A heading-like line is at most this long: a title, a subject name or a label, not a sentence. */
 const MAX_HEADING_CHARS = 80;
 /** A heading-like paragraph has at most this many lines, as in a page header ("Student Name: …", "Grade: 6", "Third Term"). */

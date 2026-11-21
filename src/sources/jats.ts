@@ -259,6 +259,42 @@ function blocks(el: XmlElement, depth: number): string[] {
   return out;
 }
 
+/**
+ * A reference given as an <element-citation> (harness 0.104.0): its parts as fields with no punctuation between them,
+ * which read run together, "MMWR Morb. Mortal. Wkly Rep.20247379379810.15585/mmwr.mm7336a3" for journal, year,
+ * volume, pages and DOI (docs/social-sciences-audit.md, S9). Its parts are written in their order, apart: authors as
+ * "Surname G." joined with commas, then each field, pages as "793–798", identifiers named ("DOI: …").
+ * A <mixed-citation> carries its own punctuation and is read as it is.
+ */
+function elementCitation(cite: XmlElement | undefined): string {
+  if (!cite) return "";
+  const parts: string[] = [];
+  let firstPage: string | undefined;
+  for (const field of elements(cite)) {
+    if (field.tag === "person-group" || field.tag === "name" || field.tag === "collab") {
+      const people = (field.tag === "person-group" ? elements(field) : [field]).flatMap((p) => {
+        if (p.tag === "name") return [clean(`${text(child(p, "surname"))} ${text(child(p, "given-names"))}`)];
+        if (p.tag === "collab" || p.tag === "string-name") return [clean(text(p))];
+        return p.tag === "etal" ? ["et al."] : [];
+      });
+      if (people.length) parts.push(people.join(", ").replace(/, et al\.$/, " et al."));
+    } else if (field.tag === "fpage") firstPage = clean(text(field));
+    else if (field.tag === "lpage") {
+      parts.push(firstPage ? `${firstPage}–${clean(text(field))}` : clean(text(field)));
+      firstPage = undefined;
+    } else if (field.tag === "pub-id") {
+      const kind = field.attrs["pub-id-type"];
+      if (kind === "doi" || kind === "pmid") parts.push(`${kind === "doi" ? "DOI" : "PMID"}: ${clean(text(field))}`);
+    } else {
+      if (firstPage) parts.push(firstPage), (firstPage = undefined);
+      const value = clean(text(field));
+      if (value) parts.push(field.tag === "issue" ? `(${value})` : value);
+    }
+  }
+  if (firstPage) parts.push(firstPage);
+  return parts.map((part) => part.replace(/\.$/, "")).join(". ").replace(/\. \(/g, " (") + ".";
+}
+
 /** What a reference needs, from the article's own metadata. */
 export interface JatsInfo {
   title: string;
@@ -329,7 +365,9 @@ export function jatsToMarkdown(root: XmlElement, otherId?: string): string {
         if (ref.tag !== "ref") continue;
         n++;
         const label = clean(text(child(ref, "label"))) || String(n);
-        lines.push(`${label}. ${clean(text(child(ref, "mixed-citation") ?? child(ref, "element-citation")))}`);
+        const mixed = child(ref, "mixed-citation");
+        // A label printed with its own point ("7.") gets no second one.
+        lines.push(`${label.replace(/\.$/, "")}. ${mixed ? clean(text(mixed)) : elementCitation(child(ref, "element-citation"))}`);
       }
       lines.push("");
     } else if (["ack", "sec", "notes", "fn-group"].includes(part.tag)) lines.push(...blocks(part, 1));

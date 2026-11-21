@@ -18,6 +18,7 @@ import { engineeringDocuments, engineeringHoldoutTasks, engineeringTasks } from 
 import { physicsDocuments, physicsHoldoutTasks, physicsTasks } from "../eval/physics/tasks.ts";
 import { mathDocuments, mathHoldoutTasks, mathTasks } from "../eval/math/tasks.ts";
 import { chemDocuments, chemHoldoutTasks, chemTasks, NO_EFFECT as CHEM_NO_EFFECT } from "../eval/chem/tasks.ts";
+import { socsciDocuments, socsciHoldoutTasks, socsciTasks } from "../eval/socsci/tasks.ts";
 import { scoreResearch } from "../eval/harness/scoring.ts";
 import { ResearchLibrary, type ResearchResult } from "../src/agent/research.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
@@ -211,7 +212,7 @@ describe("office suite", () => {
 
   it("asks only for facts its cited documents contain, with questions and IDs of its own", async () => {
     const suite = await loadFieldSuite();
-    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks, ...chemTasks, ...chemHoldoutTasks];
+    const all = [...fieldTasks, ...holdoutTasks, ...multiTasks, ...multiHoldoutTasks, ...officeTasks, ...officeHoldoutTasks, ...clinicalTasks, ...clinicalHoldoutTasks, ...csTasks, ...csHoldoutTasks, ...labTasks, ...labHoldoutTasks, ...engineeringTasks, ...engineeringHoldoutTasks, ...physicsTasks, ...physicsHoldoutTasks, ...mathTasks, ...mathHoldoutTasks, ...chemTasks, ...chemHoldoutTasks, ...socsciTasks, ...socsciHoldoutTasks];
     assert.equal(new Set(all.map((t) => t.id)).size, all.length, "task IDs are unique across the suites");
     assert.equal(new Set(all.map((t) => t.question)).size, all.length, "no question is asked twice");
     for (const task of [...officeTasks, ...officeHoldoutTasks].filter((t) => t.answerable)) {
@@ -764,5 +765,55 @@ describe("facts scored in their case (harness 0.91.0)", () => {
     assert.equal(scoreResearch(task, result("The gap of sample S1 is 0.75 millielectronvolts."), library).passed, true);
     const wrong = scoreResearch(task, result("The gap of sample S1 is 0.75 MeV."), library);
     assert.deepEqual([wrong.passed, wrong.checks.facts, wrong.checks.casedFacts], [false, true, false]);
+  });
+});
+
+describe("social-science suite (harness 0.104.0)", () => {
+  it("reads eight CC BY papers as the app reads them from Europe PMC, and two transcripts, in a library of their own", async () => {
+    const suite = await loadFieldSuite();
+    assert.equal(socsciDocuments.length, 10);
+    for (const doc of socsciDocuments.filter((d) => !d.id.startsWith("interview-"))) {
+      const text = suite.socsciLibrary.documentFor(doc.id)?.text ?? "";
+      assert.ok(text.length > 20_000, `${doc.id}: ${text.length} characters`);
+      // PLoS One prints "Creative Commons Attribution License" without its version; source/build.ts checks the XML's licence is CC BY 4.0.
+      assert.match(text, /creativecommons\.org\/licenses\/by\/|Creative Commons Attribution/i, `${doc.id}: keeps its licence statement`);
+    }
+    assert.equal(suite.socsciLibrary.documents.filter((d) => !d.id.includes("#")).length, socsciDocuments.length, "only the suite's documents");
+    assert.equal(suite.library.documentFor("interview-t01-rosa"), undefined, "the field suite's library is unchanged");
+    const text = (id: string) => suite.socsciLibrary.documentFor(id)!.text;
+    // What these documents are read for survives: an MDPI paper's tables from <floats-group>, a regression's
+    // standard errors under their estimates, and a caption file's turns with their speakers.
+    assert.match(text("pharmacist-trust-vaccination-survey"), /\| Employment status \| Retired vs\. employed \| \*\*1\.634 \(1\.140, 2\.343\)\*\* \| \*\*0\.008\*\* \| 1\.365 \(0\.782, 2\.384\) \| 0\.274 \|/);
+    assert.match(text("income-inequality-life-expectancy-canada"), /\| Top 10% income share \| \(0\.0024\) \| \(0\.0046\) \| \(0\.0034\) \|/);
+    assert.match(text("interview-t02-daniel"), /^Daniel \[00:01:26\]: That's different\. With the neighbours/m);
+    assert.doesNotMatch(text("interview-t02-daniel"), /-->/, "no cue timings");
+  });
+
+  it("has transcripts whose long answers run over parts, each saying whose turn it continues", async () => {
+    const suite = await loadFieldSuite();
+    const { chunkDocument, partNotes } = await import("../src/documents/chunk.ts");
+    for (const [id, speaker] of [["interview-t01-rosa", "P07"], ["interview-t02-daniel", "Daniel"]] as const) {
+      const notes = partNotes(chunkDocument(suite.socsciLibrary.documentFor(id)!));
+      assert.ok(notes.some((note) => note.includes(`continues what ${speaker} says`)), id);
+    }
+  });
+
+  it("asks only for facts its cited documents contain, about every document, with some held out", async () => {
+    const suite = await loadFieldSuite();
+    for (const task of [...socsciTasks, ...socsciHoldoutTasks]) {
+      if (!task.answerable) {
+        assert.deepEqual([task.facts, task.citations], [[], []], task.id);
+        continue;
+      }
+      const text = normalize(task.citations.flat().map((id) => suite.socsciLibrary.documentFor(id)!.text).join(" "));
+      for (const group of task.facts) assert.ok(group.some((option) => text.includes(normalize(option))), `${task.id}: none of ${JSON.stringify(group)} is in its documents`);
+    }
+    const ids = [...socsciTasks, ...socsciHoldoutTasks].map((t) => t.id);
+    assert.equal(new Set(ids).size, ids.length, "task IDs are unique");
+    const cited = new Set(socsciTasks.flatMap((t) => t.citations.flat()));
+    assert.deepEqual([...cited].sort(), socsciDocuments.map((d) => d.id).sort(), "every document is asked about in the open set");
+    for (const tasks of [socsciTasks, socsciHoldoutTasks]) assert.ok(tasks.some((t) => !t.answerable), "a question the documents do not answer");
+    assert.ok(socsciTasks.some((t) => t.kind === "comparison"), "a question over two documents");
+    assert.ok(socsciHoldoutTasks.length >= socsciTasks.length / 4, "a held-out set at least a quarter the size of the open one");
   });
 });

@@ -11,6 +11,7 @@ import {
 import type { Settings } from "../settings.ts";
 import type { SavedAnswer } from "./answers.ts";
 import { backupFileName, describeMerge, makeBackup, mergeBackup, parseBackup } from "./backup.ts";
+import { decryptBackup, encryptBackup, isEncryptedBackup } from "./backup-crypto.ts";
 import { download } from "./download.ts";
 import { formatBytes } from "./library.ts";
 import { savedTextBytes } from "./store.ts";
@@ -35,6 +36,9 @@ export function StorageSection({
   const [models, setModels] = useState<DownloadedModel[]>();
   const [message, setMessage] = useState<{ text: string; error?: boolean }>();
   const [asked, setAsked] = useState(false);
+  // A backup's password (backup-crypto.ts): encrypts a backup when set, and opens an encrypted one.
+  const [password, setPassword] = useState("");
+  const [working, setWorking] = useState(false);
   const inUse = settings.path === "browser" ? settings.modelId : undefined;
   // Restoring adds to the saved records, so it waits until they have loaded.
   const ready = !!library.store && !!history.store;
@@ -44,9 +48,29 @@ export function StorageSection({
     void downloadedBrowserModels().then(setModels, () => setModels([]));
   }, []);
 
+  async function saveBackup() {
+    const json = JSON.stringify(makeBackup(library.documents, history.records));
+    if (!password) return download(backupFileName(), json, "application/json");
+    setWorking(true);
+    try {
+      download(backupFileName().replace(/\.json$/, "-encrypted.json"), await encryptBackup(json, password), "application/json");
+      setMessage({ text: "Saved an encrypted backup. Keep the password: without it, the backup can't be opened by anyone, Kovrune included." });
+    } catch (error) {
+      setMessage({ text: error instanceof Error ? error.message : String(error), error: true });
+    } finally {
+      setWorking(false);
+    }
+  }
+
   async function restore(file: File) {
     try {
-      const backup = parseBackup(await file.text());
+      let text = await file.text();
+      if (isEncryptedBackup(text)) {
+        if (!password) throw new Error("This backup is encrypted. Enter its password under Backup password, then restore it again.");
+        setWorking(true);
+        text = await decryptBackup(text, password).finally(() => setWorking(false));
+      }
+      const backup = parseBackup(text);
       const result = mergeBackup({ documents: library.documents, answers: history.records }, backup);
       if (result.documents.length) library.setDocuments((docs) => [...docs, ...result.documents]);
       if (result.answers.length) history.setRecords((answers) => [...answers, ...result.answers]);
@@ -131,14 +155,19 @@ export function StorageSection({
       <h3>Backup</h3>
       <p className="hint">
         A backup file holds the text of your documents and your saved answers, so you can restore them in another browser,
-        or here if the browser clears its data. Models and the setup are not included. The file stays on your computer.
+        or here if the browser clears its data. Models and the setup are not included. The file stays on your computer. It is plain text unless you give a
+        password: then it is encrypted, and only that password opens it. Use one for documents covered by an ethics protocol or data-protection rules.
       </p>
+      <label className="backup-password">
+        Backup password (optional){" "}
+        <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </label>
       <div className="actions">
         <button
-          disabled={!ready || (library.documents.length === 0 && history.records.length === 0)}
-          onClick={() => download(backupFileName(), JSON.stringify(makeBackup(library.documents, history.records)), "application/json")}
+          disabled={!ready || working || (library.documents.length === 0 && history.records.length === 0)}
+          onClick={() => void saveBackup()}
         >
-          Download a backup
+          {password ? "Download an encrypted backup" : "Download a backup"}
         </button>
         <label className={ready ? "file-button" : "file-button disabled"}>
           Restore from a backup

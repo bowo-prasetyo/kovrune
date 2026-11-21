@@ -6,6 +6,7 @@
 import { words } from "../documents/scripts.ts";
 import { chemistryBacked, chemistryBacking } from "./chemistry.ts";
 import { formulaOffQuestion, mathBacked, mathBacking, proofOffQuestion } from "./mathematics.ts";
+import { DOWN, interviewerQuote, restatesComparison, socialBacked, socialBacking, UP } from "./socialscience.ts";
 import { readableMath } from "../documents/math.ts";
 import { stem } from "../tools/search.ts";
 import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerStatus, type CheckedEvidence } from "./evidence.ts";
@@ -574,9 +575,10 @@ export function significance(text: string): { asserted: boolean; negated: boolea
  */
 const OPPOSITES: Array<[string[], string[]]> = [
   [["higher", "highest"], ["lower", "lowest"]],
+  // Since harness 0.104.0 with the verbs social-science papers use for a change: "rose", "grew", "declined", "fell".
   [
-    ["increase", "increased", "increases", "increasing"],
-    ["decrease", "decreased", "decreases", "decreasing", "reduce", "reduced", "reduces", "reducing", "reduction", "reductions"],
+    ["increase", "increased", "increases", "increasing", "rise", "rises", "rose", "risen", "rising", "grew", "grow", "grows", "growing"],
+    ["decrease", "decreased", "decreases", "decreasing", "reduce", "reduced", "reduces", "reducing", "reduction", "reductions", "decline", "declined", "declines", "declining", "fell", "fall", "falls", "fallen", "falling", "dropped"],
   ],
   [["improve", "improved", "improves", "improving", "improvement", "improvements"], ["worsen", "worsened", "worsens", "worsening", "worse", "deteriorated", "deterioration"]],
   [["greater", "greatest", "larger", "largest"], ["smaller", "smallest"]],
@@ -622,6 +624,22 @@ const OPPOSITES: Array<[string[], string[]]> = [
   [["hypermethylated", "hypermethylation"], ["hypomethylated", "hypomethylation"]],
   [["phosphorylated", "phosphorylation", "phosphorylates"], ["dephosphorylated", "dephosphorylation", "dephosphorylates"]],
   [["gain-of-function"], ["loss-of-function"]],
+  // Social-science opposites (harness 0.104.0, docs/social-sciences-audit.md, S2): which group, which way a share or a
+  // gap went, which side people took. "more" and "less" compare groups ("50% less likely", "spend 26% less"), as
+  // "higher" and "lower" compare values; a sentence saying both ("more educated, less likely") is not judged.
+  [["more"], ["less", "fewer"]],
+  [["widen", "widened", "widening", "widens", "widest"], ["narrow", "narrowed", "narrowing", "narrows", "narrowest"]],
+  [["majority"], ["minority"]],
+  [["supported", "supporting", "supporters", "favour", "favoured", "favor", "favored"], ["opposed", "opposing", "opponents", "opposition", "oppose", "opposes"]],
+  [["trust", "trusted", "trusting"], ["distrust", "mistrust", "distrusted", "mistrusted"]],
+  [["agree", "agreed", "agrees", "agreement"], ["disagree", "disagreed", "disagrees", "disagreement"]],
+  [["aligned"], ["unaligned", "misaligned", "nonaligned"]],
+  [["employed"], ["unemployed"]],
+  [["approve", "approved", "approval"], ["disapprove", "disapproved", "disapproval"]],
+  [["rural"], ["urban"]],
+  [["richest", "wealthiest"], ["poorest"]],
+  [["liberal", "liberals"], ["conservative", "conservatives"]],
+  [["leftwing"], ["rightwing"]],
   // Physics opposites (harness 0.90.0): a limit, an exclusion, an interaction or an ordering read the wrong
   // way round. "lower" is also higher's opposite; a word may stand in two pairs. Hyphenated words are written
   // joined ("firstorder"), as normalizeForMatch leaves them.
@@ -789,10 +807,12 @@ function directions(text: string): Set<string> {
  * activation of AMPK" says which is which in its word order, which a word check cannot read, as a quote
  * stating both sides backs either.
  */
-function directionsBacked(text: string, quoted: Set<string>): boolean {
+function directionsBacked(text: string, quoted: Set<string>, skipComparatives = false): boolean {
   const said = directions(text);
   return [...said].every((key) => {
     const [pair, side] = key.split(":");
+    // A comparison restated from its other side says "more" for the quote's "less" (socialscience.ts restatesComparison).
+    if (skipComparatives && OPPOSITES[Number(pair)]!.flat().some((w) => UP.has(w) || DOWN.has(w))) return true;
     const other = `${pair}:${side === "0" ? 1 : 0}`;
     return said.has(other) || quoted.has(key) || !quoted.has(other);
   });
@@ -1012,6 +1032,15 @@ export function sentenceSupport(
     return lead ? [lead] : [];
   });
   const math = mathBacking(backing, leads);
+  // Whose turn each quote is, in a transcript: the line it stands in, when its context shows where that line starts.
+  const interviewerOnly =
+    verified.length > 0 &&
+    verified.every((e) => {
+      const before = e.context?.before;
+      const line = before !== undefined && (before.includes("\n") || !e.context!.more.before) ? before.split("\n").at(-1) : undefined;
+      return interviewerQuote(e.quote, line);
+    });
+  const social = socialBacking(backing, interviewerOnly);
   const ids = evidence.map((e) => e.docId.replace(/#\d+$/, ""));
   const scopeWords = scope ? contentWords(scope) : [];
   let judged = 0;
@@ -1044,13 +1073,14 @@ export function sentenceSupport(
       negationBacked &&
       datedMonths(text).every((month) => months.has(month)) &&
       unitsBacked(text, quotedMeasures) &&
-      directionsBacked(text, quotedDirections) &&
+      directionsBacked(text, quotedDirections, restatesComparison(text, social.comparisons)) &&
       significanceBacked(text, quotedSignificance) &&
       countsBacked(text, verified.map((e) => e.quote)) &&
       changesBacked(text, quotedChanges) &&
       namesBacked(text, namesBacking) &&
       chemistryBacked(text, chemistry) &&
-      mathBacked(text, math);
+      mathBacked(text, math) &&
+      socialBacked(text, social);
     judged++;
     if (isBacked) backed++;
     return { text: written, backed: isBacked };
