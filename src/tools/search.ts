@@ -2,7 +2,7 @@
 // uses it so results depend on the model and not on a retrieval model; the
 // app uses the same search over the user's documents.
 
-import { parentId, proofNote, proofsContinued, withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
+import { parentId, partNotes, withoutPartLabel, withoutRepeatedLead } from "../documents/chunk.ts";
 import { words } from "../documents/scripts.ts";
 import { definitions } from "./abbreviations.ts";
 import { chemicalNameTerms } from "./chemical-names.ts";
@@ -130,7 +130,7 @@ export class DocumentIndex {
   private readonly lengths: number[];
   private readonly docFreq = new Map<string, number>();
   private readonly avgLength: number;
-  /** For each document, the note of the proof it continues ("[This part continues the proof of Theorem 4.1, …]"), or "". */
+  /** For each document, the notes of the proof and the speaker's turn it continues ("[This part continues the proof of Theorem 4.1, …]"), or "". */
   private readonly proofNotes: string[];
   /** The library's abbreviations (abbreviations.ts): a short form's search term, and the search terms of each long form it stands for. */
   private readonly abbreviations = new Map<string, string[][]>();
@@ -144,7 +144,9 @@ export class DocumentIndex {
       const title = withoutPartLabel(doc.title);
       // A part inside a proof is found by what the proof proves, which it may not name ("Theorem 4.1", harness 0.100.0).
       const proof = /proof of (.*), which begins/.exec(this.proofNotes[i]!)?.[1] ?? "";
-      for (const token of tokenize(`${title} ${title} ${proof} ${withoutRepeatedLead(doc.text)}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
+      // And a part inside a speaker's turn by the speaker, which only the turn's first part names (harness 0.105.0).
+      const speaker = /continues what (.*) says, in a turn/.exec(this.proofNotes[i]!)?.[1] ?? "";
+      for (const token of tokenize(`${title} ${title} ${proof} ${speaker} ${withoutRepeatedLead(doc.text)}`)) freqs.set(token, (freqs.get(token) ?? 0) + 1);
       for (const token of freqs.keys()) this.docFreq.set(token, (this.docFreq.get(token) ?? 0) + 1);
       return freqs;
     });
@@ -326,7 +328,7 @@ export class DocumentIndex {
   }
 }
 
-/** The proof note (chunk.ts) of each document, worked out over the parts of each chunked document in order. */
+/** The part notes (chunk.ts partNotes) of each document, worked out over the parts of each chunked document in order. */
 function proofNotesOf(docs: SourceDocument[]): string[] {
   const notes = docs.map(() => "");
   const byParent = new Map<string, number[]>();
@@ -336,7 +338,7 @@ function proofNotesOf(docs: SourceDocument[]): string[] {
     byParent.set(parent, [...(byParent.get(parent) ?? []), i]);
   });
   for (const indices of byParent.values()) {
-    proofsContinued(indices.map((i) => docs[i]!)).forEach((continued, k) => (notes[indices[k]!] = proofNote(continued)));
+    partNotes(indices.map((i) => docs[i]!)).forEach((note, k) => (notes[indices[k]!] = note));
   }
   return notes;
 }

@@ -13,6 +13,7 @@ import { engineeringHoldoutTasks, engineeringTasks } from "../engineering/tasks.
 import { physicsHoldoutTasks, physicsTasks } from "../physics/tasks.ts";
 import { mathHoldoutTasks, mathTasks } from "../math/tasks.ts";
 import { chemHoldoutTasks, chemTasks } from "../chem/tasks.ts";
+import { socsciHoldoutTasks, socsciTasks } from "../socsci/tasks.ts";
 import { csHoldoutTasks, csTasks } from "../cs/tasks.ts";
 import { labHoldoutTasks, labTasks } from "../lab/tasks.ts";
 import { officeHoldoutTasks, officeTasks } from "../field/office.ts";
@@ -397,7 +398,7 @@ export async function runBenchmark(options: {
   /** The base corpus plus the PDF documents; required for the pdf suite (see eval/tasks/pdf.ts). */
   pdfLibrary?: ResearchLibrary;
   /** Required for the field and holdout suites, which share its documents (see eval/harness/field.ts). */
-  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; physicsLibrary?: ResearchLibrary; mathLibrary?: ResearchLibrary; chemLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
+  field?: { library: ResearchLibrary; officeLibrary?: ResearchLibrary; clinicalLibrary?: ResearchLibrary; csLibrary?: ResearchLibrary; labLibrary?: ResearchLibrary; engineeringLibrary?: ResearchLibrary; physicsLibrary?: ResearchLibrary; mathLibrary?: ResearchLibrary; chemLibrary?: ResearchLibrary; socsciLibrary?: ResearchLibrary; tasks: ResearchTask[]; local: { tasks: number; documents: number } };
   /** Aborting ends the run early and still returns a (partial) report. */
   signal?: AbortSignal;
 }): Promise<Report> {
@@ -408,7 +409,7 @@ export async function runBenchmark(options: {
   const pdf = pick("pdf", pdfTasks);
   if (pdf.length && !options.pdfLibrary) throw new Error("The pdf suite needs pdfLibrary.");
   if (FIELD_SUITES.some((suite) => config.suites.includes(suite)) && !options.field) {
-    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, cs, csholdout, lab, labholdout, engineering, engineeringholdout, physics, physicsholdout, math, mathholdout, chem and chemholdout suites need field (loadFieldSuite).");
+    throw new Error("The field, holdout, multi, multiholdout, office, officeholdout, clinical, clinicalholdout, cs, csholdout, lab, labholdout, engineering, engineeringholdout, physics, physicsholdout, math, mathholdout, chem, chemholdout, socsci and socsciholdout suites need field (loadFieldSuite).");
   }
   const field = config.suites.includes("field") && options.field ? options.field.tasks.filter((t) => wanted(t.id)) : [];
   const researchSuites = [
@@ -435,6 +436,8 @@ export async function runBenchmark(options: {
     { suite: "mathholdout" as const, tasks: pick("mathholdout", mathHoldoutTasks), library: options.field?.mathLibrary ?? baseLibrary },
     { suite: "chem" as const, tasks: pick("chem", chemTasks), library: options.field?.chemLibrary ?? baseLibrary },
     { suite: "chemholdout" as const, tasks: pick("chemholdout", chemHoldoutTasks), library: options.field?.chemLibrary ?? baseLibrary },
+    { suite: "socsci" as const, tasks: pick("socsci", socsciTasks), library: options.field?.socsciLibrary ?? baseLibrary },
+    { suite: "socsciholdout" as const, tasks: pick("socsciholdout", socsciHoldoutTasks), library: options.field?.socsciLibrary ?? baseLibrary },
   ];
   const coding = config.suites.includes("coding") ? codingTasks.filter((t) => wanted(t.id)) : [];
   const total = (researchSuites.reduce((n, s) => n + s.tasks.length, 0) + coding.length) * config.modes.length;

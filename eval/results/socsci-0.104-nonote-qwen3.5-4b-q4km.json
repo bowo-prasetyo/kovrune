@@ -1,0 +1,324 @@
+{
+  "harnessVersion": "0.104.0",
+  "createdAt": "2026-11-21T09:44:16.522Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "build": "llama.cpp-fae9ac5-portable",
+    "extraBody": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "cache_prompt": false
+    },
+    "notes": "Social-science suite: the two turn questions with speaker notes off (harness 0.104.0)"
+  },
+  "config": {
+    "suites": [
+      "socsci"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "s28-rosa-noticeboard-turn",
+      "s30-daniel-work-social-turn"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 28.5,
+    "decodeTokensPerSecond": 7.4,
+    "maxResearchTaskMinutes": 11,
+    "minutesPerSource": 2.6
+  },
+  "summary": [
+    {
+      "suite": "socsci",
+      "mode": "constrained",
+      "tasks": 2,
+      "passed": 2,
+      "successRate": 1,
+      "successInterval": [
+        0.342,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 6.8,
+      "prefillTokensPerSecond": 36.3,
+      "medianTaskSeconds": 121.2,
+      "maxPromptTokens": 1058,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 4129,
+      "promptSeconds": 113.4,
+      "falseReassurance": {
+        "labelled": 2,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "socsci",
+      "taskId": "s28-rosa-noticeboard-turn",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1663,
+      "completionTokens": 199,
+      "estimatedTokens": false,
+      "maxPromptTokens": 937,
+      "cachedTokens": 0,
+      "promptMs": 44805,
+      "modelMs": 73916,
+      "ttftMs": 44837,
+      "wallMs": 100525,
+      "actions": [
+        "search {\"query\":\"Rosa interview T01 online noticeboard residents' association\"}",
+        "read {\"docId\":\"interview-t01-rosa#4\"}",
+        "final_answer {\"found\":true,\"answer\":\"The committee agreed to try the online noticeboard from January that year, and Rosa used it twice. It allowed her view on t"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The committee agreed to try the online noticeboard from January that year, and Rosa used it twice. It allowed her view on the parking scheme to be read out at the February meeting even though she was on nights.\",\"evidence\":[{\"docId\":\"interview-t01-rosa#4\",\"quote\":\"I suggested an online noticeboard for the residents' association, so people on shifts could add comments before a meeting, and the committee agreed to try it from January this year. I have used it twice already. It is not the same as being in the room, but it means my view on the parking scheme was read out at the February meeting even though I was on nights.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "interview-t01-rosa#4",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "It was agreed to try it from January this year.",
+          "agrees": true,
+          "reply": "{\"answer\":\"It was agreed to try it from January this year.\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "4215068f",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Rosa interview T01 online noticeboard residents' association\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 254,
+            "completionTokens": 23,
+            "cachedTokens": 0,
+            "promptMs": 6876.592
+          }
+        },
+        {
+          "input": "4d31ef5d",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"interview-t01-rosa#4\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 472,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 12957.987
+          }
+        },
+        {
+          "input": "bfd2e780",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The committee agreed to try the online noticeboard from January that year, and Rosa used it twice. It allowed her view on the parking scheme to be read out at the February meeting even though she was on nights.\",\"evidence\":[{\"docId\":\"interview-t01-rosa#4\",\"quote\":\"I suggested an online noticeboard for the residents' association, so people on shifts could add comments before a meeting, and the committee agreed to try it from January this year. I have used it twice already. It is not the same as being in the room, but it means my view on the parking scheme was read out at the February meeting even though I was on nights.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 937,
+            "completionTokens": 155,
+            "cachedTokens": 0,
+            "promptMs": 24970.136
+          }
+        },
+        {
+          "input": "82c4207a",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 458,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 12260.374
+          }
+        },
+        {
+          "input": "0de39870",
+          "output": "{\"answer\":\"It was agreed to try it from January this year.\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 357,
+            "completionTokens": 16,
+            "cachedTokens": 0,
+            "promptMs": 10118.915
+          }
+        }
+      ]
+    },
+    {
+      "suite": "socsci",
+      "taskId": "s30-daniel-work-social-turn",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2466,
+      "completionTokens": 321,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1058,
+      "cachedTokens": 0,
+      "promptMs": 68602,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 116193,
+      "ttftMs": 69021,
+      "wallMs": 141784,
+      "actions": [
+        "search {\"query\":\"Daniel interview T02 social life work\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"Daniel says that at work he is in a team where everyone is on nights, so he has a whole social life there, inclu",
+        "read {\"docId\":\"interview-t02-daniel#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"Daniel says that at work he is in a team where everyone is on nights, so he has a whole social life there, including a dart"
+      ],
+      "final": "{\"found\":true,\"answer\":\"Daniel says that at work he is in a team where everyone is on nights, so he has a whole social life there, including a darts team and a group chat that is busy at four in the morning. He adds that this social life is not where he lives.\",\"evidence\":[{\"docId\":\"interview-t02-daniel#3\",\"quote\":\"The funny thing is, at work I'm in a team where everyone's on nights, so I've got a whole social life there, we have a darts team and a group chat of our own that's busy at four in the morning. It's just that it's not where I live.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "interview-t02-daniel#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 2,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "everyone's on nights, so I've got a whole social life there",
+          "agrees": true,
+          "reply": "{\"answer\":\"everyone's on nights, so I've got a whole social life there\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "30309755",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Daniel interview T02 social life work\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 245,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 6723.04
+          }
+        },
+        {
+          "input": "53052be4",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Daniel says that at work he is in a team where everyone is on nights, so he has a whole social life there, including a darts team and a group chat that is busy at four in the morning.\",\"evidence\":[{\"docId\":\"interview-t02-daniel#3\",\"quote\":\"The funny thing is, at work I'm in a team where everyone's on nights, so I've got a whole social life there, we have a darts team and a group chat of our own that's busy at four in the morning.\"}]}\n\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 489,
+            "completionTokens": 130,
+            "cachedTokens": 0,
+            "promptMs": 13462.875
+          }
+        },
+        {
+          "input": "c413f791",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"interview-t02-daniel#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 674,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 18486.477
+          }
+        },
+        {
+          "input": "860564d5",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"Daniel says that at work he is in a team where everyone is on nights, so he has a whole social life there, including a darts team and a group chat that is busy at four in the morning. He adds that this social life is not where he lives.\",\"evidence\":[{\"docId\":\"interview-t02-daniel#3\",\"quote\":\"The funny thing is, at work I'm in a team where everyone's on nights, so I've got a whole social life there, we have a darts team and a group chat of our own that's busy at four in the morning. It's just that it's not where I live.\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1058,
+            "completionTokens": 151,
+            "cachedTokens": 0,
+            "promptMs": 29930.099
+          }
+        },
+        {
+          "input": "4450bf2d",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 465,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 12204.971
+          }
+        },
+        {
+          "input": "e5bc61ba",
+          "output": "{\"answer\":\"everyone's on nights, so I've got a whole social life there\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 352,
+            "completionTokens": 19,
+            "cachedTokens": 0,
+            "promptMs": 9730.018
+          }
+        }
+      ]
+    }
+  ]
+}
