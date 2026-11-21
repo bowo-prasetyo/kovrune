@@ -86,6 +86,17 @@ export function ResultView({ answer, live = false }: { answer: SavedAnswer; live
                 </blockquote>
                 {item.context && <InContext context={item.context} />}
                 {!item.verified && item.reason && <span className="reason">Problem: {item.reason}.</span>}
+                {!item.verified && item.parts && (
+                  <div className="quote-parts">
+                    <span className="hint">
+                      Each part is in the source, but the model joined passages too far apart to be one quote, so it backs nothing. Check whether
+                      they say together what the answer says:
+                    </span>
+                    {item.parts.map((part, j) => (
+                      <InContext key={j} context={part.context} summary={`Show part ${j + 1} in the source: “${part.quote.length > 60 ? `${part.quote.slice(0, 60)}…` : part.quote}”`} />
+                    ))}
+                  </div>
+                )}
                 {item.closest && <ClosestPassage parts={item.closest} />}
               </li>
             ))}
@@ -259,10 +270,12 @@ function SourceName({ docId, answer }: { docId: string; answer: SavedAnswer }) {
 }
 
 /** A verified quote where it is in the source, with the text around it. */
-function InContext({ context }: { context: QuoteContext }) {
+function InContext({ context, summary = "Show in the source" }: { context: QuoteContext; summary?: string }) {
   return (
     <details className="context">
-      <summary>Show in the source</summary>
+      <summary>
+        <MathText text={summary} />
+      </summary>
       <blockquote>
         {context.more.before && "… "}
         <MathText text={context.before} />
