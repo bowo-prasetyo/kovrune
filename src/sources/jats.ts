@@ -109,13 +109,31 @@ function descendant(el: XmlElement | undefined, match: (e: XmlElement) => boolea
   return undefined;
 }
 
-/** The text of an element, inline markup flattened; a citation is written in brackets. */
+/** Superscript digits and signs, as the PDF reader writes a raised exponent (documents/pdf-layout.ts). */
+const RAISED: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "−": "⁻", "–": "⁻", "+": "⁺" };
+
+/** A power of ten's base, at the end of the text before a <sup>: "1.2855 × 10", "10" alone, but not "2010" or "v10". */
+const TEN_BEFORE = /(?<![\p{L}\p{Nd}.,])10\s*$/u;
+
+/**
+ * The text of an element, inline markup flattened; a citation is written in brackets.
+ *
+ * Since harness 0.107.0 (docs/materials-science-audit.md, MS4):
+ * - a <sup> of digits right after "10" is a power of ten, written in superscripts: "1.2855 × 10<sup>12</sup>" is
+ *   "1.2855 × 10¹²". Flattened, it was "1.2855 × 1012", a number near 1,300, and the right answer "× 10¹²" was not
+ *   backed by its quote. A negative power read right ("10−5", its sign saying it is an exponent), and is written
+ *   the same way now. Other superscripts ("kg/m<sup>2</sup>", "Fe<sup>3+</sup>") are flattened as before;
+ * - a <break/> is a space: "eutectic<break/>Precipitation" in a table cell read "eutecticPrecipitation".
+ */
 function text(el: XmlElement | undefined): string {
   if (!el) return "";
   const parts: string[] = [];
   for (const c of el.children) {
     if (typeof c === "string") parts.push(c);
-    else if (c.tag === "xref" && c.attrs["ref-type"] === "bibr") {
+    else if (c.tag === "break") parts.push(" ");
+    else if (c.tag === "sup" && TEN_BEFORE.test(parts.join("")) && /^\s*[-−–+]?\s*\d+\s*$/.test(text(c))) {
+      parts.push([...text(c).replace(/\s+/g, "")].map((ch) => RAISED[ch]).join(""));
+    } else if (c.tag === "xref" && c.attrs["ref-type"] === "bibr") {
       // A citation in brackets in the source ("[1–3]") keeps them; one without (The Lancet's
       // superscripts) gets its own, so its number does not join the sentence's last word.
       const before = parts.join("");

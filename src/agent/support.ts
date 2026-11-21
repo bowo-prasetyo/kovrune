@@ -167,6 +167,8 @@ function concise(text: string): string {
  * - a prefix the PDF set apart from its unit symbol is joined to it: "40 m Ω" is "40 mΩ", "° C" is "°C";
  * - since harness 0.91.0, LaTeX math is read as math.ts reads it, so "$1.2\times10^{-3}$" is "1.2×10⁻³",
  *   and a concise uncertainty is written out (concise);
+ * - since harness 0.107.0, a thermal expansion in "ppm K−1" or "ppm/°C" is written in powers of ten, "8.6 ppm K−1" as
+ *   "8.6 × 10^-6 K^-1", as papers give it both ways (docs/materials-science-audit.md, MS3);
  * - since harness 0.101.0, a number written without its leading zero is given one, keeping its sign:
  *   "p < .05" is 0.05 and "r = −.34" is −0.34, as APA style writes p, r, α and standardized β. Read as
  *   digits after a point, ".34" was 34, so "r = −.34" backed "r = .34" and "34%", and "d = 0.45" was not
@@ -180,6 +182,7 @@ function numberText(text: string): string {
   return normalizeForMatch(raised, { keepCase: true })
     .replace(/^\d+[.)]\s+/, "")
     .replace(/(?<![\p{L}\p{Nd}.,])([-+±]?)\.(?=\p{Nd})/gu, (_, sign: string) => `${sign}0.`)
+    .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:\.\p{Nd}+)?)\s?ppm\s?(?:\/\s?|·\s?|\s)(K|°C)(?!\p{L})(?:\s?\^?-1(?!\p{Nd}))?/gu, "$1 × 10^-6 $2^-1")
     .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:[.,]\p{Nd}+)?)\s*[×x*]\s*10\s*(?:\^\s*([-+]?\s?\p{Nd}+)|([-+]\s?\p{Nd}+))(?![\p{Nd}.])/gu, (_, m: string, a?: string, b?: string) => powerOfTen(m, (a ?? b)!))
     .replace(/(?<![\p{L}\p{Nd}.,^])10\s*\^\s*([-+]?\p{Nd}+)(?![\p{Nd}.])/gu, (_, e: string) => powerOfTen("1", e))
     .replace(/(?<![\p{L}\p{Nd}.,])(\p{Nd}+(?:\.\p{Nd}+)?)[eE]([-+]?\p{Nd}+)(?![\p{L}\p{Nd}])/gu, (_, m: string, e: string) => powerOfTen(m, e))
@@ -203,7 +206,7 @@ function signed(sign: string | undefined, digits: string): string {
  */
 export function numbers(text: string): string[] {
   const found: string[] = [];
-  const rest = numberText(text).replace(LOCANTS, (all, list: string) => (found.push(`${list.replace(/[′’]/g, "'")}-`), " ".repeat(all.length)));
+  const rest = withoutUnitPowers(numberText(text)).replace(LOCANTS, (all, list: string) => (found.push(`${list.replace(/[′’]/g, "'")}-`), " ".repeat(all.length)));
   return [...found, ...[...rest.matchAll(new RegExp(NUMBER, "gu"))].map(([, sign, digits]) => signed(sign, digits!))];
 }
 
@@ -464,6 +467,18 @@ const ENGINEERING_UNITS: Array<[string, RegExp]> = [
   ["Ci", /^(?:Ci|curies?)$/],
   ["mCi", /^mCi$/],
   ["μCi", /^(?:μCi|uCi)$/],
+  // Materials units (harness 0.107.0, docs/materials-science-audit.md, MS3), read in their case: a hardness scale is
+  // its own unit ("320 HV" is not "320 HB"), a microohm is not a milliohm, and "mS" is a millisiemens, not the
+  // millisecond "ms" it was read as. A siemens alone ("S") is read only with a length after it ("1.2 S cm−1"; measures).
+  ["μΩ", /^(?:μΩ|uΩ|microohms?|micro-ohms?)$/],
+  ["mS", /^(?:mS|millisiemens)$/],
+  ["μS", /^(?:μS|uS|microsiemens)$/],
+  ["HV", /^HV$/],
+  ["HB", /^(?:HB|HBW|HBS)$/],
+  ["HRC", /^HRC$/],
+  ["HRB", /^HRB$/],
+  ["HK", /^HK$/],
+  ["μB", /^(?:μB|uB|muB)$/],
 ];
 
 /** Units, each with the spellings that mean it. Binary and decimal sizes are one unit: models write "4 KB" for "4 KiB". */
@@ -528,11 +543,175 @@ const UNITS: Array<[string, RegExp]> = [
   ["wt%", /^wtpct$/],
   ["vol%", /^volpct$/],
   ["at%", /^atpct$/],
+  // Materials units (harness 0.107.0): radiation damage in displacements per atom is not a dose in grays, and a
+  // magnetization in emu is no other unit.
+  ["dpa", /^dpa$/],
+  ["emu", /^emu$/],
 ];
 
 /** The unit a word after a number names: an engineering symbol in its own case, or another unit in any case. */
 function unitOf(word: string): string | undefined {
   return ENGINEERING_UNITS.find(([, pattern]) => pattern.test(word))?.[0] ?? UNITS.find(([, pattern]) => pattern.test(word.toLowerCase()))?.[0];
+}
+
+/**
+ * Compound units (harness 0.107.0, docs/materials-science-audit.md, MS3). A unit is read with the units and powers
+ * after it, "185 mAh g−1" as mAh·g⁻¹ and "4.5 MPa·m^1/2" as MPa·m^½, where only its first word was read before:
+ * a gravimetric capacity then backed an areal one ("mAh cm−2"), and a fracture toughness a strength ("4.5 MPa").
+ * And the powers are not numbers: the "1" of "g−1" backed "at 1C" for a quote's "at 0.1C", and the "2" of "cm−2"
+ * had to be quoted for a sentence to be backed.
+ *
+ * After a unit, each further unit is joined by "·", "*", "/", "per" or a space, and has an optional power ("−1",
+ * "^-1", "2", "1/2", "0.5", "√" before it, "square" or "cubic" before it). One joined by a space alone must have a
+ * power, so "450 °C for 2 h" or "5 mL water" read no further than their unit. "/" and "per" make the powers after them
+ * negative, over a bracket too ("W/(m·K)").
+ */
+const UNIT_POWER = /^(?:\^\s?)?\(?([-+]?)(\p{Nd}{1,2})(?:[/⁄](\p{Nd})|\.(5))?\)?(?![\p{L}\p{Nd}]|[.,]\p{Nd})/u;
+const UNIT_JOIN = /^(?:\s*([·•⋅∙*/])\s*|\s+(per)\s+|(\s+)|(?=√))/u;
+const UNIT_WORD = /^[\p{L}°Ω]+/u;
+/** Units that are seldom written alone after a number, but follow another unit: "mV dec−1" (a Tafel slope), "S cm−1", "F g−1". */
+const TAIL_UNITS: Record<string, string> = { dec: "dec", decade: "dec", decades: "dec", S: "S", F: "F", sr: "sr" };
+/** Units of time, by unitOf's names: a temperature per unit of time is a rate, where a kelvin and a degree Celsius are the same step. */
+const TIME_UNITS = new Set(["ms", "s", "min", "h", "day", "week", "month", "year", "μs", "ns"]);
+
+interface UnitTail {
+  /** The power of the first unit: 2 for "cm2", −1 for "cm−1", 1 when none is written. */
+  power: number;
+  /** The units after it, with their powers. */
+  factors: Array<[string, number]>;
+  /** Where the powers are written in the text, to be read as no number. */
+  powers: Array<[number, number]>;
+}
+
+/** A power written at `at`, as a number (−1, 2, 0.5), and its length. */
+function unitPower(text: string, at: number): { value: number; length: number } | undefined {
+  const m = UNIT_POWER.exec(text.slice(at));
+  if (!m) return undefined;
+  const [, sign, whole, over, half] = m;
+  const size = over ? Number(whole) / Number(over) : half ? Number(`${whole}.5`) : Number(whole);
+  return { value: sign === "-" ? -size : size, length: m[0].length };
+}
+
+/** A unit written after another, as unitOf names it, or a unit that only follows another (TAIL_UNITS). */
+function tailUnit(word: string): string | undefined {
+  return TAIL_UNITS[word] ?? unitOf(word);
+}
+
+/** Units whose digits after them are a test's load or scale, not a power: "320 HV0.5", "HV10". */
+const NO_POWER = new Set(["HV", "HB", "HK", "HRC", "HRB"]);
+
+/** The powers and units after a unit that ends at `at` (see UNIT_POWER). */
+function unitTail(text: string, at: number, unit?: string): UnitTail {
+  const tail: UnitTail = { power: 1, factors: [], powers: [] };
+  if (unit && NO_POWER.has(unit)) return tail;
+  const own = unitPower(text, at);
+  let i = at;
+  if (own) {
+    tail.power = own.value;
+    tail.powers.push([i, i + own.length]);
+    i += own.length;
+  }
+  // One unit with its power at `from`, `sign` −1 after "/" or "per"; its end, or undefined when there is none.
+  const factor = (from: number, sign: number, spaced: boolean): number | undefined => {
+    let j = from;
+    let scale = 1;
+    const word = /^(square|cubic)\s+/.exec(text.slice(j));
+    if (word) (scale = word[1] === "square" ? 2 : 3), (j += word[0].length);
+    if (text[j] === "√") (scale *= 0.5), j++;
+    const name = UNIT_WORD.exec(text.slice(j))?.[0];
+    const unit = name && tailUnit(name);
+    if (!unit) return undefined;
+    j += name.length;
+    const power = unitPower(text, j);
+    if (spaced && !power && scale === 1) return undefined;
+    tail.factors.push([unit, sign * scale * (power?.value ?? 1)]);
+    if (power) tail.powers.push([j, j + power.length]), (j += power.length);
+    return j;
+  };
+  for (;;) {
+    const join = UNIT_JOIN.exec(text.slice(i));
+    if (!join) break;
+    const sign = join[1] === "/" || join[2] ? -1 : 1;
+    let j = i + join[0].length;
+    if (sign < 0 && text[j] === "(") {
+      // A bracket after "/": every unit in it is divided by, "W/(m·K)".
+      const before = tail.factors.length;
+      let k: number | undefined = j + 1;
+      while (k !== undefined && text[k] !== ")") {
+        k = factor(k, -1, false);
+        if (k !== undefined) k += /^\s*[·•⋅∙*]?\s*/.exec(text.slice(k))![0].length;
+      }
+      if (k === undefined) {
+        tail.factors.length = before;
+        break;
+      }
+      i = k + 1;
+      continue;
+    }
+    const end = factor(j, sign, Boolean(join[3]));
+    if (end === undefined) break;
+    i = end;
+  }
+  return tail;
+}
+
+/** The unit a word after a number names, as unitOf, and "S" (siemens) when a length follows it ("1.2 S cm−1"). */
+function headUnit(word: string, text: string, end: number): string | undefined {
+  const unit = unitOf(word);
+  if (unit || word !== "S") return unit;
+  return unitTail(text, end).factors.some(([u, p]) => p < 0 && /^(?:cm|m|mm|μm|nm)$/.test(u)) ? "S" : undefined;
+}
+
+/**
+ * A compound unit as one key, "mAh·g^-1", "MPa·m^0.5", "K·min^-1": the first unit with its power, then the others
+ * by name. A temperature per unit of time, or per degree, reads the same in kelvins and degrees Celsius
+ * ("5 °C min−1" is "5 K min−1", "per °C" is "per K"), as a step of one is a step of the other.
+ */
+function unitKey(unit: string, tail: UnitTail): string {
+  const powers = new Map<string, number>();
+  for (const [u, p] of tail.factors) powers.set(u, (powers.get(u) ?? 0) + p);
+  const rate = [...powers].some(([u, p]) => p < 0 && TIME_UNITS.has(u));
+  const kelvin = (u: string, p: number) => (u === "°C" && (rate || p < 0) ? "K" : u);
+  const head = kelvin(unit, tail.power) + (tail.power === 1 ? "" : `^${tail.power}`);
+  const rest = [...powers].filter(([, p]) => p !== 0).map(([u, p]) => `${kelvin(u, p)}^${p}`).sort();
+  return [head, ...rest].join("·");
+}
+
+/**
+ * Whether two compound units (unitKey) are one: the same, or the same but for what one leaves out of the other
+ * when that is only a "per" unit. "185 mAh" is backed by "185 mAh g−1", since a sentence may leave the "per gram"
+ * unsaid, but not "185 mAh cm−2" by it, nor "4.5 MPa" by "4.5 MPa·m^1/2" (a power above zero is no "per"), nor
+ * "45 mV" by "45 mV dec−1" (a decade is part of what a Tafel slope is).
+ */
+function sameUnit(a: string, b: string): boolean {
+  if (a === b) return true;
+  const [headA, ...restA] = a.split("·");
+  const [headB, ...restB] = b.split("·");
+  if (headA !== headB) return false;
+  const leftOut = (more: string[], less: string[]) => less.every((f) => more.includes(f)) && more.filter((f) => !less.includes(f)).every((f) => /\^-/.test(f) && !f.startsWith("dec^"));
+  return leftOut(restA, restB) || leftOut(restB, restA);
+}
+
+/**
+ * A text with the powers of its compound units (unitTail) blanked, one space for each character, so they are read
+ * as no number and offsets hold: "185 mAh g−1" gives the number 185 and no 1.
+ */
+function withoutUnitPowers(written: string): string {
+  const blanks: Array<[number, number]> = [];
+  for (const match of written.matchAll(new RegExp(`${NUMBER}\\s?(°?[\\p{L}Ω]+)`, "gu"))) {
+    const end = match.index + match[0].length;
+    const unit = headUnit(match[3]!, written, end);
+    if (unit) blanks.push(...unitTail(written, end, unit).powers);
+  }
+  if (!blanks.length) return written;
+  let out = "";
+  let at = 0;
+  for (const [start, end] of blanks.sort((x, y) => x[0] - y[0])) {
+    if (start < at) continue;
+    out += written.slice(at, start) + " ".repeat(end - start);
+    at = end;
+  }
+  return out + written.slice(at);
 }
 
 /** Words that end what a negation before them reaches: "no change in A, but a significant fall in B". */
@@ -849,7 +1028,8 @@ function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
   const pairs = new Set<string>();
   const bare = new Set<string>();
   const written = numberText(text);
-  for (const match of written.matchAll(new RegExp(`${NUMBER}\\s?(%|°?[\\p{L}]+[☉⊙]?(?:\\s?cent)?)?`, "gu"))) {
+  // Numbers are read where no unit's power is (withoutUnitPowers), units where they are written (unitTail).
+  for (const match of withoutUnitPowers(written).matchAll(new RegExp(`${NUMBER}\\s?(%|°?[\\p{L}]+[☉⊙]?(?:\\s?cent)?)?`, "gu"))) {
     // Digits right after a letter or a bracket belong to a formula or a name, "Pd(OAc)2" or "CD45" (harness
     // 0.93.0): as a bare number, the "2" of "2 mol% Pd(OAc)2" let "2 wt%" pass, as if the quote gave 2 with no unit.
     if (match.index > 0 && /[\p{L})\]]/u.test(written[match.index - 1]!)) continue;
@@ -857,8 +1037,11 @@ function measures(text: string): { pairs: Set<string>; bare: Set<string> } {
     // A value with its uncertainty takes the unit after it (harness 0.90.0): "125.10 ± 0.14 GeV" and
     // "(0.52 ± 0.01) meV" give 125.10 in GeV and 0.52 in meV, not 125.10 and 0.52 with no unit.
     const shared = match[3] ? undefined : UNCERTAINTY_UNIT.exec(written.slice(match.index + match[0].length))?.[1];
-    const unit = (match[3] && unitOf(match[3])) || (shared && unitOf(shared));
+    const own = match[3] && headUnit(match[3], written, match.index + match[0].length);
+    const unit = own || (shared && unitOf(shared));
     if (unit === "%") pairs.add(`${number} %${percentOf(written, match.index, match.index + match[0].length)}`);
+    // A unit of the number's own is read with the units after it (unitTail): "185 mAh g−1" is "185 mAh·g^-1".
+    else if (own) pairs.add(`${number} ${unitKey(own, unitTail(written, match.index + match[0].length, own))}`);
     else if (unit) pairs.add(`${number} ${unit}`);
     else bare.add(number);
   }
@@ -1287,7 +1470,8 @@ function unitsBacked(text: string, quoted: { pairs: Set<string>; bare: Set<strin
     const unit = pair.slice(number.length + 1);
     const quotedUnits = [...quoted.pairs].filter((p) => p.startsWith(`${number} `)).map((p) => p.slice(number.length + 1));
     // A percentage whose kind one side does not say is the same unit as one whose kind it says: "ee of 92%" and "92%".
-    const same = (a: string, b: string) => a === b || (a.startsWith("%") && b.startsWith("%") && (a === "%" || b === "%"));
+    // And compound units that differ only in a "per" unit one side leaves out are one (sameUnit): "185 mAh" and "185 mAh g−1".
+    const same = (a: string, b: string) => sameUnit(a, b) || (a.startsWith("%") && b.startsWith("%") && (a === "%" || b === "%"));
     return quotedUnits.some((u) => same(unit, u)) || quoted.bare.has(number) || !quotedUnits.length;
   });
 }

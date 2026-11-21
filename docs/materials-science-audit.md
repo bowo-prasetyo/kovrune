@@ -37,6 +37,8 @@ What gets in the way (details in [Findings](#findings)):
 
 Of the 72 wrong sentences, the word checks caught 31, and at least four of those only by accident (MS3). Recommendations 1–4 are small, deterministic and testable without a model, and should come first.
 
+**Status (harness 0.107.0):** recommendations 1–3 are done. MS4: Europe PMC full texts keep a power of ten ("10¹²") and read a line break in a table cell as a space. MS3: a unit is read with the units and powers after it, its powers are not numbers, K and °C are one in a rate, ppm K⁻¹ is 10⁻⁶ K⁻¹, and the hardness scales, μΩ, mS, S, dpa, emu and μB are units. MS8: barred digits and spaced space-group symbols are read in one form, in quote matching and search. On the 72 pairs, 38 wrong sentences are now caught (31 before) and 70 right ones backed (68 before). Re-scoring 10,065 recorded answers changes no label, and search gives every suite the same figures ([field README](../eval/field/README.md#materials-science-powers-of-ten-in-europe-pmc-compound-units-and-crystallographic-notation-01070-defect-fix)). Recommendations 4–10 remain.
+
 ## Findings
 
 ### MS1. High: a value given to the wrong property passes
@@ -149,7 +151,7 @@ The passages did not define these abbreviations. A paper that does ("laser powde
 
 Most of the field's notation is matched: subscripts ("Li₇La₃Zr₂O₁₂" against "Li7La3Zr2O12", "LiNi₀.₈…"), "P6₃/mmc" against "P63/mmc", "γ′" against "γ'", "℃" against "°C", "cm⁻¹" against "cm-1", and en dashes in "Ti–6Al–4V". Two things are not:
 
-- **Overbars.** A source's "(1̄10)", with a combining overline, is not found by a quote of "(-110)" or "(1-10)", and "Fm3̄m" is not found by "Fm-3m". Journals print negative Miller indices and roto-inversion axes this way, and a model can't type them.
+- **Overbars.** A source's "(1̄10)", with a combining overline, is not found by a quote of "(-110)", and "Fm3̄m" is not found by "Fm-3m". Journals print negative Miller indices and roto-inversion axes this way, and a model can't type them. (A quote of "(1-10)" is rightly not found: that is the plane (1 1̄ 0), another one.)
 - **Space groups.** A CIF writes "F m -3 m". Searching "Fm-3m" or "Fm3m" finds nothing, and a quote of "space group name H-M: Fm-3m" is not found. The sentence check passes Pm-3m for Fm-3m.
 
 **Fix:** in `normalizeForMatch` and the search tokenizer, read a digit with a combining overline or macron (U+0304, U+0305) as that digit with a minus before it. Write a Hermann–Mauguin symbol in one form, without spaces and with "-" for the bar ("F m -3 m", "Fm3̄m" and "Fm-3m" are "Fm-3m"). Then compare space groups as an exclusive set (MS2).
