@@ -1591,6 +1591,40 @@ Reports: `eval/results/socsci-0.104-qwen3.5-4b-q4km.json` (the suite) and `socsc
 - The claim-strength rules read wording, not design: a quote from a randomised experiment that says "associated" does not back "caused", though the design would.
 - Country and group names one word apart, and a finding stated without its subgroup, are not checked.
 
+### Premise questions, and a contrast passage that stays out (0.106.0)
+
+From a preview user's third search, "Is it true that blood never leaves the circulation system? Why?". Its answer opened "Yes, it is true that blood never leaves the circulation system", backed word for word by Wikipedia's "(meaning that the blood never leaves the network of arteries, veins and capillaries)". That parenthesis defines a closed system. It does not say that nothing crosses a vessel wall, and plasma crosses it continuously and returns through the lymphatics, as do the white cells that leave in every immune response. So a verified quote confirmed the question's premise instead of testing it, and no check sees the difference, because the words of the premise are in the source for the reason that the premise was taken from the source.
+
+**Premise questions** ([`eval/mechanism-model.ts`](../mechanism-model.ts), `npm run bench:mechanism -- --kind premise`). Five questions asking whether something a textbook says flatly is true, each listing the qualifications a sound answer names, with `affirms` recording whether the answer opens by agreeing. Two of the five premises are false rather than simplified, where agreeing at all is the error. Agreeing is not itself a failure — p5's premise is true of adults — so `affirms`, `steps` and `found` are read together. Writing the groups needs the care the suites' facts need: a bare "lymph" is inside "hemolymph", which the user's answer names while qualifying nothing, and "fuse" is inside "confuse".
+
+Europe PMC and DataCite, cache off, greedy ([4B](../results/premise-0.106-qwen3.5-4b-q4km.json), [2B](../results/premise-0.106-qwen3.5-2b-q4km.json)):
+
+| | 4B | | | 2B | | |
+| --- | --- | --- | --- | --- | --- | --- |
+| | backed | qualifications | agreed | backed | qualifications | agreed |
+| p1 blood never leaves | not-found | 0 of 2 | no | 0 of 2 | 1 of 2 | no |
+| p2 10% of the brain | not-found | 1 of 1 | no | 0 of 5 | 1 of 1 | no |
+| p3 antibiotics on viruses | 0 of 3 | 2 of 2 | no | 0 of 3 | 2 of 2 | no |
+| p4 five senses | 1 of 1 | 0 of 1 | **yes** | 0 of 1 | 0 of 1 | **yes** |
+| p5 206 bones | 2 of 3 | 1 of 1 | yes | 2 of 6 | 1 of 1 | yes |
+
+- **A false premise was never endorsed**, by either model. On p3 both said antibiotics act on bacteria and do not work on viruses, with 0 of 3 sentences backed: right, from the model's own knowledge, every sentence marked. A reader following the marks would distrust a correct rejection.
+- **A simplification was endorsed unqualified once each, both times p4**: humans have five senses, no proprioception, no vestibular sense, nothing else. 4B had its one sentence backed by a quote, so that answer carries a clean label; 2B backed nothing, which is the worst corner — agreed, unqualified and ungrounded.
+- **p5 is the sound shape**: agreed, since adults do have 206 bones, and named the qualification.
+- **The user's own question (p1) could not be answered by 4B at all.** Europe PMC and DataCite hold no statement that blood never leaves the circulation, because that phrasing belongs to an encyclopaedia and not to the literature; the trap needed Wikipedia, which this container cannot reach. 2B answered it, and better than the user's own run: it did not open by agreeing, and named one qualification.
+- 2B answered 5 of 5 where 4B answered 3, and backed 2 of 17 sentences against 4B's 3 of 11. The mechanism questions of 0.104.0 showed the same: the smaller model is the more willing and the less grounded.
+
+On a not-found run the qualification count is counted over the model's explanation for declining, not over an answer, which is where 4B's p2 count comes from. Read `steps` next to `found`.
+
+**The repeat-part note of 0.104.0 showed, twice.** In the user's circulation trace, and in 2B's p4 run here, which asked for a 44-part paper, was given part 2, asked for the whole again (the agent's repeat guard refused that), asked for part 2 by its ID — the note's case, `repeatedParts` 1, the first in any harness run — and then read part 1. Both times the next read was a different part, which is what the note is for. Two instances are the condition, not the cause.
+
+**Not adopted: letting a contrast passage back a sentence that is itself a contrast.** The answer's third sentence gave the open-circulation contrast that the quoted sentence's own second half makes, and was marked, because a passage matching `CONTRAST` is no `inSource` candidate. Measured before building: against that Wikipedia sentence the word checks credit the faithful contrast, the same claim with its two sides swapped over, and "Unlike invertebrates, humans have an open circulatory system" alike. They compare words, and these sentences differ in which side gets which property, which no word check models — "closed" and "open" are not even an opposites pair, and making them one would not help, since the passage names both sides and the both-sides exemption of 0.71.0 would pass it. Crediting a reversed sentence as being in a source is worse than leaving a faithful one marked, and `closestPassages` keeps contrast passages already, so the reader is shown it either way. The three sentences are in `tests/closest-passages.test.ts`, so the next attempt starts from the measurement. What would serve is a check that models which side of a contrast takes which property; nothing here is that.
+
+**Limits:**
+- **The premises are general knowledge, the sources are not.** Two of five could not be answered from Europe PMC and DataCite by 4B. A premise that a paper states as a premise is a different thing from one an encyclopaedia defines, and the user's case was the latter.
+- **One author** wrote the questions and their qualifications, and the qualifications are counted as substrings, so an answer can qualify in words no group holds.
+- **No before and after.** Nothing in the app changed for these questions; they measure what the models do.
+
 ## Results
 
 Constrained mode, 4,096-token context, the committed tasks only. Each run also includes the research, unanswerable and pdf suites, so a later change has a current baseline for those suites too. All runs used native llama.cpp (`d854d98`) on CPU in a 4-core cloud container, with the same Q4_K_M files the class 1 laptop uses. The 0.16.0 to 0.21.0 runs used llama.cpp built with `-DGGML_NATIVE=ON`. The CPUs, as the reports record them: Intel Xeon @ 2.80GHz for 0.16.0 to 0.19.0, 0.24.0 and 0.25.0; Intel Xeon @ 2.10GHz for 0.20.0 and 0.21.0; Intel Xeon @ 2.30GHz, with llama.cpp `fae9ac5` built with `-DGGML_NATIVE=ON`, for 0.26.0 to 0.28.0. From 0.29.0, runs use `fae9ac5` built portably (`-DGGML_NATIVE=OFF`), on whichever CPU the container had ([below](#runs-repeat-on-one-machine-not-across-machines)). So the 0.20.0 change was judged against a baseline on another CPU; on 4B, 30 of the 36 field tasks and 21 of the 22 research tasks still took the same actions. Speeds do not carry over to other machines, and neither do individual task results: see [below](#runs-repeat-on-one-machine-not-across-machines).
