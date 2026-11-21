@@ -39,7 +39,7 @@ export interface MechanismQuestion {
   /**
    * "mechanism": how something works, where the answer may give a definition instead.
    * "premise": whether something a textbook says flatly is true, where the answer may say yes because a
-   * source holds the words of the question (harness 0.105.0).
+   * source holds the words of the question (harness 0.106.0).
    */
   kind: "mechanism" | "premise";
   /** What a sound answer has to name: a mechanism's steps, or a premise's qualifications. */

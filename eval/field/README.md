@@ -1591,13 +1591,13 @@ Reports: `eval/results/socsci-0.104-qwen3.5-4b-q4km.json` (the suite) and `socsc
 - The claim-strength rules read wording, not design: a quote from a randomised experiment that says "associated" does not back "caused", though the design would.
 - Country and group names one word apart, and a finding stated without its subgroup, are not checked.
 
-### Premise questions, and a contrast passage that stays out (0.105.0)
+### Premise questions, and a contrast passage that stays out (0.106.0)
 
 From a preview user's third search, "Is it true that blood never leaves the circulation system? Why?". Its answer opened "Yes, it is true that blood never leaves the circulation system", backed word for word by Wikipedia's "(meaning that the blood never leaves the network of arteries, veins and capillaries)". That parenthesis defines a closed system. It does not say that nothing crosses a vessel wall, and plasma crosses it continuously and returns through the lymphatics, as do the white cells that leave in every immune response. So a verified quote confirmed the question's premise instead of testing it, and no check sees the difference, because the words of the premise are in the source for the reason that the premise was taken from the source.
 
 **Premise questions** ([`eval/mechanism-model.ts`](../mechanism-model.ts), `npm run bench:mechanism -- --kind premise`). Five questions asking whether something a textbook says flatly is true, each listing the qualifications a sound answer names, with `affirms` recording whether the answer opens by agreeing. Two of the five premises are false rather than simplified, where agreeing at all is the error. Agreeing is not itself a failure — p5's premise is true of adults — so `affirms`, `steps` and `found` are read together. Writing the groups needs the care the suites' facts need: a bare "lymph" is inside "hemolymph", which the user's answer names while qualifying nothing, and "fuse" is inside "confuse".
 
-Europe PMC and DataCite, cache off, greedy ([4B](../results/premise-0.105-qwen3.5-4b-q4km.json), [2B](../results/premise-0.105-qwen3.5-2b-q4km.json)):
+Europe PMC and DataCite, cache off, greedy ([4B](../results/premise-0.106-qwen3.5-4b-q4km.json), [2B](../results/premise-0.106-qwen3.5-2b-q4km.json)):
 
 | | 4B | | | 2B | | |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -71,7 +71,7 @@ describe("the closest passages for a marked sentence", () => {
 });
 
 // Why a passage setting two claims against each other is kept out of inSource, measured on a preview
-// user's "Is it true that blood never leaves the circulation system? Why?" (harness 0.105.0). Its answer's
+// user's "Is it true that blood never leaves the circulation system? Why?" (harness 0.106.0). Its answer's
 // third sentence gave the open-circulation contrast that the quoted sentence's own second half makes, and
 // was marked, since the "While …" sentence is no inSource candidate. Allowing such a passage for a
 // sentence that is itself a contrast was tried and is not adopted: the word checks cannot tell the
