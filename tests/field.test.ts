@@ -633,9 +633,11 @@ describe("engineering suite", () => {
     const paper = suite.engineeringLibrary.documentFor("sic-pfc-paper")!.text;
     // The PDFs hold what makes engineering text hard to check: a minus sign and a unit symbol from another
     // font, and a table's rows (eval/engineering/source/make_pdfs.py).
-    assert.match(datasheet, /Gate-source voltage, minimum .*8 V/);
-    assert.match(datasheet, /1950 pF/);
-    assert.match(paper, /20% 97\.1% 0\.991 6\.8%/);
+    assert.match(datasheet, /Gate-source voltage, minimum \| VGS,min \| static \| −8 \| V/);
+    // An empty cell keeps its column (harness 0.109.0): RθJA's 40 K/W is a maximum, with no typical value.
+    assert.match(datasheet, /\| Thermal resistance, junction to ambient \| RθJA \| – \| 40 \| K\/W \|/);
+    assert.match(datasheet, /\| Input capacitance \| Ciss \| VDS = 800 V, f = 1 MHz \| – \| 1950 \| – \| pF \|/);
+    assert.match(paper, /\| 20% \| 97\.1% \| 0\.991 \| 6\.8% \|/);
     assert.match(paper, /ZVS was achieved above 35% load/);
     assert.match(suite.engineeringLibrary.documentFor("tensile-tests-6061")!.text, /Test temperature \(°C\): -40 \| Yield strength \(MPa\): 290/);
   });
@@ -837,8 +839,8 @@ describe("materials suite (harness 0.108.0)", () => {
     assert.match(text("llzo-hot-pressing-sps"), /\| Ionic conductivity \[mS cm−1\] \(SPS\) \| 0\.0015 \| 0\.24 \| 0\.45 \| {2}\|/);
     assert.match(text("llzo-al-cubic"), /symmetry space group name H-M: I a -3 d/);
     assert.match(text("ti64-slm-tensile-log"), /specimen: T05 \| build_orientation: vertical \| condition: HIP 920 C 100 MPa 2 h \| yield_strength_MPa: 905 \| UTS_MPa: 995/);
-    // The PDF's blank cells are lost, as docs/materials-science-audit.md (MS5) found: ZTA-20's toughness stands under its hardness.
-    assert.match(text("zta-test-report"), /^ZTA-20 20 98\.6 5\.9 610$/m);
+    // The PDF's blank cells were lost until harness 0.109.0 (docs/materials-science-audit.md, MS5): ZTA-20's toughness stood under its hardness.
+    assert.match(text("zta-test-report"), /^\| ZTA-20 \| 20 \| 98\.6 \| – \| 5\.9 \| 610 \|$/m);
   });
 
   it("asks only for facts its cited documents contain, about every document, with some held out", async () => {
