@@ -153,6 +153,19 @@ Every failure was read, and none is a defect of its task (the value asked for is
 
 The four wrong answers labelled "Quotes found" all quote a real value of a neighbouring condition; the label says the quotes are in the documents, which they are, not that they answer the question. `bench:rescore` gives the same labels.
 
+### Harness 0.109.0
+
+The same model, server and settings, on the same machine ([`eval/results/materials-0.109-qwen3.5-4b-q4km.json`](../results/materials-0.109-qwen3.5-4b-q4km.json)):
+
+| Suite | Passed (0.108.0) | Passed (0.109.0) | Labelled "Quotes found" and wrong (0.108.0 → 0.109.0) |
+| --- | --- | --- | --- |
+| materials | 40 of 47 | 41 of 47 | 4 → 3 |
+| materialsholdout | 12 of 13 | 12 of 13 | 0 → 0 |
+
+One task changed, the one the table fix was for. In m44 the model now read the test report's row as "| ZTA-20 | 20 | 98.6 | – | 5.9 | 610 |" and answered that "Table 1 in the report shows a blank cell for the hardness of ZTA-20, indicating it was not measured", where in 0.108.0 it gave the toughness, 5.9, as the hardness, labelled "Quotes found". The other 59 answers are those of 0.108.0. The checks of MS1, MS2 and MS6 change no label of either run: the wrong answers left quote a real value of a neighbouring condition (1100 °C for 1150 °C, 550 °C for 600 °C), which no word check can tell from the right one.
+
+The 20 tasks of the engineering and physics suites whose requests the table fix changed (their datasheet's and paper's tables) were run at main and at this branch with the same model ([`pdftables-0.109-base-…`](../results/pdftables-0.109-base-qwen3.5-4b-q4km.json), [`pdftables-0.109-…`](../results/pdftables-0.109-qwen3.5-4b-q4km.json)): 20 of 20 pass at both, with 17 labelled "Quotes found" at both and none of them wrong.
+
 ## Limits
 
 - **Eight papers, six from one publisher.** MDPI's journals are where most materials full texts in Europe PMC are; the field's main journals (*Acta Materialia*, *Materials Science and Engineering A*, *Journal of Power Sources*) reach Kovrune only as PDFs, which this suite has one of, made up.

@@ -1,0 +1,2544 @@
+{
+  "harnessVersion": "0.108.0",
+  "createdAt": "2026-11-22T05:11:29.148Z",
+  "complete": true,
+  "environment": {
+    "runtime": "local-endpoint",
+    "modelId": "qwen3.5-4b-q4km",
+    "contextLength": 4096,
+    "hardwareClass": "other",
+    "hardware": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpuCores": 4,
+      "memoryGb": 16,
+      "endpoint": "http://127.0.0.1:8080/v1"
+    },
+    "extraBody": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "cache_prompt": false
+    }
+  },
+  "config": {
+    "suites": [
+      "engineering",
+      "engineeringholdout",
+      "physics",
+      "physicsholdout"
+    ],
+    "modes": [
+      "constrained"
+    ],
+    "preset": "full",
+    "taskIds": [
+      "e01-rdson-typical",
+      "e02-rdson-hot",
+      "e03-vgs-min",
+      "e04-junction-range",
+      "e05-drain-current-100c",
+      "e06-coss",
+      "e07-switching-frequency",
+      "e08-boost-inductance",
+      "e09-light-load-table",
+      "e10-zvs-load",
+      "e11-dead-time-efficiency",
+      "e12-ambient-range",
+      "e23-thermal-resistance",
+      "e24-avalanche",
+      "eh01-eon",
+      "eh02-threshold",
+      "eh03-thd-full-load",
+      "eh04-titanium-margin",
+      "ph21-bec-onset",
+      "phh06-chemical-potential"
+    ]
+  },
+  "selfCheck": {
+    "passed": true,
+    "constrained": true,
+    "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"LumenDB was released under the Apache-2.0 license until version 2.x.\",\"evidence\":[{\"docId\":\"lumen-overview\",\"quote\":\"LumenDB was released under th",
+    "seconds": 26.5,
+    "decodeTokensPerSecond": 7.1,
+    "maxResearchTaskMinutes": 11.2,
+    "minutesPerSource": 2.7
+  },
+  "summary": [
+    {
+      "suite": "engineering",
+      "mode": "constrained",
+      "tasks": 14,
+      "passed": 14,
+      "successRate": 1,
+      "successInterval": [
+        0.785,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 6.9,
+      "prefillTokensPerSecond": 40,
+      "medianTaskSeconds": 120.8,
+      "maxPromptTokens": 2839,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 46932,
+      "promptSeconds": 1169.5,
+      "falseReassurance": {
+        "labelled": 11,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "engineeringholdout",
+      "mode": "constrained",
+      "tasks": 4,
+      "passed": 4,
+      "successRate": 1,
+      "successInterval": [
+        0.51,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 6.9,
+      "prefillTokensPerSecond": 40.7,
+      "medianTaskSeconds": 131.5,
+      "maxPromptTokens": 1727,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 12953,
+      "promptSeconds": 317.4,
+      "falseReassurance": {
+        "labelled": 4,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "physics",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 6.7,
+      "prefillTokensPerSecond": 37.1,
+      "medianTaskSeconds": 119.6,
+      "maxPromptTokens": 1230,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 2669,
+      "promptSeconds": 71.8,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 0
+      }
+    },
+    {
+      "suite": "physicsholdout",
+      "mode": "constrained",
+      "tasks": 1,
+      "passed": 1,
+      "successRate": 1,
+      "successInterval": [
+        0.207,
+        1
+      ],
+      "validActionRate": 1,
+      "decodeTokensPerSecond": 6.9,
+      "prefillTokensPerSecond": 41.3,
+      "medianTaskSeconds": 121.2,
+      "maxPromptTokens": 1246,
+      "tasksWithDroppedResults": 0,
+      "processedPromptTokens": 2712,
+      "promptSeconds": 65.5,
+      "falseReassurance": {
+        "labelled": 1,
+        "wrong": 0
+      }
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "criteria": [
+      {
+        "name": "Complete run of the full evaluation set",
+        "threshold": "all 46 tasks, all four suites",
+        "actual": "no (subset, preset, or stopped early)",
+        "passed": false
+      },
+      {
+        "name": "Constrained research run",
+        "threshold": "present",
+        "actual": "missing",
+        "passed": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "suite": "engineering",
+      "taskId": "e01-rdson-typical",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 2167,
+      "completionTokens": 168,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1332,
+      "cachedTokens": 0,
+      "promptMs": 51375,
+      "modelMs": 75609,
+      "ttftMs": 51398,
+      "wallMs": 93285,
+      "actions": [
+        "search {\"query\":\"KV1200M040 drain-source on-state resistance junction temperature 25 C\"}",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"40 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 "
+      ],
+      "final": "{\"found\":true,\"answer\":\"40 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 A 40 52 mΩ\"},{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Tj = 25 °C unless otherwise noted.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        },
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "no"
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "0ae6b743",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 drain-source on-state resistance junction temperature 25 C\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 260,
+            "completionTokens": 31,
+            "cachedTokens": 0,
+            "promptMs": 6776.686
+          }
+        },
+        {
+          "input": "27c1452c",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 575,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 13325.835
+          }
+        },
+        {
+          "input": "50240d28",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"40 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 A 40 52 mΩ\"},{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Tj = 25 °C unless otherwise noted.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1332,
+            "completionTokens": 111,
+            "cachedTokens": 0,
+            "promptMs": 31271.93
+          }
+        },
+        {
+          "input": "cedc0c99",
+          "output": "{\"verdict\":\"no\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 694,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 16226.653
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e02-rdson-hot",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2992,
+      "completionTokens": 225,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1465,
+      "cachedTokens": 0,
+      "promptMs": 71916,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 104353,
+      "ttftMs": 72097,
+      "wallMs": 129932,
+      "actions": [
+        "search {\"query\":\"KV1200M040 on-state resistance 175 °C\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"68 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 ",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"68 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 "
+      ],
+      "final": "{\"found\":true,\"answer\":\"68 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 A, Tj = 175 °C 68 mΩ\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "68 mΩ",
+          "agrees": true,
+          "reply": "{\"answer\":\"68 mΩ\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "46d30d05",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 on-state resistance 175 °C\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 259,
+            "completionTokens": 29,
+            "cachedTokens": 0,
+            "promptMs": 6268.907
+          }
+        },
+        {
+          "input": "e58ccac1",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"68 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 A, Tj = 175 °C 68 mΩ\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 560,
+            "completionTokens": 85,
+            "cachedTokens": 0,
+            "promptMs": 12948.63
+          }
+        },
+        {
+          "input": "7e6db283",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 708,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 16468.112
+          }
+        },
+        {
+          "input": "b0e66305",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"68 mΩ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Drain-source on-state resistance RDS(on) VGS = 18 V, ID = 30 A, Tj = 175 °C 68 mΩ\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1465,
+            "completionTokens": 85,
+            "cachedTokens": 0,
+            "promptMs": 36229.618
+          }
+        },
+        {
+          "input": "a7078def",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 506,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 12309.507
+          }
+        },
+        {
+          "input": "da447d5a",
+          "output": "{\"answer\":\"68 mΩ\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 443,
+            "completionTokens": 9,
+            "cachedTokens": 0,
+            "promptMs": 10918.328
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e03-vgs-min",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2538,
+      "completionTokens": 168,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1102,
+      "cachedTokens": 0,
+      "promptMs": 61157,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 84954,
+      "ttftMs": 61297,
+      "wallMs": 105891,
+      "actions": [
+        "search {\"query\":\"KV1200M040 minimum gate-source voltage rating absolute maximum ratings\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"-8 V\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Gate-source voltage, minimum VGS,min static −8 V\"}]",
+        "read {\"docId\":\"kv1200m040-datasheet#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"-8 V\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Gate-source voltage, minimum VGS,min static −8 V\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"-8 V\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Gate-source voltage, minimum VGS,min static −8 V\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "-8 V",
+          "agrees": true,
+          "reply": "{\"answer\":\"-8 V\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "d8ea28ac",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 minimum gate-source voltage rating absolute maximum ratings\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 254,
+            "completionTokens": 28,
+            "cachedTokens": 0,
+            "promptMs": 6243.448
+          }
+        },
+        {
+          "input": "afda39ef",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"-8 V\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Gate-source voltage, minimum VGS,min static −8 V\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 531,
+            "completionTokens": 57,
+            "cachedTokens": 0,
+            "promptMs": 12560.414
+          }
+        },
+        {
+          "input": "8085ee2b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 651,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 16741.754
+          }
+        },
+        {
+          "input": "754fdcd3",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"-8 V\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Gate-source voltage, minimum VGS,min static −8 V\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1102,
+            "completionTokens": 57,
+            "cachedTokens": 0,
+            "promptMs": 25611.896
+          }
+        },
+        {
+          "input": "a5003cfb",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 397,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 9952.723
+          }
+        },
+        {
+          "input": "4df92b47",
+          "output": "{\"answer\":\"-8 V\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 336,
+            "completionTokens": 8,
+            "cachedTokens": 0,
+            "promptMs": 8638.316
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e04-junction-range",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2492,
+      "completionTokens": 183,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1092,
+      "cachedTokens": 0,
+      "promptMs": 60792,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 87341,
+      "ttftMs": 60937,
+      "wallMs": 108218,
+      "actions": [
+        "search {\"query\":\"KV1200M040 junction temperature range\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"-55 to 175 °C\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Operating junction temperature Tj −55 to 1",
+        "read {\"docId\":\"kv1200m040-datasheet#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"-55 to 175 °C\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Operating junction temperature Tj −55 to 175 °C\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"-55 to 175 °C\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Operating junction temperature Tj −55 to 175 °C\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "-55 to 175 °C",
+          "agrees": true,
+          "reply": "{\"answer\":\"-55 to 175 °C\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "959f7cdf",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 junction temperature range\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 248,
+            "completionTokens": 23,
+            "cachedTokens": 0,
+            "promptMs": 6750.138
+          }
+        },
+        {
+          "input": "82ab2f7c",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"-55 to 175 °C\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Operating junction temperature Tj −55 to 175 °C\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 511,
+            "completionTokens": 67,
+            "cachedTokens": 0,
+            "promptMs": 12284.259
+          }
+        },
+        {
+          "input": "9112e520",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 641,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 15125.918
+          }
+        },
+        {
+          "input": "a9c1430e",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"-55 to 175 °C\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Operating junction temperature Tj −55 to 175 °C\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1092,
+            "completionTokens": 67,
+            "cachedTokens": 0,
+            "promptMs": 26632.268
+          }
+        },
+        {
+          "input": "0bc668e6",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 405,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 9420.465
+          }
+        },
+        {
+          "input": "02e366c9",
+          "output": "{\"answer\":\"-55 to 175 °C\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 337,
+            "completionTokens": 15,
+            "cachedTokens": 0,
+            "promptMs": 7964.249
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e05-drain-current-100c",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2631,
+      "completionTokens": 179,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1133,
+      "cachedTokens": 0,
+      "promptMs": 68132,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 94243,
+      "ttftMs": 68293,
+      "wallMs": 115211,
+      "actions": [
+        "search {\"query\":\"KV1200M040 continuous drain current 100 °C case temperature\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"41 A\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Continuous drain current ID TC = 100 °C 41 A\"}]}",
+        "read {\"docId\":\"kv1200m040-datasheet#1\"}",
+        "final_answer {\"found\":true,\"answer\":\"41 A\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Continuous drain current ID TC = 100 °C 41 A\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"41 A\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Continuous drain current ID TC = 100 °C 41 A\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#1",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "41 A",
+          "agrees": true,
+          "reply": "{\"answer\":\"41 A\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "1ff30892",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 continuous drain current 100 °C case temperature\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 258,
+            "completionTokens": 31,
+            "cachedTokens": 0,
+            "promptMs": 6383.321
+          }
+        },
+        {
+          "input": "1d5c90a8",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"41 A\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Continuous drain current ID TC = 100 °C 41 A\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 558,
+            "completionTokens": 61,
+            "cachedTokens": 0,
+            "promptMs": 14301.431
+          }
+        },
+        {
+          "input": "cfcc5a27",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 682,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 17819.79
+          }
+        },
+        {
+          "input": "f58577a7",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"41 A\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#1\",\"quote\":\"Continuous drain current ID TC = 100 °C 41 A\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1133,
+            "completionTokens": 61,
+            "cachedTokens": 0,
+            "promptMs": 29627.683
+          }
+        },
+        {
+          "input": "3f77913b",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 404,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 10013.248
+          }
+        },
+        {
+          "input": "297cf724",
+          "output": "{\"answer\":\"41 A\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 342,
+            "completionTokens": 8,
+            "cachedTokens": 0,
+            "promptMs": 8613.015
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e06-coss",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2916,
+      "completionTokens": 198,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1437,
+      "cachedTokens": 0,
+      "promptMs": 73947,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 102699,
+      "ttftMs": 74084,
+      "wallMs": 128509,
+      "actions": [
+        "search {\"query\":\"KV1200M040 output capacitance 800 V\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"105 pF\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Output capacitance Coss VDS = 800 V, f = 1 MHz 10",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"105 pF\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Output capacitance Coss VDS = 800 V, f = 1 MHz 105 pF\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"105 pF\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Output capacitance Coss VDS = 800 V, f = 1 MHz 105 pF\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "105 pF",
+          "agrees": true,
+          "reply": "{\"answer\":\"105 pF\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "13a393e8",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 output capacitance 800 V\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 254,
+            "completionTokens": 28,
+            "cachedTokens": 0,
+            "promptMs": 6728.16
+          }
+        },
+        {
+          "input": "82d8dc44",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"105 pF\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Output capacitance Coss VDS = 800 V, f = 1 MHz 105 pF\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 545,
+            "completionTokens": 72,
+            "cachedTokens": 0,
+            "promptMs": 14827.358
+          }
+        },
+        {
+          "input": "ca70fe2a",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 680,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 15624.762
+          }
+        },
+        {
+          "input": "9224523a",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"105 pF\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Output capacitance Coss VDS = 800 V, f = 1 MHz 105 pF\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1437,
+            "completionTokens": 72,
+            "cachedTokens": 0,
+            "promptMs": 36767.483
+          }
+        },
+        {
+          "input": "ae099db9",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 492,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 12043.51
+          }
+        },
+        {
+          "input": "e7d7764c",
+          "output": "{\"answer\":\"105 pF\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 428,
+            "completionTokens": 10,
+            "cachedTokens": 0,
+            "promptMs": 10948.76
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e07-switching-frequency",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3578,
+      "completionTokens": 133,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1698,
+      "cachedTokens": 0,
+      "promptMs": 91219,
+      "modelMs": 111003,
+      "ttftMs": 91370,
+      "wallMs": 132622,
+      "actions": [
+        "search {\"query\":\"SiC totem-pole PFC rectifier switching frequency\"}",
+        "read {\"docId\":\"sic-pfc-paper#1\"}",
+        "read {\"docId\":\"sic-pfc-paper#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"65 kHz\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The switching frequency is fsw = 65 kHz, chosen to keep the second "
+      ],
+      "final": "{\"found\":true,\"answer\":\"65 kHz\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The switching frequency is fsw = 65 kHz, chosen to keep the second harmonic of the switching frequency below the 150-kHz start of the conducted emission band.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "65 kHz",
+          "agrees": true,
+          "reply": "{\"answer\":\"65 kHz\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "20fb6aec",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"SiC totem-pole PFC rectifier switching frequency\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 247,
+            "completionTokens": 23,
+            "cachedTokens": 0,
+            "promptMs": 6858.006
+          }
+        },
+        {
+          "input": "cf5e9ba4",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 536,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 14860.381
+          }
+        },
+        {
+          "input": "2e70fcd2",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1097,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 26455.246
+          }
+        },
+        {
+          "input": "1082db63",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"65 kHz\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The switching frequency is fsw = 65 kHz, chosen to keep the second harmonic of the switching frequency below the 150-kHz start of the conducted emission band.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1698,
+            "completionTokens": 74,
+            "cachedTokens": 0,
+            "promptMs": 43045.981
+          }
+        },
+        {
+          "input": "70e2b7fb",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 431,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 10397.502
+          }
+        },
+        {
+          "input": "5192860a",
+          "output": "{\"answer\":\"65 kHz\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 369,
+            "completionTokens": 8,
+            "cachedTokens": 0,
+            "promptMs": 8897.422
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e08-boost-inductance",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 6,
+      "validCalls": 6,
+      "promptTokens": 8741,
+      "completionTokens": 170,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2839,
+      "cachedTokens": 0,
+      "promptMs": 227412,
+      "modelMs": 253383,
+      "ttftMs": 227722,
+      "wallMs": 275138,
+      "actions": [
+        "search {\"query\":\"SiC totem-pole PFC rectifier inductance\"}",
+        "read {\"docId\":\"sic-pfc-paper#1\"}",
+        "read {\"docId\":\"sic-pfc-paper#3\"}",
+        "read {\"docId\":\"sic-pfc-paper#4\"}",
+        "read {\"docId\":\"sic-pfc-paper#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"450 μH\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The boost inductor was designed for a current ripple of 20% of the "
+      ],
+      "final": "{\"found\":true,\"answer\":\"450 μH\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The boost inductor was designed for a current ripple of 20% of the peak line current at full load, which gives L = 450 μH.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "450 μH",
+          "agrees": true,
+          "reply": "{\"answer\":\"450 μH\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "9573eb17",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"SiC totem-pole PFC rectifier inductance\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 254,
+            "completionTokens": 24,
+            "cachedTokens": 0,
+            "promptMs": 6097.162
+          }
+        },
+        {
+          "input": "d44a023d",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 553,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 14578.709
+          }
+        },
+        {
+          "input": "93296be5",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1114,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 29969.608
+          }
+        },
+        {
+          "input": "f7e51452",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#4\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1743,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 46924.007
+          }
+        },
+        {
+          "input": "732c1989",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2238,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 57573.141
+          }
+        },
+        {
+          "input": "3ca45c28",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"450 μH\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The boost inductor was designed for a current ripple of 20% of the peak line current at full load, which gives L = 450 μH.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2839,
+            "completionTokens": 74,
+            "cachedTokens": 0,
+            "promptMs": 72269.226
+          }
+        },
+        {
+          "input": "9fadae1d",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 439,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 10556.198
+          }
+        },
+        {
+          "input": "7bc2b2fb",
+          "output": "{\"answer\":\"450 μH\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 375,
+            "completionTokens": 10,
+            "cachedTokens": 0,
+            "promptMs": 8547.129
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e09-light-load-table",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1995,
+      "completionTokens": 124,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1183,
+      "cachedTokens": 0,
+      "promptMs": 48556,
+      "modelMs": 65991,
+      "ttftMs": 48728,
+      "wallMs": 90755,
+      "actions": [
+        "search {\"query\":\"totem-pole PFC paper efficiency THD 20% load\"}",
+        "read {\"docId\":\"sic-pfc-paper#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"At 20% load, the efficiency was 97.1% and the THD was 6.8%.\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"20% 97.1% 0.99"
+      ],
+      "final": "{\"found\":true,\"answer\":\"At 20% load, the efficiency was 97.1% and the THD was 6.8%.\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"20% 97.1% 0.991 6.8%\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "97.1%, 6.8%",
+          "agrees": true,
+          "reply": "{\"answer\":\"97.1%, 6.8%\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "13c9b97c",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"totem-pole PFC paper efficiency THD 20% load\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 258,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 6908.994
+          }
+        },
+        {
+          "input": "0286c99b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 554,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 13804.308
+          }
+        },
+        {
+          "input": "60b26d50",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"At 20% load, the efficiency was 97.1% and the THD was 6.8%.\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"20% 97.1% 0.991 6.8%\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1183,
+            "completionTokens": 80,
+            "cachedTokens": 0,
+            "promptMs": 27843
+          }
+        },
+        {
+          "input": "df3d0e0a",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 468,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 11569.125
+          }
+        },
+        {
+          "input": "a35f9c4a",
+          "output": "{\"answer\":\"97.1%, 6.8%\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 384,
+            "completionTokens": 15,
+            "cachedTokens": 0,
+            "promptMs": 9902.235
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e10-zvs-load",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1913,
+      "completionTokens": 105,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1148,
+      "cachedTokens": 0,
+      "promptMs": 47199,
+      "modelMs": 62921,
+      "ttftMs": 47423,
+      "wallMs": 86901,
+      "actions": [
+        "search {\"query\":\"rectifier adaptive dead time zero-voltage switching load\"}",
+        "read {\"docId\":\"sic-pfc-paper#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"35% load\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"ZVS was achieved above 35% load with the adaptive dead time, and "
+      ],
+      "final": "{\"found\":true,\"answer\":\"35% load\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"ZVS was achieved above 35% load with the adaptive dead time, and above 60% load with the fixed one.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "35%",
+          "agrees": true,
+          "reply": "{\"answer\":\"35%\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "fe6e598f",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"rectifier adaptive dead time zero-voltage switching load\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 246,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 5567.402
+          }
+        },
+        {
+          "input": "081760a7",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 519,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 12473.338
+          }
+        },
+        {
+          "input": "05770394",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"35% load\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"ZVS was achieved above 35% load with the adaptive dead time, and above 60% load with the fixed one.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1148,
+            "completionTokens": 66,
+            "cachedTokens": 0,
+            "promptMs": 29158.943
+          }
+        },
+        {
+          "input": "b2aef27f",
+          "output": "{\n\"verdict\": \"yes\"\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 416,
+            "completionTokens": 12,
+            "cachedTokens": 0,
+            "promptMs": 11414.87
+          }
+        },
+        {
+          "input": "253a560b",
+          "output": "{\"answer\":\"35%\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 353,
+            "completionTokens": 8,
+            "cachedTokens": 0,
+            "promptMs": 9341.587
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e11-dead-time-efficiency",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 3,
+      "validCalls": 3,
+      "promptTokens": 1921,
+      "completionTokens": 134,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1147,
+      "cachedTokens": 0,
+      "promptMs": 51517,
+      "modelMs": 71320,
+      "ttftMs": 51669,
+      "wallMs": 95992,
+      "actions": [
+        "search {\"query\":\"adaptive dead time fixed dead time PFC efficiency 20% load\"}",
+        "read {\"docId\":\"sic-pfc-paper#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"The efficiency at 20% load improved from 96.4% to 97.1% when the adaptive dead time replaced the fixed dead time.\",\"evidenc"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The efficiency at 20% load improved from 96.4% to 97.1% when the adaptive dead time replaced the fixed dead time.\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"At 20% load, the efficiency improved from 96.4% to 97.1%.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "improved from 96.4% to 97.1%",
+          "agrees": true,
+          "reply": "{\"answer\":\"improved from 96.4% to 97.1%\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "898f0928",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"adaptive dead time fixed dead time PFC efficiency 20% load\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 256,
+            "completionTokens": 25,
+            "cachedTokens": 0,
+            "promptMs": 7911.776
+          }
+        },
+        {
+          "input": "4314c97b",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 518,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 13391.99
+          }
+        },
+        {
+          "input": "228193f0",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The efficiency at 20% load improved from 96.4% to 97.1% when the adaptive dead time replaced the fixed dead time.\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"At 20% load, the efficiency improved from 96.4% to 97.1%.\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1147,
+            "completionTokens": 91,
+            "cachedTokens": 0,
+            "promptMs": 30212.545
+          }
+        },
+        {
+          "input": "670d6e8f",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 478,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 11050.045
+          }
+        },
+        {
+          "input": "8e27a9b3",
+          "output": "{\"answer\":\"improved from 96.4% to 97.1%\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 386,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 9433.428
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e12-ambient-range",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3493,
+      "completionTokens": 153,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1671,
+      "cachedTokens": 0,
+      "promptMs": 81426,
+      "modelMs": 103229,
+      "ttftMs": 81638,
+      "wallMs": 126347,
+      "actions": [
+        "search {\"query\":\"PFC rectifier prototype tested ambient temperature range\"}",
+        "read {\"docId\":\"sic-pfc-paper#1\"}",
+        "read {\"docId\":\"sic-pfc-paper#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"−25 °C to 55 °C\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The prototype was tested at 230-V, 50-Hz input and 400-V o"
+      ],
+      "final": "{\"found\":true,\"answer\":\"−25 °C to 55 °C\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The prototype was tested at 230-V, 50-Hz input and 400-V output. The converter was tested over an ambient temperature range of −25 °C to 55 °C in a climatic chamber.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "−25 °C to 55 °C",
+          "agrees": true,
+          "reply": "{\"answer\":\"−25 °C to 55 °C\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "c347a43e",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"PFC rectifier prototype tested ambient temperature range\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 243,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 5851.654
+          }
+        },
+        {
+          "input": "82c95bc7",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 509,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 12155.445
+          }
+        },
+        {
+          "input": "c64df7d3",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1070,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 25212.625
+          }
+        },
+        {
+          "input": "156d30e6",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"−25 °C to 55 °C\",\"evidence\":[{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The prototype was tested at 230-V, 50-Hz input and 400-V output. The converter was tested over an ambient temperature range of −25 °C to 55 °C in a climatic chamber.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1671,
+            "completionTokens": 97,
+            "cachedTokens": 0,
+            "promptMs": 38205.903
+          }
+        },
+        {
+          "input": "d8383caa",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 462,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 10907.275
+          }
+        },
+        {
+          "input": "40ef743b",
+          "output": "{\"answer\":\"−25 °C to 55 °C\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 393,
+            "completionTokens": 16,
+            "cachedTokens": 0,
+            "promptMs": 8692.06
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e23-thermal-resistance",
+      "kind": "comparison",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 5205,
+      "completionTokens": 378,
+      "estimatedTokens": false,
+      "maxPromptTokens": 2123,
+      "cachedTokens": 0,
+      "promptMs": 126671,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 183337,
+      "ttftMs": 126834,
+      "wallMs": 183389,
+      "actions": [
+        "search {\"query\":\"KV1200M040 junction-to-case thermal resistance typical PFC paper\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The KV1200M040 datasheet gives a typical junction-to-case thermal resistance of 0.38 K/W (with a range of 0.38 t",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "read {\"docId\":\"sic-pfc-paper#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"The KV1200M040 datasheet gives a typical junction-to-case thermal resistance of 0.38 K/W. The PFC paper uses the same value"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The KV1200M040 datasheet gives a typical junction-to-case thermal resistance of 0.38 K/W. The PFC paper uses the same value of 0.38 K/W.\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Thermal resistance, junction to case RθJC 0.38 0.52 K/W\"},{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The junction-to-case thermal resistance is RθJC = 0.38 K/W.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        },
+        {
+          "docId": "sic-pfc-paper#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 2,
+        "backed": 1
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "dd9c5c3c",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 junction-to-case thermal resistance typical PFC paper\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 262,
+            "completionTokens": 29,
+            "cachedTokens": 0,
+            "promptMs": 6265.645
+          }
+        },
+        {
+          "input": "3f370d4f",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The KV1200M040 datasheet gives a typical junction-to-case thermal resistance of 0.38 K/W (with a range of 0.38 to 0.52 K/W). The PFC paper does not specify a value for junction-to-case thermal resistance; it only mentions the junction-to-case thermal resistance in passing without providing a numerical value.\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Thermal resistance, junction to case RθJC 0.38 0.52 K/W\"},{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The junction-to-case thermal resistance\"}]}\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 533,
+            "completionTokens": 163,
+            "cachedTokens": 0,
+            "promptMs": 14413.059
+          }
+        },
+        {
+          "input": "73a6047e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 765,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 18234.523
+          }
+        },
+        {
+          "input": "0446cf0e",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1522,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 36044.912
+          }
+        },
+        {
+          "input": "febb2f9f",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The KV1200M040 datasheet gives a typical junction-to-case thermal resistance of 0.38 K/W. The PFC paper uses the same value of 0.38 K/W.\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Thermal resistance, junction to case RθJC 0.38 0.52 K/W\"},{\"docId\":\"sic-pfc-paper#2\",\"quote\":\"The junction-to-case thermal resistance is RθJC = 0.38 K/W.\"}]}\n\n}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 2123,
+            "completionTokens": 142,
+            "cachedTokens": 0,
+            "promptMs": 51712.185
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineering",
+      "taskId": "e24-avalanche",
+      "kind": "unanswerable",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true
+      },
+      "stopReason": "final",
+      "calls": 5,
+      "validCalls": 5,
+      "promptTokens": 4350,
+      "completionTokens": 296,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1854,
+      "cachedTokens": 0,
+      "promptMs": 108180,
+      "objections": [
+        "About to conclude that the sources don't answer this; reading what the search found first"
+      ],
+      "modelMs": 151244,
+      "ttftMs": 108446,
+      "wallMs": 151277,
+      "actions": [
+        "search {\"query\":\"KV1200M040 single-pulse avalanche energy rating\"}",
+        "final_answer (rejected) {\"found\":false,\"answer\":\"The provided documents do not contain the single-pulse avalanche energy rating for the KV1200M040. The KV1200M0",
+        "read {\"docId\":\"kv1200m040-datasheet#1\"}",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "final_answer {\"found\":false,\"answer\":\"The provided documents do not contain the single-pulse avalanche energy rating for the KV1200M040. The KV1200M040 datashee"
+      ],
+      "final": "{\"found\":false,\"answer\":\"The provided documents do not contain the single-pulse avalanche energy rating for the KV1200M040. The KV1200M040 datasheet (Rev. 2.1) lists pulsed drain current (150 A), turn-on switching energy (410 μJ), and turn-off switching energy (95 μJ), but does not specify an avalanche energy rating. The cooling loop specification is unrelated to the device's electrical ratings.\",\"evidence\":[]}",
+      "status": "not-found",
+      "evidence": [],
+      "support": {
+        "judged": 3,
+        "backed": 0
+      },
+      "quotesFound": false,
+      "replies": [
+        {
+          "input": "5a7dc77c",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 single-pulse avalanche energy rating\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 249,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 6152.29
+          }
+        },
+        {
+          "input": "c717ddfb",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain the single-pulse avalanche energy rating for the KV1200M040. The KV1200M040 datasheet mentions pulsed drain current (150 A) and turn-on switching energy (410 μJ), but not avalanche energy. The cooling loop specification is unrelated to the device's electrical ratings.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 504,
+            "completionTokens": 98,
+            "cachedTokens": 0,
+            "promptMs": 12389.888
+          }
+        },
+        {
+          "input": "993da932",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 646,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 17019.57
+          }
+        },
+        {
+          "input": "e9b38a44",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1097,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 28558.918
+          }
+        },
+        {
+          "input": "accc00e0",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":false,\"answer\":\"The provided documents do not contain the single-pulse avalanche energy rating for the KV1200M040. The KV1200M040 datasheet (Rev. 2.1) lists pulsed drain current (150 A), turn-on switching energy (410 μJ), and turn-off switching energy (95 μJ), but does not specify an avalanche energy rating. The cooling loop specification is unrelated to the device's electrical ratings.\",\"evidence\":[]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1854,
+            "completionTokens": 120,
+            "cachedTokens": 0,
+            "promptMs": 44058.818
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineeringholdout",
+      "taskId": "eh01-eon",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2771,
+      "completionTokens": 168,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1386,
+      "cachedTokens": 0,
+      "promptMs": 65671,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 89300,
+      "ttftMs": 65914,
+      "wallMs": 111664,
+      "actions": [
+        "search {\"query\":\"KV1200M040 turn-on switching energy\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"410 μJ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Turn-on switching energy Eon 410 μJ\"}]}",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"410 μJ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Turn-on switching energy Eon 410 μJ\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"410 μJ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Turn-on switching energy Eon 410 μJ\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "410 μJ",
+          "agrees": true,
+          "reply": "{\"answer\":\"410 μJ\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "11302d89",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 turn-on switching energy\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 249,
+            "completionTokens": 24,
+            "cachedTokens": 0,
+            "promptMs": 5877.888
+          }
+        },
+        {
+          "input": "f15ded4e",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"410 μJ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Turn-on switching energy Eon 410 μJ\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 507,
+            "completionTokens": 59,
+            "cachedTokens": 0,
+            "promptMs": 11571.757
+          }
+        },
+        {
+          "input": "4fc39ff5",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 629,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 14449.184
+          }
+        },
+        {
+          "input": "fca1d9fb",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"410 μJ\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Turn-on switching energy Eon 410 μJ\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1386,
+            "completionTokens": 59,
+            "cachedTokens": 0,
+            "promptMs": 33771.631
+          }
+        },
+        {
+          "input": "f0e20de1",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 425,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 9788.427
+          }
+        },
+        {
+          "input": "38d683b5",
+          "output": "{\"answer\":\"410 μJ\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 361,
+            "completionTokens": 10,
+            "cachedTokens": 0,
+            "promptMs": 9920.178
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineeringholdout",
+      "taskId": "eh02-threshold",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2961,
+      "completionTokens": 315,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1473,
+      "cachedTokens": 0,
+      "promptMs": 72071,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 118262,
+      "ttftMs": 72310,
+      "wallMs": 141274,
+      "actions": [
+        "search {\"query\":\"KV1200M040 gate threshold voltage\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"The typical gate threshold voltage (VGS(th)) of the KV1200M040 is 1.8 V, with a range of 1.8 to 2.6 V when VDS =",
+        "read {\"docId\":\"kv1200m040-datasheet#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"The typical gate threshold voltage (VGS(th)) of the KV1200M040 is 2.6 V, with a minimum of 1.8 V and a maximum of 3.6 V, me"
+      ],
+      "final": "{\"found\":true,\"answer\":\"The typical gate threshold voltage (VGS(th)) of the KV1200M040 is 2.6 V, with a minimum of 1.8 V and a maximum of 3.6 V, measured under conditions of VDS = VGS and ID = 10 mA.\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Gate threshold voltage VGS(th) VDS = VGS, ID = 10 mA 1.8 2.6 3.6 V\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "kv1200m040-datasheet#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "1.8 2.6 3.6 V",
+          "agrees": true,
+          "reply": "{\"answer\":\"1.8 2.6 3.6 V\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "d34092aa",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"KV1200M040 gate threshold voltage\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 248,
+            "completionTokens": 23,
+            "cachedTokens": 0,
+            "promptMs": 6856.379
+          }
+        },
+        {
+          "input": "13a8a5da",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The typical gate threshold voltage (VGS(th)) of the KV1200M040 is 1.8 V, with a range of 1.8 to 2.6 V when VDS = VGS and ID = 10 mA.\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Gate threshold voltage VGS(th) VDS = VGS, ID = 10 mA 1.8 2.6 3.6 V\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 524,
+            "completionTokens": 129,
+            "cachedTokens": 0,
+            "promptMs": 13778.202
+          }
+        },
+        {
+          "input": "90d8b3b0",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"kv1200m040-datasheet#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 716,
+            "completionTokens": 26,
+            "cachedTokens": 0,
+            "promptMs": 17702.433
+          }
+        },
+        {
+          "input": "f6211f3c",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"The typical gate threshold voltage (VGS(th)) of the KV1200M040 is 2.6 V, with a minimum of 1.8 V and a maximum of 3.6 V, measured under conditions of VDS = VGS and ID = 10 mA.\",\"evidence\":[{\"docId\":\"kv1200m040-datasheet#2\",\"quote\":\"Gate threshold voltage VGS(th) VDS = VGS, ID = 10 mA 1.8 2.6 3.6 V\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1473,
+            "completionTokens": 137,
+            "cachedTokens": 0,
+            "promptMs": 33735.145
+          }
+        },
+        {
+          "input": "ce301633",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 491,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 10916.801
+          }
+        },
+        {
+          "input": "3d2b6c40",
+          "output": "{\"answer\":\"1.8 2.6 3.6 V\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 369,
+            "completionTokens": 17,
+            "cachedTokens": 0,
+            "promptMs": 8586.477
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineeringholdout",
+      "taskId": "eh03-thd-full-load",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3608,
+      "completionTokens": 117,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1727,
+      "cachedTokens": 0,
+      "promptMs": 84529,
+      "modelMs": 101261,
+      "ttftMs": 84668,
+      "wallMs": 122669,
+      "actions": [
+        "search {\"query\":\"totem-pole PFC prototype THD full load\"}",
+        "read {\"docId\":\"sic-pfc-paper#1\"}",
+        "read {\"docId\":\"sic-pfc-paper#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"2.4%\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"100% 98.2% 0.999 2.4%\"}]}"
+      ],
+      "final": "{\"found\":true,\"answer\":\"2.4%\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"100% 98.2% 0.999 2.4%\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "2.4%",
+          "agrees": true,
+          "reply": "{\"answer\":\"2.4%\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "06f5e5f0",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"totem-pole PFC prototype THD full load\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 246,
+            "completionTokens": 22,
+            "cachedTokens": 0,
+            "promptMs": 6192.793
+          }
+        },
+        {
+          "input": "c4ed186f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 537,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 13070.398
+          }
+        },
+        {
+          "input": "1c2ba6bb",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1098,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 26255.831
+          }
+        },
+        {
+          "input": "6e8440b0",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"2.4%\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"100% 98.2% 0.999 2.4%\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1727,
+            "completionTokens": 59,
+            "cachedTokens": 0,
+            "promptMs": 39010.436
+          }
+        },
+        {
+          "input": "cb5408af",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 434,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 10177.547
+          }
+        },
+        {
+          "input": "e4b41f6d",
+          "output": "{\"answer\":\"2.4%\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 371,
+            "completionTokens": 9,
+            "cachedTokens": 0,
+            "promptMs": 8968.337
+          }
+        }
+      ]
+    },
+    {
+      "suite": "engineeringholdout",
+      "taskId": "eh04-titanium-margin",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 3613,
+      "completionTokens": 136,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1726,
+      "cachedTokens": 0,
+      "promptMs": 95164,
+      "modelMs": 115752,
+      "ttftMs": 95298,
+      "wallMs": 140274,
+      "actions": [
+        "search {\"query\":\"PFC rectifier 80 PLUS Titanium efficiency 50% load exceed\"}",
+        "read {\"docId\":\"sic-pfc-paper#1\"}",
+        "read {\"docId\":\"sic-pfc-paper#3\"}",
+        "final_answer {\"found\":true,\"answer\":\"2.6 percentage points\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"The proposed converter exceeds the 80 PLUS Titanium "
+      ],
+      "final": "{\"found\":true,\"answer\":\"2.6 percentage points\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"The proposed converter exceeds the 80 PLUS Titanium requirement of 96% efficiency at 50% load with a margin of 2.6 percentage points.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "sic-pfc-paper#3",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "2.6 percentage points",
+          "agrees": true,
+          "reply": "{\"answer\":\"2.6 percentage points\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "4936a945",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"PFC rectifier 80 PLUS Titanium efficiency 50% load exceed\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 254,
+            "completionTokens": 27,
+            "cachedTokens": 0,
+            "promptMs": 6371.934
+          }
+        },
+        {
+          "input": "72ec07a9",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#1\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 536,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 13863.875
+          }
+        },
+        {
+          "input": "9a139a19",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"sic-pfc-paper#3\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1097,
+            "completionTokens": 18,
+            "cachedTokens": 0,
+            "promptMs": 28995.865
+          }
+        },
+        {
+          "input": "d855713e",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"2.6 percentage points\",\"evidence\":[{\"docId\":\"sic-pfc-paper#3\",\"quote\":\"The proposed converter exceeds the 80 PLUS Titanium requirement of 96% efficiency at 50% load with a margin of 2.6 percentage points.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1726,
+            "completionTokens": 73,
+            "cachedTokens": 0,
+            "promptMs": 45931.85
+          }
+        },
+        {
+          "input": "a36cf1ac",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 412,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 11747.75
+          }
+        },
+        {
+          "input": "19d9d30e",
+          "output": "{\"answer\":\"2.6 percentage points\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 348,
+            "completionTokens": 10,
+            "cachedTokens": 0,
+            "promptMs": 10048.586
+          }
+        }
+      ]
+    },
+    {
+      "suite": "physics",
+      "taskId": "ph21-bec-onset",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "casedFacts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2669,
+      "completionTokens": 182,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1230,
+      "cachedTokens": 0,
+      "promptMs": 71811,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 99074,
+      "ttftMs": 71970,
+      "wallMs": 119620,
+      "actions": [
+        "search {\"query\":\"Bose–Einstein condensation set in all-optical 87Rb experiment temperature\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"180 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"Condensation sets in at a temperature of 180 nK, with 4",
+        "read {\"docId\":\"rb87-bec-paper#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"180 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"Condensation sets in at a temperature of 180 nK, with 4 × 10⁵ atom"
+      ],
+      "final": "{\"found\":true,\"answer\":\"180 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"Condensation sets in at a temperature of 180 nK, with 4 × 10⁵ atoms.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "rb87-bec-paper#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 1,
+        "backed": 1,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "180 nK",
+          "agrees": true,
+          "reply": "{\"answer\":\"180 nK\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "d766d8a9",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"Bose–Einstein condensation set in all-optical 87Rb experiment temperature\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 253,
+            "completionTokens": 30,
+            "cachedTokens": 0,
+            "promptMs": 7092.86
+          }
+        },
+        {
+          "input": "b270ac1c",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"180 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"Condensation sets in at a temperature of 180 nK, with 4 × 10⁵\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 532,
+            "completionTokens": 65,
+            "cachedTokens": 0,
+            "promptMs": 15513.037
+          }
+        },
+        {
+          "input": "7982864f",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"rb87-bec-paper#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 654,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 17991.444
+          }
+        },
+        {
+          "input": "e68aec3a",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"180 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"Condensation sets in at a temperature of 180 nK, with 4 × 10⁵ atoms.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1230,
+            "completionTokens": 67,
+            "cachedTokens": 0,
+            "promptMs": 31214.097
+          }
+        },
+        {
+          "input": "e0784cb3",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 393,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 9933.428
+          }
+        },
+        {
+          "input": "fcf84876",
+          "output": "{\"answer\":\"180 nK\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 329,
+            "completionTokens": 10,
+            "cachedTokens": 0,
+            "promptMs": 7850.589
+          }
+        }
+      ]
+    },
+    {
+      "suite": "physicsholdout",
+      "taskId": "phh06-chemical-potential",
+      "kind": "lookup",
+      "mode": "constrained",
+      "passed": true,
+      "checks": {
+        "finished": true,
+        "found": true,
+        "citationsExist": true,
+        "facts": true,
+        "casedFacts": true,
+        "citations": true,
+        "evidence": true
+      },
+      "stopReason": "final",
+      "calls": 4,
+      "validCalls": 4,
+      "promptTokens": 2712,
+      "completionTokens": 216,
+      "estimatedTokens": false,
+      "maxPromptTokens": 1246,
+      "cachedTokens": 0,
+      "promptMs": 65521,
+      "objections": [
+        "About to answer from search snippets; reading the documents it quotes first"
+      ],
+      "modelMs": 96899,
+      "ttftMs": 65670,
+      "wallMs": 121201,
+      "actions": [
+        "search {\"query\":\"chemical potential 87Rb condensate temperature\"}",
+        "final_answer (rejected) {\"found\":true,\"answer\":\"58 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"chemical potential of μ = h × 1.2 kHz, or μ/kB = 58 nK, ",
+        "read {\"docId\":\"rb87-bec-paper#2\"}",
+        "final_answer {\"found\":true,\"answer\":\"58 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"With the s-wave scattering length a = 100 a0, the Thomas–Fermi mode"
+      ],
+      "final": "{\"found\":true,\"answer\":\"58 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"With the s-wave scattering length a = 100 a0, the Thomas–Fermi model gives a chemical potential of μ = h × 1.2 kHz, or μ/kB = 58 nK, and a peak density of 2.5 × 10¹⁴ cm⁻³.\"}]}",
+      "status": "verified",
+      "evidence": [
+        {
+          "docId": "rb87-bec-paper#2",
+          "verified": true
+        }
+      ],
+      "support": {
+        "judged": 0,
+        "backed": 0,
+        "review": "yes",
+        "crossCheck": {
+          "extracted": "58 nK",
+          "agrees": true,
+          "reply": "{\"answer\":\"58 nK\"}"
+        }
+      },
+      "quotesFound": true,
+      "replies": [
+        {
+          "input": "45bc4044",
+          "output": "{\"tool\":\"search\",\"args\":{\"query\":\"chemical potential 87Rb condensate temperature\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 249,
+            "completionTokens": 21,
+            "cachedTokens": 0,
+            "promptMs": 5894.75
+          }
+        },
+        {
+          "input": "bb79c6cf",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"58 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"chemical potential of μ = h × 1.2 kHz, or μ/kB = 58 nK, and a\"}]}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 547,
+            "completionTokens": 66,
+            "cachedTokens": 0,
+            "promptMs": 13851.069
+          }
+        },
+        {
+          "input": "bbadd0f4",
+          "output": "{\"tool\":\"read\",\"args\":{\"docId\":\"rb87-bec-paper#2\"}}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 670,
+            "completionTokens": 20,
+            "cachedTokens": 0,
+            "promptMs": 16652.741
+          }
+        },
+        {
+          "input": "58328cdf",
+          "output": "{\"tool\":\"final_answer\",\"args\":{\"found\":true,\"answer\":\"58 nK\",\"evidence\":[{\"docId\":\"rb87-bec-paper#2\",\"quote\":\"With the s-wave scattering length a = 100 a0, the Thomas–Fermi model gives a chemical potential of μ = h × 1.2 kHz, or μ/kB = 58 nK, and a peak density of 2.5 × 10¹⁴ cm⁻³.\"}]} }",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 1246,
+            "completionTokens": 109,
+            "cachedTokens": 0,
+            "promptMs": 29122.056
+          }
+        },
+        {
+          "input": "51ec4684",
+          "output": "{\"verdict\":\"yes\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 491,
+            "completionTokens": 7,
+            "cachedTokens": 0,
+            "promptMs": 11514.568
+          }
+        },
+        {
+          "input": "78eda34f",
+          "output": "{\"answer\":\"58 nK\"}",
+          "finishReason": "stop",
+          "usage": {
+            "promptTokens": 428,
+            "completionTokens": 9,
+            "cachedTokens": 0,
+            "promptMs": 10390.76
+          }
+        }
+      ]
+    }
+  ]
+}
