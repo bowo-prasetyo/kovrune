@@ -32,6 +32,20 @@ export interface PdfLine {
   y?: number;
   /** The height of its tallest piece: the size of its text. */
   h?: number;
+  /**
+   * Its cells, where pieces are set at least `CELL_GAP` text heights apart, as a table's columns are
+   * (harness 0.109.0). Only on lines of two cells or more.
+   */
+  cells?: PdfCell[];
+  /** The line is a row of a table, written with "|" between its cells (`withTables`). */
+  table?: boolean;
+}
+
+/** A cell of a line: its text, and where it starts and ends across the page. */
+export interface PdfCell {
+  text: string;
+  x0: number;
+  x1: number;
 }
 
 /**
@@ -51,6 +65,13 @@ const SMALLER = 0.9;
 const SUPERSCRIPT: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "−": "⁻", "–": "⁻", "+": "⁺" };
 const RAISABLE = /^[0-9+\-−–]+$/;
 const raise = (text: string) => [...text].map((c) => SUPERSCRIPT[c] ?? c).join("");
+
+/**
+ * Pieces of a line set at least this many text heights apart are in two cells of a table (harness
+ * 0.109.0). A space between words is a quarter to a third of the height, and a justified line's rarely
+ * more than two thirds; a table's columns are set an em or more apart.
+ */
+const CELL_GAP = 0.8;
 
 /** Whether a piece is laid out left to right and not rotated, so its x and width can be compared. */
 function upright(item: PdfTextItem): boolean {
@@ -76,6 +97,16 @@ export function pageLines(items: PdfTextItem[]): PdfLine[] {
   // The baseline and height of the line's last piece set at the text's size, and the last piece itself.
   let base: { y: number; h: number } | undefined;
   let last: { y: number; h: number; text: string; raised: boolean } | undefined;
+  // The line's cells so far: where each starts in its text, and its extent; and where the last piece with text ended.
+  let cells: { at: number; x0: number; x1: number }[] = [];
+  let inked: number | undefined;
+  // A piece without a position: the line's cells cannot be told apart.
+  let unplaced = false;
+  const closeLine = () => {
+    const placed = cells.length >= 2 && !unplaced ? cells.map((c, i) => ({ text: line.text.slice(c.at, cells[i + 1]?.at).replace(/\s+/g, " ").trim(), x0: c.x0, x1: c.x1 })) : [];
+    if (placed.length >= 2 && placed.every((c) => c.text)) line.cells = placed;
+    lines.push(line);
+  };
   for (const item of items) {
     if (typeof item.str !== "string") continue;
     const placed = upright(item);
@@ -93,6 +124,14 @@ export function pageLines(items: PdfTextItem[]): PdfLine[] {
         const touching = placed && end !== undefined && Math.abs(item.transform![4]! - end) <= TOUCHING * Math.max(size, item.height ?? 0, 1);
         if (!touching) line.text += " ";
       }
+      if (placed && item.str.trim()) {
+        const x = item.transform![4]!;
+        const gap = Math.max(size, item.height ?? 0, 1) * CELL_GAP;
+        const current = cells.at(-1);
+        if (!current || (inked !== undefined && x - inked >= gap)) cells.push({ at: line.text.length, x0: x, x1: x + item.width! });
+        else current.x1 = Math.max(current.x1, x + item.width!);
+        inked = x + item.width!;
+      } else if (item.str.trim()) unplaced = true;
       line.text += raised ? raise(item.str) : item.str;
       if (y !== undefined && item.str.trim() && h > 0) {
         if (!raised) base = { y, h };
@@ -109,16 +148,105 @@ export function pageLines(items: PdfTextItem[]): PdfLine[] {
     }
     end = placed ? item.transform![4]! + item.width! : undefined;
     if (item.hasEOL) {
-      lines.push(line);
+      closeLine();
       line = { text: "" };
+      cells = [];
+      inked = undefined;
+      unplaced = false;
       end = undefined;
       size = 0;
       base = undefined;
       last = undefined;
     }
   }
-  lines.push(line);
-  return lines.map((l) => ({ ...l, text: l.text.replace(/[ \t]+/g, " ").trim() })).filter((l) => l.text);
+  closeLine();
+  return withTables(lines.map((l) => ({ ...l, text: l.text.replace(/[ \t]+/g, " ").trim() })).filter((l) => l.text));
+}
+
+/** A table has at least this many columns: two columns are usually labels and values, which lose no cell. */
+const MIN_COLUMNS = 3;
+/** Rows of one table are at most this many text heights apart. */
+const ROW_GAP = 2.5;
+/** What an empty cell is written as. */
+const EMPTY_CELL = "–";
+
+/** How much of [a0, a1] lies in [b0, b1]. */
+const overlap = (a0: number, a1: number, b0: number, b1: number) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+
+/**
+ * The columns a cell is under: those its extent overlaps, or, where it overlaps none (it sits in the
+ * gap between two), the nearest.
+ */
+function columnsUnder(cell: PdfCell, columns: { x0: number; x1: number }[]): number[] {
+  const under = columns.flatMap((c, i) => (overlap(cell.x0, cell.x1, c.x0, c.x1) > 0 ? [i] : []));
+  if (under.length) return under;
+  const middle = (cell.x0 + cell.x1) / 2;
+  let nearest = 0;
+  columns.forEach((c, i) => {
+    const distance = (x: { x0: number; x1: number }) => Math.max(x.x0 - middle, middle - x.x1, 0);
+    if (distance(c) < distance(columns[nearest]!)) nearest = i;
+  });
+  return [nearest];
+}
+
+/**
+ * A page's lines with its tables written as rows of cells, "| A0 | 0 | 99.2 | 17.8 | 3.6 | 410 |", as
+ * Europe PMC's tables are (harness 0.109.0). Until then a table's rows were their cells joined with
+ * spaces, and an empty cell left nothing: in "ZTA-20 20 98.6 5.9 610", 5.9 read as the hardness when it
+ * is the toughness, under an empty hardness cell (docs/materials-science-audit.md, MS5). The materials
+ * suite's model read it so.
+ *
+ * A table is a run of three lines or more, one after the other down the page, each of two cells or more,
+ * where at least two rows have the most cells, three or more, and those rows' cells line up: the columns
+ * are where their cells are. A row of fewer cells has each of them under the column it overlaps, and
+ * "–" in the columns it leaves empty. A row with a cell across two columns or more, such as a header
+ * over two columns, or two cells under one column, is written as its cells, with nothing filled in. Lines
+ * of one or no cell (a caption, a note, a sentence) end a table.
+ */
+export function withTables(lines: PdfLine[]): PdfLine[] {
+  const out = lines.map((l) => ({ ...l }));
+  let start = 0;
+  while (start < out.length) {
+    let end = start;
+    while (
+      end < out.length &&
+      out[end]!.cells &&
+      (end === start || (out[end - 1]!.y !== undefined && out[end]!.y !== undefined && out[end - 1]!.y! > out[end]!.y! && out[end - 1]!.y! - out[end]!.y! <= ROW_GAP * Math.max(out[end - 1]!.h ?? 0, out[end]!.h ?? 0, 1)))
+    )
+      end++;
+    if (end === start) {
+      start++;
+      continue;
+    }
+    writeTable(out.slice(start, end));
+    start = end;
+  }
+  return out;
+}
+
+/** Writes a run of lines of cells as a table, when it is one (withTables); otherwise leaves them. */
+function writeTable(rows: PdfLine[]): void {
+  if (rows.length < 3) return;
+  const most = Math.max(...rows.map((r) => r.cells!.length));
+  const full = rows.filter((r) => r.cells!.length === most);
+  if (most < MIN_COLUMNS || full.length < 2) return;
+  // Box-drawing characters set in columns are a drawing, a directory tree or a diagram, not a table.
+  if (rows.some((r) => r.cells!.some((c) => /[\u2500-\u257f]/.test(c.text)))) return;
+  // The columns: where the cells of the rows with the most cells are, which must not overlap.
+  const columns = full[0]!.cells!.map((_, i) => ({ x0: Math.min(...full.map((r) => r.cells![i]!.x0)), x1: Math.max(...full.map((r) => r.cells![i]!.x1)) }));
+  if (columns.some((c, i) => i > 0 && c.x0 <= columns[i - 1]!.x1)) return;
+  for (const row of rows) {
+    const cells = row.cells!;
+    const under = cells.map((cell) => columnsUnder(cell, columns));
+    const placed = under.every((u) => u.length === 1) && new Set(under.map((u) => u[0])).size === cells.length;
+    let texts = cells.map((c) => c.text);
+    if (placed) {
+      texts = columns.map(() => EMPTY_CELL);
+      cells.forEach((cell, i) => (texts[under[i]![0]!] = cell.text));
+    }
+    row.text = `| ${texts.join(" | ")} |`;
+    row.table = true;
+  }
 }
 
 /** A line's text as compared across pages: digits as "#", so "Page 2 of 3" and "Page 3 of 3" are one line. */
@@ -202,6 +330,8 @@ function lineSpacing(lines: PdfLine[]): number | undefined {
  * of a title in large type are not each a paragraph.
  */
 function paragraphEnds(a: PdfLine, b: PdfLine, spacing: number | undefined): boolean {
+  // A table is a paragraph of its own, whatever the space between its rows (harness 0.109.0).
+  if (a.table || b.table) return !(a.table && b.table);
   if (a.y === undefined || b.y === undefined || !a.h) return false;
   const gap = a.y - b.y;
   // Larger text, such as a title, is set with more space between its lines: that is not a paragraph's end.

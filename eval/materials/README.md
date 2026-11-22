@@ -84,6 +84,57 @@ The two spellings still missed are ranking alone: "titanium diboride" adds "tib2
 
 **Nothing else moves.** `bench:retrieval` gives every other suite exactly the figures it gave before (research, pdf, field, office, clinical, engineering, physics, cs, lab, math, chem, socsci), the chemistry entries add what they added before, and `bench:replay --base origin/main` on the latest recorded runs of every suite (field and held out at 0.75.0, clinical at 0.84.0, CS, lab and their held-out sets at 0.78.0, engineering at 0.68.0, physics at 0.91.0, chemistry at 0.94.0, mathematics at 0.100.0, social sciences at 0.104.0) finds **no task that makes a different request**. The tasks it can't decide are the same with `main` against itself. Tests: `tests/retrieval.test.ts` ("materials names in search"), `tests/chemical-names.test.ts` ("materials names").
 
+## Recommendations 7–10 (0.109.0)
+
+### Values, phases and formulas in the sentence check (MS1, MS2, MS6)
+
+Measured on the audit's 72 pairs of a right and a wrong sentence, each against a quote typical of the field ([appendix](../../docs/materials-science-audit.md#appendix-the-72-sentence-pairs)):
+
+| | Wrong sentences caught | Right sentences backed |
+| --- | --- | --- |
+| 0.108.0 | 38 of 72 | 70 of 72 |
+| with phases, structures and opposites (`phases.ts`, `OPPOSITES`) | 58 of 72 | 70 of 72 |
+| and values tied to their property (`properties.ts`) | 67 of 72 | 70 of 72 |
+
+- **A value is tied to its property** (`src/agent/properties.ts`): to the one property named before it in its clause ("yield strength of 880 MPa", "a Voc of 1.18 V"), or, with none there, right after it ("98% relative density"). A sentence giving a value to a property is not backed by quotes that give that value only to other properties: yield strength for tensile strength, hardness for modulus, Tg for Tm, Jsc for Voc, Coulombic efficiency for capacity retention, porosity for density, remanence for saturation magnetization, hole for electron mobility, fill factor for efficiency. A value the quotes give to no property (a table cell, "the YS and UTS were 880 and 950 MPa") backs any.
+- **Phases and structures are sets** (`src/agent/phases.ts`, read by chemistry.ts as it reads (R)/(S)): lattices (fcc, bcc, hcp, in words too), crystal systems, TiO₂'s polymorphs, steels' phases, wurtzite and zinc blende, γ′ and γ″, carbon's Raman bands, the atmosphere a sample was heated in, and space groups in one form (Fm3̄m, Fm-3m and F m -3 m are one).
+- **The field's opposites** join support.ts's: ductile/brittle, intergranular/transgranular, harder/softer, coarse/fine, direct/indirect, ordered/disordered, ferroelectric/paraelectric, thermoplastic/thermoset, single-crystal/polycrystalline, passive/pitted.
+- **Formulas with the same metals** (chemistry.ts): a formula with the quotes' metals and other non-metals is another compound (CsPbBr₃ for CsPbI₃, MoSe₂ for MoS₂), when written with a count, since "GeV" and "TeV" read as formulas of vanadium. An MXene's "Tx" is read; perovskites by their A-site cation (MAPbI₃, FAPbI₃), alloy designations (Ti-6Al-4V, Ti-4Al-6V), oxide cathodes by family (NMC, NCA) and rGO against GO are sets.
+- **Still missed** (4 of 72): an order of words, "austenite into martensite" for "martensite into austenite", "the yield stress in tension exceeded that in compression" and Hall–Petch reversed; and "fully ferritic with no austenite" for "fully austenitic with no delta ferrite", which names both phases, as a quote naming both backs either. The audit left these to the model's own checks.
+- **Recorded answers:** `bench:rescore --labels` on every recorded report that replays (10,113 answers in 201 reports) changes no label. A first version read "GeV" against a title's "TeV" as two compounds of vanadium and took a right physics answer's label (ph13); a formula must now have a count to be compared by its metals.
+
+### PDF tables keep their columns (MS5)
+
+`src/documents/pdf-layout.ts` splits a line into cells where its pieces are set at least 0.8 text heights apart, and a run of three lines or more, each of two cells or more, with two rows of the most cells (three or more) whose cells line up, is a table: each row is written "| a | b | c |", each cell under the column it overlaps, and an empty cell "–". A row with a cell across columns (a header over two) is written as its cells. Box-drawing characters set in columns are a drawing, not a table.
+
+- **The suite's report:** "ZTA-20 20 98.6 5.9 610" now reads "| ZTA-20 | 20 | 98.6 | – | 5.9 | 610 |", under its header. The engineering datasheet's typical and maximum columns keep their places too ("| RθJA | – | 40 | K/W |": 40 is the maximum).
+- **42 papers from arXiv's cond-mat.mtrl-sci** (a week's new papers, fetched 2026-11-22, read only to test and not kept): 1,056 lines in 24 of them were written as table rows. The 19 with a cell of 70 characters or more were all read: tables, lists of symbols, equations set in columns, and one table of contents with dot leaders; none was running text. A table whose columns are set closer than 0.8 text heights is read as before; at 1.0, many tables' headers were.
+- **What changes elsewhere:** a quote of a row as it read before is still found, since quotes ignore "|" and a lone "–". `bench:rescore` changes no label and `bench:retrieval` gives every suite the same figures. `bench:replay --base origin/main` finds the requests unchanged in every suite but the tasks that read a PDF table: 14 of the engineering suite's (its datasheet and paper), 2 of the physics suite's (its paper's table) and 3 of this suite's (the test report). They were run with a model ([Results](#results)).
+
+### OPTIMADE providers (MS9)
+
+OPTIMADE is the open API that crystal-structure databases serve. Each provider was asked, on 2026-11-22, for the binary Al–O structures (`elements HAS ALL "Al","O" AND nelements=2`), with an `Origin` header as a web page sends:
+
+| Database | Answers a search | Allows web pages (CORS) | Key | Time | Note |
+| --- | --- | --- | --- | --- | --- |
+| Alexandria (PBE, PBEsol) | yes | yes (`*`) | none | about 1 s | band gap, formation energy, hull distance, space group per structure |
+| NOMAD | yes | yes (`*`) | none | 2–3 s | uploaded calculations of every kind; 437 provider fields on one record |
+| MPDS | yes | yes (the origin) | needed for data | 1 s | without a key: "anonymous access: omitted fields", no elements or cell; commercial licence |
+| Matterverse | yes | yes (`*`) | none | 8 s | generated (hypothetical) structures |
+| Materials Project | yes | no | none | 0.6 s | |
+| Crystallography Open Database | yes | no | none | 1.6 s | the open database of measured structures |
+| JARVIS-DFT | yes | no | none | 1.6 s | |
+| AFLOW | yes | no | none | 0.4 s | no lattice in the answer |
+| OQMD | no answer in 60 s | – | – | – | |
+| Materials Cloud | not checked | – | – | – | redirects to a host this session's network did not allow |
+
+Alexandria answers fastest of those a web page can read, with no key, and gives the values a materials scientist looks up: each structure's space group, band gap, formation energy and distance from the convex hull. It is now an open source (`src/sources/alexandria.ts`): a search is a formula, a materials name Kovrune knows ("LLZO") or a list of elements, and lists up to five structures, the most stable first; a structure is read with its cell worked out from its lattice vectors and every value said to be computed with PBE. "LLZO" finds Li₇La₃Zr₂O₁₂ in space group 142 (I4₁/acd, tetragonal), 0.006 eV/atom above the hull, the tetragonal garnet. The Crystallography Open Database, the open database of measured structures, and the Materials Project cannot be read from a web page until they send a CORS header.
+
+### Instrument files and CIF values (MS11)
+
+- **.xrdml**, as PANalytical's diffractometers save a scan (`src/documents/xrdml.ts`): the sample, comments, wavelength (Kα1, Kα2, Kβ), tube, and each scan's mode, 2θ and ω ranges, points, step (worked out from the range and the points) and counting time, with when and by whom it was measured. The counts are not written, as for JCAMP-DX.
+- **A CIF's cell volume and calculated density** are worked out where the file leaves them out, and say so: the volume from the six cell parameters, the density from Z, the formula weight (or the formula's) and the volume. The suite's CIF gives both, so it reads as before.
+
 ## Results
 
 Qwen3.5-4B (Q4_K_M, llama.cpp `fae9ac5`, 4,096 tokens of context, thinking off, constrained mode), harness 0.108.0, run on a 4-core CPU at about 8 tokens a second ([`eval/results/materials-0.108-qwen3.5-4b-q4km.json`](../results/materials-0.108-qwen3.5-4b-q4km.json), merged from six runs of ten tasks):
@@ -98,9 +149,22 @@ Every failure was read, and none is a defect of its task (the value asked for is
 
 - **Search missed the passage** (m08): the TC25 composition table was not retrieved; the model said so instead of guessing.
 - **The model stopped short** (m01, m04, m19): it gave the other alloy's yield-strength loss (65 MPa for B4N), left out the 15–20% grain refining it was asked for, and said the 1.5 mg/mL fill factor was not given although the table row was in its passage.
-- **Unanswerable questions answered** (m44, m46, m47, mh13): no unanswerable question was declined. Three were answered with a quote of a near neighbour, and labelled "Quotes found": the conductivity at 1100 °C for 1150 °C (m46), the creep life at 550 °C for 600 °C (m47), and, in m44, the MS5 probe, 5.9 GPa as the hardness of ZTA-20. 5.9 is its fracture toughness: the PDF's empty hardness cell is dropped, so the row reads "ZTA-20 20 98.6 5.9 610" and the quote is found word for word. This is the failure the audit predicted (MS5); recommendation 7 is its fix. mh13 gave the 200-cycle retention for 500 cycles, but said it was not the value asked for, and was not labelled.
+- **Unanswerable questions answered** (m44, m46, m47, mh13): no unanswerable question was declined. Three were answered with a quote of a near neighbour, and labelled "Quotes found": the conductivity at 1100 °C for 1150 °C (m46), the creep life at 550 °C for 600 °C (m47), and, in m44, the MS5 probe, 5.9 GPa as the hardness of ZTA-20. 5.9 is its fracture toughness: the PDF's empty hardness cell is dropped, so the row reads "ZTA-20 20 98.6 5.9 610" and the quote is found word for word. This is the failure the audit predicted (MS5); recommendation 8 is its fix (0.109.0). mh13 gave the 200-cycle retention for 500 cycles, but said it was not the value asked for, and was not labelled.
 
 The four wrong answers labelled "Quotes found" all quote a real value of a neighbouring condition; the label says the quotes are in the documents, which they are, not that they answer the question. `bench:rescore` gives the same labels.
+
+### Harness 0.109.0
+
+The same model, server and settings, on the same machine ([`eval/results/materials-0.109-qwen3.5-4b-q4km.json`](../results/materials-0.109-qwen3.5-4b-q4km.json)):
+
+| Suite | Passed (0.108.0) | Passed (0.109.0) | Labelled "Quotes found" and wrong (0.108.0 → 0.109.0) |
+| --- | --- | --- | --- |
+| materials | 40 of 47 | 41 of 47 | 4 → 3 |
+| materialsholdout | 12 of 13 | 12 of 13 | 0 → 0 |
+
+One task changed, the one the table fix was for. In m44 the model now read the test report's row as "| ZTA-20 | 20 | 98.6 | – | 5.9 | 610 |" and answered that "Table 1 in the report shows a blank cell for the hardness of ZTA-20, indicating it was not measured", where in 0.108.0 it gave the toughness, 5.9, as the hardness, labelled "Quotes found". The other 59 answers are those of 0.108.0. The checks of MS1, MS2 and MS6 change no label of either run: the wrong answers left quote a real value of a neighbouring condition (1100 °C for 1150 °C, 550 °C for 600 °C), which no word check can tell from the right one.
+
+The 20 tasks of the engineering and physics suites whose requests the table fix changed (their datasheet's and paper's tables) were run at main and at this branch with the same model ([`pdftables-0.109-base-…`](../results/pdftables-0.109-base-qwen3.5-4b-q4km.json), [`pdftables-0.109-…`](../results/pdftables-0.109-qwen3.5-4b-q4km.json)): 20 of 20 pass at both, with 17 labelled "Quotes found" at both and none of them wrong.
 
 ## Limits
 

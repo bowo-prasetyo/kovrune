@@ -5,6 +5,7 @@
 
 import { words } from "../documents/scripts.ts";
 import { chemistryBacked, chemistryBacking } from "./chemistry.ts";
+import { propertiesBacked, propertyBacking } from "./properties.ts";
 import { formulaOffQuestion, mathBacked, mathBacking, proofOffQuestion } from "./mathematics.ts";
 import { DOWN, interviewerQuote, restatesComparison, socialBacked, socialBacking, UP } from "./socialscience.ts";
 import { readableMath } from "../documents/math.ts";
@@ -879,6 +880,18 @@ const OPPOSITES: Array<[string[], string[]]> = [
     ["promote", "promotes", "promoted", "promoting", "accelerate", "accelerates", "accelerated", "accelerating"],
     ["suppress", "suppresses", "suppressed", "suppressing", "retard", "retards", "retarded", "retarding", "inhibit", "inhibits", "inhibited", "inhibiting"],
   ],
+  // Materials opposites (harness 0.109.0; docs/materials-science-audit.md, MS2): how a material broke, deformed or
+  // behaved, and its grains and order, read the wrong way round. Phases and structures are sets, in phases.ts.
+  [["ductile", "ductility"], ["brittle", "brittleness", "embrittled", "embrittlement"]],
+  [["intergranular"], ["transgranular"]],
+  [["harder", "hardest"], ["softer", "softest"]],
+  [["coarse", "coarser", "coarsest", "coarsened", "coarsening", "coarsegrained"], ["fine", "finer", "finest", "finegrained", "ultrafine", "refined"]],
+  [["direct"], ["indirect"]],
+  [["ordered"], ["disordered"]],
+  [["ferroelectric", "ferroelectricity"], ["paraelectric", "paraelectricity"]],
+  [["thermoplastic", "thermoplastics"], ["thermoset", "thermosets", "thermosetting"]],
+  [["singlecrystal", "singlecrystalline", "monocrystalline"], ["polycrystalline", "polycrystal", "polycrystals"]],
+  [["passive", "passivity"], ["pitted", "pitting"]],
 ];
 
 /**
@@ -1211,6 +1224,8 @@ export function sentenceSupport(
   const quotedChanges = changes(quoteText);
   const namesBacking = { names: backingNames(context), text: context.normalize("NFKC") };
   const chemistry = chemistryBacking(context, backing);
+  // Which property each quoted value is given to (properties.ts): from the quotes only, as their words say it.
+  const properties = propertyBacking(verified.map((e) => e.quote));
   // The starts of the paragraphs the quotes stand in, for a statement's heading the quote left out (mathematics.ts).
   // Only a start the context holds: a context cut off before the paragraph begins does not show its heading.
   const leads = verified.flatMap((e) => {
@@ -1267,6 +1282,7 @@ export function sentenceSupport(
       changesBacked(text, quotedChanges) &&
       namesBacked(text, namesBacking) &&
       chemistryBacked(text, chemistry) &&
+      propertiesBacked(text, properties) &&
       mathBacked(text, math) &&
       socialBacked(text, social);
     judged++;

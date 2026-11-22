@@ -94,9 +94,16 @@ export function readCif(raw: string): ChemText {
   let i = 0;
   const isTag = (t: CifToken | undefined) => t !== undefined && !t.quoted && t.text.startsWith("_");
   const isKeyword = (t: CifToken | undefined) => t !== undefined && !t.quoted && /^(?:data_|loop_|save_|global_|stop_)/i.test(t.text);
+  // The current block's items, by tag in one form ("cell_length_a" for "_cell_length_a" and "_cell.length_a"), for what is worked out from them.
+  let items = new Map<string, string>();
+  const endBlock = () => {
+    out.push(...cellDerived(items));
+    items = new Map();
+  };
   while (i < tokens.length) {
     const t = tokens[i]!;
     if (!t.quoted && /^data_/i.test(t.text)) {
+      endBlock();
       out.push(`${out.length ? "\n" : ""}# ${t.text}`);
       i++;
     } else if (!t.quoted && /^loop_$/i.test(t.text)) {
@@ -120,16 +127,77 @@ export function readCif(raw: string): ChemText {
     } else if (isTag(t)) {
       const value = tokens[i + 1];
       if (value && !isTag(value) && !isKeyword(value)) {
-        if (said(value.text)) out.push(`${cifName(t.text)}: ${value.text.includes("\n") ? `\n${value.text}` : value.text}`);
+        if (said(value.text)) {
+          out.push(`${cifName(t.text)}: ${value.text.includes("\n") ? `\n${value.text}` : value.text}`);
+          items.set(cifKey(t.text), value.text);
+        }
         i += 2;
       } else i++;
     } else i++;
   }
+  endBlock();
   const text = out.join("\n").trim();
   return {
     text,
     ...(!text ? { warning: "This file has no CIF data." } : cut ? { warning: `A table in this file has more than ${MAX_CHEM_ROWS} rows; only the first ${MAX_CHEM_ROWS} were read.` } : {}),
   };
+}
+
+/** A tag in one form: "_cell_length_a" and mmCIF's "_cell.length_a" are "cell_length_a". */
+const cifKey = (tag: string) => tag.replace(/^_/, "").replace(/\./g, "_").toLowerCase();
+
+/** A CIF number without its standard uncertainty: "12.9682(5)" is 12.9682. Undefined when it is not a number. */
+function cifNumber(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const match = /^([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)(?:\(\d+\))?$/.exec(value.trim());
+  return match ? Number(match[1]) : undefined;
+}
+
+/** A formula's weight from a CIF's "_chemical_formula_sum" ("Al0.25 La3 Li6.25 O12 Zr2"), when every element's weight is known. */
+function formulaWeight(sum: string): number | undefined {
+  const parts = sum.trim().split(/\s+/);
+  let weight = 0;
+  for (const part of parts) {
+    const match = /^([A-Z][a-z]?)(\d*\.?\d*)$/.exec(part);
+    const mass = match ? ATOMIC_WEIGHTS[match[1]!] : undefined;
+    if (!match || mass === undefined) return undefined;
+    weight += mass * (match[2] ? Number(match[2]) : 1);
+  }
+  return weight > 0 ? weight : undefined;
+}
+
+/** Avogadro's number times 10⁻²⁴ cm³ per Å³: Z · M / (V · this) is a density in g/cm³. */
+const AVOGADRO_A3 = 0.602214076;
+
+/**
+ * What a CIF's cell gives that the file may leave out (harness 0.109.0; docs/materials-science-audit.md,
+ * MS11): the cell's volume, from its lengths and angles, and the density it gives, from Z and the formula
+ * weight (or, without one, the formula). Each is written only when the file does not give it, and says it
+ * was worked out, as a molfile's formula does.
+ */
+function cellDerived(items: Map<string, string>): string[] {
+  const [a, b, c] = ["a", "b", "c"].map((x) => cifNumber(items.get(`cell_length_${x}`)));
+  const [alpha, beta, gamma] = ["alpha", "beta", "gamma"].map((x) => cifNumber(items.get(`cell_angle_${x}`)));
+  const lines: string[] = [];
+  let volume = cifNumber(items.get("cell_volume"));
+  if (volume === undefined && a && b && c && alpha && beta && gamma) {
+    const [ca, cb, cg] = [alpha, beta, gamma].map((angle) => Math.cos((angle * Math.PI) / 180));
+    const root = 1 - ca! ** 2 - cb! ** 2 - cg! ** 2 + 2 * ca! * cb! * cg!;
+    if (root > 0) {
+      volume = a * b * c * Math.sqrt(root);
+      lines.push(`cell volume: ${volume.toFixed(2)} Å³ (worked out by Kovrune from the cell's lengths and angles)`);
+    }
+  }
+  const z = cifNumber(items.get("cell_formula_units_z"));
+  const given = cifNumber(items.get("chemical_formula_weight"));
+  const sum = items.get("chemical_formula_sum");
+  const weight = given ?? (sum ? formulaWeight(sum) : undefined);
+  if (cifNumber(items.get("exptl_crystal_density_diffrn")) === undefined && volume && z && weight) {
+    const density = (z * weight) / (volume * AVOGADRO_A3);
+    const from = given !== undefined ? "the formula weight" : "the formula's weight";
+    lines.push(`calculated density: ${density.toFixed(3)} g/cm³ (worked out by Kovrune from Z, ${from} and the cell volume)`);
+  }
+  return lines;
 }
 
 /** The words every name starts with: "atom site" for "atom site label" and "atom site fract x". */
@@ -145,12 +213,17 @@ function sharedStart(names: string[]): string {
 // Molfiles and SD files
 
 /** Standard atomic weights (IUPAC, abridged), for the elements a molfile from a chemistry lab mostly has. */
-const ATOMIC_WEIGHTS: Record<string, number> = {
+export const ATOMIC_WEIGHTS: Record<string, number> = {
   H: 1.008, Li: 6.94, B: 10.81, C: 12.011, N: 14.007, O: 15.999, F: 18.998, Na: 22.99, Mg: 24.305, Al: 26.982, Si: 28.085, P: 30.974,
   S: 32.06, Cl: 35.45, K: 39.098, Ca: 40.078, Ti: 47.867, Cr: 51.996, Mn: 54.938, Fe: 55.845, Co: 58.933, Ni: 58.693, Cu: 63.546,
   Zn: 65.38, Ga: 69.723, Ge: 72.63, As: 74.922, Se: 78.971, Br: 79.904, Rb: 85.468, Sr: 87.62, Zr: 91.224, Mo: 95.95, Ru: 101.07,
   Rh: 102.91, Pd: 106.42, Ag: 107.87, Cd: 112.41, In: 114.82, Sn: 118.71, Sb: 121.76, Te: 127.6, I: 126.9, Cs: 132.91, Ba: 137.33,
   W: 183.84, Os: 190.23, Ir: 192.22, Pt: 195.08, Au: 196.97, Hg: 200.59, Tl: 204.38, Pb: 207.2, Bi: 208.98, D: 2.014,
+  // The rest of the elements in solids (harness 0.109.0), for the formula weight of a crystal structure (readCif).
+  He: 4.0026, Be: 9.0122, Ne: 20.18, Ar: 39.95, Sc: 44.956, V: 50.942, Kr: 83.798, Y: 88.906, Nb: 92.906, Tc: 98, Xe: 131.29,
+  La: 138.91, Ce: 140.12, Pr: 140.91, Nd: 144.24, Pm: 145, Sm: 150.36, Eu: 151.96, Gd: 157.25, Tb: 158.93, Dy: 162.5, Ho: 164.93,
+  Er: 167.26, Tm: 168.93, Yb: 173.05, Lu: 174.97, Hf: 178.49, Ta: 180.95, Re: 186.21, Po: 209, At: 210, Rn: 222, Fr: 223, Ra: 226,
+  Ac: 227, Th: 232.04, Pa: 231.04, U: 238.03, Np: 237, Pu: 244, Am: 243,
 };
 
 /**

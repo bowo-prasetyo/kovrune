@@ -74,6 +74,8 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       return `Searching INSPIRE-HEP for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_pubchem":
       return `Searching PubChem for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "compound")}`;
+    case "search_alexandria":
+      return `Searching Alexandria for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "structure")}`;
     case "search_chemrxiv":
       return `Searching ChemRxiv for “${String(args.query ?? "")}”${call.failed ? ": failed" : found(call.resultCount, "result")}`;
     case "search_patents":
@@ -92,6 +94,7 @@ export function describeCall(call: CallRecord, titleFor: (docId: string) => stri
       if (id.startsWith("europepmc:")) return `Reading Europe PMC work ${bare.slice(10)}${part}`;
       if (id.startsWith("inspire:")) return `Reading INSPIRE record ${bare.slice(8)}${part}`;
       if (id.startsWith("pubchem:")) return `Reading PubChem compound ${titleFor(bare) ?? `CID ${bare.slice(8)}`}${part}`;
+      if (id.startsWith("alexandria:")) return `Reading Alexandria structure ${titleFor(bare) ?? bare.slice(11)}${part}`;
       if (id.startsWith("chemrxiv:")) return `Reading ChemRxiv preprint ${bare.slice(9)}${part}`;
       if (id.startsWith("patents:")) return `Reading patent ${bare.slice(8)}${part}`;
       return `Reading ${titleFor(id) ?? id}`;

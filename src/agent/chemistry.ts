@@ -10,6 +10,8 @@
 // quotes say, or what they say nothing of. It is marked only when it says one thing and the quotes, titles
 // or question say another of the same kind and not this one.
 
+import { MATERIALS_DESCRIPTORS, spaceGroups } from "./phases.ts";
+
 /** Elements by symbol, with the names a text spells them with. */
 const ELEMENTS: Record<string, string[]> = {
   H: ["hydrogen"], He: ["helium"], Li: ["lithium"], Be: ["beryllium"], B: ["boron"], C: ["carbon"], N: ["nitrogen"], O: ["oxygen"],
@@ -222,6 +224,8 @@ const DESCRIPTORS: Array<[set: string, pattern: RegExp, value: (m: RegExpMatchAr
   ["acidbase", /(?<!\p{L})(?:alkaline|basic\s+(?:conditions?|media|medium|solutions?|ph|aqueous|environments?|hydrolysis)|base[- ](?:catalys|catalyz|promoted|mediated)\p{L}*)/giu, () => "base"],
   ["control", /(?<!\p{L})kinetic(?:ally)?(?=\s+(?:products?|control|controlled|isomers?|enolates?|favou?red|stable|trapped))|(?<!\p{L})kinetically(?!\p{L})/giu, () => "kinetic"],
   ["control", /(?<!\p{L})thermodynamic(?:ally)?(?=\s+(?:products?|control|controlled|isomers?|enolates?|favou?red|stable|sinks?))|(?<!\p{L})thermodynamically(?!\p{L})/giu, () => "thermodynamic"],
+  // Materials science's sets (harness 0.109.0, phases.ts): lattices, crystal systems, polymorphs and phases, perovskites, alloys, cathodes.
+  ...MATERIALS_DESCRIPTORS,
 ];
 
 /**
@@ -269,6 +273,11 @@ export interface ChemistryNames {
   skeletons: Map<string, Set<string>>;
   /** Metals named, by symbol or name. */
   metals: Set<string>;
+  /**
+   * Skeletons by the metals in them (harness 0.109.0): "Cs,Pb" → "Cs,Pb,I" for CsPbI3. A formula with the quotes'
+   * metals and other non-metals is another compound: CsPbBr3 for CsPbI3, MoSe2 for MoS2 (MS6).
+   */
+  byMetals: Map<string, Set<string>>;
   /** Descriptors as "set:value" ("cistrans:cis"), solvents as "solvent:thf", substituents as "substituent:methyl". */
   said: Set<string>;
 }
@@ -279,9 +288,13 @@ export function chemistryNames(text: string): ChemistryNames {
   const skeletons = new Map<string, Set<string>>();
   const metals = new Set<string>();
   const said = new Set<string>();
+  const byMetals = new Map<string, Set<string>>();
   const add = (f: Formula) => {
     formulas.add(f.key);
     skeletons.set(f.skeleton, (skeletons.get(f.skeleton) ?? new Set()).add(f.key));
+    const own = metalsOf(f);
+    // Only a formula written with a count: "GeV" and "TeV" read as germanium and tellurium with vanadium.
+    if (own && !f.capitals && !f.bare && /\d/.test(f.key)) byMetals.set(own, (byMetals.get(own) ?? new Set()).add(f.skeleton));
     // A word in capitals alone ("UK", "CO") names no metal: it is too often an acronym.
     if (!f.capitals) for (const e of f.elements) if (!NON_METALS.has(e)) metals.add(e);
   };
@@ -289,7 +302,7 @@ export function chemistryNames(text: string): ChemistryNames {
   words.forEach((word, i) => {
     // A surname before "et al.": "Ni et al." is an author, not nickel.
     if (/^et$/i.test(words[i + 1] ?? "") && /^al\.?$/i.test(words[i + 2] ?? "")) return;
-    const f = readFormula(word);
+    const f = readFormula(word) ?? mxene(word);
     if (f) add(f);
   });
   const named = namedElements(text);
@@ -297,12 +310,30 @@ export function chemistryNames(text: string): ChemistryNames {
   for (const f of named.formulas) add(f);
   const flat = text.normalize("NFKC").replace(/[−–]/g, "-");
   for (const [set, pattern, value] of DESCRIPTORS) for (const m of flat.matchAll(pattern)) said.add(set ? `${set}:${value(m)}` : value(m));
+  for (const group of spaceGroups(text)) said.add(`spacegroup:${group}`);
   for (const [name, pattern] of SOLVENTS) if (pattern.test(flat)) said.add(`solvent:${name}`);
   for (const m of flat.matchAll(SUBSTITUENT)) {
     const prefix = (m[1] ?? "").toLowerCase().replace("-", "");
     said.add(`substituent:${({ t: "tert", i: "iso", s: "sec", n: "" } as Record<string, string>)[prefix] ?? prefix}${m[2]!.toLowerCase()}`);
   }
-  return { formulas, skeletons, metals, said };
+  return { formulas, skeletons, metals, said, byMetals };
+}
+
+/** A formula's metals, sorted, as "Cs,Pb"; undefined for one with no metal or no non-metal, which has no non-metals to compare. */
+function metalsOf(f: Formula): string | undefined {
+  const own = [...new Set(f.elements.filter((e) => !NON_METALS.has(e)))].sort();
+  return own.length && own.length < new Set(f.elements).size ? own.join(",") : undefined;
+}
+
+/**
+ * An MXene's formula with its surface terminations, "Ti3C2Tx" (harness 0.109.0): "Tx" kept "Ti3C2Tx" from being
+ * read as a formula, so "Ti2CTx" passed for it (docs/materials-science-audit.md, MS6). Read as the formula before
+ * "Tx" with "Tx" after it.
+ */
+function mxene(word: string): Formula | undefined {
+  const m = /^(.+?)(T[xz]|T_x)$/.exec(word);
+  const base = m && readFormula(m[1]!);
+  return base && !base.bare ? { ...base, key: `${base.key}Tx`, skeleton: `${base.skeleton},T`, capitals: false } : undefined;
 }
 
 /** Sets whose values a sentence may name several of, each of which must then be backed: solvents, substituents. */
@@ -344,6 +375,11 @@ export function chemistryBacked(text: string, backing: ChemistryBacking): boolea
     const others = backing.names.skeletons.get(skeleton);
     // A bare element ("Ni") claims no state or count, so any form of it in the quotes backs it.
     if (others?.size && !/^[A-Z][a-z]?$/.test(key)) return false;
+    // The quotes' metals with other non-metals, and the sentence's skeleton nowhere in them (harness 0.109.0).
+    if (!others?.size) {
+      const metalKey = [...own.byMetals].find(([, skeletons]) => skeletons.has(skeleton))?.[0];
+      if (metalKey && backing.names.byMetals.get(metalKey)?.size) return false;
+    }
   }
   const metals = backing.names.metals;
   if (metals.size && [...own.metals].some((m) => !metals.has(m))) return false;
