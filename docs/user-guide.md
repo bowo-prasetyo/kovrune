@@ -238,7 +238,7 @@ Ollama works but is experimental: in testing, some versions repeated the same st
 
 ## 3. Ask questions and write reports
 
-1. **Add documents** with **Choose files**, or by dropping them on the page: PDF, Word, PowerPoint, Excel, OpenDocument, CSV, text, Markdown, HTML, chemistry files (CIF, molfiles, JCAMP-DX spectra), or interview transcripts (WebVTT, SubRip) ([what Kovrune reads](#your-documents)). **Show text** shows what Kovrune read from a file.
+1. **Add documents** with **Choose files**, or by dropping them on the page: PDF, Word, PowerPoint, Excel, OpenDocument, CSV, text, Markdown, HTML, chemistry files (CIF, molfiles, JCAMP-DX spectra), XRD scans (.xrdml), or interview transcripts (WebVTT, SubRip) ([what Kovrune reads](#your-documents)). **Show text** shows what Kovrune read from a file.
 2. **Choose where to search**, under **Search in**. Your documents are always searched. Tick **Wikipedia**, **OpenAlex**, **arXiv**, **DataCite** or **Europe PMC** to search those too ([below](#choose-where-to-search)).
 3. **Type a question and press Ask**, or Ctrl+Enter (⌘ Enter on a Mac). The question box is at the top; where to search and **Mode** (a question or a report) are below it.
 
@@ -366,7 +366,7 @@ Steps 4 to 7 ask the same small model that wrote the answer, so they catch some 
 | Presentations | `.pptx`, `.odp` |
 | Spreadsheets | `.xlsx`, `.ods`, `.csv`, `.tsv` |
 | Text | `.txt`, Markdown (`.md`), HTML (`.html`) |
-| Chemistry | crystal structures (`.cif`), molfiles and SD files (`.mol`, `.sdf`), spectra in JCAMP-DX (`.jdx`, `.dx`, `.jcamp`) |
+| Chemistry and materials | crystal structures (`.cif`), molfiles and SD files (`.mol`, `.sdf`), spectra in JCAMP-DX (`.jdx`, `.dx`, `.jcamp`), X-ray diffraction scans from PANalytical instruments (`.xrdml`) |
 | Interview transcripts | captions exported from a recorded call: WebVTT (`.vtt`, from Zoom, Microsoft Teams or Otter) and SubRip (`.srt`) |
 
 - **PDFs:** Kovrune reads the text where it is on the page, so a subscript, a superscript or a symbol set against the text before it is read with it ("RDS(on) = 40 mΩ", "fsw", "−25 °C"), a raised exponent is written as one ("2.0 × 10⁵", "cm⁻³", "⁸⁷Rb", not "2.0 × 105"), paragraphs are kept apart, and a running header or footer that repeats on most pages ("IEEE TRANSACTIONS ON …", "Page 2 of 3") is read once, where it first appears. Footnotes at the foot of a page whose last sentence runs on to the next page are read after the paragraph that finishes it, so the sentence is read whole. PDFs added before this version keep the text they were read with; remove one and add it again to read it this way. Formulas, figures and their labels are read as whatever text they hold, which is often not much.
@@ -384,9 +384,10 @@ Steps 4 to 7 ask the same small model that wrote the answer, so they catch some 
   - Ask about particular rows: "Which orders are delayed?" or "What is Acme Trading's phone number?".
   - Totals, averages and counts over many rows are not reliable: the model reads only a few parts of a sheet at a time.
 - **Chemistry files:**
-  - A **CIF** is read as its items, one per line in its own words ("cell length a: 3.7155(4)", "space group name H-M alt: P 21/c", "refine ls R factor gt: 0.0412"), and its loops as tables, each row's values labelled with their column ("label: N1 | type symbol: N | fract x: -0.1230(4)"). Unknown values ("?") are left out. A table is read up to 2,000 rows, so a long list of reflections is cut.
+  - A **CIF** is read as its items, one per line in its own words ("cell length a: 3.7155(4)", "space group name H-M alt: P 21/c", "refine ls R factor gt: 0.0412"), and its loops as tables, each row's values labelled with their column ("label: N1 | type symbol: N | fract x: -0.1230(4)"). Unknown values ("?") are left out. A table is read up to 2,000 rows, so a long list of reflections is cut. When the file gives the cell but not its volume, or Z and the formula but not the density, Kovrune works them out and says so ("cell volume: 2180.92 Å³ (worked out by Kovrune from the cell's lengths and angles)", "calculated density: 5.114 g/cm³ (worked out by Kovrune from Z, the formula weight and the cell volume)").
   - A **molfile or SD file** is read one structure at a time: its name, its formula and molecular weight, the atoms and bonds drawn, and an SD file's data items ("Yield (%): 82"). The formula and weight are worked out by Kovrune and say so: a drawing usually leaves out hydrogens, and they are counted from each atom's usual valence, which can be wrong for unusual bonding (hypervalent atoms, metals, radicals the file does not mark).
   - A **JCAMP-DX spectrum** is read as its header ("Data type: INFRARED SPECTRUM", "X units: 1/CM", "Observe frequency (MHz): 400.13", "Solvent: CDCl3"), how many points it has over what range, and its peak table when it has one. The points themselves are not read, so a question about a band or a peak is answered only from a peak table.
+  - An **XRD scan** (`.xrdml`, as PANalytical instruments save them) is read as its sample, comments, wavelength (Kα1, Kα2, Kβ), X-ray tube, and each scan's mode, 2θ and ω ranges, number of points, step (worked out from the range and the points) and counting time, with when and by whom it was measured. As for a spectrum, the counts are not read, so a question about a peak's position or intensity finds nothing in the scan itself.
 - **CSV and TSV files** are read as one sheet, the same way. Files saved by Japanese Excel as "CSV (comma delimited)" (Shift_JIS) and as "CSV UTF-8" both read correctly; for other languages' older encodings, save as "CSV UTF-8".
 - **Can't be read:** older Office files (.doc, .ppt, .xls), RTF files and password-protected files. Open them in Word, PowerPoint, Excel or LibreOffice, save them as .docx, .pptx, .xlsx or PDF (removing the password), and add them again.
 
