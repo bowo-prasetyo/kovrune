@@ -230,6 +230,8 @@ function writeTable(rows: PdfLine[]): void {
   const most = Math.max(...rows.map((r) => r.cells!.length));
   const full = rows.filter((r) => r.cells!.length === most);
   if (most < MIN_COLUMNS || full.length < 2) return;
+  // Box-drawing characters set in columns are a drawing, a directory tree or a diagram, not a table.
+  if (rows.some((r) => r.cells!.some((c) => /[\u2500-\u257f]/.test(c.text)))) return;
   // The columns: where the cells of the rows with the most cells are, which must not overlap.
   const columns = full[0]!.cells!.map((_, i) => ({ x0: Math.min(...full.map((r) => r.cells![i]!.x0)), x1: Math.max(...full.map((r) => r.cells![i]!.x1)) }));
   if (columns.some((c, i) => i > 0 && c.x0 <= columns[i - 1]!.x1)) return;

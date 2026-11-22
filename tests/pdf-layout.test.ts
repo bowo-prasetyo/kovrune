@@ -180,6 +180,15 @@ describe("PDF tables keep their columns (harness 0.109.0)", () => {
     assert.deepEqual(twoColumns.map((l) => l.text), ["The alloy was cast and The coupons were then", "homogenized at 500 °C. tested at 240 °C.", "It was then aged. Their yield fell."]);
   });
 
+  it("leaves a drawing set in columns, a directory tree, as it was", () => {
+    const tree = pageLines([
+      ...row(700, [["│", 50], ["├── app/", 70], ["UI: components, pages, state", 200]]),
+      ...row(688, [["│", 50], ["├── agent/", 70], ["planner, executor, task graph", 200]]),
+      ...row(676, [["│", 50], ["│", 70], ["webllm, wllama, local-endpoint", 200]]),
+    ]);
+    assert.deepEqual(tree.map((l) => l.text), ["│ ├── app/ UI: components, pages, state", "│ ├── agent/ planner, executor, task graph", "│ │ webllm, wllama, local-endpoint"]);
+  });
+
   it("reads the materials suite's test report with its empty cells in place", async () => {
     const pdfjs = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as unknown as PdfJsLike;
     const { text } = await extractPdfText(new Uint8Array(await readFile(new URL("../eval/materials/docs/zta-test-report.pdf", import.meta.url))), pdfjs);
