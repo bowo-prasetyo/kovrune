@@ -35,6 +35,8 @@ export const CONNECT_HOSTS = [
   "https://inspirehep.net",
   // PubChem: compounds' properties, synonyms, descriptions and experimental properties (sources/pubchem.ts).
   "https://pubchem.ncbi.nlm.nih.gov",
+  // Alexandria: computed crystal structures through its OPTIMADE API (sources/alexandria.ts).
+  "https://alexandria.icams.rub.de",
   // Crossref: ChemRxiv's preprint records and abstracts (sources/chemrxiv.ts).
   "https://api.crossref.org",
   // EPO Open Patent Services: its token, searches and patents, with the user's own key (sources/patents.ts).

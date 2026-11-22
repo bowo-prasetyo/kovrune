@@ -10,6 +10,7 @@ import { createDataCite, createZenodoReader } from "../../sources/datacite.ts";
 import { createEuropePmc } from "../../sources/europepmc.ts";
 import { createInspire } from "../../sources/inspire.ts";
 import { createPubChem } from "../../sources/pubchem.ts";
+import { createAlexandria } from "../../sources/alexandria.ts";
 import { createChemRxiv } from "../../sources/chemrxiv.ts";
 import { createOpenAlex, OPENALEX_FIELDS, OPENALEX_VENUES } from "../../sources/openalex.ts";
 import { createPatents } from "../../sources/patents.ts";
@@ -51,6 +52,8 @@ export interface SourcePrefs {
   inspireFollowCitations?: boolean;
   /** Compounds through PubChem (sources/pubchem.ts): formulas, identifiers, descriptions and measured properties. */
   pubchem?: boolean;
+  /** Computed crystal structures through Alexandria's OPTIMADE API (sources/alexandria.ts): space groups, cells, band gaps, formation energies, stability. */
+  alexandria?: boolean;
   /** ChemRxiv preprints through Crossref (sources/chemrxiv.ts): records and abstracts. */
   chemrxiv?: boolean;
   /** Patents through the EPO's Open Patent Services (sources/patents.ts); searched only with a key and secret. */
@@ -102,6 +105,7 @@ export function parseSourcePrefs(raw: string | null, browserLanguage?: string): 
       ...(value.inspire === true ? { inspire: true } : {}),
       ...(value.inspireFollowCitations === true ? { inspireFollowCitations: true } : {}),
       ...(value.pubchem === true ? { pubchem: true } : {}),
+      ...(value.alexandria === true ? { alexandria: true } : {}),
       ...(value.chemrxiv === true ? { chemrxiv: true } : {}),
       ...(value.patents === true ? { patents: true } : {}),
       ...(typeof value.epoKey === "string" && value.epoKey.trim() ? { epoKey: value.epoKey.trim() } : {}),
@@ -150,6 +154,7 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
     ...(europepmc ? [europepmc] : []),
     ...(prefs.inspire ? [createInspire(fetch, { arxiv }, { followCitations: prefs.inspireFollowCitations === true })] : []),
     ...(prefs.pubchem ? [createPubChem()] : []),
+    ...(prefs.alexandria ? [createAlexandria()] : []),
     ...(prefs.chemrxiv ? [createChemRxiv()] : []),
     ...(patentsReady(prefs) ? [createPatents({ key: prefs.epoKey!, secret: prefs.epoSecret! })] : []),
   ];
@@ -157,12 +162,12 @@ export function openSourcesFor(prefs: SourcePrefs): OpenSource[] {
 
 /** Whether any open source is ticked, so questions can be asked without documents. */
 export function anyOpenSource(prefs: SourcePrefs): boolean {
-  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || prefs.pubchem === true || prefs.chemrxiv === true || patentsReady(prefs);
+  return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || prefs.pubchem === true || prefs.alexandria === true || prefs.chemrxiv === true || patentsReady(prefs);
 }
 
-/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "PubChem", "ChemRxiv", "EPO patents". */
+/** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "PubChem", "Alexandria", "ChemRxiv", "EPO patents". */
 export function openSourceNames(prefs: SourcePrefs): string[] {
-  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(prefs.inspire ? ["INSPIRE-HEP"] : []), ...(prefs.pubchem ? ["PubChem"] : []), ...(prefs.chemrxiv ? ["ChemRxiv"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
+  return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(prefs.inspire ? ["INSPIRE-HEP"] : []), ...(prefs.pubchem ? ["PubChem"] : []), ...(prefs.alexandria ? ["Alexandria"] : []), ...(prefs.chemrxiv ? ["ChemRxiv"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];
 }
 
 /** Common Wikipedia editions for the language picker; any valid code typed in also works. */

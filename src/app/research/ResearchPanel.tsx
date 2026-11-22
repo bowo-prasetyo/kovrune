@@ -450,6 +450,10 @@ export function ResearchPanel({
               PubChem (compounds: formulas, CAS numbers and other identifiers, descriptions, and measured properties with their sources)
             </label>
             <label className="choice">
+              <input type="checkbox" checked={prefs.alexandria ?? false} disabled={running} onChange={(e) => updatePrefs({ alexandria: e.target.checked })} />
+              Alexandria (computed crystal structures, through OPTIMADE: space groups, cells, band gaps, formation energies and stability, all from DFT)
+            </label>
+            <label className="choice">
               <input type="checkbox" checked={prefs.chemrxiv ?? false} disabled={running} onChange={(e) => updatePrefs({ chemrxiv: e.target.checked })} />
               ChemRxiv (chemistry preprints, through Crossref: titles, authors and abstracts, and the journal version when there is one)
             </label>
@@ -588,7 +592,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC, INSPIRE-HEP, PubChem, ChemRxiv or EPO patents, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC, INSPIRE-HEP, PubChem, Alexandria, ChemRxiv or EPO patents, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run
