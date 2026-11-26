@@ -5,16 +5,14 @@
 // answers to questions the suite did not foresee.
 
 import type { ExpectedSection, ReportTask } from "../field/reports.ts";
-
-const lower = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
+import { containsKeyword, containsPhrase } from "./matching.ts";
 
 /** The index of the expected section a plan question asks about, or undefined when it shares no keyword with any. */
 export function matchSection(question: string, sections: ExpectedSection[]): number | undefined {
-  const text = lower(question);
   let best: number | undefined;
   let bestHits = 0;
   sections.forEach((section, i) => {
-    const hits = section.keywords.filter((k) => text.includes(lower(k))).length;
+    const hits = section.keywords.filter((k) => containsKeyword(question, k)).length;
     if (hits > bestHits) [best, bestHits] = [i, hits];
   });
   return best;
@@ -22,8 +20,7 @@ export function matchSection(question: string, sections: ExpectedSection[]): num
 
 /** Whether an answer gives every fact group of a section, as scoreResearch checks facts. */
 export function givesFacts(answer: string, section: ExpectedSection): boolean {
-  const text = lower(answer);
-  return section.facts.every((group) => group.some((option) => text.includes(lower(option))));
+  return section.facts.every((group) => group.some((option) => containsPhrase(answer, option)));
 }
 
 /** A question that joins two things with "and" or "as well as": the kind the multi-passage suites showed is harder. */
