@@ -5,17 +5,14 @@
 // answers to questions the suite did not foresee.
 
 import type { ExpectedSection, ReportTask } from "../field/reports.ts";
-import { containsPhrase } from "./matching.ts";
-
-
+import { containsKeyword, containsPhrase } from "./matching.ts";
 
 /** The index of the expected section a plan question asks about, or undefined when it shares no keyword with any. */
 export function matchSection(question: string, sections: ExpectedSection[]): number | undefined {
-
   let best: number | undefined;
   let bestHits = 0;
   sections.forEach((section, i) => {
-    const hits = section.keywords.filter((k) => containsPhrase(question, k)).length;
+    const hits = section.keywords.filter((k) => containsKeyword(question, k)).length;
     if (hits > bestHits) [best, bestHits] = [i, hits];
   });
   return best;

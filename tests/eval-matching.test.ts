@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { containsPhrase } from "../eval/harness/matching.ts";
+import { containsKeyword, containsPhrase } from "../eval/harness/matching.ts";
 import { givesFacts, matchSection } from "../eval/harness/report-score.ts";
 
 describe("evaluation phrase matching", () => {
   it("does not count a number or acronym embedded in a larger token", () => {
     assert.equal(containsPhrase("The size is 14 KiB.", "4 KiB"), false);
+    assert.equal(containsPhrase("The size is 4GB.", "4"), true);
+    assert.equal(containsPhrase("The size is 14GB.", "4"), false);
     assert.equal(containsPhrase("AMPL is a library.", "MPL"), false);
     assert.equal(containsPhrase("unborn children", "born"), false);
   });
@@ -20,6 +22,8 @@ describe("evaluation phrase matching", () => {
   });
   it("uses boundaries for report keywords and expected facts", () => {
     const sections = [{ name: "birth", keywords: ["born"], facts: [["1815"]], citations: [["fixture"]] }];
+    assert.equal(containsKeyword("She was married in 1835.", "marri"), true);
+    assert.equal(containsKeyword("The unborn child.", "born"), false);
     assert.equal(matchSection("What was unborn?", sections), undefined);
     assert.equal(givesFacts("She was born in 1815.", sections[0]!), true);
     assert.equal(givesFacts("She was born in 11815.", sections[0]!), false);
