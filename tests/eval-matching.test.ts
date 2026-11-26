@@ -19,7 +19,7 @@ describe("evaluation phrase matching", () => {
     assert.equal(containsPhrase("Elevation: 13776.12 m.", "3776.12"), false);
   });
   it("uses boundaries for report keywords and expected facts", () => {
-    const sections = [{ name: "birth", keywords: ["born"], facts: [["1815"]] }];
+    const sections = [{ name: "birth", keywords: ["born"], facts: [["1815"]], citations: [["fixture"]] }];
     assert.equal(matchSection("What was unborn?", sections), undefined);
     assert.equal(givesFacts("She was born in 1815.", sections[0]!), true);
     assert.equal(givesFacts("She was born in 11815.", sections[0]!), false);
