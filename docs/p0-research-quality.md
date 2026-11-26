@@ -8,7 +8,7 @@ This package hardens the evidence and evaluation loop before adding new product 
 
 Evaluation facts often contain short numbers, acronyms, units, or names. A substring check can incorrectly score `4` as present in `14`, `MPL` in `AMPL`, or `born` in `unborn`. The evaluation harness now uses case-insensitive, Unicode-normalized phrase matching with alphanumeric token boundaries. Punctuation remains significant, so decimals and version identifiers stay distinguishable.
 
-The same matcher is used by retrieval passage recall and report-section scoring. This changes evaluation/scoring behavior only; it does not silently change production answer labels.
+The matcher is applied to report-section keyword/fact scoring. The existing retrieval recall metric is deliberately kept unchanged for now: its published per-suite floors were calibrated with the prior normalizer, and changing that scale requires a separate baseline review rather than silently lowering regression gates. Neither change affects production answer labels.
 
 ### 2. Research accuracy and evidence
 
@@ -55,7 +55,7 @@ Start the runner with `npm run bench:browser`, open its local page, choose WebLL
 
 ## Acceptance criteria
 
-- [ ] Evaluation phrase matching has boundary regression tests for short numbers, acronyms, names, decimals, and Unicode compatibility forms.
+- [ ] Report evaluation phrase matching has boundary regression tests for short numbers, acronyms, names, decimals, and Unicode compatibility forms.
 - [ ] Research and PDF retrieval floors remain green; field/domain retrieval is reported separately.
 - [ ] 100/300/1,000-distractor runs are captured and compared before changing retrieval strategy or result limits.
 - [ ] Report plan coverage, final factual coverage, unmatched sections, and false reassurance are reported separately.

@@ -4,7 +4,7 @@
 // is a fixed yardstick for search, not a prediction of what the agent finds.
 
 import { parentId } from "../../src/documents/chunk.ts";
-import { containsPhrase } from "./matching.ts";
+import { normalizeForMatch } from "../../src/agent/evidence.ts";
 import type { ResearchLibrary } from "../../src/agent/research.ts";
 import { mainScript } from "../../src/documents/scripts.ts";
 import type { ResearchTask } from "../tasks/research.ts";
@@ -46,7 +46,7 @@ export interface RetrievalSummary {
   complete: number;
 }
 
-const has = (text: string, option: string) => containsPhrase(text, option);
+const has = (text: string, option: string) => normalizeForMatch(text).includes(normalizeForMatch(option));
 
 /** Retrieval for each answerable task, with the question as the query. */
 export function measureRetrieval(library: ResearchLibrary, tasks: ResearchTask[], search: Search = appSearch()): TaskRetrieval[] {
