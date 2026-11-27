@@ -20,8 +20,16 @@ export const PLAN_MAX_TOKENS = 400;
 
 export const PLAN_SYSTEM = "You plan research reports. Each section of a report answers one focused question from the sources.";
 
+export interface PlanSectionCoverage {
+  question: string;
+  /** Best-matching source documents found by the deterministic local index. */
+  matches: Array<{ title: string; coverage: number }>;
+}
+
 export interface ReportPlan {
   title: string;
+  /** Initial per-section retrieval snapshot; not a claim that the answer is supported. */
+  sectionCoverage?: PlanSectionCoverage[];
   /** One question per section, in report order. */
   sections: string[];
   /** True when the model's plan could not be read, and the request is the only section. */
@@ -137,6 +145,24 @@ export async function overviewSources(library: ResearchLibrary, request: string,
 }
 
 /**
+ * Checks every planned question independently against the local document index. This exposes
+ * sections that have no surfaced source and prevents one broad request-level search from standing
+ * in for coverage of every report section. A match is only a retrieval lead, never evidence that
+ * the source answers the question.
+ */
+export function assessPlanCoverage(library: ResearchLibrary, sections: string[], limit = 6): PlanSectionCoverage[] {
+  return sections.map((question) => {
+    const byTitle = new Map<string, number>();
+    for (const hit of library.index.search(question, limit)) {
+      const document = library.documentFor(hit.docId);
+      if (!document) continue;
+      const coverage = library.index.coverage(hit.docId, question);
+      byTitle.set(document.title, Math.max(byTitle.get(document.title) ?? 0, coverage));
+    }
+    return { question, matches: [...byTitle].map(([title, coverage]) => ({ title, coverage })) };
+  });
+}
+/**
  * Whether the planner is shown the source overview, by the model's ID: no model yet. Measured on the
  * report suite at 4,096 tokens (eval/field/README.md), it lifted Qwen3.5-2B's report coverage from 3
  * to 7 of 23 sections, and its held-out total from 6 to 7 of 9. Qwen3.5-4B's stayed at 9 and 6, and
@@ -246,5 +272,10 @@ export async function planReport(options: {
   }
   const plan = parsePlan(text);
   if (!plan) return fallbackPlan(options.request);
-  return shown ? { ...plan, consulted: overview?.documents ?? [] } : plan;
+  const sectionCoverage = options.library?.documents.length ? assessPlanCoverage(options.library, plan.sections) : undefined;
+  return {
+    ...plan,
+    ...(shown ? { consulted: overview?.documents ?? [] } : {}),
+    ...(sectionCoverage ? { sectionCoverage } : {}),
+  };
 }
