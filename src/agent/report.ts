@@ -23,7 +23,7 @@ export const PLAN_SYSTEM = "You plan research reports. Each section of a report 
 export interface PlanSectionCoverage {
   question: string;
   /** Best-matching source documents found by the deterministic local index. */
-  matches: Array<{ title: string; coverage: number }>;
+  matches: Array<{ title: string; coverage: number; docId?: string }>;
 }
 
 export interface ReportPlan {
@@ -152,14 +152,15 @@ export async function overviewSources(library: ResearchLibrary, request: string,
  */
 export function assessPlanCoverage(library: ResearchLibrary, sections: string[], limit = 6): PlanSectionCoverage[] {
   return sections.map((question) => {
-    const byTitle = new Map<string, number>();
+    const byTitle = new Map<string, { coverage: number; docId: string }>();
     for (const hit of library.index.search(question, limit)) {
       const document = library.documentFor(hit.docId);
       if (!document) continue;
       const coverage = library.index.coverage(hit.docId, question);
-      byTitle.set(document.title, Math.max(byTitle.get(document.title) ?? 0, coverage));
+      const seen = byTitle.get(document.title);
+      if (!seen || coverage > seen.coverage) byTitle.set(document.title, { coverage, docId: document.id });
     }
-    return { question, matches: [...byTitle].map(([title, coverage]) => ({ title, coverage })) };
+    return { question, matches: [...byTitle].map(([title, { coverage, docId }]) => ({ title, coverage, docId })) };
   });
 }
 

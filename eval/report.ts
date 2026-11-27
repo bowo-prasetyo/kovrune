@@ -20,14 +20,14 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { arch, cpus, platform, totalmem } from "node:os";
 import { parseArgs } from "node:util";
-import { planReport } from "../src/agent/report.ts";
+import { planReport, type PlanSectionCoverage } from "../src/agent/report.ts";
 import { runResearch } from "../src/agent/research.ts";
 import { synthesisBacking, writeSynthesis, type Synthesis, type SynthesisSection } from "../src/agent/synthesis.ts";
 import { labelledQuotesFound } from "../src/agent/support.ts";
 import { LocalEndpointModel } from "../src/models/local-endpoint.ts";
 import { HARNESS_VERSION } from "./harness/benchmark.ts";
 import { loadFieldSuite } from "./harness/field.ts";
-import { scoreReport, sumScores, type ReportScore, type WrittenSection } from "./harness/report-score.ts";
+import { describePrediction, predictFromCoverage, scoreReport, sumScores, type ReportScore, type WrittenSection } from "./harness/report-score.ts";
 import { reportHoldoutTasks, reportTasks, type ReportTask } from "./field/reports.ts";
 
 const { values } = parseArgs({
@@ -53,7 +53,8 @@ if (!values.model) {
 interface ReportResult {
   suite: "reports" | "reportsholdout";
   taskId: string;
-  plan: { title: string; sections: string[]; fallback?: boolean; consulted?: string[] };
+  /** The plan as the app shows it; from harness 0.110.0 with the source check of each section (sectionCoverage). */
+  plan: { title: string; sections: string[]; fallback?: boolean; consulted?: string[]; sectionCoverage?: PlanSectionCoverage[] };
   planMs: number;
   sections: Array<
     WrittenSection & {
@@ -157,6 +158,10 @@ for (const [suite, task] of queue) {
   );
 }
 
+function reportTaskFor(id: string): ReportTask {
+  return [...reportTasks, ...reportHoldoutTasks].find((t) => t.id === id)!;
+}
+
 for (const suite of ["reports", "reportsholdout"] as const) {
   const results = run.results.filter((r) => r.suite === suite);
   if (!results.length) continue;
@@ -175,4 +180,11 @@ for (const suite of ["reports", "reportsholdout"] as const) {
       `\n  Prompt tokens processed: ${processed} of ${all.reduce((n, s) => n + s.promptTokens, 0)} sent, in ${Math.round(all.reduce((n, s) => n + (s.promptMs ?? 0), 0) / 1000)} s.` +
       `\n  ${t.calls} calls, ${Math.round(t.ms / 60000)} min of sections.`,
   );
+  // Whether the plan screen's source check predicts the sections' results (harness 0.110.0): the hint is
+  // judged by this, not by being shown (docs/p0-research-quality.md).
+  const prediction = results.reduce(
+    (into, r) => (r.plan.sectionCoverage ? predictFromCoverage(reportTaskFor(r.taskId), r.plan.sectionCoverage, r.sections, into) : into),
+    undefined as ReturnType<typeof predictFromCoverage> | undefined,
+  );
+  if (prediction) console.log(`  Plan source check against section results:\n${describePrediction(prediction).replace(/^/gm, "    ")}`);
 }
