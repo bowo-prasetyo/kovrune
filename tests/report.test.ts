@@ -75,6 +75,17 @@ describe("report mode: the plan (docs/report-mode.md, slice 1)", () => {
     assert.equal(parsePlan("no plan"), undefined);
   });
 
+  it("attaches independent source coverage to each planned section", async () => {
+    const library = new ResearchLibrary([
+      { id: "ledger", title: "Ledger.md", text: "A blockchain stores transactions in linked blocks. Each block contains the previous block hash." },
+      { id: "consensus", title: "Consensus.md", text: "Proof of stake selects validators by stake." },
+    ]);
+    const model = new ScriptedModel(plan("Blockchain", ["How are blocks linked?", "How does proof of stake select validators?"]));
+    const result = await planReport({ model, request: "Write a report about blockchain.", sources: ["your documents"], library });
+    assert.equal(result.sectionCoverage?.length, 2);
+    assert.ok(result.sectionCoverage?.[0]?.matches.some((match) => match.title === "Ledger.md"));
+    assert.ok(result.sectionCoverage?.[1]?.matches.some((match) => match.title === "Consensus.md"));
+  });
   it("falls back to the request as one section when no plan can be read, or the call fails", async () => {
     for (const reply of ["no plan", plan("T", ["Only one?"]), new Error("server error")]) {
       assert.deepEqual(await planReport({ model: new ScriptedModel(reply), request: ` ${REQUEST} `, sources: ["Wikipedia"] }), fallbackPlan(REQUEST));
