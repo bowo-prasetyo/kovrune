@@ -156,7 +156,10 @@ describe("report mode: the source overview", () => {
     const english = new ResearchLibrary(library.documents.filter((d) => d.id !== "fuji"));
     const model = new ScriptedModel(plan("Ada Lovelace", ["Who were her parents?", "What did she write about the engine?"]));
     const result = await planReport({ model, request: "Write a biography of Ada Lovelace.", sources: ["your documents"], library: english, overview: true });
-    assert.deepEqual(result, { title: "Ada Lovelace", sections: ["Who were her parents?", "What did she write about the engine?"], consulted: ["Ada Lovelace.txt"] });
+    assert.equal(result.title, "Ada Lovelace");
+    assert.deepEqual(result.sections, ["Who were her parents?", "What did she write about the engine?"]);
+    assert.deepEqual(result.consulted, ["Ada Lovelace.txt"]);
+    assert.equal(result.sectionCoverage?.length, 2, "each planned question is checked independently");
     const prompt = model.requests.at(-1)!.messages[1]!.content;
     assert.match(prompt, /What a search of your documents for the request found[^\n]*\nFrom "Ada Lovelace.txt":\n- Ada Lovelace was/);
     assert.match(prompt, /Base the sections on what the sources hold/);
