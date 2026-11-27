@@ -39,7 +39,7 @@ describe("scientific two-column tables", () => {
       { header: false, skip: 0, cells: [{ text: "Principal", span: 1 }, { text: "Tomoko Yamafuji", span: 1 }] },
       { header: false, skip: 0, cells: [{ text: "School", span: 1 }, { text: "Kawaguchi", span: 1 }] },
     ]);
-    assert.deepEqual(result, { head: [], body: ["Principal\\tTomoko Yamafuji", "School\\tKawaguchi"] });
+    assert.deepEqual(result, { head: [], body: ["Principal\tTomoko Yamafuji", "School\tKawaguchi"] });
   });
 });
 describe("number formats", () => {
