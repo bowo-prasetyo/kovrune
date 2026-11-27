@@ -102,3 +102,70 @@ export function sumScores(scores: ReportScore[]): Omit<ReportScore, "fallback"> 
     ms: sum("ms"),
   };
 }
+
+/**
+ * Whether the plan screen's source check (src/agent/report.ts assessPlanCoverage) predicts how a section
+ * turns out (harness 0.110.0). The hint is worth showing only if it tells sections that will fail from
+ * sections that will not; that it is visible says nothing. For each written section matched to an
+ * expected section, the hint is put in one of three classes, and the section's result is counted in it:
+ * - `empty`: no passage surfaced (the hint tells the reader to rephrase or drop the section);
+ * - `expected`: a passage surfaced in a document the expected section's facts are in;
+ * - `elsewhere`: passages surfaced, but none in such a document.
+ * Unmatched sections cannot be scored, so they are counted apart.
+ */
+export interface CoverageClass {
+  sections: number;
+  right: number;
+  /** Labelled Quotes found without the section's facts. */
+  labelledWrong: number;
+}
+
+export interface CoveragePrediction {
+  empty: CoverageClass;
+  expected: CoverageClass;
+  elsewhere: CoverageClass;
+  unmatched: number;
+}
+
+export interface SectionHint {
+  question: string;
+  matches: Array<{ docId?: string }>;
+}
+
+const emptyClass = (): CoverageClass => ({ sections: 0, right: 0, labelledWrong: 0 });
+
+export function emptyPrediction(): CoveragePrediction {
+  return { empty: emptyClass(), expected: emptyClass(), elsewhere: emptyClass(), unmatched: 0 };
+}
+
+/** Adds one report's sections to `into`, by the hint each section's question was given. */
+export function predictFromCoverage(task: ReportTask, hints: SectionHint[], written: WrittenSection[], into = emptyPrediction()): CoveragePrediction {
+  for (const section of written) {
+    const i = matchSection(section.question, task.sections);
+    if (i === undefined) {
+      into.unmatched++;
+      continue;
+    }
+    const expected = task.sections[i]!;
+    const hint = hints.find((h) => h.question === section.question);
+    const cited = new Set(expected.citations.flat());
+    const kind = !hint || !hint.matches.length ? "empty" : hint.matches.some((m) => m.docId && cited.has(m.docId)) ? "expected" : "elsewhere";
+    const right = givesFacts(section.answer, expected);
+    into[kind].sections++;
+    if (right) into[kind].right++;
+    if (section.quotesFound && !right) into[kind].labelledWrong++;
+  }
+  return into;
+}
+
+/** One line per class, for the report suite's summary: how many sections, and how many of them right. */
+export function describePrediction(p: CoveragePrediction): string {
+  const line = (name: string, c: CoverageClass) =>
+    `${name}: ${c.sections} ${c.sections === 1 ? "section" : "sections"}, ${c.right} right${c.sections ? ` (${Math.round((100 * c.right) / c.sections)}%)` : ""}, ${c.labelledWrong} labelled Quotes found and wrong`;
+  return [
+    line("no passage surfaced", p.empty),
+    line("a passage in the expected document", p.expected),
+    line("passages only in other documents", p.elsewhere),
+    `unmatched, not scored: ${p.unmatched}`,
+  ].join("\n");
+}

@@ -30,6 +30,7 @@
     "bench:completeness": "node --experimental-strip-types eval/completeness.ts",
     "bench:report": "node --experimental-strip-types eval/report.ts",
     "bench:replay": "node --experimental-strip-types eval/replay.ts",
+    "bench:plancoverage": "node --experimental-strip-types --no-warnings eval/plan-coverage.ts",
     "bench:europepmc": "node --experimental-strip-types eval/europepmc-check.ts",
     "bench:europepmc:model": "node --experimental-strip-types eval/europepmc-model.ts",
     "bench:paging": "node --experimental-strip-types --no-warnings eval/paging-model.ts",

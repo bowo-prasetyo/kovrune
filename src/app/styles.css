@@ -983,3 +983,18 @@ a.past-question:focus-visible {
 .answer-filters label:last-child {
   flex: 0 1 16em;
 }
+
+/* The precise label and its explanation, under the verdict (trace.ts LABEL_TIERS). */
+.label-details {
+  color: var(--muted);
+  font-size: 0.95em;
+  margin: 4px 0 8px;
+}
+
+.label-details summary {
+  cursor: pointer;
+}
+
+.label-details p {
+  margin: 6px 0 0;
+}

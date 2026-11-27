@@ -47,13 +47,12 @@ The setup wizard checks your device and recommends where to run the model:
 
 Either way, the wizard then tests the model (about a minute on capable hardware) and saves your setup in the browser.
 
-Then add documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV, text, Markdown or HTML), or tick Wikipedia, OpenAlex, arXiv, DataCite or Europe PMC to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document:
-- **Quotes found**: every quote is word for word in your documents, and every sentence of the answer shares most of its words with a quote, with no number, unit, month, "not", direction such as "higher", "significant", or name such as "TNF-α", "CD45+", "Pd/C" or "(R)-" that the quotes don't back. A short answer, such as a number, is too short to compare word by word, so it gets the label only when the model's check below confirms it; only Qwen3.5-4B is asked about short answers so far. The model then checks that the quoted passages state what the answer says, and with Qwen3.5-4B, reads the answer in the passages without seeing its own and must find the same one. This proves the quotes are real, not that the answer is right; check that they support the whole answer.
-- **Quotes found, answer not confirmed**: the quotes are real, but asked whether they state what the answer says, the model said only partly, or not at all, or gave no clear reply; or, reading the passages without seeing the answer, it found a different one or none, which is shown, with why when its reply could not be read; or, with Qwen3.5-2B, asked which parts of the question the answer gives, it found one left out; or the question names a formula, such as "Z/pZ × F₅ⁿ" or "s ≤ 1/2", that neither the answer nor its quotes has, so the answer may be about another one. A number or a condition may differ, or part of the answer may be missing.
-- **Quotes found, answer too short to check**: with models other than Qwen3.5-4B, and on answers saved by earlier versions of Kovrune, the quotes are real, but the answer (such as a name or a number) is too short to compare with them. Short answers are often wrong even with real quotes, so check that the quotes answer your question.
-- **3 of 5 sentences backed by a quote**: the quotes are real, but the sentences marked ⚠ share few words with them, or have a number, unit, month, "not", direction such as "higher", or "significant" that the quotes don't back, or rest on a quote that leaves out more than a few words with "...", so they may come from the model's memory. One nearly word for word in a document the model read, though not quoted, says "in the source, not quoted".
-- **Some quotes not found**, **Quotes not found** or **No quotes**: the answer isn't fully backed by its sources, so check it yourself. For a quote that is nearly right, the closest passage in the source is shown with the differences marked.
-- **Not found in your sources**: the model found no answer in your documents.
+Then add documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV, text, Markdown or HTML), or tick Wikipedia, OpenAlex, arXiv, DataCite or Europe PMC to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document, and the answer gets one of three verdicts:
+- **✓ Backed by quotes**: every quote is word for word in its source, and every check passed: each sentence shares most of its words with a quote, with no number, unit, "not" or name the quotes don't back, and the model, reading the quoted passages again, confirms they state the answer. This proves the quotes are real, not that the answer is right; check that they answer what you asked.
+- **⚠ Needs checking**: the quotes are real, but a check could not confirm that they back the whole answer: a sentence the quotes don't back, an answer too short to compare, a source that says otherwise, or the model's own check saying only partly.
+- **✗ Not backed**: quotes are missing or not in their sources. For a quote that is nearly right, the closest passage in the source is shown with the differences marked.
+
+Or **Not found in your sources**, when the model found no answer. Under each verdict, **Why** gives the precise label and which check decided it ([user guide](docs/user-guide.md#4-read-the-answer)).
 
 Documents and answers stay on your device: they are saved in your browser, so they are still there after a reload. A question interrupted by a reload or a lost model server can continue where it stopped. **Storage and backup** shows what the browser keeps, and saves documents and answers to a backup file you can restore in any browser. An answer can be exported as Markdown, with its quotes and sources, and the papers it cites as BibTeX. Scanned PDFs without a text layer cannot be read.
 
@@ -77,11 +76,12 @@ npm run bench:rereview -- --model m a.json   # the model's check of recorded ans
 npm run bench:crosscheck -- --model m a.json # the cross-check of recorded answers: the answer read in the passages, compared
 npm run bench:completeness -- --model m a.json # the completeness check of recorded answers: every part of the question given
 npm run bench:report      # the report suite: reports planned and written as the app does, then scored
+npm run bench:plancoverage -- a.json  # whether the plan screen's source check predicts section results, without a model
 npm run pin:browser-models   # re-pin the browser models' files and SHA-256 (a deliberate model update)
 npm run build:redirect    # the page that forwards the old GitHub Pages address
 ```
 
-Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
+Contributions follow one way of working, checked in CI: see [`CONTRIBUTING.md`](CONTRIBUTING.md). Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
 
 Product code lives in `src/` (`agent/`, `tools/`, `models/`, `sources/`, `documents/`, `app/`); the benchmark in `eval/` imports it, so benchmark results measure the code the app runs.
 

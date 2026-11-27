@@ -81,3 +81,30 @@ The remaining safeguards are deliberately model- and evidence-aware rather than 
 - Table interpretation remains bounded by extraction fidelity: a header-aware row is easier to read, but extracted text is not a substitute for inspecting a chart or a scanned table when the source layout is ambiguous.
 
 These changes improve visibility and a narrow, deterministic part of scientific table interpretation; they do not claim that all six P0 areas have passed their release gates.
+
+## Measured (harness 0.110.0)
+
+The two changes above were merged without a measurement. This section adds it, as [`CONTRIBUTING.md`](../CONTRIBUTING.md) now requires of every model-facing change.
+
+### The plan screen's source check, judged by outcome
+
+A hint is worth its space only if it tells sections that will fail from sections that won't; being visible says nothing. `npm run bench:plancoverage` takes recorded report runs, works out the check again for each planned question (it is deterministic), and counts each written section's result by the hint it got (`predictFromCoverage` in `eval/harness/report-score.ts`). From 0.110.0, `bench:report` records the hint with each plan and prints the same count.
+
+Over the ten recorded report runs (harness 0.51.0 to 0.55.0, Qwen3.5-2B and 4B, 297 written sections, 81 of them matched to an expected section):
+
+| Hint | Open reports: sections, right | Held-out reports: sections, right |
+| --- | --- | --- |
+| No passage surfaced | 0 | 0 |
+| A passage in the document the facts are in | 48, 19 right (40%) | 19, 19 right (100%) |
+| Passages only in other documents | 1, 0 right | 13, 4 right (31%) |
+
+- **The warning never fires.** In a seven-document library, some passage always surfaces, so "no matching passage surfaced" was shown for none of 297 sections. Feeding uncovered sections back to the planner, the follow-up the audit suggested, would act on none of them.
+- **The positive message doesn't predict success on the open reports.** 29 of the 48 sections whose hint names the right document fail anyway: report mode's failures are in reading and answering, not in finding the document. Nor does the share of the question's words found (`coverage`) sort them: sections whose best match covers under 40% of the question's words are right 18 of 39 times, 40–60% 15 of 26, 60–80% 6 of 13, and above 80% 3 of 3.
+- **The held-out split looks better** (19 of 19 against 4 of 13), but it rests on 32 sections, and the reader can't see which listed document is "the expected one", so it doesn't reach them as a signal.
+- **Caveats:** the hint is worked out on today's code for answers recorded at 0.51.0–0.55.0. No run since then has used the report suite.
+
+**Decision for the owner:** this does not count as P0 progress. Either drop the hint, or keep it and measure a version that could fail. For example, show it only for a section whose best match covers less than a set share of its words, with the threshold chosen on the open reports and checked on the held-out ones.
+
+### Two-column scientific table headers
+
+`npm run bench:replay -- --base cb92369 --head 77d5c08` over the latest recorded run of every suite (12 reports): 430 of 454 tasks make the same requests of the model, 0 differ, and 24 can't be decided. The same 24 can't be decided when the code before the change is replayed against itself, so that is older recording drift, not this change. **No suite document has one of the 20 header pairs**, so the rule changes nothing that is measured. It is a list fitted to its own examples, and it needs a case in a suite before it is called an improvement.

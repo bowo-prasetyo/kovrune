@@ -29,23 +29,25 @@ const report = (sections: SavedAnswer[], planned = 3) =>
   });
 
 describe("labels in the Past answers list", () => {
-  it("shows an answer's own label", () => {
+  it("shows an answer's verdict", () => {
     // UX audit: the list showed only the question, time and model, so a risky answer looked like the others.
-    assert.deepEqual(listLabel(answer("q", "verified", [true])), { label: "Quotes found", severity: "found" });
-    assert.deepEqual(listLabel(answer("q", "unverified", [false])), { label: "Quotes not found", severity: "danger" });
+    // Since the label tiers, the list shows the verdict, not the precise label.
+    assert.deepEqual(listLabel(answer("q", "verified", [true])), { label: "Backed by quotes", severity: "found" });
+    assert.deepEqual(listLabel(answer("q", "unverified", [false])), { label: "Not backed", severity: "danger" });
     assert.deepEqual(listLabel(answer("q", "not-found")), { label: "Not found in your sources", severity: "none" });
     assert.deepEqual(listLabel(answer("q", "no-answer")), { label: "No answer", severity: "none" });
+    assert.deepEqual(listLabel(answer("q", "verified", [true, false])), { label: "Not backed", severity: "danger" }, "some quotes not found");
   });
 
   it("sums up a report by its sections, red when any section's quotes are missing", () => {
     const found = answer("a?", "verified", [true]);
-    assert.deepEqual(listLabel(report([found, found, found])), { label: "Report: 3 of 3 sections Quotes found", severity: "found" });
+    assert.deepEqual(listLabel(report([found, found, found])), { label: "Report: 3 of 3 sections backed by quotes", severity: "found" });
     assert.deepEqual(listLabel(report([found, answer("b?", "no-answer"), found])), {
-      label: "Report: 2 of 3 sections Quotes found",
+      label: "Report: 2 of 3 sections backed by quotes",
       severity: "check",
     });
     assert.deepEqual(listLabel(report([found, answer("b?", "unverified", [false]), answer("c?", "unverified")])), {
-      label: "Report: 1 of 3 sections Quotes found, 2 with quotes missing or not found",
+      label: "Report: 1 of 3 sections backed by quotes, 2 not backed",
       severity: "danger",
     });
   });
@@ -53,6 +55,6 @@ describe("labels in the Past answers list", () => {
   it("counts unwritten sections against the plan", () => {
     assert.equal(listLabel(report([answer("a?", "verified", [true])])).severity, "check", "2 of 3 sections never written");
     assert.deepEqual(listLabel(report([])), { label: "Report: no sections written", severity: "none" });
-    assert.deepEqual(listLabel(report([answer("a?", "no-answer")], 1)), { label: "Report: 0 of 1 section Quotes found", severity: "none" });
+    assert.deepEqual(listLabel(report([answer("a?", "no-answer")], 1)), { label: "Report: 0 of 1 section backed by quotes", severity: "none" });
   });
 });

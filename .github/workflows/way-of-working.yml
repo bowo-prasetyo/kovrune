@@ -1,0 +1,29 @@
+name: Way of working
+
+# Every pull request follows CONTRIBUTING.md. A change to what the model is shown, or to how answers
+# are scored or labelled, bumps the harness version, adds its changelog row, and says how it was
+# measured (scripts/way-of-working.ts). Runs again when the description is edited, so adding the
+# measurement there is enough.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Check the pull request against CONTRIBUTING.md
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node --experimental-strip-types --no-warnings scripts/way-of-working.ts "$BASE_SHA"

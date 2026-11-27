@@ -129,6 +129,37 @@ export function describeNoAnswer(stopReason: string, error?: string): string {
 export type LabelSeverity = "found" | "check" | "danger" | "none";
 
 /**
+ * What a reader sees first: one of three plain verdicts, from the label's severity, with one sentence
+ * saying what it means. The precise label ("Quotes found, answer not confirmed", "3 of 5 sentences
+ * backed by a quote" …) and its full explanation stay one click away, under the verdict. The precise
+ * labels grew with every check (review, cross-check, completeness, formulas, proofs, contradictions),
+ * and readers had to learn a dozen of them to know whether to trust an answer.
+ *
+ * "found" is exactly the **Quotes found** label (`labelledQuotesFound`), so the false reassurance rate
+ * (design.md §1.6) is the share of answers headed "Backed by quotes" that are wrong.
+ */
+export const LABEL_TIERS: Record<Exclude<LabelSeverity, "none">, { headline: string; summary: string }> = {
+  found: {
+    headline: "Backed by quotes",
+    summary: "Every quote is in its source and every check passed. This shows the quotes are real and back the answer, not that the answer is right: check that it answers what you asked.",
+  },
+  check: {
+    headline: "Needs checking",
+    summary: "The quotes are real, but a check could not confirm that they back the whole answer. Compare the answer with the quotes before relying on it.",
+  },
+  danger: {
+    headline: "Not backed",
+    summary: "Quotes are missing, or not in the sources they cite, so nothing backs this answer. Treat it as unchecked.",
+  },
+};
+
+/** The verdict to show for an answer's label: its tier's headline and summary, or for no answer, the label itself. */
+export function labelTier(status: { label: string; detail: string; severity: LabelSeverity }): { headline: string; summary: string; precise: boolean } {
+  if (status.severity === "none") return { headline: status.label, summary: status.detail, precise: false };
+  return { ...LABEL_TIERS[status.severity], precise: true };
+}
+
+/**
  * The status line for an answer. A quote check proves the quotes are in the documents,
  * not that they support every part of the answer, so the wording says only that. With
  * `support`, the label also says how many of the answer's sentences a found quote backs.
