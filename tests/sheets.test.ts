@@ -12,6 +12,7 @@ import { detectKind, extractText, pageUnit, type PdfJsLike } from "../src/docume
 import { builtInFormat, formatGeneral, formatValue, serialToDate } from "../src/documents/number-format.ts";
 import { extractOfficeText } from "../src/documents/office.ts";
 import { MAX_SHEET_ROWS } from "../src/documents/sheets.ts";
+import { tableLines } from "../src/documents/tables.ts";
 import { makeZip } from "./zip-fixture.ts";
 
 const noPdf = async (): Promise<PdfJsLike> => {
@@ -20,6 +21,27 @@ const noPdf = async (): Promise<PdfJsLike> => {
 const file = (name: string, bytes: Uint8Array) => ({ name, arrayBuffer: async () => bytes.slice().buffer as ArrayBuffer });
 const fixture = (name: string) => new Uint8Array(readFileSync(new URL(`fixtures/office/${name}`, import.meta.url)));
 
+describe("scientific two-column tables", () => {
+  it("labels values with an explicit variable/value header", () => {
+    const result = tableLines([
+      { header: false, skip: 0, cells: [{ text: "Parameter", span: 1 }, { text: "Value", span: 1 }] },
+      { header: false, skip: 0, cells: [{ text: "pH", span: 1 }, { text: "7.4", span: 1 }] },
+      { header: false, skip: 0, cells: [{ text: "Temperature", span: 1 }, { text: "37 °C", span: 1 }] },
+    ]);
+    assert.deepEqual(result, {
+      head: ["Parameter | Value"],
+      body: ["Parameter: pH | Value: 7.4", "Parameter: Temperature | Value: 37 °C"],
+    });
+  });
+
+  it("does not mistake an arbitrary two-column label/value table for a header", () => {
+    const result = tableLines([
+      { header: false, skip: 0, cells: [{ text: "Principal", span: 1 }, { text: "Tomoko Yamafuji", span: 1 }] },
+      { header: false, skip: 0, cells: [{ text: "School", span: 1 }, { text: "Kawaguchi", span: 1 }] },
+    ]);
+    assert.deepEqual(result, { head: [], body: ["Principal\\tTomoko Yamafuji", "School\\tKawaguchi"] });
+  });
+});
 describe("number formats", () => {
   it("shows dates and times as the cell's format does", () => {
     assert.equal(formatValue(45717, "yyyy/m/d"), "2025/3/1");
