@@ -65,3 +65,19 @@ Start the runner with `npm run bench:browser`, open its local page, choose WebLL
 ## Non-goals
 
 This P0 does not add a coding agent, collaboration/circles, cloud inference, telemetry, or a new vector database. It does not weaken quote verification or use an LLM judge as the only correctness signal.
+
+## Implementation notes: source coverage and scientific tables
+
+The report planner now runs a separate deterministic retrieval check for every generated section and attaches the initial result to the plan. The plan screen names documents whose passages surfaced, and explicitly says when no passage surfaced. This is a retrieval diagnostic only: a hit does not establish that the source answers the question, and no hit is not proof that the answer is absent. Editing a question removes its match from the visible snapshot rather than presenting stale coverage as current.
+
+Office/OpenDocument table extraction also recognizes a small, explicit set of conventional two-column scientific headers (for example, `Parameter | Value`, `Analyte | Concentration`, and `Dose | Response`). It labels subsequent values with their column names while leaving arbitrary two-column label/value tables unchanged.
+
+The remaining safeguards are deliberately model- and evidence-aware rather than enabled by assumption:
+
+- Multi-document research already has a topic-by-topic search/read path and a read-before-answer guard. Keep it covered by multi-passage and multi-document held-out tasks.
+- Retrieval remains deterministic BM25 with domain-specific name/abbreviation expansion. Do not change the production result limit or introduce embeddings until the 100/300/1,000-distractor recall, precision, and latency runs justify it.
+- Contradiction detection currently uses lexical/negation evidence and has known limits around implicit denials and different conditions or time points. Broader detection needs held-out tests for those cases before it can safely change answer labels.
+- Completeness checking remains enabled only for models whose measured behavior justifies it; enabling a weaker checker can reject correct answers.
+- Table interpretation remains bounded by extraction fidelity: a header-aware row is easier to read, but extracted text is not a substitute for inspecting a chart or a scanned table when the source layout is ambiguous.
+
+These changes improve visibility and a narrow, deterministic part of scientific table interpretation; they do not claim that all six P0 areas have passed their release gates.
