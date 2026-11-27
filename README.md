@@ -76,11 +76,12 @@ npm run bench:rereview -- --model m a.json   # the model's check of recorded ans
 npm run bench:crosscheck -- --model m a.json # the cross-check of recorded answers: the answer read in the passages, compared
 npm run bench:completeness -- --model m a.json # the completeness check of recorded answers: every part of the question given
 npm run bench:report      # the report suite: reports planned and written as the app does, then scored
+npm run bench:plancoverage -- a.json  # whether the plan screen's source check predicts section results, without a model
 npm run pin:browser-models   # re-pin the browser models' files and SHA-256 (a deliberate model update)
 npm run build:redirect    # the page that forwards the old GitHub Pages address
 ```
 
-Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
+Contributions follow one way of working, checked in CI: see [`CONTRIBUTING.md`](CONTRIBUTING.md). Releases are built from version tags and can be rebuilt byte for byte; see [`docs/releases.md`](docs/releases.md).
 
 Product code lives in `src/` (`agent/`, `tools/`, `models/`, `sources/`, `documents/`, `app/`); the benchmark in `eval/` imports it, so benchmark results measure the code the app runs.
 

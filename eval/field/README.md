@@ -10,6 +10,8 @@ It is reported as its own suite and is not part of the gate's evaluation set, so
 
 ## Rule for prompt and guard changes
 
+Every contributor follows this rule; [`CONTRIBUTING.md`](../../CONTRIBUTING.md) says what a pull request must carry, and CI checks it (harness 0.110.0).
+
 Before a change to the research prompt or the guards (repeat, last-step, read-before-search, documents-first) is merged, it must **improve the field suite without regressing** the research, unanswerable and pdf suites, on Qwen3.5-2B and Qwen3.5-4B. A change that only fixes a live check is not enough.
 
 A change to search or chunking is measured first with `npm run bench:retrieval`, which takes seconds and needs no model (see [Retrieval](#retrieval)), and then by the same rule.
