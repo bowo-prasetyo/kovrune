@@ -63,6 +63,14 @@ export function ReportPlanView({
               value={question}
               onChange={(e) => onChange(planEdits.setQuestion(plan, i, e.target.value))}
             />
+            {plan.sectionCoverage?.find((coverage) => coverage.question === question) && (
+              <p className="hint">
+                Initial source check: {plan.sectionCoverage.find((coverage) => coverage.question === question)!.matches.length
+                  ? `matching passages surfaced in ${describeConsulted(plan.sectionCoverage.find((coverage) => coverage.question === question)!.matches.map((match) => match.title))}.`
+                  : "no matching passage surfaced. This is a retrieval gap, not proof that no source contains the answer."}
+                {" "}A match is a lead, not evidence that the section is answerable.
+              </p>
+            )}
             <span className="plan-buttons">
               <button type="button" aria-label={`Move section ${i + 1} up`} disabled={i === 0} onClick={() => onChange(planEdits.move(plan, i, -1))}>
                 ↑

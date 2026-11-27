@@ -34,11 +34,23 @@ const MAX_HEADER_CHARS = 60;
 
 /**
  * Whether a first row no file marked is still a header: every cell filled, short, and not a
- * number or a sentence. Two-column tables are left alone: they are usually labels and values
- * ("Principal | Tomoko Yamafuji"), whose first row is data.
+ * number or a sentence. Two-column tables are recognized only for explicit scientific header pairs;
+ * arbitrary label/value rows ("Principal | Tomoko Yamafuji") remain data.
  */
+const TWO_COLUMN_HEADERS = new Set([
+  "parameter|value", "variable|value", "metric|value", "measure|value", "statistic|estimate",
+  "analyte|concentration", "sample|measurement", "sample|mean", "sample|sd",
+  "time|value", "time|concentration", "group|outcome", "treatment|outcome",
+  "condition|result", "species|count", "compound|concentration", "dose|response",
+  "temperature|pressure", "endpoint|result", "property|value",
+]);
+
 function looksLikeHeader(row: string[], columns: number, rows: number): boolean {
-  if (rows < 2 || columns < 3 || row.length < columns) return false;
+  if (rows < 2 || row.length < columns) return false;
+  const cells = row.map((cell) => cell.trim().toLowerCase());
+  // Explicit two-column scientific headers are common; arbitrary label/value pairs are not headers.
+  if (columns === 2) return TWO_COLUMN_HEADERS.has(cells.slice(0, 2).join("|"));
+  if (columns < 3) return false;
   return row.every((cell) => cell !== "" && cell.length <= MAX_HEADER_CHARS && !/^[\d\s.,:%+-]+$/.test(cell) && !/[.!?。]$/.test(cell));
 }
 
