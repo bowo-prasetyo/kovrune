@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  assessPlanCoverage,
   DEFAULT_SECTIONS,
   fallbackPlan,
   MAX_SECTIONS,
@@ -172,6 +173,31 @@ describe("report mode: the source overview", () => {
   });
 });
 
+describe("report mode: per-section source coverage", () => {
+  it("checks every planned question independently and groups matching chunks by document", () => {
+    const library = new ResearchLibrary([
+      { id: "one", title: "Ledger.pdf", text: "A blockchain stores transactions in linked blocks. Each block contains the previous block hash." },
+      { id: "two", title: "Consensus.md", text: "Proof of work selects a block producer by computational effort. Proof of stake selects validators by stake." },
+      { id: "three", title: "Unrelated.txt", text: "Bread is made from flour and water." },
+    ]);
+    const coverage = assessPlanCoverage(library, [
+      "How are blocks linked?",
+      "How does proof of stake select validators?",
+      "What is the capital of Iceland?",
+    ]);
+    assert.ok(coverage[0]!.matches.some((match) => match.title === "Ledger.pdf"));
+    assert.ok(coverage[1]!.matches.some((match) => match.title === "Consensus.md"));
+    assert.deepEqual(coverage[2]!.matches, []);
+    assert.equal(coverage.length, 3, "a broad request-level match cannot hide an uncovered section");
+  });
+
+  it("reports retrieval leads, not proof that a question is answerable", () => {
+    const library = new ResearchLibrary([{ id: "doc", title: "Notes.md", text: "The report mentions blockchain but gives no details." }]);
+    const [coverage] = assessPlanCoverage(library, ["What are the limitations of blockchain?"]);
+    assert.ok(coverage!.matches.length > 0);
+    assert.equal(coverage!.question, "What are the limitations of blockchain?");
+  });
+});
 describe("report mode: the plan screen", () => {
   it("names the documents a plan was made from", () => {
     assert.equal(describeConsulted(["Guide.md"]), "“Guide.md”");
