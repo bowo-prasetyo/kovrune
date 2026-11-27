@@ -12,9 +12,9 @@ export type AnswerFilter = "all" | "found" | "check" | "danger" | "none" | "repo
 /** The label filter's choices, as the answers page shows them. */
 export const ANSWER_FILTERS: Array<[AnswerFilter, string]> = [
   ["all", "All answers"],
-  ["found", "✓ Quotes found"],
-  ["check", "⚠ To check"],
-  ["danger", "✗ Quotes missing or not found"],
+  ["found", "✓ Backed by quotes"],
+  ["check", "⚠ Needs checking"],
+  ["danger", "✗ Not backed"],
   ["none", "No answer"],
   ["reports", "Reports"],
 ];

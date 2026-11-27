@@ -286,7 +286,7 @@ An answer is a few sentences, each checked against a quote. For a longer report,
 3. **Choose whether to add an introduction and conclusion.** The model writes them after the sections, from the sections' answers only, in one more step. Their sentences are checked against the sections' quotes like an answer's, and ⚠ marks the ones no quote backs. They never change a section's label.
 4. **Press Write the report.** Above 30 minutes, it asks you to confirm first. Each section's question is researched in turn, as a question is: you see its heading and its steps. **Stop** keeps the sections already written.
 
-The report shows a summary of the sections' labels, for example "3 of 4 sections: Quotes found. 1: Quotes found, answer not confirmed.", then the introduction, each section with its own label, answer and evidence, and the conclusion. A section's label covers that section only, so check each one, as you would an answer.
+The report shows a summary of the sections' verdicts, for example "3 of 4 sections: Backed by quotes. 1: Needs checking.", then the introduction, each section with its own label, answer and evidence, and the conclusion. A section's label covers that section only, so check each one, as you would an answer.
 
 A section the model could not answer says so, and the next one starts. If the model server stops answering, the report stops there, and the sections already written are saved. A report is saved under **Past answers** after every section, so a reload keeps what was written. If a section can't be saved, the research screen says so while the report goes on, and saving is tried again with the next section.
 
@@ -296,11 +296,22 @@ Reports work best with Qwen3.5-4B. With Qwen3.5-2B, sections are often long and 
 
 ## 4. Read the answer
 
-Each answer has a label, then the answer, then what the label means, then the evidence: the quotes the answer is based on.
+Each answer has a verdict, then the answer, then one sentence on what the verdict means, then the evidence: the quotes the answer is based on.
 
-### The labels
+### The verdict
 
-The label's mark says how much it asks of you: ✓ in green when the quotes back the answer; ⚠ in amber when the quotes are real but the answer may not follow from them; ✗ in red when quotes are missing or not in the sources, so nothing backs the answer.
+Every answer gets one of three verdicts, or none when there is no answer:
+
+| Mark | Verdict | What it means | What to do |
+| --- | --- | --- | --- |
+| ✓ | **Backed by quotes** | Every quote is word for word in its source, and every check passed | Check that the quotes answer what you asked. Real quotes don't prove a right answer |
+| ⚠ | **Needs checking** | The quotes are real, but a check could not confirm that they back the whole answer | Compare the answer with the quotes before relying on it. **Why** says which check |
+| ✗ | **Not backed** | Quotes are missing, or not in the sources they cite | Treat the answer as unchecked |
+| – | **Not found in your sources** | The model found no answer in what it searched | Often the right answer. If you expected one, ask with words from the document, or tick more sources |
+
+### Why: the precise labels
+
+Under the verdict, **Why** opens the precise label and what it means. They are listed here for reference; you don't need to learn them to read an answer.
 
 | Mark | Label | What it means | What to do |
 | --- | --- | --- | --- |
@@ -434,9 +445,9 @@ All seven are off until you tick them. All but EPO patents need no account; EPO 
 
 ### Past answers
 
-Each finished answer is saved in the browser. The research screen lists the three most recent under **Recent answers**; **All past answers**, there or at the top of the page, opens the **Past answers** page with every saved answer, newest first, each with its label, when it was asked and which model answered. A report shows how many of its sections got **Quotes found**, in red when any section's quotes are missing or not found.
+Each finished answer is saved in the browser. The research screen lists the three most recent under **Recent answers**; **All past answers**, there or at the top of the page, opens the **Past answers** page with every saved answer, newest first, each with its label, when it was asked and which model answered. A report shows how many of its sections are **Backed by quotes**, in red when any section is **Not backed**.
 
-- **Search** finds answers by words in the question or the answer, or in a report's sections; accents and capitals don't matter. **Show** narrows the list by label: quotes found, to check (⚠), quotes missing or not found (✗), no answer, or reports.
+- **Search** finds answers by words in the question or the answer, or in a report's sections; accents and capitals don't matter. **Show** narrows the list by verdict: backed by quotes (✓), needs checking (⚠), not backed (✗), no answer, or reports.
 - Click a question to open the answer on its own page, as it was, with its label, evidence and steps. It still shows a document's name and pages after you remove the document. Its address (`…/answers/…`) can be bookmarked; it opens only in the browser that saved it.
 - A question that is running keeps running while you look at past answers, and what you typed in the question box stays there.
 - **Delete**, on the Past answers page or an answer's page, removes one answer, and **Undo** in the notice that follows brings it back; **Delete all saved answers**, at the bottom of the Past answers page, removes them all, after asking. Documents and models are kept.

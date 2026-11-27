@@ -59,13 +59,13 @@ Start the timer at task 1 and stop it when the first answer appears in task 4.
 
 ### Questions after the tasks
 
-1. What does the label on your answer (for example **Quotes found**) mean?
+1. What does the verdict on your answer (for example **Backed by quotes** or **Needs checking**) mean? Did you open **Why**?
 2. How would you check whether the answer is right?
 3. What was the most confusing moment?
 4. Would you use this for real work? What would stop you?
 5. Where do you think your documents and questions went?
 
-Questions 1, 2 and 5 check whether the trust and privacy messages come across. A participant who reads **Quotes found** as "the answer is correct" is a finding even if they completed every task.
+Questions 1, 2 and 5 check whether the trust and privacy messages come across. A participant who reads **Backed by quotes** as "the answer is correct" is a finding even if they completed every task.
 
 ## Results sheet
 
@@ -83,7 +83,7 @@ Build:                  commit __ (bottom of the page)
 Task 1 start app:       done / with help / not done   time __   notes
 Task 2 setup:           done / with help / not done   time __   (download __ min)
 Task 3 add PDF:         done / with help / not done
-Task 4 own question:    label shown ______   answer correct? yes / partly / no
+Task 4 own question:    verdict shown ______  Why opened? yes / no   answer correct? yes / partly / no
                         trusts it? ______ why ______
 Task 5 not covered:     label shown ______   correct refusal? yes / no
 Task 6 Wikipedia:       done / skipped        label ______ correct? ______
@@ -103,7 +103,7 @@ Answers to questions:   1 ______ 2 ______ 3 ______ 4 ______ 5 ______
 Summarize the sessions in `m1-plan.md` under slice 4:
 
 - **Counts:** how many of N completed setup and task 4 without help (target ≥ 3 of 5), and the time to first answer per participant (target under 15 minutes).
-- **False reassurance:** of the answers labelled **Quotes found** in tasks 4–6, how many the participant or moderator judged wrong or only partly right (the "answer correct?" line of the results sheet). Report it as "N of M" across all sessions; the target is under 10% ([`design.md` §1.6](design.md#16-success-metrics)). Note which of them the participant trusted.
+- **False reassurance:** of the answers labelled **Backed by quotes** (the precise label **Quotes found**) in tasks 4–6, how many the participant or moderator judged wrong or only partly right (the "answer correct?" line of the results sheet). Report it as "N of M" across all sessions; the target is under 10% ([`design.md` §1.6](design.md#16-success-metrics)). Note which of them the participant trusted.
 - **Findings:** where people got stuck, which messages were misread, and how answer quality compared with each participant's own judgement.
 - **Navigation and help:** how many used Back or reload, and how many of those got what they expected; how many opened Help, and whether it helped; whether anyone saw the slow-model advice or the "Interrupted question" notice, and what they did. These are the first sessions with these features, so even one confusion is worth an issue.
 - **Build:** the commit every session ran; if they differ, say which sessions ran which.

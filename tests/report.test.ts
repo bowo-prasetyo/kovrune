@@ -367,9 +367,9 @@ describe("report mode: exporting a report (slice 3)", () => {
     const md = answerToMarkdown(record);
     assert.match(md, /^# Blockchain\n/);
     assert.match(md, /\n> Write a report on blockchain\.\n/, "the request");
-    assert.match(md, /\*\*1 of 3 sections: Quotes found\. 1: Some sentences not backed by a quote\. 1 stopped before they were written\.\*\*/);
-    assert.match(md, /## 1\. What is it\?\n\n\*\*1 of 2 sentences backed by a quote\.\*\*\n\nA blockchain is a ledger\. ⚠ It flies\./);
-    assert.match(md, /## 2\. How are blocks linked\?\n\n\*\*Quotes found\.\*\*\n\nBy hashes\./);
+    assert.match(md, /\*\*1 of 3 sections: Backed by quotes\. 1: Needs checking\. 1 stopped before they were written\.\*\*/);
+    assert.match(md, /## 1\. What is it\?\n\n\*\*Needs checking\*\* \(1 of 2 sentences backed by a quote\)\.\n\nA blockchain is a ledger\. ⚠ It flies\./);
+    assert.match(md, /## 2\. How are blocks linked\?\n\n\*\*Backed by quotes\*\* \(Quotes found\)\.\n\nBy hashes\./);
     assert.match(md, /- ✓ \[1\]: > A blockchain is a ledger/);
     assert.match(md, /- ✓ \[2\]: > Consensus orders blocks/);
     assert.match(md, /- ✓ \[1\]: > each block holds the hash/, "two parts of one document are one reference");

@@ -11,7 +11,7 @@ import {
   answerToMarkdown,
   exportFileName,
   quotePages,
-  sectionLabel,
+  sectionTier,
   shownSupport,
   sourceErrorNote,
   sourceTitle,
@@ -22,7 +22,7 @@ import {
 import { download } from "./download.ts";
 import { mathSegments, readableMath } from "./math.ts";
 import { describeReportLabels, describeSynthesisBacking } from "./report.ts";
-import { describeStatus, type LabelSeverity } from "./trace.ts";
+import { describeStatus, labelTier, type LabelSeverity } from "./trace.ts";
 
 export function ExportButtons({ answer }: { answer: SavedAnswer }) {
   const bibtex = answerToBibtex(answer);
@@ -61,16 +61,23 @@ export function ResultView({ answer, live = false }: { answer: SavedAnswer; live
   }
   const support = shownSupport(answer);
   const status = describeStatus(answer.status, answer.evidence, support);
-  // The label, then the answer it is about, then what the label means: the answer used to sit below a
-  // paragraph of explanation, and the explanation of ⚠ was given twice.
+  const tier = labelTier(status);
+  // The verdict, then the answer it is about, then one sentence on what the verdict means; the precise
+  // label and its explanation are one click away (trace.ts LABEL_TIERS).
   return (
     <div className={`result ${answer.status}`} role={live ? "status" : undefined}>
       {sourceErrors}
       <p className="status-line">
-        <StatusPill label={status.label} severity={status.severity} />
+        <StatusPill label={tier.headline} severity={status.severity} />
       </p>
       {answer.answer && <Answer text={answer.answer} support={support} explainMarks={!status.detail.includes("⚠")} />}
-      <p className={`status-detail ${status.severity}`}>{status.detail}</p>
+      <p className={`status-detail ${status.severity}`}>{tier.summary}</p>
+      {tier.precise && (
+        <details className="label-details">
+          <summary>Why: {status.label}</summary>
+          <p>{status.detail}</p>
+        </details>
+      )}
       {answer.evidence.length > 0 && (
         <>
           <h3>Evidence</h3>
@@ -318,7 +325,7 @@ function ReportView({ report, live }: { report: SavedReport; live: boolean }) {
   return (
     <div className="report" role={live ? "status" : undefined}>
       <h3>{report.title}</h3>
-      <p className="report-labels">{describeReportLabels(report, sectionLabel)}</p>
+      <p className="report-labels">{describeReportLabels(report, sectionTier)}</p>
       <p className="hint">
         Each section answers one question with its own quotes, checked as any answer is. Check each section against its sources:
         a section's label covers that section only.

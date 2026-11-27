@@ -10,7 +10,7 @@ import { detectKind, pageUnit } from "../../documents/extract.ts";
 import type { Citation } from "../../sources/session.ts";
 import { referenceLine, type DocumentWork } from "../../documents/references.ts";
 import { describeReportLabels } from "./report.ts";
-import { describeNoAnswer, describePages, describeStatus, type LabelSeverity } from "./trace.ts";
+import { describeNoAnswer, describePages, describeStatus, labelTier, type LabelSeverity } from "./trace.ts";
 
 export interface SavedAnswer {
   id: string;
@@ -168,7 +168,9 @@ export function answerToMarkdown(answer: SavedAnswer): string {
   } else {
     const support = shownSupport(answer);
     const status = describeStatus(answer.status, answer.evidence, support);
-    lines.push(`**${status.label}.** ${status.detail}`, "");
+    const tier = labelTier(status);
+    lines.push(`**${tier.headline}.** ${tier.summary}`, "");
+    if (tier.precise) lines.push(`Why: **${status.label}.** ${status.detail}`, "");
     if (answer.answer) {
       const unbacked = support?.sentences.some((s) => s.backed === false);
       lines.push(markedAnswer(answer), "");
@@ -231,9 +233,14 @@ export function sectionLabel(section: SavedAnswer): string {
   return section.status === "no-answer" ? "No answer" : describeStatus(section.status, section.evidence, shownSupport(section)).label;
 }
 
+/** A section's verdict ("Backed by quotes", "Needs checking", "Not backed"), as its answer would show it (trace.ts LABEL_TIERS). */
+export function sectionTier(section: SavedAnswer): string {
+  return section.status === "no-answer" ? "No answer" : labelTier(describeStatus(section.status, section.evidence, shownSupport(section))).headline;
+}
+
 /**
  * A saved answer's label in the Past answers list, so answers can be told apart without opening them:
- * an answer's own label; "No answer"; or, for a report, how many of its sections got "Quotes found",
+ * an answer's verdict (trace.ts LABEL_TIERS); "No answer"; or, for a report, how many of its sections are backed by quotes,
  * red when any section's quotes are missing or not found, since one such section is enough to check.
  */
 export function listLabel(answer: SavedAnswer): { label: string; severity: LabelSeverity } {
@@ -243,14 +250,14 @@ export function listLabel(answer: SavedAnswer): { label: string; severity: Label
     const kinds = sections.map((section) => listLabel(section).severity);
     const found = kinds.filter((k) => k === "found").length;
     const danger = kinds.filter((k) => k === "danger").length;
-    const label = `Report: ${found} of ${plan.length} ${plan.length === 1 ? "section" : "sections"} Quotes found`;
-    if (danger) return { label: `${label}, ${danger} with quotes missing or not found`, severity: "danger" };
+    const label = `Report: ${found} of ${plan.length} ${plan.length === 1 ? "section" : "sections"} backed by quotes`;
+    if (danger) return { label: `${label}, ${danger} not backed`, severity: "danger" };
     if (found === plan.length) return { label, severity: "found" };
     return { label, severity: kinds.every((k) => k === "none") ? "none" : "check" };
   }
   if (answer.status === "no-answer") return { label: "No answer", severity: "none" };
-  const { label, severity } = describeStatus(answer.status, answer.evidence, shownSupport(answer));
-  return { label, severity };
+  const status = describeStatus(answer.status, answer.evidence, shownSupport(answer));
+  return { label: labelTier(status).headline, severity: status.severity };
 }
 
 /**
@@ -266,7 +273,7 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
     "",
     `> ${oneLine(report.request)}`,
     "",
-    `**${describeReportLabels(report, sectionLabel)}** Each section answers one question with its own quotes, and its label covers that section only.`,
+    `**${describeReportLabels(report, sectionTier)}** Each section answers one question with its own quotes, and its label covers that section only.`,
     "",
   ];
   // References are numbered in the order they are first quoted; a source is one document or page.
@@ -293,7 +300,9 @@ export function reportToMarkdown(record: SavedAnswer, report: SavedReport): stri
       lines.push(section.noAnswer ?? "The model did not give an answer.", "");
       return;
     }
-    lines.push(`**${sectionLabel(section)}.**`, "");
+    const tier = sectionTier(section);
+    const label = sectionLabel(section);
+    lines.push(tier === label ? `**${tier}.**` : `**${tier}** (${label}).`, "");
     if (section.answer) lines.push(markedAnswer(section), "", ...closestLines(section));
     for (const item of section.evidence) {
       const where = reference(section, item.docId, quotePages(section, item));

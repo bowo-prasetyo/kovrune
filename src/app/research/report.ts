@@ -5,6 +5,7 @@
 import { MAX_SECTIONS, MIN_SECTIONS, type ReportPlan } from "../../agent/report.ts";
 import type { Synthesis } from "../../agent/synthesis.ts";
 import type { SavedAnswer, SavedReport } from "./answers.ts";
+import { LABEL_TIERS } from "./trace.ts";
 
 /** Above this many minutes, a report asks for confirmation before it starts (decision R5). */
 export const CONFIRM_REPORT_MINUTES = 30;
@@ -136,7 +137,8 @@ export function describeReportLabels(report: SavedReport, label: (section: Saved
     counts.set(kind, (counts.get(kind) ?? 0) + 1);
   }
   const total = report.plan.length;
-  const order = [...counts.entries()].sort((a, b) => Number(b[0] === "Quotes found") - Number(a[0] === "Quotes found") || b[1] - a[1]);
+  const first = (name: string) => Number(name === "Quotes found" || name === LABEL_TIERS.found.headline);
+  const order = [...counts.entries()].sort((a, b) => first(b[0]) - first(a[0]) || b[1] - a[1]);
   const parts = order.map(([name, n], i) => (i === 0 ? `${n} of ${total} ${total === 1 ? "section" : "sections"}: ${name}.` : `${n}: ${name}.`));
   const missing = total - report.sections.length;
   if (missing > 0) {
