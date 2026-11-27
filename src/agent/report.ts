@@ -162,6 +162,7 @@ export function assessPlanCoverage(library: ResearchLibrary, sections: string[],
     return { question, matches: [...byTitle].map(([title, coverage]) => ({ title, coverage })) };
   });
 }
+
 /**
  * Whether the planner is shown the source overview, by the model's ID: no model yet. Measured on the
  * report suite at 4,096 tokens (eval/field/README.md), it lifted Qwen3.5-2B's report coverage from 3
