@@ -6,17 +6,17 @@ An open-source, local-first research app: answers about the user's own documents
 
 | | |
 | --- | --- |
-| Status | Draft, revision 5 (the design brought up to date with what is built, and the order until the first users; see §0) |
+| Status | Draft, revision 5.1 (the design brought up to date with what is built, and the order until the first users; see §0) |
 | License | MPL-2.0 (see [`LICENSE`](../LICENSE)) |
 | Scope of this document | Product definition, architecture, security model, and roadmap |
 
-Kovrune is built around a simple idea: people should be able to run their own AI agents, choose their own models, and collaborate with people they trust without depending on a centralized AI provider.
-
-Today, a user opens Kovrune in a browser, picks a compatible model from Hugging Face (or points Kovrune at a model server they already run), and runs a research agent locally over their documents and open sources. Later milestones add work on software and exchanging tasks with peers they have invited.
+Today, a user opens Kovrune in a browser, picks a compatible model from Hugging Face (or points Kovrune at a model server they already run), and runs a research agent locally over their documents and open sources. Later milestones add work on software and exchanging tasks with peers they have invited: the longer aim is that people run their own AI agents, choose their own models, and collaborate with people they trust without depending on a centralized AI provider (§1.1).
 
 ---
 
 ## 0. Revision notes
+
+**Revision 5.1** (28 November 2026) follows up the same day's product audit, and changes no milestone or principle. §1.1 leads with the research product and presents agents cooperating in circles as the later aim. §1.6 adds false reassurance for every suite on today's label rules (`bench:baseline`). §11's measured-change rule now also fails a measurement that is still to come, and a label change that gives no false reassurance figure.
 
 **Revision 5** (28 November 2026) brings the document up to date after a month in which much was built and nothing was tested with users, and follows the product audits of 26–28 November. It changes no milestone or principle:
 - **Where things stand** is now at the head of §12: M1 is built and waits on people (the usability test and the class 2 run), M2 is done but for the owner's release test, and the P0 research-quality work is open.
@@ -53,9 +53,11 @@ Revision 2 followed a product and feasibility audit of the first draft. The main
 
 ### 1.1 Vision
 
-Build a decentralized environment in which independent AI agents, each controlled by its owner, can cooperate on work that benefits from multiple perspectives, specialized capabilities, or uneven hardware.
+**Now: private research whose answers can be checked.** A researcher asks a question about their own documents and open scholarly sources and gets an answer that quotes its sources. Kovrune checks that every quote is in its source and says how far the quotes back the answer, and the model runs on the researcher's own machine. This is the product today (§1.4–1.6), and everything that follows is judged by whether it keeps that promise.
 
-For example, a Kovruner developing a software application might ask their local agent to:
+**Later: agents that cooperate within trusted circles.** The long-term aim is a decentralized environment in which independent AI agents, each controlled by its owner, can cooperate on work that benefits from multiple perspectives, specialized capabilities, or uneven hardware. Each peer keeps control of its own machine, models, data, permissions, and participation. None of this is built. The coding agent (M2.5) is on hold until users ask for it, and Circles (M3 and later) start only after interviews show demand ([`circles-interviews.md`](circles-interviews.md#m3-go-or-no-go)).
+
+For example, a Kovruner developing a software application might one day ask their local agent to:
 
 - Research libraries and compare technical approaches.
 - Run generated tests in a local sandbox.
@@ -63,7 +65,7 @@ For example, a Kovruner developing a software application might ask their local 
 - Combine the findings into a coherent implementation plan.
 - Verify the result before accepting it.
 
-Each peer retains control of its own machine, models, data, permissions, and participation.
+The project motto, *Think Freely. Build Together. Stay Decentralized.*, describes this long-term aim. The first step, research, already stands on its first and last parts: a model the user chooses, on their own machine, with no central service.
 
 ### 1.2 Core principles
 
@@ -129,7 +131,7 @@ Later milestones are compared with different alternatives:
 | Time from first visit to first useful result | Under 15 minutes on reference hardware, including model download |
 | Model download completion rate | Above 90% of started downloads |
 | Valid tool-call rate | Above 95% with constrained decoding on catalog models |
-| **False reassurance rate:** the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0; 6 of 40 (15%) over all suites in harness 0.15.0, 3 of 25 (12%) with those answers re-checked under harness 0.16.0's rules, and 3 of 26 (12%) in a harness 0.16.0 run. Latest: 5 of 117 (4.3%) over the research, unanswerable, PDF, field and held-out suites, harness 0.38.0; per field suite it varies, for example 3 wrong labelled answers on the 60-task materials suite at 0.109.0 |
+| **False reassurance rate:** the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0; 6 of 40 (15%) over all suites in harness 0.15.0, 3 of 25 (12%) with those answers re-checked under harness 0.16.0's rules, and 3 of 26 (12%) in a harness 0.16.0 run. Model run, last over the core suites: 5 of 117 (4.3%) over the research, unanswerable, PDF, field and held-out suites, harness 0.38.0. **Every suite, on harness 0.113.0's label rules** (`npm run bench:baseline`: each suite's latest recorded answers re-scored, no model asked again): Qwen3.5-4B 14 of 335 (4.2%) over 25 suites, Qwen3.5-2B 22 of 157 (14.0%) over 17; highest on the multi-passage suites ([table](p0-research-quality.md#false-reassurance-on-todays-rules-28-november-2026)) |
 | 7-day and 30-day retention | Tracked with opt-in, privacy-preserving telemetry only |
 | Trusted-circle usage (after M4) | Number of circles with at least one delegated task per week |
 
@@ -673,7 +675,7 @@ kovrune/
 | End-to-end | Select model, run task, restart app, resume work (Chromium, Firefox, WebKit) |
 | Security | Malformed peer messages, prompt injection, oversized input, unauthorized sharing, CSP violations |
 
-**Measured changes.** A change to what the model is shown, which answers pass, or how they are labelled is measured before it is merged: by replaying recorded runs (`bench:replay`), by the search benchmark, or by model runs on both catalog models with paired counts, by the rule in [`eval/field/README.md`](../eval/field/README.md#rule-for-prompt-and-guard-changes). Each such change bumps the harness version and adds a changelog row. CI's **Way of working** check enforces all three for every contributor ([`CONTRIBUTING.md`](../CONTRIBUTING.md)), and CI also writes the search benchmark in a larger library to each pull request's summary.
+**Measured changes.** A change to what the model is shown, which answers pass, or how they are labelled is measured before it is merged: by replaying recorded runs (`bench:replay`), by the search benchmark, or by model runs on both catalog models with paired counts, by the rule in [`eval/field/README.md`](../eval/field/README.md#rule-for-prompt-and-guard-changes). Each such change bumps the harness version and adds a changelog row. CI's **Way of working** check enforces all three for every contributor, fails a measurement described as still to come, and asks a change to the label rules for false reassurance ([`CONTRIBUTING.md`](../CONTRIBUTING.md)), and CI also writes the search benchmark in a larger library to each pull request's summary.
 
 ### 11.2 Evaluation set
 

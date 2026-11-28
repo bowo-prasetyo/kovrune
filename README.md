@@ -9,15 +9,6 @@ Your documents. Your machine. Answers you can check.
 
 Kovrune is an open-source, local-first research app. Ask a question about your own documents, and optionally Wikipedia and scholarly papers, and get an answer that quotes its sources. Kovrune checks that every quote is really in the source. The AI model runs on your computer, in the browser or on a local model server, so nothing is sent to an online AI service.
 
-## Where we're going
-
-Research is the first part of a longer plan, captured in the project's motto: *Think Freely. Build Together. Stay Decentralized.* These are planned, not built:
-
-- **A coding agent** that proposes changes and checks them by running tests in a sandbox in the browser (milestone M2.5).
-- **Kovrune Circles:** small groups of invited peers, such as a lab or a team, who can hand tasks to each other's agents (M3 and later).
-
-Kovrune has no tokens, no blockchain and no central AI service. See [`docs/design.md`](docs/design.md) for the product definition, architecture, security model, and roadmap.
-
 ## Status
 
 - **M0 (benchmark gate): provisional go.** See [`docs/m0-benchmark.md`](docs/m0-benchmark.md#m0-status). Help confirm it by running the benchmark on a 16 GB laptop: [issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9).
@@ -47,7 +38,7 @@ The setup wizard checks your device and recommends where to run the model:
 
 Either way, the wizard then tests the model (about a minute on capable hardware) and saves your setup in the browser.
 
-Then add documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV, text, Markdown or HTML), or tick Wikipedia, OpenAlex, arXiv, DataCite or Europe PMC to search those too, and ask a question. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document, and the answer gets one of three verdicts:
+Then add documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV, text, Markdown or HTML), or tick Wikipedia or OpenAlex to search those too, and ask a question. Eight more sources, such as arXiv, Europe PMC and PubChem, are under **More sources**. You see each step the model takes, then the answer with the passages it quoted. Each quote is checked against your document, and the answer gets one of three verdicts:
 - **✓ Backed by quotes**: every quote is word for word in its source, and every check passed: each sentence shares most of its words with a quote, with no number, unit, "not" or name the quotes don't back, and the model, reading the quoted passages again, confirms they state the answer. This proves the quotes are real, not that the answer is right; check that they answer what you asked.
 - **⚠ Needs checking**: the quotes are real, but a check could not confirm that they back the whole answer: a sentence the quotes don't back, an answer too short to compare, a source that says otherwise, or the model's own check saying only partly.
 - **✗ Not backed**: quotes are missing or not in their sources. For a quote that is nearly right, the closest passage in the source is shown with the differences marked.
@@ -57,6 +48,15 @@ Or **Not found in your sources**, when the model found no answer. Under each ver
 Documents and answers stay on your device: they are saved in your browser, so they are still there after a reload. A question interrupted by a reload or a lost model server can continue where it stopped. **Storage and backup** shows what the browser keeps, and saves documents and answers to a backup file you can restore in any browser. An answer can be exported as Markdown, with its quotes and sources, and the papers it cites as BibTeX. Scanned PDFs without a text layer cannot be read.
 
 Nothing you type or add is sent to an online AI service. The app's network requests are the model download (Hugging Face, plus WebLLM's runtime library from GitHub, at fixed versions checked against their SHA-256), the model server you connect it to, and, only when you tick them, Wikipedia and OpenAlex searches, arXiv and DataCite searches (both through DataCite), Europe PMC searches and full texts, and paper downloads from arxiv.org and zenodo.org.
+
+## Later: where Kovrune is going
+
+Research is the product today. It is the first part of a longer plan, captured in the project's motto: *Think Freely. Build Together. Stay Decentralized.* Neither of these is built, and neither is scheduled:
+
+- **A coding agent** that proposes changes and checks them by running tests in a sandbox in the browser (milestone M2.5). On hold until usability participants ask for it.
+- **Kovrune Circles:** small groups of invited peers, such as a lab or a team, who can hand tasks to each other's agents (M3 and later). Built only if interviews with researchers show demand ([`docs/circles-interviews.md`](docs/circles-interviews.md)).
+
+Kovrune has no tokens, no blockchain and no central AI service. See [`docs/design.md`](docs/design.md) for the product definition, architecture, security model, and roadmap.
 
 ## Development
 
@@ -72,6 +72,7 @@ npm run bench:retrieval   # the search on its own, no model needed
 npm run bench:retrieval:scale   # the same search in one library of every suite's documents, and with generated ones
 npm run bench:compare -- a.json b.json   # two runs task by task, with how sure the difference is
 npm run bench:rescore -- a.json          # recorded answers checked and labelled again, without a model
+npm run bench:baseline    # false reassurance for every suite: each one's latest recorded answers, on today's label rules
 npm run bench:replay -- --base main a.json   # which tasks a code change can affect: those to run again with a model
 npm run bench:rereview -- --model m a.json   # the model's check of recorded answers asked again, with a chosen prompt
 npm run bench:crosscheck -- --model m a.json # the cross-check of recorded answers: the answer read in the passages, compared
