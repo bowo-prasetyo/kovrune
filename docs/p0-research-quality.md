@@ -53,6 +53,16 @@ For the class-2 confirmation run:
 
 Start the runner with `npm run bench:browser`, open its local page, choose WebLLM, the pinned Qwen3.5-4B model, class 2, Full, Research + Unanswerable + PDF, and both decoding modes. The benchmark JSON is the source of truth. A quick preset or partial task-ID run is diagnostic only, not a release gate.
 
+## Continuous measurement
+
+The pull-request CI runs the deterministic diagnostics below before a change to retrieval or report planning is accepted:
+
+- `npm run bench:plancoverage` — compares each planned section's retrieval hint with the recorded outcome; a surfaced passage is not treated as proof of answer coverage.
+- `npm run bench:retrieval` and the same benchmark with 100, 300 and 1,000 generated distractor documents — records document recall, answer-passage recall and complete tasks as the library grows.
+- The retrieval benchmark with result limits 5 and 10 — makes the recall/precision trade-off visible before changing the app's default result limit.
+
+These are diagnostics, not new quality gates: the existing research/PDF/field floors remain authoritative, and a higher recall number alone does not justify a production change. CI does not run model-dependent research suites; those still require paired model runs and held-out comparisons under [the contributor measurement rule](../CONTRIBUTING.md#changes-to-what-the-model-is-shown).
+
 ## Acceptance criteria
 
 - [ ] Report evaluation phrase matching has boundary regression tests for short numbers, acronyms, names, decimals, and Unicode compatibility forms.
