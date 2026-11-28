@@ -282,6 +282,8 @@ If the model server stops answering in the middle of a question, start it again 
 
 An answer is a few sentences, each checked against a quote. For a longer report, choose **Write a report** under **Mode**, below the question box. Kovrune builds it from several checked answers, one per section.
 
+**Reports are experimental.** In tests, a report covered about 4 in 10 of the topics it should with Qwen3.5-4B, and fewer with Qwen3.5-2B. That is mostly because the plan is made before your documents are read, so some sections ask about what they don't hold. Those sections say "not found" rather than guess. Read each section's verdict, and edit the plan's questions to match what your documents cover.
+
 1. **Type the topic** (for example "blockchain technology, how it works and where it is used") and press **Plan the report**. The model proposes a title and a few questions, one per section, each answerable from a passage or two.
 2. **Edit the plan.** Change the title or any question, reorder them (↑ ↓), and add or remove sections, from 2 to 8. Questions that ask one thing each work best: split a question that asks two. Below the plan is how long the report can take, from your model test. Each section takes about as long as a question.
 3. **Choose whether to add an introduction and conclusion.** The model writes them after the sections, from the sections' answers only, in one more step. Their sentences are checked against the sections' quotes like an answer's, and ⚠ marks the ones no quote backs. They never change a section's label.

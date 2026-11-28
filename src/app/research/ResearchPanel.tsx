@@ -13,7 +13,7 @@ import { RecentAnswers } from "./AnswersScreen.tsx";
 import { ExportButtons, ResultView } from "./AnswerView.tsx";
 import { describeElapsed } from "./elapsed.ts";
 import type { LibraryDocument } from "./library.ts";
-import { describeEstimate, looksLikeReport, reportMinutes, toSavedReport, upsert } from "./report.ts";
+import { describeEstimate, looksLikeReport, REPORT_EXPERIMENTAL_NOTE, reportMinutes, toSavedReport, upsert } from "./report.ts";
 import { ReportPlanView } from "./ReportPlanView.tsx";
 import { isSubmitShortcut, shortcutKeys } from "./shortcut.ts";
 import {
@@ -595,8 +595,9 @@ export function ResearchPanel({
             </label>
             <label className="choice">
               <input type="radio" name="mode" checked={mode === "report"} disabled={running} onChange={() => setMode("report")} />
-              Write a report
+              Write a report (experimental)
             </label>
+            {mode === "report" && <p className="hint">{REPORT_EXPERIMENTAL_NOTE}</p>}
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
             <p className="hint">Add a document above, or tick Wikipedia, OpenAlex or one of the more sources, to ask a question.</p>

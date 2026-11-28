@@ -7,6 +7,14 @@ import type { Synthesis } from "../../agent/synthesis.ts";
 import type { SavedAnswer, SavedReport } from "./answers.ts";
 import { LABEL_TIERS } from "./trace.ts";
 
+/**
+ * Shown beside the report option and on the plan screen while report mode is below its adoption bar
+ * (docs/report-mode.md#adoption-bar). The figures are the report suite's (eval/field/README.md): on
+ * Qwen3.5-4B, 9 of 23 expected sections covered; on Qwen3.5-2B, 3 of 23.
+ */
+export const REPORT_EXPERIMENTAL_NOTE =
+  "Experimental. In our tests, reports covered about 4 in 10 of the topics they should, fewer with Qwen3.5-2B, mostly because the plan is made before your documents are read. A section your sources don't answer says so: check each section's verdict.";
+
 /** Above this many minutes, a report asks for confirmation before it starts (decision R5). */
 export const CONFIRM_REPORT_MINUTES = 30;
 

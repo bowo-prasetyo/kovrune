@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Agreed (decisions R1–R5 below). Slices 1–5 are built and the option is shown to everyone; the introduction and conclusion are measured and off by default (R4). See [Progress](#progress) |
+| Status | Agreed (decisions R1–R5 below). Slices 1–5 are built, and the option is shown to everyone **as experimental** until it meets the [adoption bar](#adoption-bar) (proposed, R6). The introduction and conclusion are measured and off by default (R4). See [Progress](#progress) |
 | Depends on | M1's research agent and its checks ([`m1-plan.md`](m1-plan.md)) |
 | Prompted by | A preview user's request for "a nice report in 400 words or more", which ended with no answer ([field README](../eval/field/README.md#the-raised-token-limit-kept-after-a-cut-off-0490)) |
 
@@ -69,6 +69,28 @@ The plan step can also be judged alone, cheaply, on the expected sections: does 
 
 **Adopted when**, on Qwen3.5-4B, coverage and section accuracy reach agreed targets and false reassurance per section stays under 10%. The targets are to be set by the owner after a first baseline run. 2B is reported, not gated.
 
+## Adoption bar
+
+*Proposed on 28 November 2026 (decision R6); the project owner confirms or changes the numbers. Declared before the next report-suite run, so no run is chosen to fit it.*
+
+The first baseline (0.51.0) came and went without targets, and the option was shown to everyone without meeting any. Until it meets the bar below, **Write a report** is labelled **experimental** in the app, and the plan screen says how far reports fell short in tests (`REPORT_EXPERIMENTAL_NOTE` in `src/app/research/report.ts`).
+
+The label comes off when one `bench:report` run on the then-current harness, at the app's 4,096-token context, on Qwen3.5-4B as the app plans, meets all four:
+
+| # | Measure | Bar | 0.51.0 baseline |
+| --- | --- | --- | --- |
+| B1 | **Report coverage** on `reports`: expected sections whose facts some section gives | at least **60%** (14 of 23 on today's suite) | 9 of 23 (39%) |
+| B2 | **Held-out coverage**, `reportsholdout`, read as a total | **not below** a baseline run on the same harness, and at least 6 of 9 | 6 of 9 |
+| B3 | **False reassurance per section**: matched sections labelled Backed by quotes without their facts | **under 10%** of the sections so labelled, on both suites together | 0 of 2 |
+| B4 | **Sections that end "not found" or without an answer** on `reports` | at most **one in five** written sections | 7 of 18 |
+
+- **B1 is the point of a report**: a report that leaves out most of what it should is not one, however honest its labels. 60% is a bar a reader would call useful, not a finished feature.
+- **B3 keeps the promise**: a section's label must mean what an answer's does. With few sections labelled today, it is easy to pass by labelling nothing, so it is read with B1, never alone.
+- **B4 is the reader's experience** of a plan made without the documents: sections that ask about what isn't there.
+- **Qwen3.5-2B is reported, not gated**, as before.
+- **If the suite grows** (it has 9 requests, five of the six open ones over Kovrune's own documents), the bar is the same shares on the larger suite, and the held-out baseline is run again on it first.
+- **Before any planner change is judged against it**, the suite is run once on the current harness: the last run was 0.55.0.
+
 ## Slices
 
 Each slice is its own pull request, reviewed and tested on the class 1 laptop.
@@ -88,8 +110,9 @@ Each slice is its own pull request, reviewed and tested on the class 1 laptop.
 | R3 | Sections by default, and the most allowed | 4 by default, 2–8 allowed |
 | R4 | Introduction and conclusion | Off until slice 5's measurement, then on by default if their sentences are mostly backed |
 | R5 | Slow setups | Above 30 minutes estimated, ask for confirmation, and suggest fewer sections or Qwen3.5-2B for a first draft |
+| R6 | When is report mode no longer experimental? | **Proposed:** when it meets the [adoption bar](#adoption-bar) on Qwen3.5-4B; until then the option and plan screen say it is experimental. The plan screen's per-section source check is no longer shown. |
 
-All five were agreed by the project owner as proposed. R1 is in the design's primary job (§1.4).
+R1–R5 were agreed by the project owner as proposed; R6 awaits the owner. R1 is in the design's primary job (§1.4).
 
 ## Progress
 

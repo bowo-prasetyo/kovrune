@@ -140,7 +140,7 @@ Over the ten recorded report runs (harness 0.51.0 to 0.55.0, Qwen3.5-2B and 4B, 
 - **The held-out split looks better** (19 of 19 against 4 of 13), but it rests on 32 sections, and the reader can't see which listed document is "the expected one", so it doesn't reach them as a signal.
 - **Caveats:** the hint is worked out on today's code for answers recorded at 0.51.0–0.55.0. No run since then has used the report suite.
 
-**Decision for the owner:** this does not count as P0 progress. Either drop the hint, or keep it and measure a version that could fail. For example, show it only for a section whose best match covers less than a set share of its words, with the threshold chosen on the open reports and checked on the held-out ones.
+**Decided (28 November 2026): the hint is no longer shown** on the plan screen. `bench:report` and `bench:plancoverage` still record and count it, so a version that could fail can be measured. The earlier options, for the record: this does not count as P0 progress. Either drop the hint, or keep it and measure a version that could fail. For example, show it only for a section whose best match covers less than a set share of its words, with the threshold chosen on the open reports and checked on the held-out ones.
 
 ### Two-column scientific table headers
 
