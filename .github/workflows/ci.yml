@@ -41,6 +41,11 @@ jobs:
             echo
             npm run -s bench:retrieval:scale -- --limit 10
           } | tee -a "$GITHUB_STEP_SUMMARY"
+      # False reassurance for every suite on this change's label rules, from the recorded runs
+      # (docs/p0-research-quality.md). A diagnostic, like the table above: no model is run.
+      - name: False reassurance on recorded answers
+        shell: bash
+        run: npm run -s bench:baseline | tee -a "$GITHUB_STEP_SUMMARY"
 
   # A release must rebuild byte for byte from its tag (docs/releases.md). Build the
   # commit twice, in different directories and time zones, and compare every file.

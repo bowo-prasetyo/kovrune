@@ -26,6 +26,7 @@
     "pin:browser-models": "node --experimental-strip-types scripts/pin-browser-models.ts",
     "bench:compare": "node --experimental-strip-types eval/compare.ts",
     "bench:rescore": "node --experimental-strip-types eval/rescore.ts",
+    "bench:baseline": "node --experimental-strip-types --no-warnings eval/baseline.ts",
     "bench:rereview": "node --experimental-strip-types eval/rereview.ts",
     "bench:crosscheck": "node --experimental-strip-types eval/crosscheck.ts",
     "bench:completeness": "node --experimental-strip-types eval/completeness.ts",

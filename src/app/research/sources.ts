@@ -165,6 +165,17 @@ export function anyOpenSource(prefs: SourcePrefs): boolean {
   return prefs.wikipedia || prefs.openalex || prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || prefs.pubchem === true || prefs.alexandria === true || prefs.chemrxiv === true || patentsReady(prefs);
 }
 
+/**
+ * The sources listed under "More sources" on the research screen. Your documents, Wikipedia and OpenAlex
+ * are always shown; these eight are folded away, so a first visit shows three choices, not eleven.
+ */
+export const MORE_SOURCES = ["arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "PubChem", "Alexandria", "ChemRxiv", "EPO patents"] as const;
+
+/** Whether any of the folded-away sources is ticked (patents count when ticked, key or not), so "More sources" opens on its own. */
+export function moreSourcesTicked(prefs: SourcePrefs): boolean {
+  return prefs.arxiv || prefs.datacite || prefs.europepmc || prefs.inspire === true || prefs.pubchem === true || prefs.alexandria === true || prefs.chemrxiv === true || prefs.patents === true;
+}
+
 /** The ticked open sources' names, as the user sees them: "Wikipedia", "OpenAlex", "arXiv", "DataCite", "Europe PMC", "INSPIRE-HEP", "PubChem", "Alexandria", "ChemRxiv", "EPO patents". */
 export function openSourceNames(prefs: SourcePrefs): string[] {
   return [...(prefs.wikipedia ? ["Wikipedia"] : []), ...(prefs.openalex ? ["OpenAlex"] : []), ...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.datacite ? ["DataCite"] : []), ...(prefs.europepmc ? ["Europe PMC"] : []), ...(prefs.inspire ? ["INSPIRE-HEP"] : []), ...(prefs.pubchem ? ["PubChem"] : []), ...(prefs.alexandria ? ["Alexandria"] : []), ...(prefs.chemrxiv ? ["ChemRxiv"] : []), ...(patentsReady(prefs) ? ["EPO patents"] : [])];

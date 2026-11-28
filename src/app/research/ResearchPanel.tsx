@@ -19,6 +19,8 @@ import { isSubmitShortcut, shortcutKeys } from "./shortcut.ts";
 import {
   anyOpenSource as anyOpenSourceTicked,
   loadSourcePrefs,
+  MORE_SOURCES,
+  moreSourcesTicked,
   openSourceNames,
   openSourcesFor,
   patentsReady,
@@ -87,6 +89,8 @@ export function ResearchPanel({
     element.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
   }, [state.phase]);
   const [prefs, setPrefs] = useState<SourcePrefs>(loadSourcePrefs);
+  // Folded away on a first visit; open when one of its sources is already ticked.
+  const [moreOpen, setMoreOpen] = useState(() => moreSourcesTicked(prefs));
   const usable = useMemo(() => documents.filter((d) => d.text.trim()), [documents]);
   /** A library document's paper details, for the answers that cite it. */
   const workOf = (id: string) => documents.find((d) => d.id === id)?.work;
@@ -398,100 +402,6 @@ export function ResearchPanel({
               <input type="checkbox" checked={prefs.openalex} disabled={running} onChange={(e) => updatePrefs({ openalex: e.target.checked })} />
               OpenAlex (scholarly papers: abstracts, or full texts through arXiv and Europe PMC when ticked)
             </label>
-            <label className="choice">
-              <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
-              arXiv (preprints, read in full from their LaTeX source, or their PDF)
-            </label>
-            {prefs.arxiv && (
-              <div className="openalex-limits">
-                <label>
-                  Subjects
-                  <input
-                    type="text"
-                    spellCheck={false}
-                    placeholder="all, or e.g. math.CO, math.NT"
-                    defaultValue={prefs.arxivSubjects ?? ""}
-                    disabled={running}
-                    onChange={(e) => updatePrefs({ arxivSubjects: parseArxivSubjects(e.target.value).join(", ") || undefined })}
-                  />
-                </label>
-                <p className="hint">
-                  arXiv archives or categories to search in, such as math, math.CO or hep-th; leave empty for all of arXiv. Each paper found shows
-                  its categories, and the MSC codes its authors gave.
-                </p>
-              </div>
-            )}
-            <label className="choice">
-              <input type="checkbox" checked={prefs.datacite} disabled={running} onChange={(e) => updatePrefs({ datacite: e.target.checked })} />
-              DataCite (repositories such as Zenodo: read in full where the PDF is open, else abstracts)
-            </label>
-            <label className="choice">
-              <input type="checkbox" checked={prefs.europepmc} disabled={running} onChange={(e) => updatePrefs({ europepmc: e.target.checked })} />
-              Europe PMC (biomedical and life-sciences papers and preprints: open-access ones read in full, others as abstracts)
-            </label>
-            <label className="choice">
-              <input type="checkbox" checked={prefs.inspire ?? false} disabled={running} onChange={(e) => updatePrefs({ inspire: e.target.checked })} />
-              INSPIRE-HEP (high-energy physics: abstracts, journal references and citations, or full texts through arXiv when ticked)
-            </label>
-            {prefs.inspire && (
-              <div className="openalex-limits">
-                <label className="choice">
-                  <input type="checkbox" checked={prefs.inspireFollowCitations ?? false} disabled={running} onChange={(e) => updatePrefs({ inspireFollowCitations: e.target.checked })} />
-                  Let the model follow citations through INSPIRE (experimental: small models often follow the wrong paper's)
-                </label>
-                <p className="hint">
-                  {prefs.arxiv ? "A record that is on arXiv is read in full from there. " : "Tick arXiv too to read a record's paper in full, not only its abstract. "}
-                  INSPIRE covers particle, nuclear and astroparticle physics, gravitation and cosmology; for other fields, use OpenAlex or arXiv.
-                </p>
-              </div>
-            )}
-            <label className="choice">
-              <input type="checkbox" checked={prefs.pubchem ?? false} disabled={running} onChange={(e) => updatePrefs({ pubchem: e.target.checked })} />
-              PubChem (compounds: formulas, CAS numbers and other identifiers, descriptions, and measured properties with their sources)
-            </label>
-            <label className="choice">
-              <input type="checkbox" checked={prefs.alexandria ?? false} disabled={running} onChange={(e) => updatePrefs({ alexandria: e.target.checked })} />
-              Alexandria (computed crystal structures, through OPTIMADE: space groups, cells, band gaps, formation energies and stability, all from DFT)
-            </label>
-            <label className="choice">
-              <input type="checkbox" checked={prefs.chemrxiv ?? false} disabled={running} onChange={(e) => updatePrefs({ chemrxiv: e.target.checked })} />
-              ChemRxiv (chemistry preprints, through Crossref: titles, authors and abstracts, and the journal version when there is one)
-            </label>
-            <label className="choice">
-              <input type="checkbox" checked={prefs.patents ?? false} disabled={running} onChange={(e) => updatePrefs({ patents: e.target.checked })} />
-              EPO patents (patents from every office: European and international ones read in full, others as abstracts; needs your free EPO key)
-            </label>
-            {prefs.patents && (
-              <div className="epo-key">
-                <label className="openalex-key">
-                  EPO consumer key
-                  <input
-                    type="password"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={prefs.epoKey ?? ""}
-                    disabled={running}
-                    onChange={(e) => updatePrefs({ epoKey: e.target.value.trim() })}
-                  />
-                </label>
-                <label className="openalex-key">
-                  EPO consumer secret
-                  <input
-                    type="password"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={prefs.epoSecret ?? ""}
-                    disabled={running}
-                    onChange={(e) => updatePrefs({ epoSecret: e.target.value.trim() })}
-                  />
-                </label>
-                <p className="hint">
-                  Register at the <a href="https://developers.epo.org/">EPO developer portal</a>, add an app under My Apps, and copy its consumer key
-                  and consumer secret here. They are kept in this browser and sent only to the EPO.
-                  {!patentsReady(prefs) && " Patents are searched once both are entered."}
-                </p>
-              </div>
-            )}
             {prefs.openalex && (
               <label className="openalex-key">
                 OpenAlex API key (optional)
@@ -553,6 +463,103 @@ export function ResearchPanel({
                 </label>
               </div>
             )}
+            <details className="more-sources" open={moreOpen} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
+              <summary>More sources ({MORE_SOURCES.length}): arXiv, Europe PMC, chemistry, physics, materials and patents</summary>
+              <label className="choice">
+                <input type="checkbox" checked={prefs.arxiv} disabled={running} onChange={(e) => updatePrefs({ arxiv: e.target.checked })} />
+                arXiv (preprints, read in full from their LaTeX source, or their PDF)
+              </label>
+              {prefs.arxiv && (
+                <div className="openalex-limits">
+                  <label>
+                    Subjects
+                    <input
+                      type="text"
+                      spellCheck={false}
+                      placeholder="all, or e.g. math.CO, math.NT"
+                      defaultValue={prefs.arxivSubjects ?? ""}
+                      disabled={running}
+                      onChange={(e) => updatePrefs({ arxivSubjects: parseArxivSubjects(e.target.value).join(", ") || undefined })}
+                    />
+                  </label>
+                  <p className="hint">
+                    arXiv archives or categories to search in, such as math, math.CO or hep-th; leave empty for all of arXiv. Each paper found shows
+                    its categories, and the MSC codes its authors gave.
+                  </p>
+                </div>
+              )}
+              <label className="choice">
+                <input type="checkbox" checked={prefs.datacite} disabled={running} onChange={(e) => updatePrefs({ datacite: e.target.checked })} />
+                DataCite (repositories such as Zenodo: read in full where the PDF is open, else abstracts)
+              </label>
+              <label className="choice">
+                <input type="checkbox" checked={prefs.europepmc} disabled={running} onChange={(e) => updatePrefs({ europepmc: e.target.checked })} />
+                Europe PMC (biomedical and life-sciences papers and preprints: open-access ones read in full, others as abstracts)
+              </label>
+              <label className="choice">
+                <input type="checkbox" checked={prefs.inspire ?? false} disabled={running} onChange={(e) => updatePrefs({ inspire: e.target.checked })} />
+                INSPIRE-HEP (high-energy physics: abstracts, journal references and citations, or full texts through arXiv when ticked)
+              </label>
+              {prefs.inspire && (
+                <div className="openalex-limits">
+                  <label className="choice">
+                    <input type="checkbox" checked={prefs.inspireFollowCitations ?? false} disabled={running} onChange={(e) => updatePrefs({ inspireFollowCitations: e.target.checked })} />
+                    Let the model follow citations through INSPIRE (experimental: small models often follow the wrong paper's)
+                  </label>
+                  <p className="hint">
+                    {prefs.arxiv ? "A record that is on arXiv is read in full from there. " : "Tick arXiv too to read a record's paper in full, not only its abstract. "}
+                    INSPIRE covers particle, nuclear and astroparticle physics, gravitation and cosmology; for other fields, use OpenAlex or arXiv.
+                  </p>
+                </div>
+              )}
+              <label className="choice">
+                <input type="checkbox" checked={prefs.pubchem ?? false} disabled={running} onChange={(e) => updatePrefs({ pubchem: e.target.checked })} />
+                PubChem (compounds: formulas, CAS numbers and other identifiers, descriptions, and measured properties with their sources)
+              </label>
+              <label className="choice">
+                <input type="checkbox" checked={prefs.alexandria ?? false} disabled={running} onChange={(e) => updatePrefs({ alexandria: e.target.checked })} />
+                Alexandria (computed crystal structures, through OPTIMADE: space groups, cells, band gaps, formation energies and stability, all from DFT)
+              </label>
+              <label className="choice">
+                <input type="checkbox" checked={prefs.chemrxiv ?? false} disabled={running} onChange={(e) => updatePrefs({ chemrxiv: e.target.checked })} />
+                ChemRxiv (chemistry preprints, through Crossref: titles, authors and abstracts, and the journal version when there is one)
+              </label>
+              <label className="choice">
+                <input type="checkbox" checked={prefs.patents ?? false} disabled={running} onChange={(e) => updatePrefs({ patents: e.target.checked })} />
+                EPO patents (patents from every office: European and international ones read in full, others as abstracts; needs your free EPO key)
+              </label>
+              {prefs.patents && (
+                <div className="epo-key">
+                  <label className="openalex-key">
+                    EPO consumer key
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={prefs.epoKey ?? ""}
+                      disabled={running}
+                      onChange={(e) => updatePrefs({ epoKey: e.target.value.trim() })}
+                    />
+                  </label>
+                  <label className="openalex-key">
+                    EPO consumer secret
+                    <input
+                      type="password"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={prefs.epoSecret ?? ""}
+                      disabled={running}
+                      onChange={(e) => updatePrefs({ epoSecret: e.target.value.trim() })}
+                    />
+                  </label>
+                  <p className="hint">
+                    Register at the <a href="https://developers.epo.org/">EPO developer portal</a>, add an app under My Apps, and copy its consumer key
+                    and consumer secret here. They are kept in this browser and sent only to the EPO.
+                    {!patentsReady(prefs) && " Patents are searched once both are entered."}
+                  </p>
+                </div>
+              )}
+            </details>
             {prefs.openalex && (prefs.arxiv || prefs.europepmc) && (
               <p className="hint">
                 A paper OpenAlex finds that is also on {joinNames([...(prefs.arxiv ? ["arXiv"] : []), ...(prefs.europepmc ? ["Europe PMC"] : [])])} is read in full
@@ -592,7 +599,7 @@ export function ResearchPanel({
             </label>
           </fieldset>
           {usable.length === 0 && !anyOpenSource && (
-            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex, arXiv, DataCite, Europe PMC, INSPIRE-HEP, PubChem, Alexandria, ChemRxiv or EPO patents, to ask a question.</p>
+            <p className="hint">Add a document above, or tick Wikipedia, OpenAlex or one of the more sources, to ask a question.</p>
           )}
           <div className="actions">
             {/* Distinct keys keep these as separate elements: if Stop were reused as the submit button, a run

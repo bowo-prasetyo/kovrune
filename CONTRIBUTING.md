@@ -22,6 +22,9 @@ CI's **Way of working** check (`scripts/way-of-working.ts`) decides from the cha
    - **A model run** on Qwen3.5-2B and Qwen3.5-4B, on the suites the rule names and the held-out suite, compared with `npm run bench:compare`: tasks gained and lost, p, and false reassurance before and after.
 
    Write it under **Measurement** in the pull request description, or commit the recorded run under `eval/results/`. A change that alters a label must report false reassurance before and after, and a rise is the project owner's decision.
+   - **A measurement still to come is not one.** CI fails a Measurement section or changelog row that says "not yet measured", "measurement pending" or the like. Measure the change first, or split off the part that can't be measured yet.
+   - **The label rules** (`src/agent/support.ts`, `evidence.ts`, `review.ts`, `crosscheck.ts`, `completeness.ts` and the field checks they call) need a false reassurance figure in the Measurement section. `npm run bench:rescore -- <recorded runs>` gives it without a model, and `npm run bench:baseline` gives it for every suite.
+   - **Code that nothing calls** isn't merged into model-facing paths: it can't be measured. Bring it with the change that uses it.
 4. **Don't tune on what you report.** Held-out suites are read as totals only. A rule fitted to the examples that justify it, such as a list of header names, needs a case in a suite it was not written for before it is called an improvement.
 
 ## Every change

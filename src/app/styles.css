@@ -688,6 +688,19 @@ footer.build {
   cursor: pointer;
 }
 
+details.more-sources {
+  margin: 6px 0;
+}
+
+details.more-sources > summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+details.more-sources[open] > summary {
+  margin-bottom: 4px;
+}
+
 details.passage-finder {
   margin-top: 16px;
 }
