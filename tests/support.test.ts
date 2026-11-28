@@ -51,6 +51,22 @@ describe("sentence splitting", () => {
 });
 
 describe("sentence support", () => {
+  it("maps each clause to quotes from individual sources without merging their evidence", () => {
+    const first = "Lovelace wrote an algorithm for the Analytical Engine.";
+    const second = "Babbage designed the Analytical Engine.";
+    const answer = "Lovelace wrote an algorithm; Babbage designed the Analytical Engine.";
+    const support = sentenceSupport(answer, [
+      { docId: "ada", quote: first, verified: true },
+      { docId: "babbage", quote: second, verified: true },
+    ]);
+    assert.equal(support.sentences.length, 1);
+    assert.deepEqual(support.sentences[0]!.claims, [
+      { text: "Lovelace wrote an algorithm", evidence: [{ docId: "ada", quote: first }] },
+      { text: "Babbage designed the Analytical Engine.", evidence: [{ docId: "babbage", quote: second }] },
+    ]);
+    assert.equal(support.sentences[0]!.backed, true);
+  });
+
   it("marks claims next to a real quote that does not back them (fifth live check)", () => {
     // "How does LLM think?": the one verified quote was the Wikipedia article's paragraph on
     // mental-health uses, which backed only the side remark, not the main claims.

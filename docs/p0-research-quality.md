@@ -98,6 +98,13 @@ This P0 does not add a coding agent, collaboration/circles, cloud inference, tel
 
 ## Implementation notes: source coverage and scientific tables
 
+### Claim-level evidence provenance
+
+`AnswerSentence.claims` now exposes each independently stated clause alongside the verified quote(s) that lexically match it. A clause is attributed to a source only when that source alone shares at least 60% of the clause's content words; words from separate documents are never pooled to manufacture one source attribution. At most three matching quotes are returned per clause, in descending lexical match order.
+
+This provenance is intentionally advisory. It does not replace the semantic checks for negation, dates, units, direction, named entities, scientific properties or contradictions, and it does not itself change the answer verdict. The sentence-level verdict remains the result of the existing independent checks. A regression test uses two claims supported by two different documents and asserts that each claim points to its own source.
+
+
 The report planner now runs a separate deterministic retrieval check for every generated section and attaches the initial result to the plan. The plan screen names documents whose passages surfaced, and explicitly says when no passage surfaced. This is a retrieval diagnostic only: a hit does not establish that the source answers the question, and no hit is not proof that the answer is absent. Editing a question removes its match from the visible snapshot rather than presenting stale coverage as current.
 
 Office/OpenDocument table extraction also recognizes a small, explicit set of conventional two-column scientific headers (for example, `Parameter | Value`, `Analyte | Concentration`, and `Dose | Response`). It labels subsequent values with their column names while leaving arbitrary two-column label/value tables unchanged.
