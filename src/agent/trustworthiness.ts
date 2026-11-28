@@ -64,12 +64,12 @@ export function findSemanticConflicts(
   const answerSentences = answer.split(/(?<=[.!?。！？])\s+/u).map((part) => part.trim()).filter(Boolean);
   for (const claim of answerSentences) {
     for (const { relation, positive, negative } of PREDICATES) {
-      const answerPolarity = positive.test(claim) ? "positive" : negative.test(claim) ? "negative" : undefined;
+      const answerPolarity = negative.test(claim) ? "negative" : positive.test(claim) ? "positive" : undefined;
       if (!answerPolarity) continue;
       for (const { docId, text } of documents) {
         for (const passage of text.split(/(?<=[.!?。！？])\s+|\n+/u).map((part) => part.trim()).filter(Boolean)) {
           if (passage.length > 1200 || (quotes.some((quote) => quote.includes(passage.toLowerCase()) || passage.toLowerCase().includes(quote)))) continue;
-          const passagePolarity = positive.test(passage) ? "positive" : negative.test(passage) ? "negative" : undefined;
+          const passagePolarity = negative.test(passage) ? "negative" : positive.test(passage) ? "positive" : undefined;
           if (!passagePolarity || passagePolarity === answerPolarity) continue;
           if (scope(claim) !== scope(passage)) continue;
           const answerNumbers = quantities(claim);
