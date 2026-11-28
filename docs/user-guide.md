@@ -239,7 +239,7 @@ Ollama works but is experimental: in testing, some versions repeated the same st
 ## 3. Ask questions and write reports
 
 1. **Add documents** with **Choose files**, or by dropping them on the page: PDF, Word, PowerPoint, Excel, OpenDocument, CSV, text, Markdown, HTML, chemistry files (CIF, molfiles, JCAMP-DX spectra), XRD scans (.xrdml), or interview transcripts (WebVTT, SubRip) ([what Kovrune reads](#your-documents)). **Show text** shows what Kovrune read from a file.
-2. **Choose where to search**, under **Search in**. Your documents are always searched. Tick **Wikipedia**, **OpenAlex**, **arXiv**, **DataCite** or **Europe PMC** to search those too ([below](#choose-where-to-search)).
+2. **Choose where to search**, under **Search in**. Your documents are always searched. Tick **Wikipedia** or **OpenAlex** to search those too; eight more, such as arXiv and Europe PMC, are under **More sources** ([below](#choose-where-to-search)).
 3. **Type a question and press Ask**, or Ctrl+Enter (⌘ Enter on a Mac). The question box is at the top; where to search and **Mode** (a question or a report) are below it.
 
 You see each step the model takes, then the answer with its label and the quotes it is based on ([section 4](#4-read-the-answer)).
@@ -253,6 +253,7 @@ Tips:
 
 ### Choose where to search
 
+- **Three choices are shown:** your documents, **Wikipedia** and **OpenAlex**. The eight others (arXiv, DataCite, Europe PMC, INSPIRE-HEP, PubChem, Alexandria, ChemRxiv and EPO patents) are under **More sources**, which opens by itself once one of them is ticked.
 - **Your documents come first:** the model reads what it finds in them before it may search the others.
 - **With any open source ticked,** you can ask questions without adding documents. Wikipedia is searched in the language you choose next to it.
 - **Every source you tick is searched** before the answer, and the answer combines them: your documents for what is specific to them, the others for background and what your documents don't cover. Each quote names its source.
@@ -421,7 +422,7 @@ For the papers you downloaded through a library or a subscription (IEEE Xplore, 
 
 ### Open sources
 
-All seven are off until you tick them. All but EPO patents need no account; EPO patents needs your own free EPO key. When the model first reads a part of a long article or paper from any of them, it is also shown the document's outline: which parts hold which sections and tables (for example "#3 Findings; #19 Table 1: Baseline characteristics"), so it can go to the part it needs. If the model then reads a paper of twenty parts or more part after part (parts 1, 2, 3 …), the third read gives the part it asked for and, once, the outline again, with a note that reading in order takes many steps.
+All ten are off until you tick them; all but Wikipedia and OpenAlex are under **More sources**. All but EPO patents need no account; EPO patents needs your own free EPO key. When the model first reads a part of a long article or paper from any of them, it is also shown the document's outline: which parts hold which sections and tables (for example "#3 Findings; #19 Table 1: Baseline characteristics"), so it can go to the part it needs. If the model then reads a paper of twenty parts or more part after part (parts 1, 2, 3 …), the third read gives the part it asked for and, once, the outline again, with a note that reading in order takes many steps.
 
 - **Wikipedia:** encyclopedia articles, in the language edition you choose. A long article is read a part at a time, the part that best matches your question first.
 - **OpenAlex:** scholarly papers of every field. OpenAlex catalogues papers and does not hold their text, so Kovrune reads their abstracts, or the full text from arXiv or Europe PMC when you tick those too (below). A question about a paper's methods or results beyond its abstract usually ends as "not found" otherwise.

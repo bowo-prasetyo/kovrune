@@ -4,7 +4,7 @@ import type { CallRecord } from "../src/agent/agent.ts";
 import { documentId, formatBytes } from "../src/app/research/library.ts";
 import { describeCall, describeNoAnswer, describeStatus } from "../src/app/research/trace.ts";
 import { withoutPartLabels } from "../src/agent/research.ts";
-import { anyOpenSource, defaultLanguage, openSourceNames, openSourcesFor, parseSourcePrefs, patentsReady } from "../src/app/research/sources.ts";
+import { anyOpenSource, defaultLanguage, MORE_SOURCES, moreSourcesTicked, openSourceNames, openSourcesFor, parseSourcePrefs, patentsReady } from "../src/app/research/sources.ts";
 
 const call = (fields: Partial<CallRecord>): CallRecord => ({
   valid: true,
@@ -17,6 +17,18 @@ const call = (fields: Partial<CallRecord>): CallRecord => ({
 });
 
 describe("research screen helpers", () => {
+  it("folds away every source but Wikipedia and OpenAlex until one of them is ticked", () => {
+    const none = parseSourcePrefs(null, "en");
+    assert.equal(moreSourcesTicked(none), false, "a first visit shows three choices");
+    assert.equal(moreSourcesTicked({ ...none, wikipedia: true, openalex: true }), false);
+    for (const key of ["arxiv", "datacite", "europepmc", "inspire", "pubchem", "alexandria", "chemrxiv", "patents"] as const) {
+      assert.equal(moreSourcesTicked({ ...none, [key]: true }), true, key);
+    }
+    // Every source the screen can name is either always shown or listed under More sources.
+    const all = parseSourcePrefs(JSON.stringify({ wikipedia: true, openalex: true, arxiv: true, datacite: true, europepmc: true, inspire: true, pubchem: true, alexandria: true, chemrxiv: true, patents: true, epoKey: "k", epoSecret: "s" }));
+    assert.deepEqual(openSourceNames(all).filter((n) => n !== "Wikipedia" && n !== "OpenAlex"), [...MORE_SOURCES]);
+  });
+
   it("makes short, unique document IDs from file names", () => {
     const taken = new Set<string>();
     const first = documentId("Annual Report 2024 (final).pdf", taken);
