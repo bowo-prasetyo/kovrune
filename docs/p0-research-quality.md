@@ -151,7 +151,7 @@ Over the ten recorded report runs (harness 0.51.0 to 0.55.0, Qwen3.5-2B and 4B, 
 
 The first implementation slice adds `src/agent/trustworthiness.ts` and deterministic regression tests:
 
-- **Semantic contradictions** (the one part still in the code): the production answer-support path now checks explicit opposing predicates (direction, presence, significance, polarity and effect). It is deliberately conservative: the topic must overlap, explicit quantities must match, and recognized time/group/in-vitro scopes must be identical. The exact passage already quoted by the answer is not treated as independent contradiction evidence. A conflict is surfaced through the existing contradiction path, so it prevents a reassuring answer label. It does not detect implicit paraphrases or establish which source is correct.
+- *Parked in 0.114.0:* **Semantic contradictions:** the production answer-support path checked explicit opposing predicates (direction, presence, significance, polarity and effect). It is deliberately conservative: the topic must overlap, explicit quantities must match, and recognized time/group/in-vitro scopes must be identical. The exact passage already quoted by the answer is not treated as independent contradiction evidence. A conflict is surfaced through the existing contradiction path, so it prevents a reassuring answer label. It does not detect implicit paraphrases or establish which source is correct.
 - *Parked:* **Multi-document reconciliation:** `reconcileClaims` groups structured claims only when subject, predicate and explicit condition agree, and reports different values with their source IDs. It does not collapse different populations, time points or conditions into one result.
 - *Parked:* **Claim-level evidence:** `assessClaimEvidence` checks a claim against one source at a time, including quantities and explicit polarity. It does not pool words across sources and labels its result as a provenance assessment, not entailment.
 - *Parked:* **Independent numerical checks:** `verifyArithmetic` recomputes sums, differences, ratios and percentage changes from supplied operands, rejects incompatible units for additive operations, and uses an explicit numerical tolerance. It does not perform general dimensional analysis or unit conversion; callers must supply normalized, compatible inputs.
@@ -159,7 +159,7 @@ The first implementation slice adds `src/agent/trustworthiness.ts` and determini
 - *Parked:* **Scientific tables:** `interpretScientificTable` preserves the mapping from each value to its header and parses a numeric value/unit only when the cell explicitly contains one. It does not infer omitted headers, missing cells or ambiguous visual layout.
 - *Parked:* **Mixed-library retrieval:** `summarizeMixedLibrary` reports both macro-average suite results and task-weighted pooled results, preventing large suites from hiding a weak specialist domain.
 
-These helpers established contracts for later integrations, but none of the six after the contradiction check was called by the app or the benchmark. They are parked as of 0.113.0 ([below](#parked-helpers)). The existing BM25 scale benchmark remains the production retrieval regression; this slice does not change ranking or the default result limit.
+These helpers established contracts for later integrations, but none of the six after the contradiction check was called by the app or the benchmark. They were parked in 0.113.0, and the contradiction check in 0.114.0 ([below](#parked-helpers)). The existing BM25 scale benchmark remains the production retrieval regression; this slice does not change ranking or the default result limit.
 
 ### Measurement and release gate
 
@@ -169,7 +169,7 @@ These helpers established contracts for later integrations, but none of the six 
 
 ### Parked helpers
 
-0.113.0 took six helpers of 0.112.0 out of `src/agent/trustworthiness.ts`, with their tests, because nothing but those tests called them: `reconcileClaims`, `assessClaimEvidence`, `verifyArithmetic`, `reportSectionState`, `interpretScientificTable` and `summarizeMixedLibrary`. Code that nothing runs can't be measured, and kept beside the label rules it would sooner or later be wired in without a measurement. `findSemanticConflicts`, which the sentence check calls, stays.
+0.113.0 took six helpers of 0.112.0 out of `src/agent/trustworthiness.ts`, with their tests, because nothing but those tests called them: `reconcileClaims`, `assessClaimEvidence`, `verifyArithmetic`, `reportSectionState`, `interpretScientificTable` and `summarizeMixedLibrary`. Code that nothing runs can't be measured, and kept beside the label rules it would sooner or later be wired in without a measurement. 0.114.0 parked the seventh, `findSemanticConflicts`, and took it out of `contradictedSupport` ([below](#the-word-flip-contradiction-check-parked-in-01140)). `src/agent/trustworthiness.ts` and its tests are gone.
 
 They are in the repository's history, at the merge of [bowo-prasetyo/kovrune#219](https://github.com/bowo-prasetyo/kovrune/pull/219):
 
@@ -179,6 +179,21 @@ git show d911bde:tests/trustworthiness.test.ts    # their tests
 ```
 
 A change that brings one back wires it into the app or the benchmark in the same pull request, and measures it as [`CONTRIBUTING.md`](../CONTRIBUTING.md) asks.
+
+#### The word-flip contradiction check, parked in 0.114.0
+
+`findSemanticConflicts` took the label from an answer when a document it had read held a sentence with the opposite word (increased/decreased, positive/negative, present/absent, effective/ineffective, significant/not significant) and enough words in common. It ran first in `contradictedSupport`, ahead of the two safeguards the older check was measured with: the passage must cover most of the question's words, and an answer that denies something itself is not contradicted by a denial.
+
+- **On recorded answers it changed nothing.** Re-scoring every recorded report with it and without it gives the same labels ([measurement](#measured-0114)), so it caught no wrong answer the older check missed.
+- **On ordinary wording it took the label from right answers.** Probes written for the audit: four of five right, fully backed answers were taken as contradicted, by "a negative control" next to a positive result, a rise "before falling", another reaction "in earlier work", and "the lower bound of the yield". Of three wrong answers it caught only the one-word flip, not "were down on the year before" or the same sentence in Japanese. The four are now in `tests/contradiction-false-alarms.test.ts`, which fails with the check and passes without it.
+
+##### Measured (0.114.0)
+
+- `bench:rescore --labels` over every recorded report in `eval/results/`, on the code with the check and without it: **10,213 answers in 163 reports, every label and every pass the same.**
+- `bench:baseline`, false reassurance on today's rules: Qwen3.5-4B 14 of 335 (4.2%), Qwen3.5-2B 22 of 157 (14.0%), before and after.
+- `tests/contradiction-false-alarms.test.ts`: the four right answers are taken as contradicted with the check (4 of 4 fail) and are not without it (4 of 4 pass).
+
+A label it withheld could only turn **Backed by quotes** into **Needs checking**, so its errors cost right answers their label rather than labelling wrong ones. A version that comes back should run behind the older check's safeguards, not ahead of them, and be measured first on written right/wrong sentence pairs with a held-out third (as the field audits were), then on paired Qwen3.5-2B/4B runs of the clinical, social-science, laboratory and materials suites, reporting right answers that lose the label apart from wrong ones caught.
 
 The contradiction check of 0.112.0 still owes its paired model runs. Re-scoring every recorded run with it, against the code before it, changes no label (5,644 answers in 88 reports, checked for the 28 November audit), so on recorded answers it neither helps nor harms; what it does to new answers is not known.
 

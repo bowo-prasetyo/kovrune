@@ -14,7 +14,6 @@ import { hasNegation, LITERAL_BREAKS, normalizeForMatch, quoteHas, type AnswerSt
 import type { Completeness } from "./completeness.ts";
 import type { CrossCheck } from "./crosscheck.ts";
 import type { ReviewVerdict } from "./review.ts";
-import { findSemanticConflicts } from "./trustworthiness.ts";
 
 export interface AnswerSentence {
   /** The sentence as written, with the whitespace after it, so the sentences join back into the answer. */
@@ -1708,13 +1707,6 @@ export function contradictedSupport(
   const judged = support.sentences.filter((s) => s.backed !== undefined);
   if (!judged.length || judged.some((s) => !s.backed)) return support;
   const answer = support.sentences.map((s) => s.text).join("");
-  // Catch explicit opposing scientific predicates (e.g. increased vs decreased) only when
-  // topic, quantities and stated conditions align. This is deliberately conservative.
-  const semanticConflict = findSemanticConflicts(answer, documents, verified.map((e) => e.quote))[0];
-  if (semanticConflict) {
-    const title = titleFor(semanticConflict.docId);
-    return { ...support, contradicted: { docId: semanticConflict.docId, ...(title ? { title } : {}), passage: semanticConflict.passage } };
-  }
   // An answer that denies something itself is not contradicted by a denial: both say no.
   if (hasNegation(answer) || significance(answer).negated) return support;
   const asked = contentWords(question);
