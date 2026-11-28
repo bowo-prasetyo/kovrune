@@ -29,6 +29,7 @@ import {
   reportStatus,
   toSavedReport,
   upsert,
+  REPORT_EXPERIMENTAL_NOTE,
 } from "../src/app/research/report.ts";
 import type { GenerationRequest, LanguageModel } from "../src/models/types.ts";
 
@@ -53,6 +54,15 @@ class ScriptedModel implements LanguageModel {
 
 const REQUEST = "Please research about blockchain and give me a nice report in 400 words or more.";
 const plan = (title: string, questions: string[]) => JSON.stringify({ title, sections: questions.map((question) => ({ question })) });
+
+describe("report mode: experimental until it meets its bar (docs/report-mode.md#adoption-bar)", () => {
+  it("says it is experimental and how far reports fell short, in plain words", () => {
+    assert.match(REPORT_EXPERIMENTAL_NOTE, /^Experimental\./);
+    assert.match(REPORT_EXPERIMENTAL_NOTE, /about 4 in 10/, "the report suite's 9 of 23 on Qwen3.5-4B");
+    assert.match(REPORT_EXPERIMENTAL_NOTE, /check each section's verdict/);
+    assert.doesNotMatch(REPORT_EXPERIMENTAL_NOTE, /source check|coverage/i, "the plan hint is no longer shown");
+  });
+});
 
 describe("report mode: the plan (docs/report-mode.md, slice 1)", () => {
   it("asks for focused questions, one per section, from the request and the sources, not the documents", async () => {
