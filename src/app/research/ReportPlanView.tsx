@@ -1,9 +1,12 @@
 import { MAX_SECTIONS, type ReportPlan } from "../../agent/report.ts";
-import { describeConsulted, describeEstimate, planEdits, planReady } from "./report.ts";
+import { describeConsulted, describeEstimate, planEdits, planReady, REPORT_EXPERIMENTAL_NOTE } from "./report.ts";
 
 /**
  * The plan of a report, before anything is researched (docs/report-mode.md): its title and one
  * question per section, which the user can edit, reorder, add or remove, with how long it can take.
+ * The per-section source check (plan.sectionCoverage) is not shown: measured over 297 recorded sections,
+ * its warning never fired and its match did not predict which sections fail (docs/p0-research-quality.md).
+ * bench:report and bench:plancoverage still record it.
  */
 export function ReportPlanView({
   plan,
@@ -32,6 +35,7 @@ export function ReportPlanView({
   return (
     <div className="report-plan">
       <h3>Report plan</h3>
+      <p className="hint">{REPORT_EXPERIMENTAL_NOTE}</p>
       {plan.fallback ? (
         <p className="hint">
           The model gave no plan that could be read, so the request is one section. Add the questions you want the report to
@@ -63,14 +67,6 @@ export function ReportPlanView({
               value={question}
               onChange={(e) => onChange(planEdits.setQuestion(plan, i, e.target.value))}
             />
-            {plan.sectionCoverage?.find((coverage) => coverage.question === question) && (
-              <p className="hint">
-                Initial source check: {plan.sectionCoverage.find((coverage) => coverage.question === question)!.matches.length
-                  ? `matching passages surfaced in ${describeConsulted(plan.sectionCoverage.find((coverage) => coverage.question === question)!.matches.map((match) => match.title))}.`
-                  : "no matching passage surfaced. This is a retrieval gap, not proof that no source contains the answer."}
-                {" "}A match is a lead, not evidence that the section is answerable.
-              </p>
-            )}
             <span className="plan-buttons">
               <button type="button" aria-label={`Move section ${i + 1} up`} disabled={i === 0} onClick={() => onChange(planEdits.move(plan, i, -1))}>
                 ↑
