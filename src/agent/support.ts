@@ -1287,7 +1287,7 @@ export function sentenceSupport(
       socialBacked(text, social);
     judged++;
     if (isBacked) backed++;
-    return { text: written, backed: isBacked };
+    return { text: written, backed: isBacked, claims: mapClaimEvidence(text, verified) };
   });
   const otherProof = question ? proofOffQuestion(question, verified.map((e) => e.proof)) : undefined;
   if (!judged && question && answerInQuote(answer, question, verified, titleFor)) {
@@ -1460,6 +1460,31 @@ export function closestPassages(
  */
 const CLAIM_BREAK =
   /;\s+|,?\s+(?:while|whereas)\s+|,\s+but\s+|,?\s+and\s+(?=(?:is|are|was|were|has|have|had|can|could|may|might|will|would|should|must|does|do|did|causes?|caused|increases?|increased|reduces?|reduced|leads?|led|shows?|showed|provides?|provided|acts?|works?|affects?|inhibits?|requires?|remains?|becomes?|became)\b)/giu;
+
+/**
+ * Attach source-level provenance to each independently stated claim. Unlike sentenceSupport's
+ * aggregate lexical check, this never combines words from different documents to attribute one
+ * clause to a source. The result is advisory, not semantic proof.
+ */
+function mapClaimEvidence(text: string, evidence: CheckedEvidence[]): Array<{ text: string; evidence: Array<{ docId: string; quote: string }> }> {
+  const parts = text.split(CLAIM_BREAK).map((part) => part.trim()).filter(Boolean);
+  const claims = parts.length > 1 ? parts : [text];
+  return claims.map((claimText) => {
+    const claimWords = contentWords(claimText);
+    if (claimWords.length < MIN_JUDGED_WORDS) return { text: claimText, evidence: [] };
+    const matches = evidence
+      .filter((item) => item.verified)
+      .map((item) => {
+        const sourceWords = contentWords(item.quote);
+        const shared = claimWords.filter((word) => sourceWords.some((candidate) => sameWord(word, candidate))).length;
+        return { item, share: shared / claimWords.length };
+      })
+      .filter(({ share }) => share >= MIN_BACKED_SHARE)
+      .sort((a, b) => b.share - a.share || a.item.docId.localeCompare(b.item.docId))
+      .slice(0, 3);
+    return { text: claimText, evidence: matches.map(({ item }) => ({ docId: item.docId, quote: item.quote })) };
+  });
+}
 
 /**
  * Whether each part of a sentence that makes its own claim (CLAIM_BREAK) shares most of its words with the
