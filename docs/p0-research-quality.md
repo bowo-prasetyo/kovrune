@@ -117,7 +117,7 @@ The remaining safeguards are deliberately model- and evidence-aware rather than 
 - Completeness checking remains enabled only for models whose measured behavior justifies it; enabling a weaker checker can reject correct answers.
 - Table interpretation remains bounded by extraction fidelity: a header-aware row is easier to read, but extracted text is not a substitute for inspecting a chart or a scanned table when the source layout is ambiguous.
 
-These changes improve visibility and a narrow, deterministic part of scientific table interpretation; they do not claim that all six P0 areas have passed their release gates.
+These changes improve visibility and a narrow, deterministic part of scientific table interpretation; they do not claim that all eight P0 areas have passed their release gates.
 
 ## Measured (harness 0.110.0)
 
@@ -145,3 +145,24 @@ Over the ten recorded report runs (harness 0.51.0 to 0.55.0, Qwen3.5-2B and 4B, 
 ### Two-column scientific table headers
 
 `npm run bench:replay -- --base cb92369 --head 77d5c08` over the latest recorded run of every suite (12 reports): 430 of 454 tasks make the same requests of the model, 0 differ, and 24 can't be decided. The same 24 can't be decided when the code before the change is replayed against itself, so that is older recording drift, not this change. **No suite document has one of the 20 header pairs**, so the rule changes nothing that is measured. It is a list fitted to its own examples, and it needs a case in a suite before it is called an improvement.
+
+
+## Trustworthiness hardening (harness 0.112.0)
+
+The first implementation slice adds `src/agent/trustworthiness.ts` and deterministic regression tests:
+
+- **Semantic contradictions:** the production answer-support path now checks explicit opposing predicates (direction, presence, significance, polarity and effect). It is deliberately conservative: the topic must overlap, explicit quantities must match, and recognized time/group/in-vitro scopes must be identical. The exact passage already quoted by the answer is not treated as independent contradiction evidence. A conflict is surfaced through the existing contradiction path, so it prevents a reassuring answer label. It does not detect implicit paraphrases or establish which source is correct.
+- **Multi-document reconciliation:** `reconcileClaims` groups structured claims only when subject, predicate and explicit condition agree, and reports different values with their source IDs. It does not collapse different populations, time points or conditions into one result.
+- **Claim-level evidence:** `assessClaimEvidence` checks a claim against one source at a time, including quantities and explicit polarity. It does not pool words across sources and labels its result as a provenance assessment, not entailment.
+- **Independent numerical checks:** `verifyArithmetic` recomputes sums, differences, ratios and percentage changes from supplied operands, rejects incompatible units for additive operations, and uses an explicit numerical tolerance. It does not perform general dimensional analysis or unit conversion; callers must supply normalized, compatible inputs.
+- **Report completeness:** `reportSectionState` distinguishes not researched, no evidence, insufficient evidence, contradictory evidence and evidence-backed sections. A plan or retrieval hit alone cannot make a section complete.
+- **Scientific tables:** `interpretScientificTable` preserves the mapping from each value to its header and parses a numeric value/unit only when the cell explicitly contains one. It does not infer omitted headers, missing cells or ambiguous visual layout.
+- **Mixed-library retrieval:** `summarizeMixedLibrary` reports both macro-average suite results and task-weighted pooled results, preventing large suites from hiding a weak specialist domain.
+
+These helpers establish explicit contracts for the next integrations; the report state, arithmetic, structured reconciliation, table interpretation and mixed-suite summary are not yet wired into every production workflow. The existing BM25 scale benchmark remains the production retrieval regression; this slice does not change ranking or the default result limit.
+
+### Measurement and release gate
+
+- Deterministic tests cover opposite directions, significance, different time points, different quantities/topics, quoted-passage exclusion, source reconciliation, claim polarity/quantity, arithmetic, report states, table columns and macro-vs-pooled retrieval.
+- The new semantic check can change an answer's contradiction verdict. Before treating it as an improvement or enabling broader predicate families, run `bench:rescore --labels` on the recorded reports and paired Qwen3.5-2B/4B open plus held-out suites under `CONTRIBUTING.md`. Report right answers rejected, wrong answers still labelled, and false reassurance separately.
+- Open risks: non-English polarity, implicit contradictions, statistical qualifiers, causation vs association, population mismatch, unit conversion, and table extraction fidelity. These require held-out examples before production expansion.

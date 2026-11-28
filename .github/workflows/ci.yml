@@ -23,6 +23,9 @@ jobs:
       - run: npm run build
       - run: npm run bench:browser:build
       - run: npm run build:redirect
+      # Search baseline: keep the per-suite retrieval floors visible in CI alongside the mixed-library diagnostic.
+      - name: Retrieval baseline
+        run: npm run bench:retrieval
       # Search in a larger library, without a model (docs/p0-research-quality.md, item 4): each
       # real-document suite inside one library of every suite's documents, and the field suite also
       # with generated ones, at 3 (the app's), 5 and 10 results. Written to the job summary as one
