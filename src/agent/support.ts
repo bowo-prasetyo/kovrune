@@ -21,6 +21,11 @@ export interface AnswerSentence {
   /** Whether a verified quote backs the sentence; undefined for fragments too short to judge, such as "Steps:". */
   backed?: boolean;
   /**
+   * Claim-by-claim provenance: verified quotes that lexically match each clause, one source at a time.
+   * This is an inspection aid, not a semantic proof; the normal sentence checks still determine backed.
+   */
+  claims?: Array<{ text: string; evidence: Array<{ docId: string; quote: string }> }>;
+  /**
    * For a sentence no quote backs: a passage of a document the model read that would back it, had it been
    * quoted (inSourceSupport). The sentence is still not backed, and is labelled as before; the passage only
    * tells the reader where to check it, instead of "it may come from the model's memory".
