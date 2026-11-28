@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { harnessVersion, isModelFacing, measurementSection, problems } from "../scripts/way-of-working.ts";
+import { harnessVersion, isLabelRule, isModelFacing, measurementSection, pendingPhrase, problems } from "../scripts/way-of-working.ts";
 
 const changelog = "| Version | Changes |\n| --- | --- |\n| 0.109.0 | Materials. |\n| 0.110.0 | Label tiers. |\n";
 const measured = "## Summary\n\nX.\n\n## Measurement\n\nbench:replay on 454 tasks: 0 differ.\n";
@@ -39,5 +39,34 @@ describe("way of working (CONTRIBUTING.md)", () => {
       [],
       "a recorded run stands for the measurement",
     );
+  });
+
+  it("fails a measurement that is still to come", () => {
+    // #219's own wording, which the check used to pass because there was text under the heading.
+    const pending = "## Measurement\n- **Not yet measured:** `bench:replay --labels` and paired Qwen3.5-2B/4B open + held-out model runs.\n";
+    const found = problems({ files: ["src/documents/tables.ts"], baseVersion: "0.109.0", headVersion: "0.110.0", changelog, body: pending });
+    assert.equal(found.length, 1);
+    assert.match(found[0]!, /still to come \("Not yet measured"\)/);
+    for (const text of ["Measurement pending: model runs", "the 4B run is still pending", "pending measurement on 2B", "to be measured after merge", "TBD", "held-out comparison have not yet been run", "the runs haven't been recorded"])
+      assert.ok(pendingPhrase(text), text);
+    for (const text of ["bench:replay on 454 tasks: 0 differ.", "Not measured: libraries larger than 87 documents; this change doesn't touch them.", "A pending question resumes."])
+      assert.equal(pendingPhrase(text), undefined, text);
+  });
+
+  it("fails a changelog row that says its measurement is pending", () => {
+    const row = changelog + "| 0.111.0 | A contradiction check. **Measurement pending:** model runs have not yet been run. |\n";
+    const found = problems({ files: ["src/documents/tables.ts"], baseVersion: "0.110.0", headVersion: "0.111.0", changelog: row, body: measured });
+    assert.equal(found.length, 1);
+    assert.match(found[0]!, /changelog row for harness 0\.111\.0 says the measurement is still to come/);
+  });
+
+  it("asks a change to the label rules for false reassurance", () => {
+    assert.ok(isLabelRule("src/agent/support.ts") && isLabelRule("src/agent/trustworthiness.ts"));
+    assert.ok(!isLabelRule("src/agent/report.ts") && !isLabelRule("src/documents/tables.ts"));
+    const found = problems({ files: ["src/agent/support.ts"], baseVersion: "0.109.0", headVersion: "0.110.0", changelog, body: measured });
+    assert.equal(found.length, 1);
+    assert.match(found[0]!, /false reassurance before and after/);
+    const withRate = measured + "\nbench:rescore over 88 reports: false reassurance 12 of 300 before, 12 of 300 after.\n";
+    assert.deepEqual(problems({ files: ["src/agent/support.ts"], baseVersion: "0.109.0", headVersion: "0.110.0", changelog, body: withRate }), []);
   });
 });

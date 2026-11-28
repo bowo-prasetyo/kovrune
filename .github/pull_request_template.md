@@ -19,6 +19,9 @@ Model-facing changes only. How it was measured, by the rule in eval/field/README
 - or a model run on Qwen3.5-2B and Qwen3.5-4B: suites, paired counts (gained / lost) and p from bench:compare,
   false reassurance before and after, and the held-out totals.
 Say what decided it, and anything not measured.
+A measurement still to come ("not yet measured", "pending") fails CI: measure first, or split it off.
+A change to the label rules (src/agent/support.ts, evidence.ts, review.ts and the checks they call) gives
+false reassurance before and after; bench:rescore gives it without a model.
 -->
 
 ## Checks
