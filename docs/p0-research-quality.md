@@ -151,18 +151,98 @@ Over the ten recorded report runs (harness 0.51.0 to 0.55.0, Qwen3.5-2B and 4B, 
 
 The first implementation slice adds `src/agent/trustworthiness.ts` and deterministic regression tests:
 
-- **Semantic contradictions:** the production answer-support path now checks explicit opposing predicates (direction, presence, significance, polarity and effect). It is deliberately conservative: the topic must overlap, explicit quantities must match, and recognized time/group/in-vitro scopes must be identical. The exact passage already quoted by the answer is not treated as independent contradiction evidence. A conflict is surfaced through the existing contradiction path, so it prevents a reassuring answer label. It does not detect implicit paraphrases or establish which source is correct.
-- **Multi-document reconciliation:** `reconcileClaims` groups structured claims only when subject, predicate and explicit condition agree, and reports different values with their source IDs. It does not collapse different populations, time points or conditions into one result.
-- **Claim-level evidence:** `assessClaimEvidence` checks a claim against one source at a time, including quantities and explicit polarity. It does not pool words across sources and labels its result as a provenance assessment, not entailment.
-- **Independent numerical checks:** `verifyArithmetic` recomputes sums, differences, ratios and percentage changes from supplied operands, rejects incompatible units for additive operations, and uses an explicit numerical tolerance. It does not perform general dimensional analysis or unit conversion; callers must supply normalized, compatible inputs.
-- **Report completeness:** `reportSectionState` distinguishes not researched, no evidence, insufficient evidence, contradictory evidence and evidence-backed sections. A plan or retrieval hit alone cannot make a section complete.
-- **Scientific tables:** `interpretScientificTable` preserves the mapping from each value to its header and parses a numeric value/unit only when the cell explicitly contains one. It does not infer omitted headers, missing cells or ambiguous visual layout.
-- **Mixed-library retrieval:** `summarizeMixedLibrary` reports both macro-average suite results and task-weighted pooled results, preventing large suites from hiding a weak specialist domain.
+- **Semantic contradictions** (the one part still in the code): the production answer-support path now checks explicit opposing predicates (direction, presence, significance, polarity and effect). It is deliberately conservative: the topic must overlap, explicit quantities must match, and recognized time/group/in-vitro scopes must be identical. The exact passage already quoted by the answer is not treated as independent contradiction evidence. A conflict is surfaced through the existing contradiction path, so it prevents a reassuring answer label. It does not detect implicit paraphrases or establish which source is correct.
+- *Parked:* **Multi-document reconciliation:** `reconcileClaims` groups structured claims only when subject, predicate and explicit condition agree, and reports different values with their source IDs. It does not collapse different populations, time points or conditions into one result.
+- *Parked:* **Claim-level evidence:** `assessClaimEvidence` checks a claim against one source at a time, including quantities and explicit polarity. It does not pool words across sources and labels its result as a provenance assessment, not entailment.
+- *Parked:* **Independent numerical checks:** `verifyArithmetic` recomputes sums, differences, ratios and percentage changes from supplied operands, rejects incompatible units for additive operations, and uses an explicit numerical tolerance. It does not perform general dimensional analysis or unit conversion; callers must supply normalized, compatible inputs.
+- *Parked:* **Report completeness:** `reportSectionState` distinguishes not researched, no evidence, insufficient evidence, contradictory evidence and evidence-backed sections. A plan or retrieval hit alone cannot make a section complete.
+- *Parked:* **Scientific tables:** `interpretScientificTable` preserves the mapping from each value to its header and parses a numeric value/unit only when the cell explicitly contains one. It does not infer omitted headers, missing cells or ambiguous visual layout.
+- *Parked:* **Mixed-library retrieval:** `summarizeMixedLibrary` reports both macro-average suite results and task-weighted pooled results, preventing large suites from hiding a weak specialist domain.
 
-These helpers establish explicit contracts for the next integrations; the report state, arithmetic, structured reconciliation, table interpretation and mixed-suite summary are not yet wired into every production workflow. The existing BM25 scale benchmark remains the production retrieval regression; this slice does not change ranking or the default result limit.
+These helpers established contracts for later integrations, but none of the six after the contradiction check was called by the app or the benchmark. They are parked as of 0.113.0 ([below](#parked-helpers)). The existing BM25 scale benchmark remains the production retrieval regression; this slice does not change ranking or the default result limit.
 
 ### Measurement and release gate
 
 - Deterministic tests cover opposite directions, significance, different time points, different quantities/topics, quoted-passage exclusion, source reconciliation, claim polarity/quantity, arithmetic, report states, table columns and macro-vs-pooled retrieval.
 - The new semantic check can change an answer's contradiction verdict. Before treating it as an improvement or enabling broader predicate families, run `bench:rescore --labels` on the recorded reports and paired Qwen3.5-2B/4B open plus held-out suites under `CONTRIBUTING.md`. Report right answers rejected, wrong answers still labelled, and false reassurance separately.
 - Open risks: non-English polarity, implicit contradictions, statistical qualifiers, causation vs association, population mismatch, unit conversion, and table extraction fidelity. These require held-out examples before production expansion.
+
+### Parked helpers
+
+0.113.0 took six helpers of 0.112.0 out of `src/agent/trustworthiness.ts`, with their tests, because nothing but those tests called them: `reconcileClaims`, `assessClaimEvidence`, `verifyArithmetic`, `reportSectionState`, `interpretScientificTable` and `summarizeMixedLibrary`. Code that nothing runs can't be measured, and kept beside the label rules it would sooner or later be wired in without a measurement. `findSemanticConflicts`, which the sentence check calls, stays.
+
+They are in the repository's history, at the merge of [bowo-prasetyo/kovrune#219](https://github.com/bowo-prasetyo/kovrune/pull/219):
+
+```sh
+git show d911bde:src/agent/trustworthiness.ts     # the helpers
+git show d911bde:tests/trustworthiness.test.ts    # their tests
+```
+
+A change that brings one back wires it into the app or the benchmark in the same pull request, and measures it as [`CONTRIBUTING.md`](../CONTRIBUTING.md) asks.
+
+The contradiction check of 0.112.0 still owes its paired model runs. Re-scoring every recorded run with it, against the code before it, changes no label (5,644 answers in 88 reports, checked for the 28 November audit), so on recorded answers it neither helps nor harms; what it does to new answers is not known.
+
+## False reassurance on today's rules (28 November 2026)
+
+The design's headline figure ([§1.6](design.md#16-success-metrics)) was last measured over the core suites at harness 0.38.0. `npm run bench:baseline` gives it for every suite on the current label rules, without a model: for each suite and model it takes the latest recorded run that answered at least 90% of the suite's tasks in constrained mode, skips a run whose verified quotes are no longer found in today's documents (more than 5% of its answers), and re-scores its answers (`eval/baseline.ts`, sharing `eval/rescore-core.ts` with `bench:rescore`).
+
+**Read it for what it is.** The answers are the model's, from each run's own harness version, as old as 0.48.0; only the checking and labelling are today's. Changes to prompts, search and reading since a run are not in it, and the model's own checks are not asked again. It is the best figure there is without a model, not a fresh run. A fresh run of every suite on both models is about 600 tasks each, at 50–120 s a task on the 4-core machine the recorded runs used: some 28 hours.
+
+**Totals** (harness 0.113.0 rules):
+
+| Model | Suites | Re-scored | Right | False reassurance, all | Open suites | Held-out suites |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qwen3.5-2B | 17 | 379 | 249 | 22 of 157 (14.0%) | 16 of 109 (14.7%) | 6 of 48 (12.5%) |
+| Qwen3.5-4B | 25 | 559 | 486 | 14 of 335 (4.2%) | 11 of 238 (4.6%) | 3 of 97 (3.1%) |
+
+- **Qwen3.5-4B is under the design's 10% target**, at 4.2%, close to the 4.3% of harness 0.38.0. **Qwen3.5-2B is above it**, at 14.0%; the target is set for 4B, and 2B is reported, not gated.
+- **Where wrong answers are labelled:** the multi-passage suites (2B 5 of 7 labelled answers wrong, 4B 2 of 9), the clinical held-out suite (2 of 5 on both models), and for 2B the chemistry, computer-science and laboratory suites (4 of 14, 2 of 8, 3 of 13). For 4B: mathematics 2 of 11 and materials 3 of 25.
+- **No run covers** the office suites on either model, nor physics, mathematics, social sciences and materials on 2B: twelve suite-and-model pairs with no figure at all.
+- **The oldest rows matter most.** The multi-passage rows come from harness 0.48–0.54, and the core suites' from 0.75; they are the first to run again with a model.
+
+Every suite, as printed by `npm run bench:baseline`:
+
+| Suite | Model | Answers from | Re-scored | Right | Labelled, wrong (false reassurance) | As recorded |
+| --- | --- | --- | --- | --- | --- | --- |
+| research | Qwen3.5-2B | 0.75.0, `field-0.75-baseline-qwen3.5-2b-q4km.json` | 22 of 22 | 16 | 0 of 10 (0.0%) | 0 of 10 (0.0%) |
+| research | Qwen3.5-4B | 0.75.0, `field-0.75-baseline-qwen3.5-4b-q4km.json` | 22 of 22 | 19 | 1 of 17 (5.9%) | 1 of 17 (5.9%) |
+| unanswerable | Qwen3.5-2B | 0.75.0, `field-0.75-baseline-qwen3.5-2b-q4km.json` | 8 of 8 | 5 | 1 of 1 (100.0%) | 1 of 1 (100.0%) |
+| unanswerable | Qwen3.5-4B | 0.75.0, `field-0.75-baseline-qwen3.5-4b-q4km.json` | 8 of 8 | 8 | none labelled | none labelled |
+| pdf | Qwen3.5-2B | 0.75.0, `field-0.75-baseline-qwen3.5-2b-q4km.json` | 4 of 4 | 3 | 0 of 3 (0.0%) | 0 of 3 (0.0%) |
+| pdf | Qwen3.5-4B | 0.75.0, `field-0.75-baseline-qwen3.5-4b-q4km.json` | 4 of 4 | 4 | 0 of 4 (0.0%) | 0 of 4 (0.0%) |
+| field | Qwen3.5-2B | 0.75.0, `field-0.75-baseline-qwen3.5-2b-q4km.json` | 89 of 89 | 69 | 2 of 37 (5.4%) | 2 of 37 (5.4%) |
+| field | Qwen3.5-4B | 0.75.0, `field-0.75-baseline-qwen3.5-4b-q4km.json` | 89 of 89 | 80 | 2 of 62 (3.2%) | 2 of 62 (3.2%) |
+| holdout | Qwen3.5-2B | 0.75.0, `field-0.75-baseline-qwen3.5-2b-q4km.json` | 37 of 37 | 24 | 1 of 17 (5.9%) | 1 of 17 (5.9%) |
+| holdout | Qwen3.5-4B | 0.75.0, `field-0.75-baseline-qwen3.5-4b-q4km.json` | 37 of 37 | 36 | 0 of 28 (0.0%) | 0 of 28 (0.0%) |
+| multi | Qwen3.5-2B | 0.48.0, `multi-0.48-qwen3.5-2b-q4km.json` | 13 of 13 | 3 | 3 of 4 (75.0%) | 3 of 3 (100.0%) |
+| multi | Qwen3.5-4B | 0.54.0, `field-0.54-cache-qwen3.5-4b-q4km.json` | 13 of 13 | 9 | 1 of 8 (12.5%) | 1 of 8 (12.5%) |
+| multiholdout | Qwen3.5-2B | 0.48.0, `multi-0.48-qwen3.5-2b-q4km.json` | 8 of 8 | 1 | 2 of 3 (66.7%) | 2 of 3 (66.7%) |
+| multiholdout | Qwen3.5-4B | 0.54.0, `field-0.54-cache-qwen3.5-4b-q4km.json` | 8 of 8 | 5 | 1 of 1 (100.0%) | 1 of 1 (100.0%) |
+| clinical | Qwen3.5-2B | 0.84.0, `names-0.87-clinical-qwen3.5-2b-q4km.json` | 23 of 23 | 12 | 1 of 9 (11.1%) | 1 of 9 (11.1%) |
+| clinical | Qwen3.5-4B | 0.84.0, `names-0.87-clinical-qwen3.5-4b-q4km.json` | 23 of 23 | 18 | 1 of 14 (7.1%) | 1 of 14 (7.1%) |
+| clinicalholdout | Qwen3.5-2B | 0.72.0, `cs-clinical-0.73-qwen3.5-2b-q4km.json` | 10 of 10 | 5 | 2 of 5 (40.0%) | 2 of 5 (40.0%) |
+| clinicalholdout | Qwen3.5-4B | 0.72.0, `cs-clinical-0.73-qwen3.5-4b-q4km.json` | 10 of 10 | 6 | 2 of 5 (40.0%) | 2 of 5 (40.0%) |
+| engineering | Qwen3.5-2B | 0.68.0, `engineering-0.68-qwen3.5-2b-q4km.json` | 25 of 25 | 22 | 0 of 10 (0.0%) | 0 of 10 (0.0%) |
+| engineering | Qwen3.5-4B | 0.68.0, `engineering-0.68-qwen3.5-4b-q4km.json` | 25 of 25 | 23 | 1 of 21 (4.8%) | 1 of 21 (4.8%) |
+| engineeringholdout | Qwen3.5-2B | 0.68.0, `engineering-0.68-qwen3.5-2b-q4km.json` | 10 of 10 | 8 | 0 of 5 (0.0%) | 0 of 5 (0.0%) |
+| engineeringholdout | Qwen3.5-4B | 0.68.0, `engineering-0.68-qwen3.5-4b-q4km.json` | 10 of 10 | 10 | 0 of 8 (0.0%) | 0 of 8 (0.0%) |
+| physics | Qwen3.5-4B | 0.91.0, `physics-0.91-qwen3.5-4b-q4km.json` | 26 of 26 | 23 | 0 of 14 (0.0%) | 0 of 13 (0.0%) |
+| physicsholdout | Qwen3.5-4B | 0.91.0, `physics-0.91-qwen3.5-4b-q4km.json` | 10 of 10 | 10 | 0 of 9 (0.0%) | 0 of 9 (0.0%) |
+| math | Qwen3.5-4B | 0.100.0, `math-0.100-qwen3.5-4b-q4km.json` | 26 of 26 | 20 | 2 of 11 (18.2%) | 2 of 11 (18.2%) |
+| mathholdout | Qwen3.5-4B | 0.100.0, `math-0.100-qwen3.5-4b-q4km.json` | 11 of 11 | 9 | 0 of 5 (0.0%) | 0 of 5 (0.0%) |
+| chem | Qwen3.5-2B | 0.94.0, `chem-0.94-qwen3.5-2b-q4km.json` | 40 of 40 | 22 | 4 of 14 (28.6%) | 4 of 14 (28.6%) |
+| chem | Qwen3.5-4B | 0.94.0, `chem-0.94-qwen3.5-4b-q4km.json` | 40 of 40 | 33 | 0 of 22 (0.0%) | 0 of 22 (0.0%) |
+| chemholdout | Qwen3.5-2B | 0.94.0, `chem-0.94-qwen3.5-2b-q4km.json` | 11 of 12 | 10 | 0 of 7 (0.0%) | 0 of 7 (0.0%) |
+| chemholdout | Qwen3.5-4B | 0.94.0, `chem-0.94-qwen3.5-4b-q4km.json` | 12 of 12 | 12 | 0 of 11 (0.0%) | 0 of 11 (0.0%) |
+| socsci | Qwen3.5-4B | 0.104.0, `socsci-0.104-qwen3.5-4b-q4km.json` | 34 of 34 | 29 | 0 of 12 (0.0%) | 1 of 12 (8.3%) |
+| socsciholdout | Qwen3.5-4B | 0.104.0, `socsci-0.104-qwen3.5-4b-q4km.json` | 12 of 12 | 10 | 0 of 8 (0.0%) | 0 of 8 (0.0%) |
+| materials | Qwen3.5-4B | 0.109.0, `materials-0.109-qwen3.5-4b-q4km.json` | 47 of 47 | 41 | 3 of 25 (12.0%) | 3 of 25 (12.0%) |
+| materialsholdout | Qwen3.5-4B | 0.109.0, `materials-0.109-qwen3.5-4b-q4km.json` | 13 of 13 | 12 | 0 of 11 (0.0%) | 0 of 11 (0.0%) |
+| cs | Qwen3.5-2B | 0.84.0, `names-0.87-cs-qwen3.5-2b-q4km.json` | 26 of 26 | 13 | 2 of 8 (25.0%) | 2 of 8 (25.0%) |
+| cs | Qwen3.5-4B | 0.84.0, `names-0.87-cs-qwen3.5-4b-q4km.json` | 26 of 26 | 22 | 0 of 12 (0.0%) | 0 of 12 (0.0%) |
+| csholdout | Qwen3.5-2B | 0.78.0, `baseline-0.78-holdouts-qwen3.5-2b-q4km.json` | 10 of 10 | 7 | 0 of 2 (0.0%) | 0 of 2 (0.0%) |
+| csholdout | Qwen3.5-4B | 0.78.0, `baseline-0.78-holdouts-qwen3.5-4b-q4km.json` | 10 of 10 | 10 | 0 of 3 (0.0%) | 0 of 3 (0.0%) |
+| lab | Qwen3.5-2B | 0.84.0, `names-0.87-lab-qwen3.5-2b-q4km.json` | 32 of 32 | 19 | 3 of 13 (23.1%) | 3 of 13 (23.1%) |
+| lab | Qwen3.5-4B | 0.84.0, `names-0.87-lab-qwen3.5-4b-q4km.json` | 32 of 32 | 27 | 0 of 16 (0.0%) | 0 of 16 (0.0%) |
+| labholdout | Qwen3.5-2B | 0.78.0, `baseline-0.78-holdouts-qwen3.5-2b-q4km.json` | 11 of 11 | 10 | 1 of 9 (11.1%) | 1 of 9 (11.1%) |
+| labholdout | Qwen3.5-4B | 0.78.0, `baseline-0.78-holdouts-qwen3.5-4b-q4km.json` | 11 of 11 | 10 | 0 of 8 (0.0%) | 0 of 8 (0.0%) |
