@@ -6,7 +6,7 @@ An open-source, local-first research app: answers about the user's own documents
 
 | | |
 | --- | --- |
-| Status | Draft, revision 4 (roadmap re-planned for a team of two, with a go/no-go for M3; see §0) |
+| Status | Draft, revision 5 (the design brought up to date with what is built, and the order until the first users; see §0) |
 | License | MPL-2.0 (see [`LICENSE`](../LICENSE)) |
 | Scope of this document | Product definition, architecture, security model, and roadmap |
 
@@ -17,6 +17,13 @@ Today, a user opens Kovrune in a browser, picks a compatible model from Hugging 
 ---
 
 ## 0. Revision notes
+
+**Revision 5** (28 November 2026) brings the document up to date after a month in which much was built and nothing was tested with users, and follows the product audits of 26–28 November. It changes no milestone or principle:
+- **Where things stand** is now at the head of §12: M1 is built and waits on people (the usability test and the class 2 run), M2 is done but for the owner's release test, and the P0 research-quality work is open.
+- **Field checks** (§1.4): November added checks, sources and evaluation suites for ten fields. They serve the same first audience; they are not a move to specialise. Until the usability test, no new field or source is added (proposed; the owner decides).
+- **Sources** (§5.1): ten, not five.
+- **Answer verdicts** (§1.6): answers lead with **Backed by quotes**, **Needs checking** or **Not backed**; "Backed by quotes" is exactly **Quotes found**, so the false reassurance metric is unchanged. The latest baseline is added.
+- **Way of working** (§11): every change to what the model is shown is measured before it is merged, and CI checks it ([`CONTRIBUTING.md`](../CONTRIBUTING.md)).
 
 **Revision 4** re-plans the roadmap for the actual team of two ([issue #36](https://github.com/bowo-prasetyo/kovrune/issues/36)). §12 has new estimates, which separate what Claude builds from what waits on people. It proposes an order after M1 (M2 next, M2.5 on hold) and adds a go/no-go gate for M3, decided by interviews whose rule is fixed in advance ([`circles-interviews.md`](circles-interviews.md)). Using a model server on another computer of the user's own is documented in the user guide, as the path that needs no P2P work.
 
@@ -91,6 +98,8 @@ People who won't use a terminal are **not** the first audience. They could use o
 
 **Primary job to be done:** "Help me answer a question, or write a short report, from my own documents and open scholarly sources, using a model I control, with quotes I can check." A report is built from checked answers, one per section ([`report-mode.md`](report-mode.md)).
 
+**Field checks.** The checks behind the labels were first written for general technical text. In November 2026, audits for mathematics, chemistry, the social sciences and materials science, and suites for clinical, engineering, laboratory, physics and computer-science documents, added what those fields need: units and their prefixes, formulas and theorem numbering, chemical names and formulas, statistics written without a leading zero, values tied to their property, and tables kept in columns. These serve the first audience as a whole: a technical researcher's documents are in one field or another, and a check that misses a field's way of writing gives false reassurance there. They are not a decision to specialise. **Until the usability test (§12), no new field or source is added** (proposed; the owner decides): which fields matter next should come from the people who use Kovrune, not from audits.
+
 A second job, "help me work on a codebase", is the target of the coding agent (M2.5) and is not part of the current product.
 
 ### 1.5 Positioning
@@ -120,7 +129,7 @@ Later milestones are compared with different alternatives:
 | Time from first visit to first useful result | Under 15 minutes on reference hardware, including model download |
 | Model download completion rate | Above 90% of started downloads |
 | Valid tool-call rate | Above 95% with constrained decoding on catalog models |
-| **False reassurance rate:** the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0; 6 of 40 (15%) over all suites in harness 0.15.0, 3 of 25 (12%) with those answers re-checked under harness 0.16.0's rules, and 3 of 26 (12%) in a harness 0.16.0 run |
+| **False reassurance rate:** the share of answers labelled **Quotes found** that are wrong or only partly right | Under 10% on Qwen3.5-4B, tracked between harness versions. Measured by the benchmark (a labelled answer whose task fails), the usability test, and the live checks. Baseline: 3 of 22 (14%) in the last recorded Qwen3.5-4B report, harness 0.6.0; 6 of 40 (15%) over all suites in harness 0.15.0, 3 of 25 (12%) with those answers re-checked under harness 0.16.0's rules, and 3 of 26 (12%) in a harness 0.16.0 run. Latest: 5 of 117 (4.3%) over the research, unanswerable, PDF, field and held-out suites, harness 0.38.0; per field suite it varies, for example 3 wrong labelled answers on the 60-task materials suite at 0.109.0 |
 | 7-day and 30-day retention | Tracked with opt-in, privacy-preserving telemetry only |
 | Trusted-circle usage (after M4) | Number of circles with at least one delegated task per week |
 
@@ -419,7 +428,12 @@ The research agent searches accessible sources, extracts passages and metadata, 
 - CORS-friendly scholarly and technical APIs, for example Wikipedia, OpenAlex, Crossref, arXiv metadata where reachable, the GitHub API, and the Hugging Face Hub.
 - Search providers that allow browser access with the user's own API key, where available.
 
-**Built so far:** the user's documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV and TSV, text, Markdown and HTML; [`office-formats.md`](office-formats.md)), and five open sources, each off until the user ticks it: Wikipedia, OpenAlex (abstracts), arXiv (found through DataCite, papers read in full from arxiv.org), DataCite (repository works, read in full from Zenodo's PDFs where available, otherwise as abstracts), and Europe PMC (biomedical papers and preprints, read in full from their JATS XML where open access, otherwise as abstracts).
+**Built so far:** the user's documents (PDF, Word, PowerPoint, Excel, OpenDocument text, presentations and spreadsheets, CSV and TSV, text, Markdown and HTML; [`office-formats.md`](office-formats.md)), and ten open sources, each off until the user ticks it:
+- **General and scholarly:** Wikipedia, OpenAlex (abstracts), arXiv (found through DataCite, read in full from arxiv.org), DataCite (repository works, read in full from Zenodo where available).
+- **By field:** Europe PMC (biomedical, read in full from JATS XML where open access), INSPIRE-HEP (high-energy physics), PubChem (compounds and their measured properties), Alexandria (computed crystal structures, through OPTIMADE), ChemRxiv (chemistry preprints, through Crossref).
+- **EPO patents** (the European Patent Office's Open Patent Services). It is the one source that needs an account: the user's own free EPO key, kept in the browser and sent only to the EPO.
+
+The [user guide](user-guide.md#open-sources) lists what each sends and to which host.
 
 The product is positioned as **scholarly and technical research**, not general web browsing. Each source adapter declares what it can reach, and the UI explains when a URL cannot be fetched and offers to import it manually.
 
@@ -659,6 +673,8 @@ kovrune/
 | End-to-end | Select model, run task, restart app, resume work (Chromium, Firefox, WebKit) |
 | Security | Malformed peer messages, prompt injection, oversized input, unauthorized sharing, CSP violations |
 
+**Measured changes.** A change to what the model is shown, which answers pass, or how they are labelled is measured before it is merged: by replaying recorded runs (`bench:replay`), by the search benchmark, or by model runs on both catalog models with paired counts, by the rule in [`eval/field/README.md`](../eval/field/README.md#rule-for-prompt-and-guard-changes). Each such change bumps the harness version and adds a changelog row. CI's **Way of working** check enforces all three for every contributor ([`CONTRIBUTING.md`](../CONTRIBUTING.md)), and CI also writes the search benchmark in a larger library to each pull request's summary.
+
 ### 11.2 Evaluation set
 
 The evaluation set is the project's main quality instrument and is built in M0.
@@ -672,6 +688,19 @@ A release does not claim that a model, browser, network feature, or security pro
 ---
 
 ## 12. Roadmap
+
+### Where things stand (28 November 2026)
+
+| | Status | Waits on |
+| --- | --- | --- |
+| **M0** | Provisional go (§12, M0) | A class 2 browser run ([issue #9](https://github.com/bowo-prasetyo/kovrune/issues/9)), open since 24 October |
+| **M1** | All four slices built; checked live on the class 1 laptop | The usability test ([issue #29](https://github.com/bowo-prasetyo/kovrune/issues/29)), open since 25 October, and the class 2 run |
+| **M2** | Done: pinned downloads, resume, storage and backup, reproducible signed builds, Cloudflare Pages; v0.1.0 published 2 November | The owner testing a release on the laptop |
+| **P0 research quality** ([`p0-research-quality.md`](p0-research-quality.md)) | Five of six acceptance items done | The class 2 run |
+| **Report mode** | Available, but its reports give the facts of 9 of 23 expected sections, and the plan screen's source hint did not predict which sections fail | A decision on the hint; a planner that sees the sources |
+| **M2.5, M3** | On hold, as planned | M2.5: what usability participants ask for. M3: the Circles interviews, run with the usability sessions |
+
+**Building is not the bottleneck; people are.** Since M1 was built, the harness went from 0.36.0 to 0.110.0 while no one from the first audience used the product. **The next step is the usability test**, with the Circles interview after it. It needs nothing more to be built: the protocol, the results sheet and the invitations are ready ([`usability-test.md`](usability-test.md), [`tester-invitation.md`](tester-invitation.md)). Until it has run, work is limited to fixing defects, measurement and the findings of reviews (proposed; the owner decides).
 
 Each milestone delivers a usable result and has explicit acceptance criteria. The team is two people: the project owner (decisions, reviews, testing on reference hardware) and Claude (implementation, tests, benchmark runs, documentation), as in [`m1-plan.md`](m1-plan.md).
 

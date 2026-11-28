@@ -69,6 +69,7 @@ npm run release:verify -- SHA256SUMS   # check a release's signature
 npm run bench:browser     # M0 benchmark page (WebLLM)
 npm run bench:endpoint    # M0 benchmark against a local model server
 npm run bench:retrieval   # the search on its own, no model needed
+npm run bench:retrieval:scale   # the same search in one library of every suite's documents, and with generated ones
 npm run bench:compare -- a.json b.json   # two runs task by task, with how sure the difference is
 npm run bench:rescore -- a.json          # recorded answers checked and labelled again, without a model
 npm run bench:replay -- --base main a.json   # which tasks a code change can affect: those to run again with a model

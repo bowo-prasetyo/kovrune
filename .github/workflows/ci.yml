@@ -23,21 +23,21 @@ jobs:
       - run: npm run build
       - run: npm run bench:browser:build
       - run: npm run build:redirect
-      # Deterministic diagnostics for the P0 research-quality work. These run without a model:
-      # report planning is scored against recorded outcomes, and retrieval is stressed with
-      # realistic distractor libraries before any search default is changed.
-      # bench:plancoverage needs recorded report-run JSON; run it with explicit reports
-      # when available (see docs/p0-research-quality.md), not as a zero-argument CI command.
-      - name: Measure retrieval at the app's default result limit
+      # Search in a larger library, without a model (docs/p0-research-quality.md, item 4): each
+      # real-document suite inside one library of every suite's documents, and the field suite also
+      # with generated ones, at 3 (the app's), 5 and 10 results. Written to the job summary as one
+      # table per limit. Diagnostic only: the retrieval floors in npm test decide, and a change to the
+      # result limit needs model runs (CONTRIBUTING.md).
+      - name: Search in a larger library (diagnostic)
+        shell: bash
         run: |
-          npm run bench:retrieval
-          npm run bench:retrieval -- --distractors 100
-          npm run bench:retrieval -- --distractors 300
-          npm run bench:retrieval -- --distractors 1000
-      - name: Compare retrieval result limits
-        run: |
-          npm run bench:retrieval -- --limit 5
-          npm run bench:retrieval -- --limit 10
+          {
+            npm run -s bench:retrieval:scale
+            echo
+            npm run -s bench:retrieval:scale -- --limit 5
+            echo
+            npm run -s bench:retrieval:scale -- --limit 10
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
   # A release must rebuild byte for byte from its tag (docs/releases.md). Build the
   # commit twice, in different directories and time zones, and compare every file.

@@ -28,13 +28,12 @@ Use the report suite's expected-section coverage and factual correctness as sepa
 
 ### 4. Retrieval at realistic library sizes
 
-Run the deterministic retrieval benchmark at baseline and with 100, 300, and 1,000 generated distractor documents:
+Run the deterministic retrieval benchmark at baseline and in a larger library: every suite's real documents together, and the field suite also with 100, 300 and 1,000 generated documents. `bench:retrieval:scale` does all of it in one table ([recorded comparison](#retrieval-in-a-larger-library-recorded-comparison-28-november-2026)):
 
 ```sh
-npm run bench:retrieval
-npm run bench:retrieval -- --distractors 100
-npm run bench:retrieval -- --distractors 300
-npm run bench:retrieval -- --distractors 1000
+npm run bench:retrieval                       # each suite in its own library
+npm run bench:retrieval:scale                 # the same suites in a larger library
+npm run bench:retrieval:scale -- --limit 5    # and with more results
 ```
 
 Record document recall, passage recall, and complete-task count per suite. Compare top-3 with top-5/top-10 before changing the production default. Do not introduce embeddings or hybrid retrieval unless the benchmark shows a repeatable improvement on held-out tasks without regressing precision or latency.
@@ -55,20 +54,43 @@ Start the runner with `npm run bench:browser`, open its local page, choose WebLL
 
 ## Continuous measurement
 
-Pull-request CI runs the deterministic retrieval benchmark at the app's default result limit, with 100, 300 and 1,000 generated distractor documents, and with result limits 5 and 10. These diagnostics expose document recall, answer-passage recall and the recall/precision trade-off without changing production defaults.
+Every pull request's CI writes one table per result limit (3, the app's; 5; 10) to its job summary: `npm run bench:retrieval:scale` (`eval/retrieval-scale.ts`). Each real-document suite is searched in its own library, then in one library holding every suite's documents (87 distinct real documents), as a researcher's mixed library would be. The field suite is also searched with 100, 300 and 1,000 generated documents added. The figures are diagnostics, not new gates: the retrieval floors in `npm test` still decide, and model-dependent quality and false reassurance still need paired model runs under [the contributor measurement rule](../CONTRIBUTING.md#changes-to-what-the-model-is-shown).
 
-The report-plan coverage diagnostic is different: `npm run bench:plancoverage -- <report-run>.json [...]` requires recorded report-run JSON. Run it when those benchmark reports are available; it is not a zero-argument CI check. It compares the plan's recorded/recomputed retrieval hints with the outcomes of the written sections.
+The report-plan coverage diagnostic is different: `npm run bench:plancoverage -- <report-run>.json [...]` needs recorded report runs, so it is not a CI step. It compares the plan's hints with how the written sections turned out ([below](#the-plan-screens-source-check-judged-by-outcome)).
 
-These diagnostics are not new pass/fail quality thresholds. Existing retrieval floors remain authoritative. Model-dependent answer quality and false reassurance still require paired model runs and held-out comparisons under [the contributor measurement rule](../CONTRIBUTING.md#changes-to-what-the-model-is-shown).
+### Retrieval in a larger library: recorded comparison (28 November 2026)
+
+At the app's 3 results:
+
+| Suite | Own library: documents, passages, complete | In all 87 real documents | Tasks lost |
+| --- | --- | --- | --- |
+| field | 98.7%, 93.3%, 70 of 74 | 97.4%, 93.3%, 70 of 74 | 0 |
+| field, also 100 generated | | 92.2%, 88.8%, 66 of 74 | 4 |
+| field, also 300 generated | | 89.6%, 87.6%, 65 of 74 | 5 |
+| field, also 1,000 generated | | 88.3%, 86.5%, 65 of 74 | 5 |
+| office | 100%, 95.2%, 18 of 19 | 100%, 95.2%, 18 of 19 | 0 |
+| clinical | 100%, 90.7%, 26 of 30 | 100%, 88.4%, 25 of 30 | 1 |
+| engineering | 100%, 100%, 32 of 32 | unchanged | 0 |
+| physics | 100%, 95.6%, 31 of 33 | unchanged | 0 |
+| math | 100%, 100%, 34 of 34 | unchanged | 0 |
+| cs | 97.2%, 82.2%, 27 of 34 | 97.2%, 84.4%, 26 of 34 | 1 |
+| lab | 97.6%, 94.5%, 39 of 40 | 97.6%, 90.9%, 38 of 40 | 1 |
+| chem | 98%, 94%, 46 of 49 | 98%, 91%, 44 of 49 | 2 |
+| socsci | 100%, 87.7%, 39 of 44 | unchanged | 0 |
+| materials | 100%, 94%, 52 of 56 | 98.2%, 90.4%, 48 of 56 | 4 |
+
+- **Real neighbours compete; generated ones barely do.** With every suite's real documents in one library, 9 of 445 tasks lose a cited document or answer passage that search found in their own library. The losses are where fields share vocabulary: materials (4), chemistry (2), laboratory, clinical and computer science (1 each). Generated documents cost the field suite 4 tasks at 100 and only 5 at 1,000, so they measure volume poorly. The real-document library is the better yardstick, and the reason the suites' documents are pooled.
+- **More results recover most of it, in search alone.** At 5 results the pooled library loses 5 of 445 tasks, and the own libraries find more too (materials 55 of 56, field 73 of 74). This is not a reason to change the default: when 5 results were tried with the models, Qwen3.5-4B's field suite gained one task and Qwen3.5-2B's lost two ([field README](../eval/field/README.md#five-search-results)). A smaller model reads less of what it is shown. Any change to the limit is judged by model runs, not by this table.
+- **Not measured:** questions in another writing system than their documents (search translates them with the model), and libraries larger than 87 real documents.
 
 ## Acceptance criteria
 
-- [ ] Report evaluation phrase matching has boundary regression tests for short numbers, acronyms, names, decimals, and Unicode compatibility forms.
-- [ ] Research and PDF retrieval floors remain green; field/domain retrieval is reported separately.
-- [ ] 100/300/1,000-distractor runs are captured and compared before changing retrieval strategy or result limits.
-- [ ] Report plan coverage, final factual coverage, unmatched sections, and false reassurance are reported separately.
-- [ ] Browser class-2 validation uses a full run, records the complete environment/model identity, and is repeated after a clean reload.
-- [ ] No model/runtime is described as production-ready solely because it loads or passes a tool self-check.
+- [x] Report evaluation phrase matching has boundary regression tests for short numbers, acronyms, names, decimals, and Unicode compatibility forms (`tests/eval-matching.test.ts`, #213).
+- [x] Research and PDF retrieval floors remain green; field/domain retrieval is reported separately (`tests/retrieval.test.ts`; `bench:retrieval` and `bench:retrieval:scale` report each suite apart).
+- [x] 100/300/1,000-distractor runs are captured and compared before changing retrieval strategy or result limits ([recorded comparison](#retrieval-in-a-larger-library-recorded-comparison-28-november-2026), with every suite's real documents as well; in each pull request's CI summary).
+- [x] Report plan coverage, final factual coverage, unmatched sections, and false reassurance are reported separately (`bench:report` summary; the plan hint against section results since 0.110.0).
+- [ ] Browser class-2 validation uses a full run, records the complete environment/model identity, and is repeated after a clean reload. **Open: waits on a class 2 tester ([bowo-prasetyo/kovrune#9](https://github.com/bowo-prasetyo/kovrune/issues/9)).**
+- [x] No model/runtime is described as production-ready solely because it loads or passes a tool self-check (the README and design call the browser path experimental and unmeasured on class 2; standing rule, re-checked at each release).
 
 ## Non-goals
 
