@@ -53,6 +53,14 @@ For the class-2 confirmation run:
 
 Start the runner with `npm run bench:browser`, open its local page, choose WebLLM, the pinned Qwen3.5-4B model, class 2, Full, Research + Unanswerable + PDF, and both decoding modes. The benchmark JSON is the source of truth. A quick preset or partial task-ID run is diagnostic only, not a release gate.
 
+## Continuous measurement
+
+Pull-request CI runs the deterministic retrieval benchmark at the app's default result limit, with 100, 300 and 1,000 generated distractor documents, and with result limits 5 and 10. These diagnostics expose document recall, answer-passage recall and the recall/precision trade-off without changing production defaults.
+
+The report-plan coverage diagnostic is different: `npm run bench:plancoverage -- <report-run>.json [...]` requires recorded report-run JSON. Run it when those benchmark reports are available; it is not a zero-argument CI check. It compares the plan's recorded/recomputed retrieval hints with the outcomes of the written sections.
+
+These diagnostics are not new pass/fail quality thresholds. Existing retrieval floors remain authoritative. Model-dependent answer quality and false reassurance still require paired model runs and held-out comparisons under [the contributor measurement rule](../CONTRIBUTING.md#changes-to-what-the-model-is-shown).
+
 ## Acceptance criteria
 
 - [ ] Report evaluation phrase matching has boundary regression tests for short numbers, acronyms, names, decimals, and Unicode compatibility forms.

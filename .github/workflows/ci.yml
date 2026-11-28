@@ -23,6 +23,21 @@ jobs:
       - run: npm run build
       - run: npm run bench:browser:build
       - run: npm run build:redirect
+      # Deterministic diagnostics for the P0 research-quality work. These run without a model:
+      # report planning is scored against recorded outcomes, and retrieval is stressed with
+      # realistic distractor libraries before any search default is changed.
+      # bench:plancoverage needs recorded report-run JSON; run it with explicit reports
+      # when available (see docs/p0-research-quality.md), not as a zero-argument CI command.
+      - name: Measure retrieval at the app's default result limit
+        run: |
+          npm run bench:retrieval
+          npm run bench:retrieval -- --distractors 100
+          npm run bench:retrieval -- --distractors 300
+          npm run bench:retrieval -- --distractors 1000
+      - name: Compare retrieval result limits
+        run: |
+          npm run bench:retrieval -- --limit 5
+          npm run bench:retrieval -- --limit 10
 
   # A release must rebuild byte for byte from its tag (docs/releases.md). Build the
   # commit twice, in different directories and time zones, and compare every file.
