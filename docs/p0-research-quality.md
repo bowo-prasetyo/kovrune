@@ -117,7 +117,7 @@ The remaining safeguards are deliberately model- and evidence-aware rather than 
 - Completeness checking remains enabled only for models whose measured behavior justifies it; enabling a weaker checker can reject correct answers.
 - Table interpretation remains bounded by extraction fidelity: a header-aware row is easier to read, but extracted text is not a substitute for inspecting a chart or a scanned table when the source layout is ambiguous.
 
-These changes improve visibility and a narrow, deterministic part of scientific table interpretation; they do not claim that all six P0 areas have passed their release gates.
+These changes improve visibility and a narrow, deterministic part of scientific table interpretation; they do not claim that all eight P0 areas have passed their release gates.
 
 ## Measured (harness 0.110.0)
 
