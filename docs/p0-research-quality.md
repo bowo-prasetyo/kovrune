@@ -55,13 +55,11 @@ Start the runner with `npm run bench:browser`, open its local page, choose WebLL
 
 ## Continuous measurement
 
-The pull-request CI runs the deterministic diagnostics below before a change to retrieval or report planning is accepted:
+Pull-request CI runs the deterministic retrieval benchmark at the app's default result limit, with 100, 300 and 1,000 generated distractor documents, and with result limits 5 and 10. These diagnostics expose document recall, answer-passage recall and the recall/precision trade-off without changing production defaults.
 
-- `npm run bench:plancoverage` — compares each planned section's retrieval hint with the recorded outcome; a surfaced passage is not treated as proof of answer coverage.
-- `npm run bench:retrieval` and the same benchmark with 100, 300 and 1,000 generated distractor documents — records document recall, answer-passage recall and complete tasks as the library grows.
-- The retrieval benchmark with result limits 5 and 10 — makes the recall/precision trade-off visible before changing the app's default result limit.
+The report-plan coverage diagnostic is different: `npm run bench:plancoverage -- <report-run>.json [...]` requires recorded report-run JSON. Run it when those benchmark reports are available; it is not a zero-argument CI check. It compares the plan's recorded/recomputed retrieval hints with the outcomes of the written sections.
 
-These are diagnostics, not new quality gates: the existing research/PDF/field floors remain authoritative, and a higher recall number alone does not justify a production change. CI does not run model-dependent research suites; those still require paired model runs and held-out comparisons under [the contributor measurement rule](../CONTRIBUTING.md#changes-to-what-the-model-is-shown).
+These diagnostics are not new pass/fail quality thresholds. Existing retrieval floors remain authoritative. Model-dependent answer quality and false reassurance still require paired model runs and held-out comparisons under [the contributor measurement rule](../CONTRIBUTING.md#changes-to-what-the-model-is-shown).
 
 ## Acceptance criteria
 
