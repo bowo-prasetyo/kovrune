@@ -83,3 +83,139 @@ export function findSemanticConflicts(
   }
   return conflicts;
 }
+
+export interface ResearchClaim {
+  subject: string;
+  predicate: string;
+  value: string;
+  condition?: string;
+  sourceId: string;
+}
+
+/** Reconcile claims only when their subject, predicate and explicit conditions agree. */
+export function reconcileClaims(claims: ResearchClaim[]): Array<{ key: string; claims: ResearchClaim[]; sourceIds: string[] }> {
+  const groups = new Map<string, ResearchClaim[]>();
+  for (const claim of claims) {
+    const key = [claim.subject, claim.predicate, claim.condition ?? ""].map((part) => part.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim()).join("|");
+    groups.set(key, [...(groups.get(key) ?? []), claim]);
+  }
+  return [...groups.entries()].flatMap(([key, group]) => {
+    const values = new Set(group.map((claim) => claim.value.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim()));
+    return values.size > 1 ? [{ key, claims: group, sourceIds: [...new Set(group.map((claim) => claim.sourceId))] }] : [];
+  });
+}
+
+export interface ClaimEvidenceAssessment {
+  supported: boolean;
+  share: number;
+  missingNumbers: string[];
+  reason: "supported" | "insufficient-overlap" | "quantity-mismatch" | "polarity-mismatch";
+}
+
+/**
+ * A single-source claim check. This is provenance triage, not entailment: callers must retain
+ * the source quote and use semantic review for claims that pass lexical matching.
+ */
+export function assessClaimEvidence(claim: string, quote: string, minimumShare = 0.6): ClaimEvidenceAssessment {
+  const claimTerms = [...terms(claim)];
+  const quoteTerms = terms(quote);
+  const share = claimTerms.length ? claimTerms.filter((term) => quoteTerms.has(term)).length / claimTerms.length : 0;
+  const claimNumbers = quantities(claim);
+  const quoteNumbers = quantities(quote);
+  const missingNumbers = claimNumbers.filter((number) => !quoteNumbers.includes(number));
+  const polarityMismatch = /\b(?:not|never|no|without|absent|failed)\b/i.test(claim) !== /\b(?:not|never|no|without|absent|failed)\b/i.test(quote);
+  const reason = missingNumbers.length ? "quantity-mismatch" : polarityMismatch ? "polarity-mismatch" : share < minimumShare ? "insufficient-overlap" : "supported";
+  return { supported: reason === "supported", share, missingNumbers, reason };
+}
+
+export type ArithmeticOperation = "sum" | "difference" | "ratio" | "percent-change";
+export interface ArithmeticCheck {
+  operation: ArithmeticOperation;
+  operands: Array<{ value: number; unit: string }>;
+  claimed: { value: number; unit: string };
+  tolerance?: number;
+}
+export interface ArithmeticResult { valid: boolean; expected: number; difference: number; reason: "matches" | "non-finite" | "unit-mismatch" | "unsupported-units" | "wrong-result" }
+
+/** Independently recompute simple derived quantities; never infer conversions between unlike units. */
+export function verifyArithmetic(check: ArithmeticCheck): ArithmeticResult {
+  const [a, b] = check.operands;
+  if (!a || !b || !Number.isFinite(a.value) || !Number.isFinite(b.value) || !Number.isFinite(check.claimed.value)) {
+    return { valid: false, expected: Number.NaN, difference: Number.NaN, reason: "non-finite" };
+  }
+  const sameUnit = a.unit.trim().toLowerCase() === b.unit.trim().toLowerCase();
+  if (check.operation !== "ratio" && !sameUnit) {
+    return { valid: false, expected: Number.NaN, difference: Number.NaN, reason: "unit-mismatch" };
+  }
+  if (check.operation === "ratio" && (!sameUnit || !check.claimed.unit.trim() || check.claimed.unit.trim() === a.unit.trim())) {
+    return { valid: false, expected: Number.NaN, difference: Number.NaN, reason: "unsupported-units" };
+  }
+  let expected: number;
+  switch (check.operation) {
+    case "sum": expected = a.value + b.value; break;
+    case "difference": expected = a.value - b.value; break;
+    case "ratio": if (b.value === 0) return { valid: false, expected: Number.NaN, difference: Number.NaN, reason: "non-finite" }; expected = a.value / b.value; break;
+    case "percent-change": if (a.value === 0) return { valid: false, expected: Number.NaN, difference: Number.NaN, reason: "non-finite" }; expected = ((b.value - a.value) / Math.abs(a.value)) * 100; break;
+  }
+  const difference = Math.abs(expected - check.claimed.value);
+  const tolerance = check.tolerance ?? Math.max(1e-9, Math.abs(expected) * 1e-6);
+  return { valid: difference <= tolerance, expected, difference, reason: difference <= tolerance ? "matches" : "wrong-result" };
+}
+
+export type ReportSectionState = "not-researched" | "no-evidence" | "insufficient-evidence" | "contradictory-evidence" | "evidence-backed";
+export interface ReportSectionEvidence {
+  sectionId: string;
+  researched: boolean;
+  evidenceCount: number;
+  independentSourceCount: number;
+  requiredClaims: number;
+  supportedClaims: number;
+  contradictory: boolean;
+}
+/** Report sections are complete only when every required claim has evidence and no conflict remains. */
+export function reportSectionState(section: ReportSectionEvidence): ReportSectionState {
+  if (!section.researched) return "not-researched";
+  if (section.contradictory) return "contradictory-evidence";
+  if (section.evidenceCount === 0) return "no-evidence";
+  if (section.independentSourceCount === 0 || section.supportedClaims < section.requiredClaims) return "insufficient-evidence";
+  return "evidence-backed";
+}
+
+export interface ScientificTable {
+  headers: string[];
+  rows: string[][];
+}
+/** Interpret an already-extracted table without guessing missing cells or flattening column identity. */
+export function interpretScientificTable(table: ScientificTable): Array<{ row: number; values: Record<string, { text: string; numeric?: number; unit?: string }> }> {
+  return table.rows.map((cells, index) => {
+    const values: Record<string, { text: string; numeric?: number; unit?: string }> = {};
+    table.headers.forEach((header, column) => {
+      const text = (cells[column] ?? "").trim();
+      if (!text) return;
+      const match = text.match(/^([-+]?\d+(?:[.,]\d+)?(?:e[-+]?\d+)?)\s*(.*)$/i);
+      values[header] = match
+        ? { text, numeric: Number(match[1]!.replace(",", ".")), ...(match[2] ? { unit: match[2] } : {}) }
+        : { text };
+    });
+    return { row: index, values };
+  });
+}
+
+export interface SuiteRetrievalMetrics { suite: string; tasks: number; documentRecall: number; passageRecall: number; complete: number }
+/** Report both macro-average suite performance and task-weighted pooled performance. */
+export function summarizeMixedLibrary(suites: SuiteRetrievalMetrics[]): {
+  suites: SuiteRetrievalMetrics[];
+  macro: Omit<SuiteRetrievalMetrics, "suite">;
+  pooled: Omit<SuiteRetrievalMetrics, "suite">;
+} {
+  const total = suites.reduce((sum, suite) => sum + suite.tasks, 0);
+  const average = (field: "documentRecall" | "passageRecall" | "complete") =>
+    suites.length ? suites.reduce((sum, suite) => sum + suite[field], 0) / suites.length : 0;
+  const weighted = (field: "documentRecall" | "passageRecall" | "complete") =>
+    total ? suites.reduce((sum, suite) => sum + suite[field] * suite.tasks, 0) / total : 0;
+  return {
+    suites,
+    macro: { tasks: total, documentRecall: average("documentRecall"), passageRecall: average("passageRecall"), complete: average("complete") },
+    pooled: { tasks: total, documentRecall: weighted("documentRecall"), passageRecall: weighted("passageRecall"), complete: weighted("complete") },
+  };
+}
