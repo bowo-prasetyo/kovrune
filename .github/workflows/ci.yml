@@ -26,8 +26,8 @@ jobs:
       # Deterministic diagnostics for the P0 research-quality work. These run without a model:
       # report planning is scored against recorded outcomes, and retrieval is stressed with
       # realistic distractor libraries before any search default is changed.
-      - name: Measure report-plan source coverage
-        run: npm run bench:plancoverage
+      # bench:plancoverage needs recorded report-run JSON; run it with explicit reports
+      # when available (see docs/p0-research-quality.md), not as a zero-argument CI command.
       - name: Measure retrieval at the app's default result limit
         run: |
           npm run bench:retrieval
